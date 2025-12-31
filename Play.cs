@@ -10,6 +10,9 @@ public partial class Play : Node3D
 	{
 		Input.MouseMode = Input.MouseModeEnum.Captured;
 
+		// Setup the spawner's spawn function to set authority correctly
+		_playerSpawner.SpawnFunction = new Callable(this, MethodName.CustomSpawn);
+
 		if (Multiplayer.IsServer())
 		{
 			GD.Print($"Server ready. Connected peers: {string.Join(", ", Multiplayer.GetPeers())}");
@@ -33,6 +36,25 @@ public partial class Play : Node3D
 		}
 	}
 
+	// Custom spawn function called by MultiplayerSpawner
+	private Node CustomSpawn(Variant data)
+	{
+		var peerId = data.AsInt32();
+		var player = _playerScene.Instantiate<CharacterBody3D>();
+		player.Name = $"Player{peerId}";
+		player.Position = new Vector3(0, 2, 0);
+
+		// Set authority in the spawn callback (this is the right time!)
+		player.SetMultiplayerAuthority(peerId);
+		var sync = player.GetNodeOrNull<MultiplayerSynchronizer>("MultiplayerSynchronizer");
+		if (sync != null)
+		{
+			sync.SetMultiplayerAuthority(peerId);
+		}
+
+		return player;
+	}
+
 	private void OnPeerConnected(long peerId)
 	{
 		GD.Print($"Peer {peerId} connected, spawning their player");
@@ -41,22 +63,9 @@ public partial class Play : Node3D
 
 	private void SpawnPlayer(long peerId)
 	{
-		var player = _playerScene.Instantiate<CharacterBody3D>();
-		player.Name = $"Player{peerId}";
-
-		// Position the player above ground (adjust Y value as needed)
-		player.Position = new Vector3(0, 2, 0);
-
-		// Set who controls this player
-		player.SetMultiplayerAuthority((int)peerId);
-
-		// Add to scene first
-		_playerSpawner.GetParent().AddChild(player);
-
-		// Tell the spawner to replicate this node
-		_playerSpawner.Spawn(player);
-
-		GD.Print($"Spawned player for peer {peerId} at position {player.Position}");
+		// Just tell the spawner to spawn with the peer ID as data
+		_playerSpawner.Spawn(peerId);
+		GD.Print($"Requested spawn for peer {peerId}");
 	}
 
 	public override void _Input(InputEvent @event)

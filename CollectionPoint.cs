@@ -7,6 +7,9 @@ public partial class CollectionPoint : Node3D
 {
 	private readonly List<ICollector> collectors = [];
 
+	[Export] public InventoryItemType ResourceType = InventoryItemType.Wood;
+	[Export] public int CollectionPerSecond = 1;
+
 	public override void _Ready()
 	{
 		Area3D area = GetNode<Area3D>("Area3D");
@@ -21,7 +24,7 @@ public partial class CollectionPoint : Node3D
 	{
 		foreach (var collector in collectors)
 		{
-			collector.Collect(InventoryItemType.Wood, 1);
+			collector.Collect(ResourceType, CollectionPerSecond);
 		}
 	}
 

@@ -49,6 +49,10 @@ shadow_enabled = true
 [node name="CollectionPoint" parent="." instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.98428345, 0, 27.669376)
 
+[node name="Collection Point" parent="." instance=ExtResource("6_ccytq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.98428345, 0, -40.066883)
+ResourceType = 1
+
 [node name="SpawnPoint" type="Node3D" parent="."]
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="SpawnPoint"]

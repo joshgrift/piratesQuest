@@ -1,14 +1,28 @@
-[gd_scene load_steps=5 format=3 uid="uid://cumwy7ox3pa0b"]
+[gd_scene load_steps=6 format=3 uid="uid://cumwy7ox3pa0b"]
 
 [ext_resource type="Script" uid="uid://b4ivpos2qv5rq" path="res://Player.cs" id="1_onrkg"]
 [ext_resource type="PackedScene" uid="uid://xg8l1d4eyeyk" path="res://art/kenny_pirate/ship-small.glb" id="2_onrkg"]
 [ext_resource type="Script" uid="uid://bhydcnypg8r7i" path="res://CameraPivot.cs" id="3_i3pqv"]
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_i3pqv"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath("Pivot:rotation")
+properties/2/spawn = true
+properties/2/replication_mode = 1
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_i3pqv"]
 size = Vector3(5.272705, 4.304199, 8.193848)
 
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("1_onrkg")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_i3pqv")
 
 [node name="Pivot" type="Node3D" parent="."]
 

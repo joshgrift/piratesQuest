@@ -30,6 +30,17 @@ public partial class Player : CharacterBody3D, ICollector
 
 	private readonly Inventory _inventory = new();
 
+	public override void _Ready()
+	{
+		// Only enable the camera for the player we control
+		var camera = GetNodeOrNull<Camera3D>("CameraPivot/Camera3D");
+		if (camera != null)
+		{
+			camera.Current = IsMultiplayerAuthority();
+			GD.Print($"{Name}: Camera enabled = {camera.Current}");
+		}
+	}
+
 	public override void _PhysicsProcess(double delta)
 	{
 		if (IsMultiplayerAuthority())
