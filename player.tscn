@@ -4,8 +4,8 @@
 [ext_resource type="PackedScene" uid="uid://xg8l1d4eyeyk" path="res://art/kenny_pirate/ship-small.glb" id="2_onrkg"]
 [ext_resource type="Script" uid="uid://bhydcnypg8r7i" path="res://CameraPivot.cs" id="3_i3pqv"]
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_hqtel"]
-radius = 4.148299
+[sub_resource type="BoxShape3D" id="BoxShape3D_i3pqv"]
+size = Vector3(5.272705, 4.304199, 8.193848)
 
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("1_onrkg")
@@ -23,5 +23,5 @@ script = ExtResource("3_i3pqv")
 transform = Transform3D(1, 0, 0, 0, 0.6467898, 0.7626684, 0, -0.7626684, 0.6467898, 0, 27.871, 25.183)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.025403023, 3.877646, -0.19620496)
-shape = SubResource("SphereShape3D_hqtel")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.23863506, 2.2255464, 0.36898065)
+shape = SubResource("BoxShape3D_i3pqv")
