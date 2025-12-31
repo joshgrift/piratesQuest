@@ -1,0 +1,26 @@
+[gd_scene load_steps=6 format=3 uid="uid://bkdqs4u6efsoq"]
+
+[ext_resource type="Texture2D" uid="uid://4co36sufp47w" path="res://art/proto/Green/texture_09.png" id="1_281px"]
+[ext_resource type="Script" uid="uid://d2dggj3j345am" path="res://CollectionPoint.cs" id="1_eldjc"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1bvp3"]
+size = Vector3(20, 1, 20)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h2yge"]
+albedo_texture = ExtResource("1_281px")
+uv1_scale = Vector3(2, 2, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1bvp3"]
+
+[node name="Collection Point" type="Node3D"]
+script = ExtResource("1_eldjc")
+
+[node name="Area3D" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("BoxShape3D_1bvp3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(20, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_h2yge")
+mesh = SubResource("BoxMesh_1bvp3")

@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://0xkhvjlfg55v" path="res://art/proto/Dark/texture_05.png" id="1_h2yge"]
 [ext_resource type="PackedScene" uid="uid://cumwy7ox3pa0b" path="res://player.tscn" id="1_ig7tw"]
-[ext_resource type="PackedScene" uid="uid://b45nrf1j8o15q" path="res://terrain_block.tscn" id="2_0xm2m"]
+[ext_resource type="PackedScene" uid="uid://bkdqs4u6efsoq" path="res://collection_point.tscn" id="3_h2yge"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_0xm2m"]
 size = Vector3(200, 1, 200)
@@ -33,5 +33,5 @@ mesh = SubResource("BoxMesh_ig7tw")
 transform = Transform3D(1, 0, 0, 0, -0.53452927, 0.84514993, 0, -0.84514993, -0.53452927, 0, 9.451715, 0)
 shadow_enabled = true
 
-[node name="Terrain_Block" parent="." instance=ExtResource("2_0xm2m")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5)
+[node name="World" parent="." instance=ExtResource("3_h2yge")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 20)
