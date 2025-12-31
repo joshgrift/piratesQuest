@@ -25,6 +25,14 @@ public partial class CameraPivot : Marker3D
 			// Apply the rotation
 			Rotation = new Vector3(Rotation.X, _cameraTargetAngleY, Rotation.Z);
 		}
+
+		if (@event is InputEventKey keyEvent && keyEvent.Pressed && keyEvent.Keycode == Key.Escape)
+		{
+			GD.Print("Toggling mouse mode");
+			Input.MouseMode = Input.MouseMode == Input.MouseModeEnum.Captured
+				? Input.MouseModeEnum.Visible
+				: Input.MouseModeEnum.Captured;
+		}
 	}
 
 	// If the pivot needs to follow a moving target (like a player), update its position in _process or _physics_process

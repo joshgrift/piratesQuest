@@ -18,14 +18,35 @@ size = Vector3(200, 1, 299)
 
 [node name="main" type="Node3D"]
 
-[node name="HUD" type="CanvasLayer" parent="."]
+[node name="HUD" type="CanvasLayer" parent="." node_paths=PackedStringArray("InventoryList")]
 script = ExtResource("1_1bvp3")
+InventoryList = NodePath("VBoxContainer/MarginContainer/InventoryList")
 
-[node name="MarginContainer" type="MarginContainer" parent="HUD"]
+[node name="VBoxContainer" type="VBoxContainer" parent="HUD"]
 offset_right = 40.0
 offset_bottom = 40.0
 
-[node name="InventoryList" type="VBoxContainer" parent="HUD/MarginContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="HUD/VBoxContainer"]
+layout_mode = 2
+
+[node name="ServerIP" type="LineEdit" parent="HUD/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+placeholder_text = "192.168.1.1"
+max_length = 15
+expand_to_text_length = true
+
+[node name="JoinButton" type="Button" parent="HUD/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Join"
+
+[node name="HostButton" type="Button" parent="HUD/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Host"
+
+[node name="MarginContainer" type="MarginContainer" parent="HUD/VBoxContainer"]
+layout_mode = 2
+
+[node name="InventoryList" type="VBoxContainer" parent="HUD/VBoxContainer/MarginContainer"]
 layout_mode = 2
 theme = ExtResource("2_lquwl")
 
@@ -48,3 +69,6 @@ shadow_enabled = true
 
 [node name="World" parent="." instance=ExtResource("3_h2yge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.98428345, 0, -2.019764)
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="."]
+spawn_path = NodePath("../Player")

@@ -3,6 +3,7 @@ using Algonquin1;
 
 public partial class Hud : CanvasLayer
 {
+	[Export] public VBoxContainer InventoryList;
 
 	public override void _Ready()
 	{
@@ -12,8 +13,7 @@ public partial class Hud : CanvasLayer
 
 	private void OnInventoryChanged(InventoryItemType itemType, int newAmount)
 	{
-		var parentNode = GetNode<VBoxContainer>("MarginContainer/InventoryList");
-		var itemLabel = GetNodeOrNull<Label>($"MarginContainer/InventoryList/{itemType}Label");
+		var itemLabel = InventoryList.GetNodeOrNull<Label>($"{itemType}Label");
 
 		if (itemLabel != null)
 		{
@@ -26,7 +26,7 @@ public partial class Hud : CanvasLayer
 				Name = $"{itemType}Label",
 				Text = $"{itemType}: {newAmount}"
 			};
-			parentNode.AddChild(itemLabel);
+			InventoryList.AddChild(itemLabel);
 		}
 	}
 
