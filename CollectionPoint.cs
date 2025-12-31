@@ -1,28 +1,42 @@
 using Godot;
 using Algonquin1;
+using System;
+using System.Collections.Generic;
 
 public partial class CollectionPoint : Node3D
 {
-	// Called when the node enters the scene tree for the first time.
+	private readonly List<ICollector> collectors = [];
+
 	public override void _Ready()
 	{
 		Area3D area = GetNode<Area3D>("Area3D");
 		area.BodyEntered += OnBodyEntered;
+		area.BodyExited += OnBodyExited;
+
+		Timer collectionTimer = GetNode<Timer>("CollectionTimer");
+		collectionTimer.Timeout += OnCollectionTimeout;
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
+	private void OnCollectionTimeout()
 	{
+		foreach (var collector in collectors)
+		{
+			collector.Collect(InventoryItemType.Wood, 1);
+		}
 	}
 
-	// The handler method - must match the signal's signature
 	private void OnBodyEntered(Node3D body)
 	{
 		if (body is ICollector collector)
 		{
-			collector.Collect(InventoryItemType.Wood, 5);
+			collectors.Add(collector);
 		}
-		// body is whatever entered the area
-		GD.Print($"Something entered: {body.Name}");
+	}
+	private void OnBodyExited(Node3D body)
+	{
+		if (body is ICollector collector)
+		{
+			collectors.Remove(collector);
+		}
 	}
 }
