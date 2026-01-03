@@ -11,16 +11,13 @@ properties/0/replication_mode = 1
 properties/1/path = NodePath(".:rotation")
 properties/1/spawn = true
 properties/1/replication_mode = 1
-properties/2/path = NodePath("Pivot:rotation")
-properties/2/spawn = true
-properties/2/replication_mode = 1
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_i3pqv"]
 size = Vector3(5.272705, 4.304199, 8.193848)
 
 [node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("CannonPivot")]
 script = ExtResource("1_onrkg")
-CannonPivot = NodePath("Pivot/Cannon")
+CannonPivot = NodePath("Cannon")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_i3pqv")
@@ -29,12 +26,10 @@ replication_config = SubResource("SceneReplicationConfig_i3pqv")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.23863506, 2.2255464, 0.36898065)
 shape = SubResource("BoxShape3D_i3pqv")
 
-[node name="Pivot" type="Node3D" parent="."]
-
-[node name="ship-small2" parent="Pivot" instance=ExtResource("2_onrkg")]
+[node name="ship-small2" parent="." instance=ExtResource("2_onrkg")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, -1, 0)
 
-[node name="Cannon" type="Node3D" parent="Pivot"]
+[node name="Cannon" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02030468, 1.8513229, -4.6251783)
 
 [node name="CameraPivot" type="Marker3D" parent="."]

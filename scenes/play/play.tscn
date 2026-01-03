@@ -7,14 +7,14 @@
 [ext_resource type="PackedScene" uid="uid://bkdqs4u6efsoq" path="res://scenes/collectonPoint/collection_point.tscn" id="6_ccytq"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_0xm2m"]
-size = Vector3(200, 10, 200)
+size = Vector3(500, 1, 500)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1bvp3"]
 albedo_texture = ExtResource("4_iu7w4")
 uv1_scale = Vector3(20, 20, 20)
 
 [sub_resource type="BoxMesh" id="BoxMesh_ig7tw"]
-size = Vector3(200, 1, 299)
+size = Vector3(500, 1, 500)
 
 [node name="Play" type="Node3D" node_paths=PackedStringArray("_playerSpawner")]
 script = ExtResource("1_j5m8q")
@@ -49,7 +49,7 @@ text = "READY TO FIRE"
 [node name="Ground" type="StaticBody3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.189, -5, 5.658)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
 shape = SubResource("BoxShape3D_0xm2m")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
@@ -69,6 +69,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.98428345, 0, -40.066883)
 ResourceType = 1
 
 [node name="SpawnPoint" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 24.776485, 0)
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="SpawnPoint"]
 _spawnable_scenes = PackedStringArray("uid://cumwy7ox3pa0b")

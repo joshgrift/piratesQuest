@@ -25,7 +25,7 @@ public partial class Player : CharacterBody3D, ICollector
 	public int FallAcceleration { get; set; } = 75;
 
 	[Export]
-	public float TurnSpeed { get; set; } = 1.5f;
+	public float TurnSpeed { get; set; } = 0.5f;
 
 	[Export]
 	public float MinTurnSpeed { get; set; } = 2.0f;
@@ -55,6 +55,18 @@ public partial class Player : CharacterBody3D, ICollector
 		}
 
 		_cannonBallScene = GD.Load<PackedScene>("res://scenes/cannon_ball/cannon_ball.tscn");
+
+		const int startYRange = 100;
+		const int startXRange = 100;
+
+		// Randomize starting position	
+		var rng = new RandomNumberGenerator();
+		rng.Randomize();
+		GlobalPosition = new Vector3(
+			rng.Randf() * startYRange - startYRange / 2,
+			GlobalPosition.Y,
+			rng.Randf() * startXRange - startXRange / 2
+		);
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -79,10 +91,8 @@ public partial class Player : CharacterBody3D, ICollector
 			{
 				CannonBall ball = _cannonBallScene.Instantiate<CannonBall>();
 
-				var pivot = GetNode<Node3D>("Pivot");
-
 				ball.GlobalPosition = CannonPivot.GlobalPosition;
-				ball.Launch(pivot.GlobalTransform.Basis.Z * -1, _currentSpeed, "josh");
+				ball.Launch(GlobalTransform.Basis.Z * -1, _currentSpeed, "josh");
 
 				_firedTimerCountdown = _fireCoolDownInSeconds;
 				EmitSignal(SignalName.CannonFired);
@@ -93,8 +103,6 @@ public partial class Player : CharacterBody3D, ICollector
 
 	private void UpdateMovement(float delta)
 	{
-		var pivot = GetNode<Node3D>("Pivot");
-
 		// Get input for forward/backward movement
 		float forwardInput = 0.0f;
 		if (Input.IsActionPressed("move_forward"))
@@ -142,12 +150,12 @@ public partial class Player : CharacterBody3D, ICollector
 			float turnDirection = _currentSpeed > 0 ? turnInput : -turnInput;
 
 			// Rotate the pivot (and thus the ship model)
-			pivot.RotateY(-turnDirection * effectiveTurnSpeed * (float)delta);
+			RotateY(-turnDirection * effectiveTurnSpeed * (float)delta);
 		}
 
 		// Move the ship in the direction it's facing
 		// The pivot's forward direction is -Z in local space
-		Vector3 forwardDirection = -pivot.GlobalTransform.Basis.Z;
+		Vector3 forwardDirection = -GlobalTransform.Basis.Z;
 
 		// Ground velocity - ship only moves forward/backward in facing direction
 		_targetVelocity.X = forwardDirection.X * _currentSpeed;
