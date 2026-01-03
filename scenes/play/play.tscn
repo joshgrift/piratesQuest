@@ -21,7 +21,7 @@ size = Vector3(500, 1, 500)
 script = ExtResource("1_j5m8q")
 _playerSpawner = NodePath("SpawnPoint/MultiplayerSpawner")
 _projectileSpawner = NodePath("Projectiles/ProjectileSpawner")
-_freeCam = NodePath("Camera3D")
+_freeCam = NodePath("ServerFreeCam")
 
 [node name="HUD" type="CanvasLayer" parent="." node_paths=PackedStringArray("InventoryList", "ReadyToFireContainer", "HealthLabel", "PlayersContainer")]
 script = ExtResource("2_y08r1")
@@ -108,5 +108,6 @@ spawn_path = NodePath("..")
 _spawnable_scenes = PackedStringArray("uid://dmuvqf8th0wup")
 spawn_path = NodePath("..")
 
-[node name="Camera3D" type="Camera3D" parent="."]
+[node name="ServerFreeCam" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 176.38995, 0)
 script = ExtResource("6_1phcp")
