@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://dmuvqf8th0wup"]
+[gd_scene load_steps=6 format=3 uid="uid://dmuvqf8th0wup"]
 
 [ext_resource type="Script" uid="uid://0jrxebo5krlp" path="res://scenes/cannon_ball/CannonBall.cs" id="1_nvjdn"]
 
@@ -11,6 +11,17 @@ roughness = 0.45
 
 [sub_resource type="SphereMesh" id="SphereMesh_nvjdn"]
 
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_nvjdn"]
+properties/0/path = NodePath("..:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath("..:Damage")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath("..:TimeToLiveInSeconds")
+properties/2/spawn = true
+properties/2/replication_mode = 1
+
 [node name="cannon_ball" type="RigidBody3D"]
 script = ExtResource("1_nvjdn")
 
@@ -20,3 +31,7 @@ shape = SubResource("SphereShape3D_nyruy")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 material_override = SubResource("StandardMaterial3D_nyruy")
 mesh = SubResource("SphereMesh_nvjdn")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+root_path = NodePath("../MeshInstance3D")
+replication_config = SubResource("SceneReplicationConfig_nvjdn")

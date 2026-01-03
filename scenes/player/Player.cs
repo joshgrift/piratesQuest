@@ -32,13 +32,13 @@ public partial class Player : CharacterBody3D, ICollector
 
 	[Export] public Node3D CannonPivot;
 
+	[Export] public MultiplayerSpawner ProjectileSpawner;
+
 	private float _currentSpeed = 0.0f;
 
 	private Vector3 _targetVelocity = Vector3.Zero;
 
 	private readonly Inventory _inventory = new();
-
-	private PackedScene _cannonBallScene;
 
 	private int _fireCoolDownInSeconds = 2;
 
@@ -53,8 +53,6 @@ public partial class Player : CharacterBody3D, ICollector
 			camera.Current = IsMultiplayerAuthority();
 			GD.Print($"{Name}: Camera enabled = {camera.Current}");
 		}
-
-		_cannonBallScene = GD.Load<PackedScene>("res://scenes/cannon_ball/cannon_ball.tscn");
 
 		const int startYRange = 100;
 		const int startXRange = 100;
@@ -76,7 +74,7 @@ public partial class Player : CharacterBody3D, ICollector
 			// Movement
 			UpdateMovement((float)delta);
 
-			// Firing Cannon 
+			// Firing
 			if (_firedTimerCountdown < 0)
 			{
 				_firedTimerCountdown = 0;
@@ -89,17 +87,31 @@ public partial class Player : CharacterBody3D, ICollector
 
 			if (Input.IsActionPressed("fire_cannons") && _firedTimerCountdown <= 0)
 			{
-				CannonBall ball = _cannonBallScene.Instantiate<CannonBall>();
-
-				GetParent().AddChild(ball);
-				ball.GlobalPosition = CannonPivot.GlobalPosition;
-				ball.Launch(GlobalTransform.Basis.Z * -1, _currentSpeed, "josh");
-
-				_firedTimerCountdown = _fireCoolDownInSeconds;
-				EmitSignal(SignalName.CannonFired);
-
+				FireCannons();
 			}
 		}
+	}
+
+	private void FireCannons()
+	{
+		_firedTimerCountdown = _fireCoolDownInSeconds;
+		var spawnData = new Godot.Collections.Dictionary
+		{
+			["position"] = CannonPivot.GlobalPosition,
+			["direction"] = GlobalTransform.Basis.Z * -1,
+			["speed"] = _currentSpeed
+		};
+
+		Rpc(MethodName.RequestFireCannons, spawnData);
+		EmitSignal(SignalName.CannonFired);
+	}
+
+	[Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true)]
+	private void RequestFireCannons(Variant data)
+	{
+		if (!Multiplayer.IsServer()) return;
+
+		ProjectileSpawner.Spawn(data);
 	}
 
 	private void UpdateMovement(float delta)

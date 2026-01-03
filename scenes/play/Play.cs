@@ -4,14 +4,18 @@ using System;
 public partial class Play : Node3D
 {
 	[Export] private MultiplayerSpawner _playerSpawner;
+	[Export] private MultiplayerSpawner _projectileSpawner;
+
 	private PackedScene _playerScene = GD.Load<PackedScene>("res://scenes/player/player.tscn");
+	private PackedScene _cannonBallScene = GD.Load<PackedScene>("res://scenes/cannon_ball/cannon_ball.tscn");
 
 	public override void _Ready()
 	{
 		Input.MouseMode = Input.MouseModeEnum.Captured;
 
 		// Setup the spawner's spawn function to set authority correctly
-		_playerSpawner.SpawnFunction = new Callable(this, MethodName.CustomSpawn);
+		_playerSpawner.SpawnFunction = new Callable(this, MethodName.PlayerSpawnHandler);
+		_projectileSpawner.SpawnFunction = new Callable(this, MethodName.ProjectileSpawnHandler);
 
 		if (Multiplayer.IsServer())
 		{
@@ -36,21 +40,33 @@ public partial class Play : Node3D
 		}
 	}
 
-	// Custom spawn function called by MultiplayerSpawner
-	private Node CustomSpawn(Variant data)
+	private CannonBall ProjectileSpawnHandler(Variant data)
+	{
+		var dict = data.AsGodotDictionary();
+
+		Vector3 position = dict["position"].AsVector3();
+		Vector3 direction = dict["direction"].AsVector3();
+		float speed = dict["speed"].AsSingle();
+
+		var ball = _cannonBallScene.Instantiate<CannonBall>();
+		ball.Position = position;
+		ball.Launch(direction, speed, "player");
+		return ball;
+	}
+
+	private Player PlayerSpawnHandler(Variant data)
 	{
 		var peerId = data.AsInt32();
-		var player = _playerScene.Instantiate<CharacterBody3D>();
+		var player = _playerScene.Instantiate<Player>();
 		player.Name = $"Player{peerId}";
 		player.Position = new Vector3(0, 2, 0);
+
+		player.ProjectileSpawner = GetNode<MultiplayerSpawner>("Projectiles/ProjectileSpawner");
 
 		// Set authority in the spawn callback (this is the right time!)
 		player.SetMultiplayerAuthority(peerId);
 		var sync = player.GetNodeOrNull<MultiplayerSynchronizer>("MultiplayerSynchronizer");
-		if (sync != null)
-		{
-			sync.SetMultiplayerAuthority(peerId);
-		}
+		sync?.SetMultiplayerAuthority(peerId);
 
 		return player;
 	}
@@ -63,7 +79,6 @@ public partial class Play : Node3D
 
 	private void SpawnPlayer(long peerId)
 	{
-		// Just tell the spawner to spawn with the peer ID as data
 		_playerSpawner.Spawn(peerId);
 		GD.Print($"Requested spawn for peer {peerId}");
 	}
