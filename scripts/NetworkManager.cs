@@ -3,7 +3,6 @@ namespace Algonquin1;
 using Godot;
 
 // This is an autoload singleton that persists across scene changes
-// It holds the multiplayer peer so it doesn't get lost
 public partial class NetworkManager : Node
 {
   public override void _Ready()
@@ -53,8 +52,18 @@ public partial class NetworkManager : Node
 
   private void Disconnect()
   {
-    Multiplayer.ConnectedToServer -= OnConnectOk;
-    Multiplayer.ConnectionFailed -= OnConnectionFail;
+    var connectOkCallable = Callable.From(OnConnectOk);
+    var connectionFailCallable = Callable.From(OnConnectionFail);
+
+    if (Multiplayer.IsConnected(MultiplayerApi.SignalName.ConnectedToServer, connectOkCallable))
+    {
+      Multiplayer.ConnectedToServer -= OnConnectOk;
+    }
+
+    if (Multiplayer.IsConnected(MultiplayerApi.SignalName.ConnectionFailed, connectionFailCallable))
+    {
+      Multiplayer.ConnectionFailed -= OnConnectionFail;
+    }
   }
 
   private void OnConnectOk()
