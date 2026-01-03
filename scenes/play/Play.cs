@@ -1,5 +1,6 @@
+namespace Algonquin1;
+
 using Godot;
-using System;
 
 public partial class Play : Node3D
 {
@@ -13,30 +14,13 @@ public partial class Play : Node3D
 	{
 		Input.MouseMode = Input.MouseModeEnum.Captured;
 
-		// Setup the spawner's spawn function to set authority correctly
 		_playerSpawner.SpawnFunction = new Callable(this, MethodName.PlayerSpawnHandler);
 		_projectileSpawner.SpawnFunction = new Callable(this, MethodName.ProjectileSpawnHandler);
 
 		if (Multiplayer.IsServer())
 		{
-			GD.Print($"Server ready. Connected peers: {string.Join(", ", Multiplayer.GetPeers())}");
-
-			// Spawn for the host
-			SpawnPlayer(Multiplayer.GetUniqueId());
-
-			// Spawn for any peers that are already connected
-			foreach (var peerId in Multiplayer.GetPeers())
-			{
-				GD.Print($"Spawning for already-connected peer {peerId}");
-				SpawnPlayer(peerId);
-			}
-
-			// Listen for new peers and spawn for them
+			GD.Print($"Server ready");
 			Multiplayer.PeerConnected += OnPeerConnected;
-		}
-		else
-		{
-			GD.Print($"Client ready. My peer ID: {Multiplayer.GetUniqueId()}");
 		}
 	}
 
@@ -89,7 +73,7 @@ public partial class Play : Node3D
 	{
 		if (!Multiplayer.IsServer()) return;
 
-		var playerNode = GetNodeOrNull<Player>($"Players/{playerName}");
+		var playerNode = GetNodeOrNull<Player>($"SpawnPoint/{playerName}");
 		if (playerNode != null)
 		{
 			playerNode.CallDeferred(Player.MethodName.QueueFree);
@@ -97,9 +81,9 @@ public partial class Play : Node3D
 		}
 	}
 
-	private void OnPeerConnected(long peerId)
+	private async void OnPeerConnected(long peerId)
 	{
-		GD.Print($"Peer {peerId} connected, spawning their player");
+		GD.Print($"Spawning player for peer {peerId}");
 		SpawnPlayer(peerId);
 	}
 
@@ -107,13 +91,5 @@ public partial class Play : Node3D
 	{
 		_playerSpawner.Spawn(peerId);
 		GD.Print($"Requested spawn for peer {peerId}");
-	}
-
-	public override void _Input(InputEvent @event)
-	{
-		if (@event is InputEventKey keyEvent && keyEvent.Pressed && keyEvent.Keycode == Key.Escape)
-		{
-			GetTree().ChangeSceneToFile("res://menu.tscn");
-		}
 	}
 }

@@ -17,11 +17,11 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
 ## Todo for first alpha trial
 - [x] Ship movement
 - [x] Multiplayer
-- [ ] Core Game Mechanices
-  - [x] Collection of reasources
+- [ ] Core Game Mechanics
+  - [x] Collection of resources
   - [ ] Three resource types & store to purchase upgrades
-  - [ ] Shooting Cannonballs, health, and death.
-  - [ ] Limited Map
+  - [x] Shooting Cannonballs, health, and death.
+  - [ ] Limited Map with islands
 - [ ] API for AI characters
   - [ ] Different ship design for AI character
 - [ ] Graphics

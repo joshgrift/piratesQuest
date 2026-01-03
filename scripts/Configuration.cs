@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Godot;
 
 partial class Configuration : Node
@@ -13,5 +14,17 @@ partial class Configuration : Node
     String title = $"Algonquin 1 {OS.GetCmdlineArgs().Join(" ")}";
     GD.Print($"setting title to {title}");
     DisplayServer.WindowSetTitle(title);
+
+    // Minimize the server window automatically
+    if (IsDesignatedServerMode())
+    {
+      DisplayServer.WindowSetMode(DisplayServer.WindowMode.Minimized);
+    }
+  }
+
+  public static bool IsDesignatedServerMode()
+  {
+    var args = OS.GetCmdlineArgs();
+    return args.Contains("--server");
   }
 }

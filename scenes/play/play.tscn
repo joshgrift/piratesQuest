@@ -21,11 +21,12 @@ script = ExtResource("1_j5m8q")
 _playerSpawner = NodePath("SpawnPoint/MultiplayerSpawner")
 _projectileSpawner = NodePath("Projectiles/ProjectileSpawner")
 
-[node name="HUD" type="CanvasLayer" parent="." node_paths=PackedStringArray("InventoryList", "ReadyToFireContainer", "HealthLabel")]
+[node name="HUD" type="CanvasLayer" parent="." node_paths=PackedStringArray("InventoryList", "ReadyToFireContainer", "HealthLabel", "PlayersContainer")]
 script = ExtResource("2_y08r1")
 InventoryList = NodePath("MarginContainer/InventoryList")
 ReadyToFireContainer = NodePath("MarginContainer2/HBoxContainer/ReadyToFire")
 HealthLabel = NodePath("MarginContainer2/HBoxContainer/HealthLabel")
+PlayersContainer = NodePath("../SpawnPoint")
 
 [node name="MarginContainer" type="MarginContainer" parent="HUD"]
 offset_right = 40.0

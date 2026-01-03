@@ -6,6 +6,7 @@ public partial class Hud : CanvasLayer
 	[Export] public Container InventoryList;
 	[Export] public CanvasItem ReadyToFireContainer;
 	[Export] public Label HealthLabel;
+	[Export] public Node3D PlayersContainer;
 
 	private Player _player;
 	private int _retryCount = 0;
@@ -13,7 +14,13 @@ public partial class Hud : CanvasLayer
 
 	public override void _Ready()
 	{
-		// Start looking for the player
+		if (Multiplayer.IsServer())
+		{
+			GD.Print("Skipping HUD, acting as server");
+			QueueFree();
+			return;
+		}
+
 		FindLocalPlayer();
 	}
 
@@ -21,7 +28,7 @@ public partial class Hud : CanvasLayer
 	{
 		// Find the player that we control
 		var myPeerId = Multiplayer.GetUniqueId();
-		_player = GetNodeOrNull<Player>($"/root/Play/SpawnPoint/player_{myPeerId}");
+		_player = PlayersContainer.GetNodeOrNull<Player>($"player_{myPeerId}");
 
 		if (_player != null)
 		{
@@ -76,10 +83,5 @@ public partial class Hud : CanvasLayer
 			};
 			InventoryList.AddChild(itemLabel);
 		}
-	}
-
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
-	{
 	}
 }

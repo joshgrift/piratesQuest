@@ -5,44 +5,52 @@ using Algonquin1;
 public partial class Menu : Node2D
 {
 	[Export] public Container MultiplayerControls;
-	[Export] public Button StartButton;
 
-	// Called when the node enters the scene tree for the first time.
+	private int _port = 8888;
+
 	public override void _Ready()
 	{
 		Input.MouseMode = Input.MouseModeEnum.Visible;
 
-		var hostButton = MultiplayerControls.GetNodeOrNull<Button>("HostButton");
-		hostButton.ButtonDown += () =>
+		if (Configuration.IsDesignatedServerMode())
 		{
-			var networkManager = GetNode<NetworkManager>("/root/NetworkManager");
-			networkManager.CreateServer(7777);
-		};
+			GD.Print($"Starting server on port {_port} due to --server flag");
+			CallDeferred(MethodName.StartServer);
 
+		}
+		else
+		{
+			SetupMenuUI();
+		}
+	}
+
+	private void SetupMenuUI()
+	{
 		var joinButton = MultiplayerControls.GetNodeOrNull<Button>("JoinButton");
 		joinButton.ButtonDown += () =>
 		{
 			var ipBox = MultiplayerControls.GetNodeOrNull<LineEdit>("ServerIP");
 			var ip = ipBox.Text.Trim();
+
+			// Connect to server FIRST (NetworkManager is persistent)
 			var networkManager = GetNode<NetworkManager>("/root/NetworkManager");
-			networkManager.CreateClient(ip, 7777);
-		};
+			networkManager.CreateClient(ip, _port);
 
-		StartButton.ButtonDown += () =>
-		{
-			Rpc(MethodName.StartGame);
+			// THEN change scene
+			GetTree().ChangeSceneToFile("res://scenes/play/play.tscn");
 		};
-
 	}
 
-	[Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-	private void StartGame()
+	private void StartServer()
 	{
+		var networkManager = GetNode<NetworkManager>("/root/NetworkManager");
+		networkManager.CreateServer(_port);
 		GetTree().ChangeSceneToFile("res://scenes/play/play.tscn");
 	}
 
 	public override void _Input(InputEvent @event)
 	{
+		// A workaround way to toggle mouse mode for testing and/org getting the mouse stuck.
 		if (@event is InputEventKey keyEvent && keyEvent.Pressed && keyEvent.Keycode == Key.F)
 		{
 			GD.Print("Toggling mouse mode");
@@ -50,10 +58,5 @@ public partial class Menu : Node2D
 				? Input.MouseModeEnum.Visible
 				: Input.MouseModeEnum.Captured;
 		}
-	}
-
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
-	{
 	}
 }

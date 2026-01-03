@@ -1,42 +1,33 @@
-[gd_scene load_steps=3 format=3 uid="uid://dep3rmcejo3ua"]
+[gd_scene load_steps=2 format=3 uid="uid://dep3rmcejo3ua"]
 
 [ext_resource type="Script" uid="uid://0mbi44cmsr5y" path="res://scenes/menu/Menu.cs" id="1_lti8b"]
 
-[sub_resource type="Theme" id="Theme_lti8b"]
-Button/font_sizes/font_size = 64
-LineEdit/font_sizes/font_size = 32
-
-[node name="Menu" type="Node2D" node_paths=PackedStringArray("MultiplayerControls", "StartButton")]
+[node name="Menu" type="Node2D" node_paths=PackedStringArray("MultiplayerControls")]
 script = ExtResource("1_lti8b")
-MultiplayerControls = NodePath("CenterContainer/VBoxContainer/MultiplayerControls")
-StartButton = NodePath("CenterContainer/VBoxContainer/StartButton")
+MultiplayerControls = NodePath("CanvasLayer/MultiplayerControls")
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
-offset_right = 540.0
-offset_bottom = 333.0
-theme = SubResource("Theme_lti8b")
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
-layout_mode = 2
+[node name="MultiplayerControls" type="HBoxContainer" parent="CanvasLayer"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -60.0
+offset_top = -15.5
+offset_right = 60.0
+offset_bottom = 15.5
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="MultiplayerControls" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
-layout_mode = 2
-
-[node name="ServerIP" type="LineEdit" parent="CenterContainer/VBoxContainer/MultiplayerControls"]
+[node name="ServerIP" type="LineEdit" parent="CanvasLayer/MultiplayerControls"]
 layout_mode = 2
 text = "127.0.0.1"
 placeholder_text = "192.168.1.1"
 max_length = 15
 expand_to_text_length = true
 
-[node name="JoinButton" type="Button" parent="CenterContainer/VBoxContainer/MultiplayerControls"]
+[node name="JoinButton" type="Button" parent="CanvasLayer/MultiplayerControls"]
 layout_mode = 2
 text = "Join"
-
-[node name="HostButton" type="Button" parent="CenterContainer/VBoxContainer/MultiplayerControls"]
-layout_mode = 2
-text = "Host"
-
-[node name="StartButton" type="Button" parent="CenterContainer/VBoxContainer"]
-layout_mode = 2
-text = "Start Game"
