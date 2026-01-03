@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://c8c63pod53w2l"]
+[gd_scene load_steps=19 format=3 uid="uid://c8c63pod53w2l"]
 
 [ext_resource type="Script" uid="uid://cie1vrfri8q8x" path="res://scenes/play/Play.cs" id="1_j5m8q"]
 [ext_resource type="Script" uid="uid://cxvxoxqx6wkup" path="res://scenes/play/Hud.cs" id="2_y08r1"]
@@ -23,11 +23,33 @@ size = Vector3(500, 1, 500)
 
 [sub_resource type="Resource" id="Resource_a0nu5"]
 script = ExtResource("10_10igl")
+BuyPrice = 5
+SellPrice = 4
 metadata/_custom_type_script = "uid://b81r8qngpan6y"
 
 [sub_resource type="Resource" id="Resource_bjecb"]
 script = ExtResource("10_10igl")
 ItemType = 1
+metadata/_custom_type_script = "uid://b81r8qngpan6y"
+
+[sub_resource type="Resource" id="Resource_10igl"]
+script = ExtResource("10_10igl")
+ItemType = 3
+BuyPrice = 2
+SellPrice = 1
+metadata/_custom_type_script = "uid://b81r8qngpan6y"
+
+[sub_resource type="Resource" id="Resource_gcg6u"]
+script = ExtResource("10_10igl")
+BuyPrice = 4
+SellPrice = 3
+metadata/_custom_type_script = "uid://b81r8qngpan6y"
+
+[sub_resource type="Resource" id="Resource_mric1"]
+script = ExtResource("10_10igl")
+ItemType = 3
+BuyPrice = 2
+SellPrice = 1
 metadata/_custom_type_script = "uid://b81r8qngpan6y"
 
 [node name="Play" type="Node3D" node_paths=PackedStringArray("_playerSpawner", "_projectileSpawner", "_freeCam")]
@@ -167,23 +189,311 @@ script = ExtResource("6_1phcp")
 
 [node name="Terrain" type="Node3D" parent="."]
 
-[node name="TerrainBlock" parent="Terrain" instance=ExtResource("7_damvd")]
-transform = Transform3D(5, 0, 0, 0, 10, 0, 0, 0, 30, -72.76486, 5.000004, 25.112988)
-
-[node name="TerrainBlock2" parent="Terrain" instance=ExtResource("7_damvd")]
-transform = Transform3D(0.85471576, 0, 21.69798, 0, 10, 0, -1.8081651, 0, 10.256589, -65.46844, 5, 44.694542)
-
 [node name="TerrainBlock3" parent="Terrain" instance=ExtResource("7_damvd")]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 24.625904, 5, 0)
 
-[node name="TerrainBlock6" parent="Terrain" instance=ExtResource("7_damvd")]
-transform = Transform3D(6, 0, 0, 0, 3, 0, 0, 0, 10, 40.964, 1.5, 34.107)
+[node name="TerrainBlock11" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -129.40503, 5, -113.26361)
 
-[node name="TerrainBlock7" parent="Terrain" instance=ExtResource("7_damvd")]
-transform = Transform3D(6, 0, 0, 0, 3, 0, 0, 0, 10, 35.737545, 1.5, 41.92417)
+[node name="TerrainBlock10" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -117.53992, 5, -124.516136)
 
-[node name="TerrainBlock8" parent="Terrain" instance=ExtResource("7_damvd")]
-transform = Transform3D(6, 0, 0, 0, 3, 0, 0, 0, 10, 39.936035, 1.5000019, 42.65267)
+[node name="TerrainBlock12" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -129.42505, 5, -104.36092)
+
+[node name="TerrainBlock13" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -109.11185, 5, -119.44925)
+
+[node name="TerrainBlock14" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -99.80065, 5, -119.36408)
+
+[node name="TerrainBlock15" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -104.8107, 5, -86.77126)
+
+[node name="TerrainBlock16" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -96.943825, 5, -90.56797)
+
+[node name="TerrainBlock17" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -85.49218, 5, -95.42826)
+
+[node name="TerrainBlock18" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -91.60837, 5, -94.44014)
+
+[node name="TerrainBlock19" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -106.03936, 5, -128.16008)
+
+[node name="TerrainBlock21" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -113.22899, 5, -128.18546)
+
+[node name="TerrainBlock22" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -121.90852, 5, -130.62378)
+
+[node name="TerrainBlock23" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -130.96683, 5, -130.44601)
+
+[node name="TerrainBlock24" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -134.41275, 5, -123.42097)
+
+[node name="TerrainBlock25" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -89.289894, 5, -87.223854)
+
+[node name="TerrainBlock27" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -70.90138, 5, 9.369194)
+
+[node name="TerrainBlock28" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -70.3719, 5, 17.57172)
+
+[node name="TerrainBlock29" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -69.65925, 5, 27.578562)
+
+[node name="TerrainBlock30" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -77.90535, 4.999996, 30.106882)
+
+[node name="TerrainBlock31" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -69.68282, 4.999996, 37.227562)
+
+[node name="TerrainBlock32" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -65.045006, 4.9999924, 46.265144)
+
+[node name="TerrainBlock33" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -56.813343, 4.9999924, 52.60331)
+
+[node name="TerrainBlock34" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -48.432064, 4.9999886, 56.66794)
+
+[node name="TerrainBlock35" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -39.167152, 4.9999886, 58.031647)
+
+[node name="TerrainBlock36" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -30.189274, 4.9999886, 58.72715)
+
+[node name="TerrainBlock37" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -24.189274, 4.9999886, 61.72715)
+
+[node name="TerrainBlock38" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -22.985767, 4.9999886, 70.66479)
+
+[node name="TerrainBlock39" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -28.749172, 4.9999886, 80.58847)
+
+[node name="TerrainBlock40" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -36.19277, 4.9999886, 86.56244)
+
+[node name="TerrainBlock41" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -42.794155, 4.9999886, 93.34478)
+
+[node name="TerrainBlock42" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -52.021557, 4.9999886, 93.6244)
+
+[node name="TerrainBlock43" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -59.843822, 4.9999886, 90.75122)
+
+[node name="TerrainBlock44" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -68.79741, 4.9999886, 85.76811)
+
+[node name="TerrainBlock45" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -69.500534, 4.9999886, 79.579025)
+
+[node name="TerrainBlock46" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -75.84235, 4.9999886, 72.75762)
+
+[node name="TerrainBlock47" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -83.958176, 4.9999886, 63.331566)
+
+[node name="TerrainBlock48" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -87.7867, 4.9999886, 55.58818)
+
+[node name="TerrainBlock49" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -97.434906, 4.9999886, 49.417595)
+
+[node name="TerrainBlock50" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -97.84451, 4.9999886, 39.60405)
+
+[node name="TerrainBlock51" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -95.859604, 4.9999886, 30.671822)
+
+[node name="TerrainBlock52" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -91.591324, 4.9999886, 23.452473)
+
+[node name="TerrainBlock53" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -85.48204, 4.9999886, 15.041216)
+
+[node name="TerrainBlock54" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -80.48204, 4.9999886, 7.041216)
+
+[node name="TerrainBlock55" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 19.461533, 4.9999886, 30.0953)
+
+[node name="TerrainBlock56" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 18.334293, 4.9999886, 43.699898)
+
+[node name="TerrainBlock57" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 23.497993, 4.9999886, 51.689884)
+
+[node name="TerrainBlock58" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 4.491722, 4.9999886, 74.4552)
+
+[node name="TerrainBlock59" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 31.607735, 4.9999886, 54.382)
+
+[node name="TerrainBlock60" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 35.17086, 4.9999886, 49.244354)
+
+[node name="TerrainBlock61" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 33.709423, 4.9999886, 41.18993)
+
+[node name="TerrainBlock62" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 35.508675, 4.9999886, 32.530193)
+
+[node name="TerrainBlock63" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 40.050396, 4.9999886, 26.026806)
+
+[node name="TerrainBlock64" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 46.147125, 4.9999886, 19.380358)
+
+[node name="TerrainBlock65" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 52.047684, 4.9999886, 14.723528)
+
+[node name="TerrainBlock66" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 57.82755, 4.9999886, 7.7480297)
+
+[node name="TerrainBlock67" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 57.41425, 4.9999886, 0.85923576)
+
+[node name="TerrainBlock68" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 55.551197, 4.9999886, -4.509493)
+
+[node name="TerrainBlock69" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 52.551197, 4.9999886, -13.509493)
+
+[node name="TerrainBlock70" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 39.111355, 4.9999886, -19.115545)
+
+[node name="TerrainBlock71" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 33.339294, 4.9999886, -14.444231)
+
+[node name="TerrainBlock72" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 28.142967, 4.9999886, -7.2899456)
+
+[node name="TerrainBlock73" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 18.45895, 4.9999886, 4.275545)
+
+[node name="TerrainBlock74" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 12.502399, 4.9999886, 6.806711)
+
+[node name="TerrainBlock75" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 5.1291847, 4.9999886, 5.2750607)
+
+[node name="TerrainBlock76" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -1.4402695, 4.9999886, 0.18847847)
+
+[node name="TerrainBlock77" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 1.7681923, 4.9999886, 11.985353)
+
+[node name="TerrainBlock78" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 8.082771, 4.9999886, 17.47983)
+
+[node name="TerrainBlock79" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 13.959734, 4.9999886, 21.780634)
+
+[node name="TerrainBlock80" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 23.44016, 4.9999886, -32.71669)
+
+[node name="TerrainBlock81" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 21.54246, 4.9999886, -25.849579)
+
+[node name="TerrainBlock82" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 18.562708, 4.9999886, -24.686005)
+
+[node name="TerrainBlock83" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 13.263453, 4.9999886, -20.68937)
+
+[node name="TerrainBlock84" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -14.108339, 4.9999886, -14.77232)
+
+[node name="TerrainBlock85" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -17.20405, 4.9999886, -17.192116)
+
+[node name="TerrainBlock86" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -27.540117, 4.9999886, -18.71598)
+
+[node name="TerrainBlock87" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -24.540117, 4.9999886, -18.71598)
+
+[node name="TerrainBlock88" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -21.55137, 4.9999886, -25.178719)
+
+[node name="TerrainBlock89" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -46.485634, 4.9999886, -39.324913)
+
+[node name="TerrainBlock90" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -2.9283447, 4.9999886, 96.77088)
+
+[node name="TerrainBlock91" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -20.739166, 4.9999886, 109.91688)
+
+[node name="TerrainBlock92" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -9.896561, 4.9999886, 104.46339)
+
+[node name="TerrainBlock93" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -12.901535, 4.9999886, 106.20406)
+
+[node name="TerrainBlock94" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0.93640137, 4.9999886, 87.866005)
+
+[node name="TerrainBlock95" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 4.44965, 4.9999886, 82.789894)
+
+[node name="TerrainBlock96" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 27.245358, 4.9999886, 93.64825)
+
+[node name="TerrainBlock97" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -41.754642, 4.9999886, 118.64825)
+
+[node name="TerrainBlock98" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -64.221664, 4.9999886, 116.71665)
+
+[node name="TerrainBlock99" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -110.78555, 4.9999886, 12.329552)
+
+[node name="TerrainBlock100" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -115.59184, 4.9999886, -7.993988)
+
+[node name="TerrainBlock101" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -145.05243, 4.9999886, -88.851074)
+
+[node name="TerrainBlock102" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -169.8168, 4.9999886, -120.37352)
+
+[node name="TerrainBlock103" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -117.52349, 4.9999886, -50.451447)
+
+[node name="TerrainBlock104" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -53.53192, 4.9999886, -106.7536)
+
+[node name="TerrainBlock105" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -60.73104, 4.9999886, -136.53964)
+
+[node name="TerrainBlock106" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -103.53626, 4.9999886, -166.61143)
+
+[node name="TerrainBlock107" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -134.94632, 4.9999886, -170.04332)
+
+[node name="TerrainBlock108" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -1.8812866, 4.9999886, -81.11832)
+
+[node name="TerrainBlock109" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -122.22449, 4.9999886, 109.91156)
+
+[node name="TerrainBlock26" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -51.658176, 5, -47.464466)
+
+[node name="TerrainBlock20" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -97.15903, 5, -128.06596)
+
+[node name="TerrainBlock9" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -125.61157, 5, -122.18704)
 
 [node name="TerrainBlock5" parent="Terrain" instance=ExtResource("7_damvd")]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 14.433952, 5, 38.41247)
@@ -197,14 +507,22 @@ transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 46.48507, 5, -20.913643)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.984, 1, -40.067)
 ResourceType = 1
 
+[node name="Collection Point2" parent="Interactables" instance=ExtResource("6_ccytq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -102.253654, 1, 115.4908)
+ResourceType = 1
+
 [node name="CollectionPoint" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(2, 0, 0, 0, 1, 0, 0, 0, 2, -44.621, 1, 27.669)
+
+[node name="CollectionPoint2" parent="Interactables" instance=ExtResource("6_ccytq")]
+transform = Transform3D(2, 0, 0, 0, 1, 0, 0, 0, 2, -161.24391, 1, -57.88156)
 
 [node name="Port" parent="Interactables" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 47.911507, 1, 38.809845)
 PortName = "Saint Johns"
-ItemsForSale = Array[Object]([SubResource("Resource_a0nu5"), SubResource("Resource_bjecb")])
+ItemsForSale = Array[Object]([SubResource("Resource_a0nu5"), SubResource("Resource_bjecb"), SubResource("Resource_10igl")])
 
 [node name="Port2" parent="Interactables" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -111.896355, 1, -103.57585)
 PortName = "Haven"
+ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_mric1")])
