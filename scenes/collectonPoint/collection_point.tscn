@@ -24,7 +24,7 @@ shape = SubResource("CylinderShape3D_nl2ir")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(20, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0)
 material_override = SubResource("StandardMaterial3D_h2yge")
-transparency = 0.98
+transparency = 0.95
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_y8w4b")
 

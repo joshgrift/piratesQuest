@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://c8c63pod53w2l"]
+[gd_scene load_steps=11 format=3 uid="uid://c8c63pod53w2l"]
 
 [ext_resource type="Script" uid="uid://cie1vrfri8q8x" path="res://scenes/play/Play.cs" id="1_j5m8q"]
 [ext_resource type="Script" uid="uid://cxvxoxqx6wkup" path="res://scenes/play/Hud.cs" id="2_y08r1"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://0xkhvjlfg55v" path="res://art/proto/Dark/texture_05.png" id="4_iu7w4"]
 [ext_resource type="Script" uid="uid://d3pli0crpwxcc" path="res://scripts/FreeCam.cs" id="6_1phcp"]
 [ext_resource type="PackedScene" uid="uid://bkdqs4u6efsoq" path="res://scenes/collectonPoint/collection_point.tscn" id="6_ccytq"]
+[ext_resource type="PackedScene" uid="uid://cbwteoxdgaayj" path="res://scenes/play/terrain_block.tscn" id="7_damvd"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_0xm2m"]
 size = Vector3(500, 1, 500)
@@ -76,11 +77,9 @@ collision_layer = 4
 collision_mask = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
 shape = SubResource("BoxShape3D_0xm2m")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
 material_override = SubResource("StandardMaterial3D_1bvp3")
 mesh = SubResource("BoxMesh_ig7tw")
 
@@ -89,10 +88,10 @@ transform = Transform3D(1, 0, 0, 0, -0.53452927, 0.84514993, 0, -0.84514993, -0.
 shadow_enabled = true
 
 [node name="CollectionPoint" parent="." instance=ExtResource("6_ccytq")]
-transform = Transform3D(2, 0, 0, 0, 1, 0, 0, 0, 2, -44.621307, 0, 27.669376)
+transform = Transform3D(2, 0, 0, 0, 1, 0, 0, 0, 2, -44.621, 1, 27.669)
 
 [node name="Collection Point" parent="." instance=ExtResource("6_ccytq")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.98428345, 0, -40.066883)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.984, 1, -40.067)
 ResourceType = 1
 
 [node name="SpawnPoint" type="Node3D" parent="."]
@@ -111,3 +110,29 @@ spawn_path = NodePath("..")
 [node name="ServerFreeCam" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 176.38995, 0)
 script = ExtResource("6_1phcp")
+
+[node name="Terrain" type="Node3D" parent="."]
+
+[node name="TerrainBlock" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(5, 0, 0, 0, 10, 0, 0, 0, 30, -72.76486, 5.000004, 25.112988)
+
+[node name="TerrainBlock2" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(0.85471576, 0, 21.69798, 0, 10, 0, -1.8081651, 0, 10.256589, -65.46844, 5, 44.694542)
+
+[node name="TerrainBlock3" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 24.625904, 5, 0)
+
+[node name="TerrainBlock6" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(6, 0, 0, 0, 3, 0, 0, 0, 10, 40.964, 1.5, 34.107)
+
+[node name="TerrainBlock7" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(6, 0, 0, 0, 3, 0, 0, 0, 10, 35.737545, 1.5, 41.92417)
+
+[node name="TerrainBlock8" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(6, 0, 0, 0, 3, 0, 0, 0, 10, 39.936035, 1.5000019, 42.65267)
+
+[node name="TerrainBlock5" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 14.433952, 5, 38.41247)
+
+[node name="TerrainBlock4" parent="Terrain" instance=ExtResource("7_damvd")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 46.48507, 5, -20.913643)
