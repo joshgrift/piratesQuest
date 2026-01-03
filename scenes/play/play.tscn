@@ -1,9 +1,10 @@
-[gd_scene load_steps=9 format=3 uid="uid://c8c63pod53w2l"]
+[gd_scene load_steps=10 format=3 uid="uid://c8c63pod53w2l"]
 
 [ext_resource type="Script" uid="uid://cie1vrfri8q8x" path="res://scenes/play/Play.cs" id="1_j5m8q"]
 [ext_resource type="Script" uid="uid://cxvxoxqx6wkup" path="res://scenes/play/Hud.cs" id="2_y08r1"]
 [ext_resource type="Theme" uid="uid://sj508xa6kulh" path="res://scenes/play/hud_theme.tres" id="3_3ib3j"]
 [ext_resource type="Texture2D" uid="uid://0xkhvjlfg55v" path="res://art/proto/Dark/texture_05.png" id="4_iu7w4"]
+[ext_resource type="Script" uid="uid://d3pli0crpwxcc" path="res://scripts/FreeCam.cs" id="6_1phcp"]
 [ext_resource type="PackedScene" uid="uid://bkdqs4u6efsoq" path="res://scenes/collectonPoint/collection_point.tscn" id="6_ccytq"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_0xm2m"]
@@ -16,10 +17,11 @@ uv1_scale = Vector3(20, 20, 20)
 [sub_resource type="BoxMesh" id="BoxMesh_ig7tw"]
 size = Vector3(500, 1, 500)
 
-[node name="Play" type="Node3D" node_paths=PackedStringArray("_playerSpawner", "_projectileSpawner")]
+[node name="Play" type="Node3D" node_paths=PackedStringArray("_playerSpawner", "_projectileSpawner", "_freeCam")]
 script = ExtResource("1_j5m8q")
 _playerSpawner = NodePath("SpawnPoint/MultiplayerSpawner")
 _projectileSpawner = NodePath("Projectiles/ProjectileSpawner")
+_freeCam = NodePath("Camera3D")
 
 [node name="HUD" type="CanvasLayer" parent="." node_paths=PackedStringArray("InventoryList", "ReadyToFireContainer", "HealthLabel", "PlayersContainer")]
 script = ExtResource("2_y08r1")
@@ -105,3 +107,6 @@ spawn_path = NodePath("..")
 [node name="ProjectileSpawner" type="MultiplayerSpawner" parent="Projectiles"]
 _spawnable_scenes = PackedStringArray("uid://dmuvqf8th0wup")
 spawn_path = NodePath("..")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+script = ExtResource("6_1phcp")

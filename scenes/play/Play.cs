@@ -6,6 +6,7 @@ public partial class Play : Node3D
 {
 	[Export] private MultiplayerSpawner _playerSpawner;
 	[Export] private MultiplayerSpawner _projectileSpawner;
+	[Export] private FreeCam _freeCam;
 
 	private PackedScene _playerScene = GD.Load<PackedScene>("res://scenes/player/player.tscn");
 	private PackedScene _cannonBallScene = GD.Load<PackedScene>("res://scenes/cannon_ball/cannon_ball.tscn");
@@ -21,6 +22,13 @@ public partial class Play : Node3D
 		{
 			GD.Print($"Server ready");
 			Multiplayer.PeerConnected += OnPeerConnected;
+
+			// Activate free camera in server mode
+			if (Configuration.IsDesignatedServerMode() && _freeCam != null)
+			{
+				_freeCam.Current = true;
+				GD.Print("Free camera activated for server mode");
+			}
 		}
 	}
 
