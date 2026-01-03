@@ -13,11 +13,11 @@ PID1=$!
 sleep 0.5
 
 echo -e "${GREEN}=== Starting Client 1 ===${RESET}"
-/Applications/Godot_mono.app/Contents/MacOS/Godot --path . --position 0,50 --client1 2>&1 | sed "s/^/$(echo -e ${GREEN})[Client 1 ]$(echo -e ${RESET}) /" &
+/Applications/Godot_mono.app/Contents/MacOS/Godot --path . --resolution 2400x1000 --position 0,50 --client1 2>&1 | sed "s/^/$(echo -e ${GREEN})[Client 1 ]$(echo -e ${RESET}) /" &
 PID2=$!
 
 echo -e "${BLUE}=== Starting Client 2 ===${RESET}"
-/Applications/Godot_mono.app/Contents/MacOS/Godot --path . --position 0,840 --client2 2>&1 | sed "s/^/$(echo -e ${BLUE})[Client 2]$(echo -e ${RESET}) /" &
+/Applications/Godot_mono.app/Contents/MacOS/Godot --path . --resolution 2400x1000 --position 0,1250 --client2 2>&1 | sed "s/^/$(echo -e ${BLUE})[Client 2]$(echo -e ${RESET}) /" &
 PID3=$!
 
 # Wait for both instances to complete
