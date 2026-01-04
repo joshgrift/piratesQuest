@@ -50,6 +50,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 			GlobalPosition.Y,
 			rng.Randf() * startXRange - startXRange / 2
 		);
+
+		CallDeferred(MethodName.UpdateInventory, (int)InventoryItemType.Ammo, 10);
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -79,6 +81,15 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
 	private void FireCannons()
 	{
+		if (_inventory.GetItemCount(InventoryItemType.Ammo) <= 0)
+		{
+			GD.PrintErr($"{Name} tried to fire cannons but has no cannonballs!");
+			_firedTimerCountdown = 0.1f;
+			return;
+		}
+
+		UpdateInventory(InventoryItemType.Ammo, -1);
+
 		_firedTimerCountdown = _fireCoolDownInSeconds;
 		var spawnData = new Godot.Collections.Dictionary
 		{
