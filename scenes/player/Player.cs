@@ -1,6 +1,7 @@
 using Algonquin1;
 using Algonquin1.Attributes;
 using Godot;
+using Godot.Collections;
 
 public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 {
@@ -52,6 +53,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 		);
 
 		CallDeferred(MethodName.UpdateInventory, (int)InventoryItemType.Ammo, 10);
+		CallDeferred(MethodName.UpdateInventory, (int)InventoryItemType.G, 10000);
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -227,5 +229,10 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
 		EmitSignal(SignalName.InventoryChanged, (int)item, _inventory.GetItemCount(item));
 		return true;
+	}
+
+	public Dictionary<InventoryItemType, int> GetInventory()
+	{
+		return _inventory.GetAll();
 	}
 }

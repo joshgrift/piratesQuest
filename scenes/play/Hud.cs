@@ -6,7 +6,7 @@ using Godot.Collections;
 
 public partial class Hud : CanvasLayer
 {
-	[Export] public Container InventoryList;
+	[Export] public Tree InventoryList;
 	[Export] public CanvasItem ReadyToFireContainer;
 	[Export] public PortUi PortUIContainer;
 	[Export] public Label HealthLabel;
@@ -14,7 +14,9 @@ public partial class Hud : CanvasLayer
 
 	private Player _player;
 	private int _retryCount = 0;
-	private const int MaxRetries = 30; // Try for ~1 second
+	private const int MaxRetries = 30;
+	private Dictionary<InventoryItemType, TreeItem> InventoryTreeReferences = [];
+	private TreeItem rootInventoryItem = null;
 
 	public override void _Ready()
 	{
@@ -80,6 +82,7 @@ public partial class Hud : CanvasLayer
 		if (_player != null)
 		{
 			_player.InventoryChanged += OnInventoryChanged;
+			InitializeInventory();
 
 			_player.CannonReadyToFire += () =>
 			{
@@ -113,22 +116,47 @@ public partial class Hud : CanvasLayer
 		}
 	}
 
+	private void InitializeInventory()
+	{
+		rootInventoryItem = InventoryList.CreateItem();
+
+		InventoryList.Columns = 2;
+		InventoryList.MouseFilter = Control.MouseFilterEnum.Ignore;
+		InventoryList.HideRoot = true; // Hide the root item and its line
+
+		InventoryList.SetColumnCustomMinimumWidth(0, 32);
+		InventoryList.SetColumnCustomMinimumWidth(1, 100);
+		InventoryList.CustomMinimumSize = new Vector2(152, 0);
+		InventoryList.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
+
+		InventoryList.AddThemeConstantOverride("draw_relationship_lines", 0);
+		InventoryList.AddThemeConstantOverride("draw_guides", 0);
+		InventoryList.AddThemeConstantOverride("v_separation", 0); // Remove vertical spacing between items
+
+		var emptyStylebox = new StyleBoxEmpty();
+		InventoryList.AddThemeStyleboxOverride("panel", emptyStylebox);
+		InventoryList.AddThemeStyleboxOverride("bg", emptyStylebox);
+
+		var inventory = _player.GetInventory();
+		foreach (var kvp in inventory)
+		{
+			OnInventoryChanged(kvp.Key, kvp.Value);
+		}
+	}
+
 	private void OnInventoryChanged(InventoryItemType itemType, int newAmount)
 	{
-		var itemLabel = InventoryList.GetNodeOrNull<Label>($"{itemType}Label");
-
-		if (itemLabel != null)
+		if (InventoryTreeReferences.TryGetValue(itemType, out TreeItem itemEntry))
 		{
-			itemLabel.Text = $"{itemType}: {newAmount}";
+			itemEntry.SetText(1, newAmount.ToString());
+			return;
 		}
 		else
 		{
-			itemLabel = new Label
-			{
-				Name = $"{itemType}Label",
-				Text = $"{itemType}: {newAmount}"
-			};
-			InventoryList.AddChild(itemLabel);
+			TreeItem item = InventoryList.CreateItem(rootInventoryItem);
+			item.SetIcon(0, InventoryIcons.GetIcon(itemType));
+			item.SetText(1, newAmount.ToString());
+			InventoryTreeReferences.Add(itemType, item);
 		}
 	}
 }

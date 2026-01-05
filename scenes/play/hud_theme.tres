@@ -1,10 +1,30 @@
-[gd_resource type="Theme" format=3 uid="uid://sj508xa6kulh"]
+[gd_resource type="Theme" load_steps=6 format=3 uid="uid://sj508xa6kulh"]
+
+[ext_resource type="FontFile" uid="uid://1adc3v15g26n" path="res://art/fonts/New_Rocker/NewRocker-Regular.ttf" id="1_0r3sf"]
+[ext_resource type="FontFile" uid="uid://d4dryj8lmoxxs" path="res://art/fonts/Texturina/static/Texturina_60pt-Bold.ttf" id="2_tiyfl"]
+[ext_resource type="FontFile" uid="uid://s3rjydua0alu" path="res://art/fonts/Texturina/static/Texturina_14pt-Medium.ttf" id="3_iwjk8"]
+[ext_resource type="FontFile" uid="uid://crnruiruiuxiq" path="res://art/fonts/Texturina/static/Texturina_14pt-Bold.ttf" id="4_rxm5r"]
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_tiyfl"]
+color = Color(0.10934054, 0.109340556, 0.10934054, 1)
 
 [resource]
 Button/font_sizes/font_size = 32
+Button/fonts/font = ExtResource("2_tiyfl")
+HUD_Header/base_type = &"Label"
+HUD_Header/font_sizes/font_size = 48
+HUD_Header/fonts/font = ExtResource("1_0r3sf")
 Label/font_sizes/font_size = 32
-MarginContainer/constants/margin_bottom = 20
-MarginContainer/constants/margin_left = 20
-MarginContainer/constants/margin_top = 20
-TabBar/font_sizes/font_size = 32
-TabContainer/font_sizes/font_size = 32
+Label/fonts/font = ExtResource("2_tiyfl")
+MarginContainer/constants/margin_bottom = 0
+MarginContainer/constants/margin_left = 0
+MarginContainer/constants/margin_right = 0
+MarginContainer/constants/margin_top = 0
+TabContainer/font_sizes/font_size = 26
+TabContainer/fonts/font = ExtResource("2_tiyfl")
+TabContainer/styles/panel = SubResource("StyleBoxLine_tiyfl")
+Tree/colors/font_color = Color(1, 1, 1, 1)
+Tree/font_sizes/font_size = 32
+Tree/font_sizes/title_button_font_size = 32
+Tree/fonts/font = ExtResource("3_iwjk8")
+Tree/fonts/title_button_font = ExtResource("4_rxm5r")

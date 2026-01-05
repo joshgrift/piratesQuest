@@ -1,7 +1,7 @@
 
-namespace Algonquin1;
+using Godot.Collections;
 
-using System.Collections.Generic;
+namespace Algonquin1;
 
 public partial class Inventory
 {
@@ -42,5 +42,10 @@ public partial class Inventory
     }
 
     return false;
+  }
+
+  public Dictionary<InventoryItemType, int> GetAll()
+  {
+    return new Dictionary<InventoryItemType, int>(_items);
   }
 }

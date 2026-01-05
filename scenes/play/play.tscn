@@ -1,10 +1,11 @@
-[gd_scene load_steps=19 format=3 uid="uid://c8c63pod53w2l"]
+[gd_scene load_steps=20 format=3 uid="uid://c8c63pod53w2l"]
 
 [ext_resource type="Script" uid="uid://cie1vrfri8q8x" path="res://scenes/play/Play.cs" id="1_j5m8q"]
 [ext_resource type="Script" uid="uid://cxvxoxqx6wkup" path="res://scenes/play/Hud.cs" id="2_y08r1"]
 [ext_resource type="Theme" uid="uid://sj508xa6kulh" path="res://scenes/play/hud_theme.tres" id="3_3ib3j"]
 [ext_resource type="Script" uid="uid://bok25e88xetyj" path="res://scenes/play/PortUi.cs" id="4_fe62l"]
 [ext_resource type="Texture2D" uid="uid://0xkhvjlfg55v" path="res://art/proto/Dark/texture_05.png" id="4_iu7w4"]
+[ext_resource type="Script" uid="uid://dqvc4d55xjhd3" path="res://scenes/play/TreePlayground.cs" id="5_a0nu5"]
 [ext_resource type="Script" uid="uid://d3pli0crpwxcc" path="res://scripts/FreeCam.cs" id="6_1phcp"]
 [ext_resource type="PackedScene" uid="uid://bkdqs4u6efsoq" path="res://scenes/collectonPoint/collection_point.tscn" id="6_ccytq"]
 [ext_resource type="PackedScene" uid="uid://cbwteoxdgaayj" path="res://scenes/play/terrain_block.tscn" id="7_damvd"]
@@ -60,99 +61,177 @@ _freeCam = NodePath("ServerFreeCam")
 
 [node name="HUD" type="CanvasLayer" parent="." node_paths=PackedStringArray("InventoryList", "ReadyToFireContainer", "PortUIContainer", "HealthLabel", "PlayersContainer")]
 script = ExtResource("2_y08r1")
-InventoryList = NodePath("MarginContainer/InventoryList")
-ReadyToFireContainer = NodePath("MarginContainer2/HBoxContainer/ReadyToFire")
-PortUIContainer = NodePath("PortUI")
-HealthLabel = NodePath("MarginContainer2/HBoxContainer/HealthLabel")
+InventoryList = NodePath("Control/Inventory Container/InventoryTree")
+ReadyToFireContainer = NodePath("Control/Status Container/HBoxContainer/ReadyToFire")
+PortUIContainer = NodePath("Control/PortUI")
+HealthLabel = NodePath("Control/Status Container/HBoxContainer/HealthLabel")
 PlayersContainer = NodePath("../SpawnPoint")
 
-[node name="MarginContainer" type="MarginContainer" parent="HUD"]
-offset_right = 40.0
+[node name="Control" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme = ExtResource("3_3ib3j")
 
-[node name="InventoryList" type="VBoxContainer" parent="HUD/MarginContainer"]
+[node name="Inventory Container" type="MarginContainer" parent="HUD/Control"]
+layout_mode = 0
+offset_right = 383.0
+offset_bottom = 339.0
+
+[node name="InventoryTree" type="Tree" parent="HUD/Control/Inventory Container"]
 layout_mode = 2
-theme = ExtResource("3_3ib3j")
+hide_root = true
+scroll_horizontal_enabled = false
 
-[node name="MarginContainer2" type="MarginContainer" parent="HUD"]
+[node name="Status Container" type="MarginContainer" parent="HUD/Control"]
+layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_top = -40.0
-offset_right = 146.0
+offset_top = -85.0
+offset_right = 297.0
 grow_vertical = 0
-theme = ExtResource("3_3ib3j")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="HUD/MarginContainer2"]
+[node name="HBoxContainer" type="HBoxContainer" parent="HUD/Control/Status Container"]
 layout_mode = 2
 theme = ExtResource("3_3ib3j")
 
-[node name="Heart" type="Label" parent="HUD/MarginContainer2/HBoxContainer"]
+[node name="Heart" type="Label" parent="HUD/Control/Status Container/HBoxContainer"]
 layout_mode = 2
 theme = ExtResource("3_3ib3j")
 text = "❤️"
 
-[node name="HealthLabel" type="Label" parent="HUD/MarginContainer2/HBoxContainer"]
+[node name="HealthLabel" type="Label" parent="HUD/Control/Status Container/HBoxContainer"]
 layout_mode = 2
 theme = ExtResource("3_3ib3j")
 text = "100"
 
-[node name="Space" type="Label" parent="HUD/MarginContainer2/HBoxContainer"]
+[node name="Space" type="Label" parent="HUD/Control/Status Container/HBoxContainer"]
 layout_mode = 2
 theme = ExtResource("3_3ib3j")
 text = " - "
 
-[node name="ReadyToFire" type="Label" parent="HUD/MarginContainer2/HBoxContainer"]
+[node name="ReadyToFire" type="Label" parent="HUD/Control/Status Container/HBoxContainer"]
 layout_mode = 2
 theme = ExtResource("3_3ib3j")
 text = "💣  Ready"
 
-[node name="PortUI" type="PanelContainer" parent="HUD" node_paths=PackedStringArray("StockListContainer")]
-visible = false
-custom_minimum_size = Vector2(400, 0)
+[node name="PortUI" type="PanelContainer" parent="HUD/Control" node_paths=PackedStringArray("StockListContainer")]
+custom_minimum_size = Vector2(600, 0)
+layout_mode = 1
 anchors_preset = 11
 anchor_left = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -172.0
+offset_left = -270.0
 grow_horizontal = 0
 grow_vertical = 2
 script = ExtResource("4_fe62l")
-StockListContainer = NodePath("MarginContainer/Port/PortTabs/Store")
+StockListContainer = NodePath("MarginContainer/Port/MarginContainer/PortTabs/Buy")
 
-[node name="MarginContainer" type="MarginContainer" parent="HUD/PortUI"]
+[node name="MarginContainer" type="MarginContainer" parent="HUD/Control/PortUI"]
 layout_mode = 2
-theme = ExtResource("3_3ib3j")
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
 
-[node name="Port" type="VBoxContainer" parent="HUD/PortUI/MarginContainer"]
+[node name="Port" type="VBoxContainer" parent="HUD/Control/PortUI/MarginContainer"]
 layout_mode = 2
-theme = ExtResource("3_3ib3j")
 
-[node name="PortName" type="Label" parent="HUD/PortUI/MarginContainer/Port"]
+[node name="PortName" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port"]
 layout_mode = 2
+theme_type_variation = &"HUD_Header"
 text = "Saint Johns"
 
-[node name="PortTabs" type="TabContainer" parent="HUD/PortUI/MarginContainer/Port"]
+[node name="Tree" type="Tree" parent="HUD/Control/PortUI/MarginContainer/Port"]
 layout_mode = 2
-theme = ExtResource("3_3ib3j")
+size_flags_vertical = 3
+columns = 5
+column_titles_visible = true
+script = ExtResource("5_a0nu5")
+
+[node name="MarginContainer" type="MarginContainer" parent="HUD/Control/PortUI/MarginContainer/Port"]
+layout_mode = 2
+theme_override_constants/margin_top = 20
+
+[node name="PortTabs" type="TabContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer"]
+layout_mode = 2
 current_tab = 0
 
-[node name="Store" type="VBoxContainer" parent="HUD/PortUI/MarginContainer/Port/PortTabs"]
+[node name="Buy" type="VBoxContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs"]
 layout_mode = 2
-theme = ExtResource("3_3ib3j")
 metadata/_tab_index = 0
 
-[node name="Button" type="Button" parent="HUD/PortUI/MarginContainer/Port/PortTabs/Store"]
-layout_mode = 2
-text = "Buy Thing"
-
-[node name="Recruit" type="VBoxContainer" parent="HUD/PortUI/MarginContainer/Port/PortTabs"]
+[node name="Sell" type="VBoxContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs"]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="Hire" type="Button" parent="HUD/PortUI/MarginContainer/Port/PortTabs/Recruit"]
+[node name="GridContainer2" type="GridContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell"]
 layout_mode = 2
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2"]
+layout_mode = 2
+
+[node name="ItemLabel" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer2"]
+layout_mode = 2
+text = "Item"
+
+[node name="Price Label" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer2"]
+layout_mode = 2
+text = "Price"
+
+[node name="Stock Label" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer2"]
+layout_mode = 2
+text = "Stock"
+
+[node name="Amount Label" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer2"]
+layout_mode = 2
+text = "Amount"
+
+[node name="Cost Label" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer2"]
+layout_mode = 2
+text = "Cost"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2"]
+layout_mode = 2
+
+[node name="Item" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer"]
+layout_mode = 2
+text = "Gold"
+
+[node name="Price" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer"]
+layout_mode = 2
+text = "3g"
+
+[node name="Stock" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer"]
+layout_mode = 2
+text = "44"
+
+[node name="SpinBox" type="SpinBox" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer"]
+layout_mode = 2
+
+[node name="Cost" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer"]
+layout_mode = 2
+text = "0"
+
+[node name="Recruit" type="VBoxContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="Hire" type="Button" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Recruit"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Recruit/Hire"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 51.0
+text = "test"
 
 [node name="Ground" type="StaticBody3D" parent="."]
 collision_layer = 4
