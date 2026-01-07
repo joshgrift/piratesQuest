@@ -20,7 +20,7 @@ public partial class Hud : CanvasLayer
 
 	public override void _Ready()
 	{
-		PortUIContainer.Visible = false;
+		//PortUIContainer.Visible = false;
 		if (Multiplayer.IsServer())
 		{
 			GD.Print("Skipping HUD, acting as server");
