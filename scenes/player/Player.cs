@@ -30,6 +30,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 	private int _fireCoolDownInSeconds = 2;
 	private double _firedTimerCountdown = 0;
 
+	private bool RandomStart = false;
+
 	public override void _Ready()
 	{
 		// Only enable the camera for the player we control
@@ -39,18 +41,23 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 			camera.Current = IsMultiplayerAuthority();
 			GD.Print($"{Name}: Camera enabled = {camera.Current}");
 		}
+		if (RandomStart)
+		{
+			const int startYRange = 100;
+			const int startXRange = 100;
 
-		const int startYRange = 100;
-		const int startXRange = 100;
+			// Randomize starting position	
+			var rng = new RandomNumberGenerator();
+			rng.Randomize();
+			GlobalPosition = new Vector3(
+				rng.Randf() * startYRange - startYRange / 2,
+				GlobalPosition.Y,
+				rng.Randf() * startXRange - startXRange / 2
+			);
 
-		// Randomize starting position	
-		var rng = new RandomNumberGenerator();
-		rng.Randomize();
-		GlobalPosition = new Vector3(
-			rng.Randf() * startYRange - startYRange / 2,
-			GlobalPosition.Y,
-			rng.Randf() * startXRange - startXRange / 2
-		);
+		}
+
+
 
 		CallDeferred(MethodName.UpdateInventory, (int)InventoryItemType.CannonBall, 10);
 		CallDeferred(MethodName.UpdateInventory, (int)InventoryItemType.Coin, 10000);
@@ -229,6 +236,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
 		EmitSignal(SignalName.InventoryChanged, (int)item, _inventory.GetItemCount(item));
 		return true;
+	}
+
+	public int GetInventoryCount(InventoryItemType item)
+	{
+		return _inventory.GetItemCount(item);
 	}
 
 	public Dictionary<InventoryItemType, int> GetInventory()

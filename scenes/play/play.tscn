@@ -1,11 +1,10 @@
-[gd_scene load_steps=20 format=3 uid="uid://c8c63pod53w2l"]
+[gd_scene load_steps=19 format=3 uid="uid://c8c63pod53w2l"]
 
 [ext_resource type="Script" uid="uid://cie1vrfri8q8x" path="res://scenes/play/Play.cs" id="1_j5m8q"]
 [ext_resource type="Script" uid="uid://cxvxoxqx6wkup" path="res://scenes/play/Hud.cs" id="2_y08r1"]
 [ext_resource type="Theme" uid="uid://sj508xa6kulh" path="res://scenes/play/hud_theme.tres" id="3_3ib3j"]
 [ext_resource type="Script" uid="uid://bok25e88xetyj" path="res://scenes/play/PortUi.cs" id="4_fe62l"]
 [ext_resource type="Texture2D" uid="uid://0xkhvjlfg55v" path="res://art/proto/Dark/texture_05.png" id="4_iu7w4"]
-[ext_resource type="Script" uid="uid://dqvc4d55xjhd3" path="res://scenes/play/TreePlayground.cs" id="5_a0nu5"]
 [ext_resource type="Script" uid="uid://d3pli0crpwxcc" path="res://scripts/FreeCam.cs" id="6_1phcp"]
 [ext_resource type="PackedScene" uid="uid://bkdqs4u6efsoq" path="res://scenes/collectonPoint/collection_point.tscn" id="6_ccytq"]
 [ext_resource type="PackedScene" uid="uid://cbwteoxdgaayj" path="res://scenes/play/terrain_block.tscn" id="7_damvd"]
@@ -35,9 +34,9 @@ metadata/_custom_type_script = "uid://b81r8qngpan6y"
 
 [sub_resource type="Resource" id="Resource_10igl"]
 script = ExtResource("10_10igl")
-ItemType = 3
+ItemType = 5
 BuyPrice = 2
-SellPrice = 1
+SellPrice = 0
 metadata/_custom_type_script = "uid://b81r8qngpan6y"
 
 [sub_resource type="Resource" id="Resource_gcg6u"]
@@ -119,7 +118,7 @@ layout_mode = 2
 theme = ExtResource("3_3ib3j")
 text = "💣  Ready"
 
-[node name="PortUI" type="PanelContainer" parent="HUD/Control" node_paths=PackedStringArray("StockListContainer")]
+[node name="PortUI" type="PanelContainer" parent="HUD/Control" node_paths=PackedStringArray("BuyListTree", "TotalBuyLabel", "BuyButton", "SellListTree", "TotalSellLabel", "SellButton")]
 custom_minimum_size = Vector2(600, 0)
 layout_mode = 1
 anchors_preset = 11
@@ -130,7 +129,12 @@ offset_left = -270.0
 grow_horizontal = 0
 grow_vertical = 2
 script = ExtResource("4_fe62l")
-StockListContainer = NodePath("MarginContainer/Port/MarginContainer/PortTabs/Buy")
+BuyListTree = NodePath("MarginContainer/Port/MarginContainer/PortTabs/Buy/MarginContainer/BuyList")
+TotalBuyLabel = NodePath("MarginContainer/Port/MarginContainer/PortTabs/Buy/MarginContainer2/VBoxContainer/TotalBuyLabel")
+BuyButton = NodePath("MarginContainer/Port/MarginContainer/PortTabs/Buy/MarginContainer2/VBoxContainer/BuyButton")
+SellListTree = NodePath("MarginContainer/Port/MarginContainer/PortTabs/Sell/MarginContainer/SellList")
+TotalSellLabel = NodePath("MarginContainer/Port/MarginContainer/PortTabs/Sell/MarginContainer2/VBoxContainer/TotalSellLabel")
+SellButton = NodePath("MarginContainer/Port/MarginContainer/PortTabs/Sell/MarginContainer2/VBoxContainer/SellButton")
 
 [node name="MarginContainer" type="MarginContainer" parent="HUD/Control/PortUI"]
 layout_mode = 2
@@ -147,77 +151,75 @@ layout_mode = 2
 theme_type_variation = &"HUD_Header"
 text = "Saint Johns"
 
-[node name="Tree" type="Tree" parent="HUD/Control/PortUI/MarginContainer/Port"]
-layout_mode = 2
-size_flags_vertical = 3
-columns = 5
-column_titles_visible = true
-script = ExtResource("5_a0nu5")
-
 [node name="MarginContainer" type="MarginContainer" parent="HUD/Control/PortUI/MarginContainer/Port"]
 layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/margin_top = 20
 
 [node name="PortTabs" type="TabContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer"]
 layout_mode = 2
 current_tab = 0
 
-[node name="Buy" type="VBoxContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs"]
+[node name="Buy" type="GridContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs"]
 layout_mode = 2
 metadata/_tab_index = 0
 
-[node name="Sell" type="VBoxContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs"]
+[node name="MarginContainer" type="MarginContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Buy"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="BuyList" type="Tree" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Buy/MarginContainer"]
+layout_mode = 2
+
+[node name="MarginContainer2" type="MarginContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Buy"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Buy/MarginContainer2"]
+layout_mode = 2
+
+[node name="TotalBuyLabel" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Buy/MarginContainer2/VBoxContainer"]
+layout_mode = 2
+text = "Total: 0"
+horizontal_alignment = 2
+
+[node name="BuyButton" type="Button" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Buy/MarginContainer2/VBoxContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 8
+text = "Buy"
+
+[node name="Sell" type="GridContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs"]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="GridContainer2" type="GridContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell"]
+[node name="MarginContainer" type="MarginContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="SellList" type="Tree" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/MarginContainer"]
 layout_mode = 2
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2"]
+[node name="MarginContainer2" type="MarginContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/MarginContainer2"]
 layout_mode = 2
 
-[node name="ItemLabel" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer2"]
+[node name="TotalSellLabel" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/MarginContainer2/VBoxContainer"]
 layout_mode = 2
-text = "Item"
+text = "Total: 0"
+horizontal_alignment = 2
 
-[node name="Price Label" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer2"]
+[node name="SellButton" type="Button" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/MarginContainer2/VBoxContainer"]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
-text = "Price"
-
-[node name="Stock Label" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer2"]
-layout_mode = 2
-text = "Stock"
-
-[node name="Amount Label" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer2"]
-layout_mode = 2
-text = "Amount"
-
-[node name="Cost Label" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer2"]
-layout_mode = 2
-text = "Cost"
-
-[node name="HBoxContainer" type="HBoxContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2"]
-layout_mode = 2
-
-[node name="Item" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer"]
-layout_mode = 2
-text = "Gold"
-
-[node name="Price" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer"]
-layout_mode = 2
-text = "3g"
-
-[node name="Stock" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer"]
-layout_mode = 2
-text = "44"
-
-[node name="SpinBox" type="SpinBox" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer"]
-layout_mode = 2
-
-[node name="Cost" type="Label" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs/Sell/GridContainer2/HBoxContainer"]
-layout_mode = 2
-text = "0"
+size_flags_horizontal = 8
+text = "Sell"
 
 [node name="Recruit" type="VBoxContainer" parent="HUD/Control/PortUI/MarginContainer/Port/MarginContainer/PortTabs"]
 visible = false
@@ -476,16 +478,16 @@ transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 18.45895, 4.9999886, 4.275
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 12.502399, 4.9999886, 6.806711)
 
 [node name="TerrainBlock75" parent="Terrain" instance=ExtResource("7_damvd")]
-transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 5.1291847, 4.9999886, 5.2750607)
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 99.67926, 4.9999886, 36.21398)
 
 [node name="TerrainBlock76" parent="Terrain" instance=ExtResource("7_damvd")]
-transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -1.4402695, 4.9999886, 0.18847847)
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 95.56971, 4.999996, 13.23715)
 
 [node name="TerrainBlock77" parent="Terrain" instance=ExtResource("7_damvd")]
-transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 1.7681923, 4.9999886, 11.985353)
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 70.48889, 4.9999886, 13.060701)
 
 [node name="TerrainBlock78" parent="Terrain" instance=ExtResource("7_damvd")]
-transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 8.082771, 4.9999886, 17.47983)
+transform = Transform3D(10, -0.0015707964, 0, 0.0015707964, 10, 0, 0, 0, 10, 8.082771, 4.9999886, 17.47983)
 
 [node name="TerrainBlock79" parent="Terrain" instance=ExtResource("7_damvd")]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 13.959734, 4.9999886, 21.780634)
@@ -612,7 +614,7 @@ transform = Transform3D(2, 0, 0, 0, 1, 0, 0, 0, 2, -44.621, 1, 27.669)
 transform = Transform3D(2, 0, 0, 0, 1, 0, 0, 0, 2, -161.24391, 1, -57.88156)
 
 [node name="Port" parent="Interactables" instance=ExtResource("9_4dfl3")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 47.911507, 1, 38.809845)
+transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 0.40486145, 1, 0.15786743)
 PortName = "Saint Johns"
 ItemsForSale = Array[Object]([SubResource("Resource_a0nu5"), SubResource("Resource_bjecb"), SubResource("Resource_10igl")])
 
