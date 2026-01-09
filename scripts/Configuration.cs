@@ -6,6 +6,7 @@ partial class Configuration : Node
 {
   public static bool RandomSpawnEnabled { get; } = false;
   public static int StartingCoin { get; } = 100;
+  public static bool IsCreative { get; } = true;
 
   public override void _Ready()
   {

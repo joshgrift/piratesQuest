@@ -4,6 +4,7 @@ using PiratesQuest.Attributes;
 using Godot;
 using Godot.Collections;
 using PiratesQuest.Data;
+using System;
 
 public class OwnedComponent
 {
@@ -47,6 +48,14 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
 		if (Configuration.RandomSpawnEnabled)
 			RandomSpawn(100, 100);
+
+		if (Configuration.IsCreative)
+		{
+			foreach (InventoryItemType itemType in Enum.GetValues<InventoryItemType>())
+			{
+				CallDeferred(MethodName.UpdateInventory, (int)itemType, 100000);
+			}
+		}
 
 		CallDeferred(MethodName.UpdateInventory, (int)InventoryItemType.CannonBall, 10);
 		CallDeferred(MethodName.UpdateInventory, (int)InventoryItemType.Coin, Configuration.StartingCoin);
