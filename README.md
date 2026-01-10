@@ -35,10 +35,12 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
   - [x] Shooting Cannonballs, health, and death.
   - [x] Limited Map with islands
   - [ ] Components
-    - [ ] Limit Cargo Size
-    - [ ] Increase Collection
+    - [x] Can add to ship
+    - [x] Can buy in Port
     - [ ] Limit number of components
     - [ ] Allow multiple of the same component
+    - [ ] Limit Cargo Size
+    - [ ] Increase Collection
     - [ ] Auto Heal Mechanic
   - [ ] Pickup dead player rewards
 - [ ] Quests to get skulls
