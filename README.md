@@ -43,14 +43,16 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
     - [x] Increase Collection
     - [x] Auto Heal Mechanic
   - [x] Pickup dead player rewards
-- [ ] Quests to get skulls
+- [x] Trophies
 - [ ] Leaderboards
+- [ ] Cannons Shoot from sides
 - [ ] Graphics
   - [x] Opaque collection spaces
   - [ ] Hit Markers
-  - [ ] Cannon shot graphics and shoot from side
+  - [ ] Cannon shot graphics
   - [x] Collection spots have island
-  - [ ] Basic Water & Island Graphics
+  - [ ] Basic Water
+  - [ ] Basic Island Graphics
 - [x] Distribution
 
 ### 0.3.0 Alpha

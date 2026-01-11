@@ -20,7 +20,8 @@ public class Icons
         { InventoryItemType.Coin, GD.Load<Texture2D>("res://art/inventory/coin.png") },
         { InventoryItemType.CannonBall, GD.Load<Texture2D>("res://art/inventory/cannon_ball.png") },
         { InventoryItemType.Fish, GD.Load<Texture2D>("res://art/inventory/fish.png") },
-        { InventoryItemType.Tea, GD.Load<Texture2D>("res://art/inventory/tea.png") }
+        { InventoryItemType.Tea, GD.Load<Texture2D>("res://art/inventory/tea.png") },
+        { InventoryItemType.Trophy, GD.Load<Texture2D>("res://art/inventory/trophy.png") }
       };
 
     loadedIcons = true;

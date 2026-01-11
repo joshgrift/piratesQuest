@@ -11,9 +11,9 @@ public record ServerListingInfo
 
 partial class Configuration : Node
 {
-  public static bool RandomSpawnEnabled { get; } = false;
+  public static bool RandomSpawnEnabled { get; } = true;
   public static int StartingCoin { get; } = 100;
-  public static bool IsCreative { get; } = true;
+  public static bool IsCreative { get; } = false;
   public static int DefaultPort { get; } = 7777;
 
   public override void _Ready()

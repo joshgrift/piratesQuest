@@ -84,6 +84,7 @@ public partial class PortUi : PanelContainer
 			{
 				TreeItem item = BuyListTree.CreateItem(_buyListRoot);
 				item.SetText(0, itemData.ItemType.ToString());
+				item.SetIcon(0, Icons.GetInventoryIcon(itemData.ItemType));
 				item.SetText(1, itemData.BuyPrice.ToString());
 				item.SetCellMode(2, TreeItem.TreeCellMode.Range);
 				item.SetRange(2, 0);
@@ -96,6 +97,7 @@ public partial class PortUi : PanelContainer
 			{
 				TreeItem sellItem = SellListTree.CreateItem(_sellListRoot);
 				sellItem.SetText(0, itemData.ItemType.ToString());
+				sellItem.SetIcon(0, Icons.GetInventoryIcon(itemData.ItemType));
 				sellItem.SetText(1, itemData.SellPrice.ToString());
 				sellItem.SetCellMode(2, TreeItem.TreeCellMode.Range);
 				sellItem.SetRange(2, 0);

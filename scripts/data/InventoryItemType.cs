@@ -7,5 +7,6 @@ public enum InventoryItemType
   Fish,
   Tea,
   Coin,
-  CannonBall
+  CannonBall,
+  Trophy
 }

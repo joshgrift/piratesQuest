@@ -128,10 +128,9 @@ theme_override_constants/margin_top = 20
 
 [node name="PortTabs" type="TabContainer" parent="PortUI/MarginContainer/Port/MarginContainer"]
 layout_mode = 2
-current_tab = 4
+current_tab = 0
 
 [node name="Buy" type="GridContainer" parent="PortUI/MarginContainer/Port/MarginContainer/PortTabs"]
-visible = false
 layout_mode = 2
 metadata/_tab_index = 0
 
@@ -206,23 +205,10 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Recruit" type="VBoxContainer" parent="PortUI/MarginContainer/Port/MarginContainer/PortTabs"]
+[node name="Ship" type="VBoxContainer" parent="PortUI/MarginContainer/Port/MarginContainer/PortTabs"]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 3
-
-[node name="Hire" type="Button" parent="PortUI/MarginContainer/Port/MarginContainer/PortTabs/Recruit"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="PortUI/MarginContainer/Port/MarginContainer/PortTabs/Recruit/Hire"]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 51.0
-text = "test"
-
-[node name="Ship" type="VBoxContainer" parent="PortUI/MarginContainer/Port/MarginContainer/PortTabs"]
-layout_mode = 2
-metadata/_tab_index = 4
 
 [node name="ScrollContainer" type="ScrollContainer" parent="PortUI/MarginContainer/Port/MarginContainer/PortTabs/Ship"]
 layout_mode = 2
