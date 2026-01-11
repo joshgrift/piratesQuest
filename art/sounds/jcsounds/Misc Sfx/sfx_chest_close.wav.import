@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://d1u2ovsbyy2nu"
+path="res://.godot/imported/sfx_chest_close.wav-81102d46b08e75784fc326eaf8fdbe57.sample"
+
+[deps]
+
+source_file="res://art/sounds/jcsounds/Misc Sfx/sfx_chest_close.wav"
+dest_files=["res://.godot/imported/sfx_chest_close.wav-81102d46b08e75784fc326eaf8fdbe57.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

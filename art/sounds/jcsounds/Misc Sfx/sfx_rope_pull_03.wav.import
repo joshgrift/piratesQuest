@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bfa2f8j0awcdd"
+path="res://.godot/imported/sfx_rope_pull_03.wav-3fb1b3534adae94f9573e68f4607ec9a.sample"
+
+[deps]
+
+source_file="res://art/sounds/jcsounds/Misc Sfx/sfx_rope_pull_03.wav"
+dest_files=["res://.godot/imported/sfx_rope_pull_03.wav-3fb1b3534adae94f9573e68f4607ec9a.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

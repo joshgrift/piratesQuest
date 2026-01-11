@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://c8badbgbjbrrf"
+path="res://.godot/imported/sfx_map_handle_01.wav-6664ad43185b61a12b80aca78a9bf91b.sample"
+
+[deps]
+
+source_file="res://art/sounds/jcsounds/Misc Sfx/sfx_map_handle_01.wav"
+dest_files=["res://.godot/imported/sfx_map_handle_01.wav-6664ad43185b61a12b80aca78a9bf91b.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

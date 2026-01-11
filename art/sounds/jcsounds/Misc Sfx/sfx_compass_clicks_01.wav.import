@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://dbo4f56vw175b"
+path="res://.godot/imported/sfx_compass_clicks_01.wav-27da17e75fbe806d8b72abdfa18bf795.sample"
+
+[deps]
+
+source_file="res://art/sounds/jcsounds/Misc Sfx/sfx_compass_clicks_01.wav"
+dest_files=["res://.godot/imported/sfx_compass_clicks_01.wav-27da17e75fbe806d8b72abdfa18bf795.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

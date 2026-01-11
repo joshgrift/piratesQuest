@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://6myn7ca0j61y"
+path="res://.godot/imported/sfx_coin_spill_03.wav-d852e92fbf075f78379e6cdaeec5342e.sample"
+
+[deps]
+
+source_file="res://art/sounds/jcsounds/Misc Sfx/sfx_coin_spill_03.wav"
+dest_files=["res://.godot/imported/sfx_coin_spill_03.wav-d852e92fbf075f78379e6cdaeec5342e.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

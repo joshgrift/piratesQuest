@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://b4t2y5badse71"
+path="res://.godot/imported/amb_sea_storm.wav-1642cc886b4953a5ff060d079bc916c5.sample"
+
+[deps]
+
+source_file="res://art/sounds/jcsounds/Ambiences (Loops)/amb_sea_storm.wav"
+dest_files=["res://.godot/imported/amb_sea_storm.wav-1642cc886b4953a5ff060d079bc916c5.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

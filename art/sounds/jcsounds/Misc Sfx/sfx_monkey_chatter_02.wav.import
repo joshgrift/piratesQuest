@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://ccweilm3qf4gv"
+path="res://.godot/imported/sfx_monkey_chatter_02.wav-5d47d9adce3a9a61459e30c83564b5eb.sample"
+
+[deps]
+
+source_file="res://art/sounds/jcsounds/Misc Sfx/sfx_monkey_chatter_02.wav"
+dest_files=["res://.godot/imported/sfx_monkey_chatter_02.wav-5d47d9adce3a9a61459e30c83564b5eb.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

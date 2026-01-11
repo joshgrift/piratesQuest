@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bqjbr3f6ebifx"
+path="res://.godot/imported/amb_deck_creaks.wav-6374441258aee786932b3fbbba6112f1.sample"
+
+[deps]
+
+source_file="res://art/sounds/jcsounds/Ambiences (Loops)/amb_deck_creaks.wav"
+dest_files=["res://.godot/imported/amb_deck_creaks.wav-6374441258aee786932b3fbbba6112f1.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

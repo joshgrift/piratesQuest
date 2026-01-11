@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bcilnsimnv2v0"
+path="res://.godot/imported/sfx_pistol_01.wav-086443405e4f4e7fc220d86dc3b43a45.sample"
+
+[deps]
+
+source_file="res://art/sounds/jcsounds/Misc Sfx/sfx_pistol_01.wav"
+dest_files=["res://.godot/imported/sfx_pistol_01.wav-086443405e4f4e7fc220d86dc3b43a45.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

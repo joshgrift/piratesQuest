@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://3k5l2yt7mg6x"
+path="res://.godot/imported/sfx_glass_clink_01.wav-da06720c422a135d0cb7e9d9eb4c823c.sample"
+
+[deps]
+
+source_file="res://art/sounds/jcsounds/Misc Sfx/sfx_glass_clink_01.wav"
+dest_files=["res://.godot/imported/sfx_glass_clink_01.wav-da06720c422a135d0cb7e9d9eb4c823c.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

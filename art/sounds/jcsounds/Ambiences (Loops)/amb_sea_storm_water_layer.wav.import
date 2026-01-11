@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://c42gkgbv08bj2"
+path="res://.godot/imported/amb_sea_storm_water_layer.wav-94b06c7cf72ddb2bf8fec2efebc75371.sample"
+
+[deps]
+
+source_file="res://art/sounds/jcsounds/Ambiences (Loops)/amb_sea_storm_water_layer.wav"
+dest_files=["res://.godot/imported/amb_sea_storm_water_layer.wav-94b06c7cf72ddb2bf8fec2efebc75371.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
