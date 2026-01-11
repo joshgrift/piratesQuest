@@ -31,7 +31,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   [Export] public string Nickname { get; set; }
 
-  [Export] public Node3D CannonPivot;
+  [Export] public Node3D CannonPivotLeft;
+  [Export] public Node3D CannonPivotRight;
   [Export] public MultiplayerSpawner ProjectileSpawner;
   [Export] public MultiplayerSpawner DeadPlayerSpawner;
   [Export] public Timer AutoHealTimer;
@@ -139,15 +140,26 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
         _firedTimerCountdown -= delta;
       }
 
-      if (Input.IsActionPressed("fire_cannons") && _firedTimerCountdown <= 0)
+      // Check for left cannon fire (Q key)
+      if (Input.IsActionPressed("fire_left") && _firedTimerCountdown <= 0)
       {
-        FireCannons();
+        FireCannons(true); // true = fire from left side
+      }
+      // Check for right cannon fire (E key)
+      else if (Input.IsActionPressed("fire_right") && _firedTimerCountdown <= 0)
+      {
+        FireCannons(false); // false = fire from right side
       }
     }
   }
 
-  private void FireCannons()
+  /// <summary>
+  /// Fires a cannonball from either the left or right side of the ship.
+  /// </summary>
+  /// <param name="fromLeftSide">True to fire from the left cannon, false to fire from the right cannon</param>
+  private void FireCannons(bool fromLeftSide)
   {
+    // Check if player has cannonballs in inventory
     if (_inventory.GetItemCount(InventoryItemType.CannonBall) <= 0)
     {
       GD.PrintErr($"{Name} tried to fire cannons but has no cannonballs!");
@@ -155,18 +167,31 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       return;
     }
 
+    // Use one cannonball from inventory
     UpdateInventory(InventoryItemType.CannonBall, -1);
 
+    // Start the cooldown timer
     _firedTimerCountdown = _fireCoolDownInSeconds;
+
+    // Select which cannon pivot to use based on the parameter
+    Node3D cannonPivot = fromLeftSide ? CannonPivotLeft : CannonPivotRight;
+
+    // Determine firing direction: left cannon fires left, right cannon fires right (perpendicular to ship)
+    Vector3 fireDirection = fromLeftSide ? -GlobalTransform.Basis.X : GlobalTransform.Basis.X;
+
+    // Create spawn data for the cannonball
     var spawnData = new Godot.Collections.Dictionary
     {
-      ["position"] = CannonPivot.GlobalPosition,
-      ["direction"] = GlobalTransform.Basis.Z * -1,
-      ["speed"] = _currentSpeed,
-      ["playerName"] = Name
+      ["position"] = cannonPivot.GlobalPosition,  // Spawn at the selected cannon position
+      ["direction"] = fireDirection,  // Fire perpendicular to the ship
+      ["speed"] = _currentSpeed,  // Include the ship's current speed
+      ["playerName"] = Name  // Track which player fired the cannonball
     };
 
+    // Request the server to spawn the cannonball (works in multiplayer)
     Rpc(MethodName.RequestFireCannons, spawnData);
+
+    // Emit signal so UI can react (e.g., show firing animation or sound)
     EmitSignal(SignalName.CannonFired);
   }
 

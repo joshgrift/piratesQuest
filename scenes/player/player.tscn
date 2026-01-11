@@ -1,9 +1,12 @@
-[gd_scene load_steps=7 format=3 uid="uid://cumwy7ox3pa0b"]
+[gd_scene load_steps=10 format=3 uid="uid://cumwy7ox3pa0b"]
 
 [ext_resource type="Script" uid="uid://b4ivpos2qv5rq" path="res://scenes/player/Player.cs" id="1_onrkg"]
 [ext_resource type="PackedScene" uid="uid://xg8l1d4eyeyk" path="res://art/kenny_pirate/ship-small.glb" id="2_onrkg"]
 [ext_resource type="Script" uid="uid://bhydcnypg8r7i" path="res://scenes/player/CameraPivot.cs" id="3_i3pqv"]
 [ext_resource type="FastNoiseLite" path="res://scenes/play/water_noise.tres" id="4_water"]
+[ext_resource type="PackedScene" uid="uid://du8tr0updheh4" path="res://art/kenny_pirate/cannon.glb" id="5_0owmy"]
+[ext_resource type="PackedScene" uid="uid://evegr5p7efy1" path="res://art/kenny_pirate/crate-bottles.glb" id="6_qek5x"]
+[ext_resource type="PackedScene" uid="uid://bbde00hqcee0c" path="res://art/kenny_pirate/bottle.glb" id="7_5gtgg"]
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_i3pqv"]
 properties/0/path = NodePath(".:position")
@@ -25,10 +28,11 @@ properties/4/replication_mode = 1
 [sub_resource type="BoxShape3D" id="BoxShape3D_i3pqv"]
 size = Vector3(4.721039, 8.911621, 7.52652)
 
-[node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("CannonPivot", "AutoHealTimer")]
+[node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("CannonPivotLeft", "CannonPivotRight", "AutoHealTimer")]
 collision_mask = 5
 script = ExtResource("1_onrkg")
-CannonPivot = NodePath("Cannon")
+CannonPivotLeft = NodePath("CannonLeft")
+CannonPivotRight = NodePath("CannonRight")
 AutoHealTimer = NodePath("Timer")
 WaterNoiseResource = ExtResource("4_water")
 
@@ -39,11 +43,28 @@ replication_config = SubResource("SceneReplicationConfig_i3pqv")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.037198067, 4.5292573, 0.41925836)
 shape = SubResource("BoxShape3D_i3pqv")
 
-[node name="ship-small2" parent="." instance=ExtResource("2_onrkg")]
+[node name="art" type="Node3D" parent="."]
+
+[node name="ship-small2" parent="art" instance=ExtResource("2_onrkg")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, -2.0243583, 0)
 
-[node name="Cannon" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.851, -4.625)
+[node name="cannon2" parent="art" instance=ExtResource("5_0owmy")]
+transform = Transform3D(0.009721321, 0, 0.99995273, 0, 1, 0, -0.99995273, 0, 0.009721321, 1.4321022, 0, 0.5068867)
+
+[node name="cannon3" parent="art" instance=ExtResource("5_0owmy")]
+transform = Transform3D(0.017906236, 0, -0.99983966, 0, 1, 0, 0.99983966, 0, 0.017906236, -1.5286508, 0, 0.5838313)
+
+[node name="crate-bottles2" parent="art" instance=ExtResource("6_qek5x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3178196, 0, -1.1805451)
+
+[node name="bottle2" parent="art" instance=ExtResource("7_5gtgg")]
+transform = Transform3D(0.6362618, -0.25944638, 0.72653866, 0.37758222, 0.92597604, 0, -0.6727574, 0.27432808, 0.68712556, -1.5095825, 1.5258942, 3.5238233)
+
+[node name="CannonLeft" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.17589, 0.65498245, 0.597582)
+
+[node name="CannonRight" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.239894, 0.6663635, 0.51253057)
 
 [node name="CameraPivot" type="Marker3D" parent="."]
 transform = Transform3D(-0.038387865, 0, 0.9992629, 0, 1, 0, -0.9992629, 0, -0.038387865, 0, 0, 0)
