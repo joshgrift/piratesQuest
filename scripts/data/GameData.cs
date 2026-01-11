@@ -142,7 +142,7 @@ public static class GameData
         new Component
         {
             name = "Advanced Fish Nets",
-            description = "Increases fish collection rate by 20%",
+            description = "Increases fish collection rate by 50%",
             icon = GD.Load<Texture2D>("res://art/components/collect_fish.png"),
             cost = new Dictionary<InventoryItemType, int>
             {
@@ -155,14 +155,14 @@ public static class GameData
                 {
                     Stat = PlayerStat.CollectionFish,
                     Modifier = RecordPlayerStatChangeModifier.Multiplicative,
-                    Value = 1.20f
+                    Value = 1.50f
                 }
             ]
         },
         new Component
         {
             name = "Reinforced Lumber Tools",
-            description = "Increases wood collection rate by 20%",
+            description = "Increases wood collection rate by 50%",
             icon = GD.Load<Texture2D>("res://art/components/collect_wood.png"),
             cost = new Dictionary<InventoryItemType, int>
             {
@@ -175,14 +175,14 @@ public static class GameData
                 {
                     Stat = PlayerStat.CollectionWood,
                     Modifier = RecordPlayerStatChangeModifier.Multiplicative,
-                    Value = 1.20f
+                    Value = 1.50f
                 }
             ]
         },
         new Component
         {
             name = "Enhanced Mining Tools",
-            description = "Increases iron collection rate by 20%",
+            description = "Increases iron collection rate by 50%",
             icon = GD.Load<Texture2D>("res://art/components/collect_iron.png"),
             cost = new Dictionary<InventoryItemType, int>
             {
@@ -195,7 +195,7 @@ public static class GameData
                 {
                     Stat = PlayerStat.CollectionIron,
                     Modifier = RecordPlayerStatChangeModifier.Multiplicative,
-                    Value = 1.20f
+                    Value = 1.50f
                 }
             ]
         }
