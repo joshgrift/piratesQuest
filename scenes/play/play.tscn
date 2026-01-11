@@ -96,7 +96,7 @@ metadata/_custom_type_script = "uid://b81r8qngpan6y"
 [sub_resource type="Resource" id="Resource_4dfl3"]
 script = ExtResource("10_10igl")
 ItemType = 6
-BuyPrice = 1000000
+BuyPrice = 100000
 SellPrice = 0
 metadata/_custom_type_script = "uid://b81r8qngpan6y"
 
@@ -129,7 +129,7 @@ metadata/_custom_type_script = "uid://b81r8qngpan6y"
 [sub_resource type="Resource" id="Resource_fe62l"]
 script = ExtResource("10_10igl")
 ItemType = 6
-BuyPrice = 1000000
+BuyPrice = 100000
 SellPrice = 0
 metadata/_custom_type_script = "uid://b81r8qngpan6y"
 
