@@ -42,6 +42,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   [Export] public MultiplayerSpawner DeadPlayerSpawner;
   [Export] public Timer AutoHealTimer;
 
+  [Export] private AudioStreamPlayer3D _cannonSoundPlayer;
+
   // Water Physics Properties
   [ExportGroup("Water Physics")]
   [Export] public FastNoiseLite WaterNoiseResource { get; set; }
@@ -196,7 +198,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     // Request the server to spawn the cannonball (works in multiplayer)
     Rpc(MethodName.RequestFireCannons, spawnData);
 
-    // Emit signal so UI can react (e.g., show firing animation or sound)
+    if (_cannonSoundPlayer != null && _cannonSoundPlayer.Stream != null)
+    {
+      _cannonSoundPlayer.Play();
+    }
+
     EmitSignal(SignalName.CannonFired);
 
     // Add rocking effect: left cannon rocks left, right cannon rocks right
@@ -496,6 +502,12 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     }
 
     EmitSignal(SignalName.InventoryChanged, (int)item, _inventory.GetItemCount(item));
+
+    if (item == InventoryItemType.Coin && amount > 0)
+    {
+      var audioManager = GetNode<AudioManager>("/root/AudioManager");
+      audioManager.PlaySound("res://art/sounds/jcsounds/Misc Sfx/sfx_coin_clink_01.wav", volumeDb: -5.0f); // Slightly quieter
+    }
 
     isLimitedByCapacity = _inventory.GetTotalItemCount([InventoryItemType.Coin]) > Stats.GetStat(PlayerStat.ShipCapacity);
     GD.Print($"{Name} updated inventory: {item} by {amount} (price: {price})");

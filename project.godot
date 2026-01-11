@@ -21,6 +21,7 @@ config/icon="res://icon.svg"
 NetworkManager="*res://scripts/NetworkManager.cs"
 Configuration="*res://scripts/Configuration.cs"
 Identity="*res://scripts/Identity.cs"
+AudioManager="*res://scripts/AudioManager.cs"
 
 [display]
 

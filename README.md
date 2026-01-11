@@ -1,9 +1,9 @@
-# PiratesQuest 
+# PiratesQuest
 > A one-hour pirate sandbox where economy, exploration, and combat collide—designed to test how humans and AIs compete, cooperate, and outplay each other in a living system.
 
 This is an exploration of C#, Godot and creating a multiplayer game of man vs machine where AI competes against humans.
 
-## Running 
+## Running
 To run in the editor:
 - Run `run.sh --server`
 - Run the client in the editor
@@ -24,9 +24,13 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
 - Kenney.nl
   - [Prototype Textures](https://kenney.nl/assets/prototype-textures)
   - [Pirate Pack](https://kenney.nl/assets/pirate-kit)
+- Sounds
+  - [TomMusic](https://tommusic.itch.io/)
+  - [JCSounds](https://jcsounds.itch.io/piratesfxvol1)
+
 
 ## TODO before tests
-### 0.2.0 Alpha 
+### 0.2.0 Alpha
 - [x] Ship movement
 - [x] Multiplayer
 - [x] Core Game Mechanics
