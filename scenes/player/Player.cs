@@ -352,6 +352,27 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 		return true;
 	}
 
+	public bool CollectResource(InventoryItemType item, int amount)
+	{
+		float total = (float)amount;
+
+		switch (item)
+		{
+			case InventoryItemType.Fish:
+				total = amount * Stats.GetStat(PlayerStat.CollectionFish);
+				break;
+			case InventoryItemType.Wood:
+				total = amount * Stats.GetStat(PlayerStat.CollectionWood);
+				break;
+			case InventoryItemType.Iron:
+				total = amount * Stats.GetStat(PlayerStat.CollectionIron);
+				break;
+			default:
+				break;
+		}
+		return UpdateInventory(item, Mathf.RoundToInt(total));
+	}
+
 	public bool UpdateInventory(InventoryItemType item, int amount)
 	{
 		return UpdateInventory(item, amount, 0);

@@ -7,5 +7,5 @@ using PiratesQuest.Data;
 /// </summary>
 public interface ICanCollect
 {
-  bool UpdateInventory(InventoryItemType item, int amount);
+  bool CollectResource(InventoryItemType item, int amount);
 }

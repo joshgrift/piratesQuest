@@ -29,4 +29,3 @@ cast_shadow = 0
 mesh = SubResource("CylinderMesh_y8w4b")
 
 [node name="CollectionTimer" type="Timer" parent="."]
-autostart = true

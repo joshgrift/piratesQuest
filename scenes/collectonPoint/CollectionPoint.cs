@@ -8,7 +8,7 @@ public partial class CollectionPoint : Node3D, IDropper
 	private readonly List<ICanCollect> collectors = [];
 
 	[Export] public InventoryItemType ResourceType = InventoryItemType.Wood;
-	[Export] public int CollectionPerSecond = 1;
+	[Export] public int CollectionPerSecond = 4;
 
 	public override void _Ready()
 	{
@@ -18,13 +18,15 @@ public partial class CollectionPoint : Node3D, IDropper
 
 		Timer collectionTimer = GetNode<Timer>("CollectionTimer");
 		collectionTimer.Timeout += OnCollectionTimeout;
+		collectionTimer.WaitTime = 2.0f;
+		collectionTimer.Start();
 	}
 
 	private void OnCollectionTimeout()
 	{
 		foreach (var collector in collectors)
 		{
-			collector.UpdateInventory(ResourceType, CollectionPerSecond);
+			collector.CollectResource(ResourceType, CollectionPerSecond);
 		}
 	}
 
