@@ -20,6 +20,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   [Signal] public delegate void DeathEventHandler(string playerName);
   [Signal] public delegate void HealthUpdateEventHandler(int newHealth);
 
+  // Ship recoil/rocking effect when firing
+  private float _recoilRoll = 0.0f;
+  private const float RecoilRollAmount = 0.40f; // Radians, tweak for more/less rocking
+  private const float RecoilDecaySpeed = 2.5f; // How quickly the rocking fades (higher = faster)
+
   public bool isLimitedByCapacity = true;
 
   public readonly PlayerStats Stats = new();
@@ -193,6 +198,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     // Emit signal so UI can react (e.g., show firing animation or sound)
     EmitSignal(SignalName.CannonFired);
+
+    // Add rocking effect: left cannon rocks left, right cannon rocks right
+    _recoilRoll += fromLeftSide ? -RecoilRollAmount : RecoilRollAmount;
   }
 
   [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true)]
@@ -547,17 +555,18 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     float heightDiff = heightBow - heightStern;
     float targetPitch = -Mathf.Atan2(heightDiff, ShipLength);
 
-    // Calculate roll (bank) based on turning
-    // When turning right (_currentTurnInput = 1), ship leans right (positive roll)
-    // When turning left (_currentTurnInput = -1), ship leans left (negative roll)
+    // Calculate roll (bank) based on turning and add recoil rocking
     float maxRollAngle = Mathf.DegToRad(5.0f); // Maximum 5 degrees of roll
-    float targetRoll = _currentTurnInput * maxRollAngle;
+    float targetRoll = _currentTurnInput * maxRollAngle + _recoilRoll;
 
     // Smoothly interpolate rotation
     Vector3 rotation = Rotation;
     rotation.X = Mathf.LerpAngle(rotation.X, targetPitch, delta * WaterSmoothSpeed);
     rotation.Z = Mathf.LerpAngle(rotation.Z, targetRoll, delta * WaterSmoothSpeed * 0.3f); // Slow, subtle banking
     Rotation = rotation;
+
+    // Decay the recoil rocking over time so the ship returns to normal
+    _recoilRoll = Mathf.Lerp(_recoilRoll, 0.0f, delta * RecoilDecaySpeed);
   }
 
   /// <summary>
