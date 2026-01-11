@@ -266,14 +266,16 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   public void OnDeath()
   {
     GD.Print($"dead: {Name}");
-    Rpc(MethodName.ServerDeath, new Dictionary
+    RpcId(1, MethodName.ServerDeath, new Dictionary
     {
       ["peerId"] = Multiplayer.GetUniqueId(),
       ["nickname"] = Nickname,
+      ["playerName"] = Name,
       ["position"] = GlobalPosition,
       ["items"] = _inventory.GetAll()
     });
-    EmitSignal(SignalName.Death, Name);
+
+    CallDeferred(MethodName.EmitSignal, SignalName.Death, Name);
   }
 
   [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true)]
@@ -510,12 +512,6 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     // Update vertical position to sit on water surface
     float planeY = WaterPlane?.GlobalPosition.Y ?? 0.0f;
     float targetY = heightAvg + planeY + VerticalOffset - 0.5f;
-
-    // Debug output (only occasionally to avoid spam)
-    if (Time.GetTicksMsec() % 1000 < 50)
-    {
-      GD.Print($"Water Physics - heightAvg: {heightAvg:F2}, targetY: {targetY:F2}, currentY: {pos.Y:F2}");
-    }
 
     // Smoothly interpolate to target Y position
     Vector3 currentPos = GlobalPosition;

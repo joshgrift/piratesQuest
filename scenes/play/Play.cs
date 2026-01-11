@@ -76,6 +76,8 @@ public partial class Play : Node3D
     var deadPlayer = _deadPlayerScene.Instantiate<DeadPlayer>();
     deadPlayer.Position = dict["position"].AsVector3();
     deadPlayer.DroppedItems = dict["items"].AsGodotDictionary<InventoryItemType, int>();
+    deadPlayer.Nickname = dict["nickname"].AsString();
+    deadPlayer.PlayerName = dict["playerName"].AsString();
 
     return deadPlayer;
   }
@@ -90,7 +92,7 @@ public partial class Play : Node3D
 
     player.Death += playerName =>
     {
-      CallDeferred(MethodName.HandleDeath, playerName);
+      CallDeferred(MethodName.HandleDeath, player);
     };
 
     player.ProjectileSpawner = GetNode<MultiplayerSpawner>("Projectiles/ProjectileSpawner");
@@ -103,12 +105,16 @@ public partial class Play : Node3D
     return player;
   }
 
-  private void HandleDeath(string playerName)
+  private void HandleDeath(Player player)
   {
-    Multiplayer.MultiplayerPeer.Close();
+    player.Visible = false;
 
-    GD.Print("Disconnected from multiplayer, returning to menu");
-    GetTree().ChangeSceneToFile("res://scenes/menu/menu.tscn");
+    GetTree().CreateTimer(4.0f).Timeout += () =>
+    {
+      Multiplayer.MultiplayerPeer.Close();
+      GD.Print("Disconnected from multiplayer, returning to menu");
+      GetTree().ChangeSceneToFile("res://scenes/menu/menu.tscn");
+    };
   }
 
   private async void OnPeerConnected(long peerId)

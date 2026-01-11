@@ -1,5 +1,6 @@
 namespace PiratesQuest.Attributes;
 
+using Godot;
 using Godot.Collections;
 using PiratesQuest.Data;
 
@@ -10,4 +11,5 @@ public interface ICanCollect
 {
   bool CollectResource(InventoryItemType item, int amount);
   bool BulkCollect(Dictionary<InventoryItemType, int> items);
+  public StringName Name { get; set; }
 }
