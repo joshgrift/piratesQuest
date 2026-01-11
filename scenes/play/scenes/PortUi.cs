@@ -111,7 +111,6 @@ public partial class PortUi : PanelContainer
 
 	public void OnBuyItemEdited()
 	{
-		int buyTotal = 0;
 		TreeItem edited = BuyListTree.GetEdited();
 		if (edited != null)
 		{
@@ -121,9 +120,15 @@ public partial class PortUi : PanelContainer
 			{
 				int quantity = (int)edited.GetRange(2);
 				int localTotal = quantity * int.Parse(edited.GetText(1));
-				buyTotal += localTotal;
 				edited.SetText(3, localTotal.ToString());
 			}
+		}
+
+		// Calculate total across all items
+		int buyTotal = 0;
+		foreach (TreeItem item in _buyListRoot.GetChildren())
+		{
+			buyTotal += int.Parse(item.GetText(3));
 		}
 
 		TotalBuyLabel.Text = $"Total: {buyTotal}";
@@ -147,7 +152,6 @@ public partial class PortUi : PanelContainer
 
 	public void OnSellItemEdited()
 	{
-		int sellTotal = 0;
 		TreeItem edited = SellListTree.GetEdited();
 		if (edited != null)
 		{
@@ -156,9 +160,15 @@ public partial class PortUi : PanelContainer
 			{
 				int quantity = (int)edited.GetRange(2);
 				int localTotal = quantity * int.Parse(edited.GetText(1));
-				sellTotal += localTotal;
 				edited.SetText(3, localTotal.ToString());
 			}
+		}
+
+		// Calculate total across all items
+		int sellTotal = 0;
+		foreach (TreeItem item in _sellListRoot.GetChildren())
+		{
+			sellTotal += int.Parse(item.GetText(3));
 		}
 
 		TotalSellLabel.Text = $"Total: {sellTotal}";
