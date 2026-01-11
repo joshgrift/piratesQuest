@@ -39,9 +39,9 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
     - [x] Can buy in Port
     - [x] Limit number of components
     - [x] Allow multiple of the same component
-    - [ ] Limit Cargo Size
+    - [x] Limit Cargo Size
     - [ ] Increase Collection
-    - [ ] Auto Heal Mechanic
+    - [x] Auto Heal Mechanic
   - [ ] Pickup dead player rewards
 - [ ] Quests to get skulls
 - [ ] Leaderboards

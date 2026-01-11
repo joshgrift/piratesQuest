@@ -21,10 +21,11 @@ properties/3/replication_mode = 1
 [sub_resource type="BoxShape3D" id="BoxShape3D_i3pqv"]
 size = Vector3(4.721039, 8.911621, 7.52652)
 
-[node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("CannonPivot")]
+[node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("CannonPivot", "AutoHealTimer")]
 collision_mask = 5
 script = ExtResource("1_onrkg")
 CannonPivot = NodePath("Cannon")
+AutoHealTimer = NodePath("Timer")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_i3pqv")
@@ -45,3 +46,5 @@ script = ExtResource("3_i3pqv")
 
 [node name="Camera3D" type="Camera3D" parent="CameraPivot"]
 transform = Transform3D(1, 0, 0, 0, 0.6467898, 0.7626684, 0, -0.7626684, 0.6467898, 0, 27.871, 25.183)
+
+[node name="Timer" type="Timer" parent="."]

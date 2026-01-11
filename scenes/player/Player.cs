@@ -26,13 +26,14 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 	public System.Collections.Generic.List<OwnedComponent> OwnedComponents = [];
 
 	public int FallAcceleration { get; set; } = 75;
-	public int Health { get; set; } = 100;
+	public int Health { get; set; } = 80;
 	public int MaxHealth => (int)Stats.GetStat(PlayerStat.ShipHullStrength);
 
 	[Export] public string Nickname { get; set; }
 
 	[Export] public Node3D CannonPivot;
 	[Export] public MultiplayerSpawner ProjectileSpawner;
+	[Export] public Timer AutoHealTimer;
 
 	private float _currentSpeed = 0.0f;
 	private Vector3 _targetVelocity = Vector3.Zero;
@@ -70,6 +71,14 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
 		CallDeferred(MethodName.UpdateInventory, (int)InventoryItemType.CannonBall, 10);
 		CallDeferred(MethodName.UpdateInventory, (int)InventoryItemType.Coin, Configuration.StartingCoin);
+
+		// Set up auto-heal timer
+		if (AutoHealTimer != null && IsMultiplayerAuthority())
+		{
+			AutoHealTimer.WaitTime = 10.0; // Heal every 10 seconds
+			AutoHealTimer.Timeout += OnAutoHealTimeout;
+			AutoHealTimer.Start();
+		}
 	}
 
 	private void RandomSpawn(int startXRange, int startYRange)
@@ -224,6 +233,19 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 	{
 		GD.Print($"dead: {Name}");
 		EmitSignal(SignalName.Death, Name);
+	}
+
+	private void OnAutoHealTimeout()
+	{
+		if (!IsMultiplayerAuthority()) return;
+
+		int healAmount = (int)Stats.GetStat(PlayerStat.HealthRegen);
+
+		if (healAmount > 0 && Health < MaxHealth)
+		{
+			Health = Mathf.Min(Health + healAmount, MaxHealth);
+			EmitSignal(SignalName.HealthUpdate, Health);
+		}
 	}
 
 	public void PurchaseComponent(Component Component)
