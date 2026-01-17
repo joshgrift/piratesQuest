@@ -39,6 +39,7 @@ public partial class ProjectilePartial : RigidBody3D
 
     _targetVelocity.X *= _currentSpeed;
     _targetVelocity.Z *= _currentSpeed;
+    _targetVelocity.Y = 5.0f; // Slight arc effect
     LinearVelocity = _targetVelocity;
   }
 

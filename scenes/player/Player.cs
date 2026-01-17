@@ -97,7 +97,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     // Try to find water plane if not set
     if (WaterPlane == null)
     {
-      WaterPlane = GetNodeOrNull<MeshInstance3D>("/root/Play/Ground/WaterPlane");
+      WaterPlane = GetNodeOrNull<MeshInstance3D>("/root/Play/WaterPlane");
       if (WaterPlane != null)
       {
         GD.Print($"{Name}: Found WaterPlane at absolute path");

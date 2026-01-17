@@ -30,9 +30,6 @@ adjustment_brightness = 1.05
 adjustment_contrast = 1.15
 adjustment_saturation = 1.25
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_0xm2m"]
-size = Vector3(500, 1, 500)
-
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_water"]
 noise = ExtResource("water_noise")
 seamless = true
@@ -51,6 +48,9 @@ material = SubResource("ShaderMaterial_water")
 size = Vector2(500, 500)
 subdivide_width = 500
 subdivide_depth = 500
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0xm2m"]
+size = Vector3(500, 1, 500)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gcg6u"]
 albedo_texture = ExtResource("6_bjecb")
@@ -155,16 +155,18 @@ PlayersContainer = NodePath("../../SpawnPoint")
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_1eoep")
 
+[node name="WaterPlane" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.027585983, -2.0736532, 0.033924103)
+mesh = SubResource("PlaneMesh_water")
+skeleton = NodePath("../Ground")
+
 [node name="Ground" type="StaticBody3D" parent="."]
 collision_layer = 4
 collision_mask = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3, 0)
 shape = SubResource("BoxShape3D_0xm2m")
-
-[node name="WaterPlane" type="MeshInstance3D" parent="Ground"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.027585983, -2.0736532, 0.033924103)
-mesh = SubResource("PlaneMesh_water")
 
 [node name="Sand" type="MeshInstance3D" parent="Ground"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3, 0)
