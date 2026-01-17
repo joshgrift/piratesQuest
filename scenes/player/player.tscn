@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://cumwy7ox3pa0b"]
+[gd_scene load_steps=10 format=3 uid="uid://cumwy7ox3pa0b"]
 
 [ext_resource type="Script" uid="uid://b4ivpos2qv5rq" path="res://scenes/player/Player.cs" id="1_onrkg"]
 [ext_resource type="PackedScene" uid="uid://xg8l1d4eyeyk" path="res://art/kenny_pirate/ship-small.glb" id="2_onrkg"]
@@ -29,9 +29,6 @@ properties/5/path = NodePath(".:TrophyCount")
 properties/5/spawn = true
 properties/5/replication_mode = 1
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_i3pqv"]
-size = Vector3(4.721039, 8.911621, 7.52652)
-
 [node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("CannonPivotLeft", "CannonPivotRight", "AutoHealTimer", "_cannonSoundPlayer")]
 collision_mask = 5
 script = ExtResource("1_onrkg")
@@ -41,14 +38,16 @@ AutoHealTimer = NodePath("Timer")
 _cannonSoundPlayer = NodePath("CannonFireSound")
 WaterNoiseResource = ExtResource("4_water")
 
+[node name="CollisionPolygon3D" type="CollisionPolygon3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -3.333, 3, -3.792)
+depth = 10.0
+polygon = PackedVector2Array(1.0824568, 3.1109843, 1.1123765, 7.9579754, 5.4706793, 7.9978685, 5.5006, 3.1109843, 3.2965147, -0.7386844)
+
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_i3pqv")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.037198067, 4.5292573, 0.41925836)
-shape = SubResource("BoxShape3D_i3pqv")
-
 [node name="art" type="Node3D" parent="."]
+metadata/_edit_lock_ = true
 
 [node name="ship-small2" parent="art" instance=ExtResource("2_onrkg")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, -2.0243583, 0)

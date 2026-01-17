@@ -24,10 +24,11 @@ properties/2/replication_mode = 1
 
 [node name="cannon_ball" type="RigidBody3D"]
 collision_layer = 2
-collision_mask = 6
+collision_mask = 0
 script = ExtResource("1_nvjdn")
 
 [node name="TerrainCollisionShape" type="CollisionShape3D" parent="."]
+visible = false
 shape = SubResource("SphereShape3D_nyruy")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
@@ -39,7 +40,8 @@ root_path = NodePath("../MeshInstance3D")
 replication_config = SubResource("SceneReplicationConfig_nvjdn")
 
 [node name="PlayerCollision" type="Area3D" parent="."]
-collision_layer = 0
+collision_layer = 2
+collision_mask = 7
 
 [node name="PlayerCollisionShape" type="CollisionShape3D" parent="PlayerCollision"]
 shape = SubResource("SphereShape3D_nyruy")
