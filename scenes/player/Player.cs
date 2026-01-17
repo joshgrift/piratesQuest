@@ -211,10 +211,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     Rpc(MethodName.RequestFireCannons, spawnData);
 
-    if (_cannonSoundPlayer != null && _cannonSoundPlayer.Stream != null)
-    {
-      _cannonSoundPlayer.Play();
-    }
+    // Play cannon sound on ALL clients (not just locally)
+    Rpc(MethodName.PlayCannonSound);
 
     EmitSignal(SignalName.CannonFired);
 
@@ -228,6 +226,33 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (!Multiplayer.IsServer()) return;
 
     ProjectileSpawner.Spawn(data);
+  }
+
+  /// <summary>
+  /// Plays the cannon firing sound at this ship's position.
+  /// Called via RPC so all clients hear it from the correct location.
+  /// </summary>
+  [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true)]
+  private void PlayCannonSound()
+  {
+    // Don't play audio on the server - only clients have audio output
+    if (Multiplayer.IsServer() && !IsMultiplayerAuthority()) return;
+
+    // Create a temporary 3D audio player at THIS ship's position.
+    // We can't rely on _cannonSoundPlayer because [Export] fields may not
+    // be set up correctly on non-local player instances.
+    var tempAudio = new AudioStreamPlayer3D();
+    tempAudio.Stream = GD.Load<AudioStream>("res://art/sounds/jcsounds/Misc Sfx/sfx_cannon_fire_01.wav");
+    tempAudio.VolumeDb = 10.0f;
+    tempAudio.MaxDistance = 100.0f;
+
+    // Add to scene tree first (required for GlobalPosition)
+    GetTree().Root.AddChild(tempAudio);
+    tempAudio.GlobalPosition = GlobalPosition;
+
+    // Play and auto-delete when finished
+    tempAudio.Finished += () => tempAudio.QueueFree();
+    tempAudio.Play();
   }
 
   private void UpdateMovement(float delta)
