@@ -35,32 +35,33 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
   - [x] Backing up controls feel weird
   - [x] camera can go upside down
   - [ ] Auto equip components when you buy them
-  - [ ] Stop player from shooting when dead
   - [x] Cannon ball goes too far
   - [x] Need the ability to shoot, move, and turn at the same time
   - [ ] Collection points are too hard to see
   - [x] Improve turn radius
   - [ ] UI to show you collecting items
-  - [ ] Close port menu early
   - [ ] Reset Port UI when you buy
   - [ ] Status Tool Tip
-  - [ ] Island collides with cannonballs
-- [ ] Make death less punishing somehow
 - [ ] A way to heal
 - [x] Hit Markers
-- [ ] Limit Player name characters
-- [ ] Respawn
+- [x] Limit Player name characters
+- [ ] Death & Respawn
+  - [ ] Make death less punishing somehow
+  - [ ] Stop player from shooting when dead
+  - [ ] Respawn player automatically after 5 seconds instead of back to menu
 - [x] Broadcast sound across all players
-- [ ] In Combat Timer
-  - [ ] Can't heal if you're in combat
-  - [ ] When in port, the timer pauses
-- [ ] Ship Upgrades??
-- [ ] Multiple Cannonball types?
-
-### 0.4.0 Alpha
-- [ ] API for AI characters
-- [ ]
+- [ ] Fix cannonball collision
 
 ### Later
 - [ ] Quests
 - [ ] Ship Upgrades
+- [ ] API for AI characters
+- [ ] Island mesh?
+- [ ] Fix water.
+
+### Suggestions
+- [ ] Close port menu early
+- [ ] Multiple Cannonball types?
+- [ ] In Combat Timer
+  - [ ] Can't heal if you're in combat
+  - [ ] When in port, the timer pauses

@@ -425,17 +425,30 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     }
   }
 
+  /// <summary>
+  /// Purchases a component and automatically equips it if there's room.
+  /// This removes the extra step of manually equipping after purchase.
+  /// </summary>
+  /// <param name="Component">The component to purchase</param>
   public void PurchaseComponent(Component Component)
   {
+    // MakePurchase checks if we can afford it and deducts the cost
     if (!MakePurchase(Component.cost))
       return;
 
+    // Check if we have room to equip this component right away
+    // ComponentCapacity is the max number of components we can have active
+    bool canEquipNow = GetTotalEquippedComponents() < (int)Stats.GetStat(PlayerStat.ComponentCapacity);
+
+    // Add the component to our inventory
+    // If we have room, equip it immediately so the player gets the benefit right away
     OwnedComponents.Add(new OwnedComponent
     {
       Component = Component,
-      isEquipped = false
+      isEquipped = canEquipNow  // Auto-equip if there's room
     });
 
+    GD.Print($"{Name} purchased component {Component.name} (auto-equipped: {canEquipNow})");
     UpdatePlayerStats();
   }
 
