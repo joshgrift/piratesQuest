@@ -9,7 +9,7 @@ public partial class CameraPivot : Marker3D
   // 0 = looking straight ahead (horizon)
   // Negative values = looking up, Positive values = looking down
   [Export]
-  public float MinPitch { get; set; } = -Mathf.Pi / 2.0f; // Looking straight up
+  public float MinPitch { get; set; } = -1.2f; // Limit upward rotation to ~69 degrees to prevent flipping
 
   [Export]
   public float MaxPitch { get; set; } = 0.3f; // Can look down a bit, but not too far below the world
