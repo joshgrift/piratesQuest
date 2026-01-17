@@ -58,12 +58,14 @@ visible = false
 layout_mode = 2
 size_flags_horizontal = 0
 texture = ExtResource("3_g5ihu")
+tooltip_text = "Ship is overloaded! Your cargo exceeds capacity. Sell items at a port to remove this debuff."
 
 [node name="ReadyToFire" type="TextureRect" parent="Status Container/VBoxContainer/StatusList"]
 visible = false
 layout_mode = 2
 size_flags_horizontal = 0
 texture = ExtResource("4_wm7av")
+tooltip_text = "Cannons ready!"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Status Container/VBoxContainer"]
 layout_mode = 2
@@ -74,6 +76,7 @@ layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 8
 texture = ExtResource("5_yo1xf")
+tooltip_text = "Ship health. Reach 0 and you'll sink! Dock at a port to repair."
 
 [node name="HealthLabel" type="Label" parent="Status Container/VBoxContainer/HBoxContainer"]
 layout_mode = 2
