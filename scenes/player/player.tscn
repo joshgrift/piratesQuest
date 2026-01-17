@@ -47,7 +47,7 @@ polygon = PackedVector2Array(1.0824568, 3.1109843, 1.1123765, 7.9579754, 5.47067
 replication_config = SubResource("SceneReplicationConfig_i3pqv")
 
 [node name="art" type="Node3D" parent="."]
-metadata/_edit_lock_ = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7724174, 0)
 
 [node name="ship-small2" parent="art" instance=ExtResource("2_onrkg")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, -2.0243583, 0)

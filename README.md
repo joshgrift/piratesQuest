@@ -36,10 +36,10 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
   - [x] camera can go upside down
   - [ ] Auto equip components when you buy them
   - [ ] Stop player from shooting when dead
-  - [ ] Cannon ball goes too far
-  - [ ] Need the ability to shoot, move, and turn at the same time
+  - [x] Cannon ball goes too far
+  - [x] Need the ability to shoot, move, and turn at the same time
   - [ ] Collection points are too hard to see
-  - [ ] Improve turn radius
+  - [x] Improve turn radius
   - [ ] UI to show you collecting items
   - [ ] Close port menu early
   - [ ] Reset Port UI when you buy
@@ -48,7 +48,7 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
 - [ ] Make death less punishing somehow
 - [ ] A way to heal
 - [ ] Hit Markers
-- [ ] Limit Player characters
+- [ ] Limit Player name characters
 - [ ] Respawn
 - [ ] Broadcast sound across all players
 - [ ] In Combat Timer
