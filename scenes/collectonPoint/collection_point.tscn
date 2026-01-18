@@ -1,32 +1,14 @@
-[gd_scene load_steps=5 format=3 uid="uid://bkdqs4u6efsoq"]
+[gd_scene load_steps=3 format=3 uid="uid://bkdqs4u6efsoq"]
 
 [ext_resource type="Script" uid="uid://d2dggj3j345am" path="res://scenes/collectonPoint/CollectionPoint.cs" id="1_eldjc"]
+[ext_resource type="PackedScene" uid="uid://mjskkrq4qiuo" path="res://scenes/play/scenes/interaction_point.tscn" id="2_nl2ir"]
 
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_nl2ir"]
-height = 1.0
-radius = 10.0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h2yge"]
-albedo_color = Color(0, 1, 0.09803922, 1)
-uv1_scale = Vector3(2, 2, 2)
-disable_receive_shadows = true
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_y8w4b"]
-height = 1.0
-
-[node name="Collection Point" type="Node3D"]
+[node name="Collection Point" type="Node3D" node_paths=PackedStringArray("DockingArea")]
 script = ExtResource("1_eldjc")
+DockingArea = NodePath("InteractionPoint")
 
-[node name="Area3D" type="Area3D" parent="."]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
-shape = SubResource("CylinderShape3D_nl2ir")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(20, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0)
-material_override = SubResource("StandardMaterial3D_h2yge")
-transparency = 0.95
-cast_shadow = 0
-mesh = SubResource("CylinderMesh_y8w4b")
+[node name="InteractionPoint" parent="." instance=ExtResource("2_nl2ir")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.5, 0)
+RingColor = Color(0, 0.99215686, 0.29803923, 0.4)
 
 [node name="CollectionTimer" type="Timer" parent="."]

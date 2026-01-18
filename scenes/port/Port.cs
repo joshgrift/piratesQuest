@@ -1,6 +1,5 @@
 namespace PiratesQuest;
 
-using PiratesQuest.Data;
 using PiratesQuest.Attributes;
 using Godot;
 using Godot.Collections;
@@ -10,14 +9,15 @@ public partial class Port : Node3D, IIntractable
 {
   [Export] public String PortName { get; set; } = "Default Port";
   [Export] public ShopItemData[] ItemsForSale { get; set; } = [];
+  [Export] public InteractionPoint DockingArea;
+
   [Signal] public delegate void ShipDockedEventHandler(Port port, Player player, Variant payload);
   [Signal] public delegate void ShipDepartedEventHandler(Port port, Player player);
 
   public override void _Ready()
   {
-    Area3D area = GetNode<Area3D>("Area3D");
-    area.BodyEntered += OnBodyEntered;
-    area.BodyExited += OnBodyExited;
+    DockingArea.InteractionArea.BodyEntered += OnBodyEntered;
+    DockingArea.InteractionArea.BodyExited += OnBodyExited;
   }
 
   private void OnBodyEntered(Node3D body)

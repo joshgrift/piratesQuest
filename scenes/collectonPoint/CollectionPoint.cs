@@ -10,12 +10,12 @@ public partial class CollectionPoint : Node3D, IDropper
   [Export] public InventoryItemType ResourceType = InventoryItemType.Wood;
   [Export] public int CollectionPerSecond = 4;
   [Export] public float CollectionSpeed = 2.0f;
+  [Export] public InteractionPoint DockingArea;
 
   public override void _Ready()
   {
-    Area3D area = GetNode<Area3D>("Area3D");
-    area.BodyEntered += OnBodyEntered;
-    area.BodyExited += OnBodyExited;
+    DockingArea.InteractionArea.BodyEntered += OnBodyEntered;
+    DockingArea.InteractionArea.BodyExited += OnBodyExited;
 
     Timer collectionTimer = GetNode<Timer>("CollectionTimer");
     collectionTimer.Timeout += OnCollectionTimeout;
