@@ -16,6 +16,8 @@ public partial class PortUi : PanelContainer
 
   [Export] public Tree ShipStatsTree;
 
+  [Export] public Button HealButton;
+
   [Export] public Control BuyComponentsContainer;
   [Export] public Control ShipComponentsContainer;
   [Export] public Control ActiveShipComponentsContainer;
@@ -60,6 +62,9 @@ public partial class PortUi : PanelContainer
 
     SellListTree.ItemEdited += OnSellItemEdited;
     SellButton.Pressed += OnSellButtonPressed;
+
+    // Heal button - repairs the ship for 5 wood + 1 fish per health point
+    HealButton.Pressed += OnHealButtonPressed;
 
     // ShipMenu
     ShipStatsTree.Columns = 4;
@@ -206,6 +211,69 @@ public partial class PortUi : PanelContainer
     }
 
     TotalSellLabel.Text = $"Total: 0";
+    RefreshPortUi();
+  }
+
+  /// <summary>
+  /// Called when the player clicks the Heal button.
+  /// Heals the ship to full health (or as much as resources allow).
+  /// Cost: 5 wood + 1 fish per health point healed.
+  /// </summary>
+  public void OnHealButtonPressed()
+  {
+    // Calculate how much health we need to restore
+    int healthNeeded = Player.MaxHealth - Player.Health;
+
+    // If already at full health, nothing to do
+    if (healthNeeded <= 0)
+    {
+      GD.Print("Ship is already at full health!");
+      return;
+    }
+
+    // Check how many resources the player has
+    int woodAvailable = Player.GetInventoryCount(InventoryItemType.Wood);
+    int fishAvailable = Player.GetInventoryCount(InventoryItemType.Fish);
+
+    // Cost per health point: 5 wood and 1 fish
+    const int WoodCostPerHealth = 5;
+    const int FishCostPerHealth = 1;
+
+    // Calculate max health we can heal based on each resource
+    // (integer division automatically rounds down)
+    int maxHealFromWood = woodAvailable / WoodCostPerHealth;
+    int maxHealFromFish = fishAvailable / FishCostPerHealth;
+
+    // The actual amount we can heal is limited by:
+    // 1. How much health we need
+    // 2. How much wood we have (divided by cost)
+    // 3. How much fish we have (divided by cost)
+    int healthToHeal = Math.Min(healthNeeded, Math.Min(maxHealFromWood, maxHealFromFish));
+
+    // If we can't afford any healing, do nothing
+    if (healthToHeal <= 0)
+    {
+      GD.Print("Not enough resources to heal! Need 5 wood + 1 fish per health point.");
+      return;
+    }
+
+    // Calculate total resource cost
+    int woodCost = healthToHeal * WoodCostPerHealth;
+    int fishCost = healthToHeal * FishCostPerHealth;
+
+    // Deduct resources from inventory (negative amount = remove)
+    Player.UpdateInventory(InventoryItemType.Wood, -woodCost);
+    Player.UpdateInventory(InventoryItemType.Fish, -fishCost);
+
+    // Heal the ship
+    Player.Health += healthToHeal;
+
+    // Emit the health update signal so the HUD updates
+    Player.EmitSignal(Player.SignalName.HealthUpdate, Player.Health);
+
+    GD.Print($"Healed ship by {healthToHeal} HP. Cost: {woodCost} wood, {fishCost} fish. New health: {Player.Health}/{Player.MaxHealth}");
+
+    // Refresh the UI to show updated inventory
     RefreshPortUi();
   }
 

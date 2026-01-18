@@ -37,9 +37,9 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
   - [x] Auto equip components when you buy them
   - [x] Cannon ball goes too far
   - [x] Need the ability to shoot, move, and turn at the same time
-  - [ ] Collection points are too hard to see
+  - [x] Collection points are too hard to see
   - [x] Improve turn radius
-  - [ ] UI to show you collecting items
+  - [x] UI to show you collecting items
   - [x] Reset Port UI when you buy
   - [x] Status Tool Tip
 - [ ] A way to heal
