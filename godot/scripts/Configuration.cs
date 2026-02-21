@@ -19,6 +19,7 @@ partial class Configuration : Node
   private const string GateScenePath = "res://scenes/menu/menu.tscn";
 
   private bool _isRedirectingToGate = false;
+  private static string _pendingMenuError = string.Empty;
 
   public static bool RandomSpawnEnabled { get; } = true;
   public static int StartingCoin { get; } = 100;
@@ -159,6 +160,24 @@ partial class Configuration : Node
 
     // Optional convenience: keep username pre-filled when token is missing.
     return (false, username, string.Empty);
+  }
+
+  // Cross-scene one-time error message for menu UI (for example join rejection).
+  public static void SetPendingMenuError(string message)
+  {
+    _pendingMenuError = message ?? string.Empty;
+  }
+
+  public static string ConsumePendingMenuError()
+  {
+    var message = _pendingMenuError;
+    _pendingMenuError = string.Empty;
+    return message;
+  }
+
+  public static bool HasPendingMenuError()
+  {
+    return !string.IsNullOrWhiteSpace(_pendingMenuError);
   }
 
   // If user has no token, keep them on the gate scene (menu/login).

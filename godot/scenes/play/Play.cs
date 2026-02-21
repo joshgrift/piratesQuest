@@ -3,6 +3,7 @@ namespace PiratesQuest;
 using System;
 using Godot;
 using PiratesQuest.Data;
+using System.Collections.Generic;
 
 public partial class Play : Node3D
 {
@@ -16,6 +17,7 @@ public partial class Play : Node3D
   private PackedScene _playerScene = GD.Load<PackedScene>("res://scenes/player/player.tscn");
   private PackedScene _cannonBallScene = GD.Load<PackedScene>("res://scenes/cannon_ball/cannon_ball.tscn");
   private PackedScene _deadPlayerScene = GD.Load<PackedScene>("res://scenes/dead_player/dead_player.tscn");
+  private readonly Dictionary<long, string> _peerUsernames = new();
 
   public override void _Ready()
   {
@@ -41,11 +43,20 @@ public partial class Play : Node3D
         GD.Print("Free camera activated for server mode");
       }
     }
+    else
+    {
+      Multiplayer.ServerDisconnected += OnServerDisconnected;
+      Multiplayer.ConnectionFailed += OnConnectionFailed;
+
+      // Client must register username with server before the server spawns their player.
+      RegisterLocalUsernameWithServer();
+    }
   }
 
   private void OnPeerDisconnected(long peerId)
   {
     GD.Print($"Peer {peerId} disconnected, cleaning up their player");
+    _peerUsernames.Remove(peerId);
 
     // Clean up the disconnected player's node
     var playerNode = GetNodeOrNull<Player>($"SpawnPoint/player_{peerId}");
@@ -131,16 +142,131 @@ public partial class Play : Node3D
     };
   }
 
-  private async void OnPeerConnected(long peerId)
+  private void OnPeerConnected(long peerId)
   {
-    GD.Print($"Spawning player for peer {peerId}");
-    SpawnPlayer(peerId);
+    // Wait for this peer to send username via RPC before spawning.
+    GD.Print($"Peer {peerId} connected. Waiting for username registration...");
   }
 
   private void SpawnPlayer(long peerId)
   {
     _playerSpawner.Spawn(peerId);
     GD.Print($"Requested spawn for peer {peerId}");
+  }
+
+  // Sent by each client after entering Play scene.
+  // Server validates uniqueness and either spawns player or rejects join.
+  [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
+  private void RegisterUsername(string username)
+  {
+    if (!Multiplayer.IsServer())
+    {
+      return;
+    }
+
+    var peerId = Multiplayer.GetRemoteSenderId();
+    var normalizedUsername = (username ?? string.Empty).Trim();
+
+    if (string.IsNullOrWhiteSpace(normalizedUsername))
+    {
+      RejectPeer(peerId, "Username is required.");
+      return;
+    }
+
+    // Block duplicate usernames (case-insensitive) currently connected to this server.
+    foreach (var entry in _peerUsernames)
+    {
+      if (entry.Key == peerId)
+      {
+        continue;
+      }
+
+      if (string.Equals(entry.Value, normalizedUsername, StringComparison.OrdinalIgnoreCase))
+      {
+        RejectPeer(peerId, "That username is already in this server.");
+        return;
+      }
+    }
+
+    _peerUsernames[peerId] = normalizedUsername;
+    SpawnPlayer(peerId);
+    SetSpawnedPlayerNickname(peerId, normalizedUsername);
+  }
+
+  private void RegisterLocalUsernameWithServer()
+  {
+    var identity = GetNode<Identity>("/root/Identity");
+    var username = identity.PlayerName.Trim();
+    RpcId(1, MethodName.RegisterUsername, username);
+  }
+
+  private void SetSpawnedPlayerNickname(long peerId, string username)
+  {
+    // Spawn happens through MultiplayerSpawner. Defer so node exists before lookup.
+    CallDeferred(MethodName.SetSpawnedPlayerNicknameDeferred, peerId, username);
+  }
+
+  private void SetSpawnedPlayerNicknameDeferred(long peerId, string username)
+  {
+    var playerNode = GetNodeOrNull<Player>($"SpawnPoint/player_{peerId}");
+    if (playerNode != null)
+    {
+      playerNode.Nickname = username;
+    }
+  }
+
+  // Server calls this on the rejected client before disconnecting.
+  [Rpc(MultiplayerApi.RpcMode.Authority)]
+  private void OnJoinRejected(string reason)
+  {
+    GD.PrintErr($"Join rejected: {reason}");
+    Configuration.SetPendingMenuError(reason);
+    GetTree().ChangeSceneToFile("res://scenes/menu/menu.tscn");
+  }
+
+  private void DisconnectPeerAfterRejection(long peerId)
+  {
+    // Give the rejection RPC a moment to reach the client before disconnecting.
+    GetTree().CreateTimer(0.1).Timeout += () =>
+    {
+      if (IsPeerConnected(peerId))
+      {
+        Multiplayer.MultiplayerPeer?.DisconnectPeer((int)peerId, true);
+      }
+    };
+  }
+
+  private void RejectPeer(long peerId, string reason)
+  {
+    if (!IsPeerConnected(peerId))
+    {
+      GD.PrintErr($"Cannot reject peer {peerId}: peer is no longer connected.");
+      return;
+    }
+
+    RpcId(peerId, MethodName.OnJoinRejected, reason);
+    DisconnectPeerAfterRejection(peerId);
+  }
+
+  private bool IsPeerConnected(long peerId)
+  {
+    return Array.IndexOf(Multiplayer.GetPeers(), (int)peerId) >= 0;
+  }
+
+  private void OnServerDisconnected()
+  {
+    // Safety net: if rejection RPC is missed, still return to menu.
+    if (!Configuration.HasPendingMenuError())
+    {
+      Configuration.SetPendingMenuError("Disconnected from server.");
+    }
+    GetTree().ChangeSceneToFile("res://scenes/menu/menu.tscn");
+  }
+
+  private void OnConnectionFailed()
+  {
+    Configuration.SetPendingMenuError("Connection to server failed.");
+    GetTree().ChangeSceneToFile("res://scenes/menu/menu.tscn");
   }
 
   /// <summary>
@@ -181,6 +307,12 @@ public partial class Play : Node3D
   /// </summary>
   public override void _ExitTree()
   {
+    if (!Multiplayer.IsServer())
+    {
+      Multiplayer.ServerDisconnected -= OnServerDisconnected;
+      Multiplayer.ConnectionFailed -= OnConnectionFailed;
+    }
+
     // Stop our background audio when leaving this scene
     // This prevents sounds from continuing to play after leaving
     var audioManager = GetNodeOrNull<AudioManager>("/root/AudioManager");

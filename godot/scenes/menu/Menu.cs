@@ -177,8 +177,14 @@ public partial class Menu : Node2D
     SetMainMenuVisible(true);
     UsernameEdit.ReleaseFocus();
     PasswordEdit.ReleaseFocus();
-    DisplayStatus("Authenticated.");
-    _ = LoadServerListingsAsync();
+
+    var pendingMenuError = Configuration.ConsumePendingMenuError();
+    if (string.IsNullOrWhiteSpace(pendingMenuError))
+    {
+      DisplayStatus("Authenticated.");
+    }
+
+    _ = LoadServerListingsAsync(pendingMenuError);
   }
 
   private void SetMainMenuVisible(bool isVisible)
@@ -215,7 +221,7 @@ public partial class Menu : Node2D
     playerNameEdit.Text = safeUsername;
   }
 
-  private async Task LoadServerListingsAsync()
+  private async Task LoadServerListingsAsync(string postLoadError = "")
   {
     // Remove existing rows so re-login doesn't duplicate listing entries.
     foreach (Node child in ServerListingsContainer.GetChildren())
@@ -243,6 +249,11 @@ public partial class Menu : Node2D
     else
     {
       DisplayStatus("Servers loaded.");
+    }
+
+    if (!string.IsNullOrWhiteSpace(postLoadError))
+    {
+      DisplayError(postLoadError);
     }
   }
 

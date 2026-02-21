@@ -102,6 +102,14 @@ public partial class Hud : Control
       return;
     }
 
+    // If the client has been disconnected (for example join rejected),
+    // Multiplayer.GetUniqueId() will throw engine errors. Stop retries safely.
+    if (!IsMultiplayerActive())
+    {
+      GD.Print("HUD stopped player lookup because multiplayer is not active.");
+      return;
+    }
+
     // Find the player that we control
     var myPeerId = Multiplayer.GetUniqueId();
     GD.Print($"{PlayersContainer.GetChildCount()}");
@@ -142,6 +150,17 @@ public partial class Hud : Control
         GD.PrintErr($"Could not find Player{myPeerId} after {MaxRetries} attempts");
       }
     }
+  }
+
+  private bool IsMultiplayerActive()
+  {
+    var peer = Multiplayer.MultiplayerPeer;
+    if (peer == null)
+    {
+      return false;
+    }
+
+    return peer.GetConnectionStatus() == MultiplayerPeer.ConnectionStatus.Connected;
   }
 
   private void UpdateLeaderboard()
