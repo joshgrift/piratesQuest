@@ -29,29 +29,27 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
   - [JCSounds](https://jcsounds.itch.io/piratesfxvol1)
 
 
-## TODO before tests
-### 0.3.0 Alpha
-- [x] Bugs & Improvements
-  - [x] Backing up controls feel weird
-  - [x] camera can go upside down
-  - [x] Auto equip components when you buy them
-  - [x] Cannon ball goes too far
-  - [x] Need the ability to shoot, move, and turn at the same time
-  - [x] Collection points are too hard to see
-  - [x] Improve turn radius
-  - [x] UI to show you collecting items
-  - [x] Reset Port UI when you buy
-  - [x] Status Tool Tip
-- [x] A way to heal
-- [x] Hit Markers
-- [x] Limit Player name characters
-- [x] Death & Respawn
-  - [x] Make death less punishing somehow
-  - [x] Stop player from shooting when dead
-  - [x] Respawn player automatically after 5 seconds instead of back to menu
-- [x] Broadcast sound across all players
-- [x] Fix cannonball collision
-- [x] Island fix
+## TODO
+### 0.4.0 Alpha
+- [ ] React UI so it can explain a lot more
+  - [ ] More details
+  - [ ] Stacking components
+  - [ ] Satisfying animations
+  - [ ] Buy in 5, 10, 50 increments
+  - [ ] Sell all button
+- [ ] Safe zone in port
+- [ ] Stash
+- [ ] AI ships
+- [ ] Ship upgrades (persistent)
+- [ ] Proximity voice chat
+- [ ] UI to show when you are harvesting things
+- [ ] Persistent world
+- [ ] Login
+- [ ] More incremental progress
+- [ ] Quick buy for components
+- [ ] Backwords should be a more gradual movement
+- [ ] Health too expensive?
+- [ ] Artifacts are long term growth options.
 
 ### Later
 - [ ] Quests

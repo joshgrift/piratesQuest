@@ -499,17 +499,17 @@ transform = Transform3D(0.25, 0, 0, 0, 1, 0, 0, 0, 0.25, -65.841064, 1, -103.994
 ResourceType = 3
 CollectionSpeed = 4.0
 
-[node name="Port" parent="Interactables" instance=ExtResource("9_4dfl3")]
+[node name="StJohns" parent="Interactables" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -33.59208, 1, 44.59691)
 PortName = "Saint Johns"
 ItemsForSale = Array[Object]([SubResource("Resource_a0nu5"), SubResource("Resource_bjecb"), SubResource("Resource_10igl"), SubResource("Resource_q6imw"), SubResource("Resource_qysfa"), SubResource("Resource_4dfl3")])
 
-[node name="Port2" parent="Interactables" instance=ExtResource("9_4dfl3")]
+[node name="KrakenFall" parent="Interactables" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -110.64748, 1, -104.08782)
 PortName = "Krakenfall"
 ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_3sgb2"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l")])
 
-[node name="Port3" parent="Interactables" instance=ExtResource("9_4dfl3")]
+[node name="Haven" parent="Interactables" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 139.80185, 1, -103.99682)
 PortName = "Haven"
 ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_mfrq5"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l")])
