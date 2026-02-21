@@ -1,16 +1,27 @@
 using Godot;
 using System;
+using System.Threading.Tasks;
 using PiratesQuest;
 
 public partial class Menu : Node2D
 {
+  [Export] public Control MainMenuContainer;
+  [Export] public Control LoginContainer;
+  [Export] public LineEdit UsernameEdit;
+  [Export] public LineEdit PasswordEdit;
+  [Export] public Button LoginButton;
+  [Export] public Button SignupButton;
+  [Export] public Label LoginStatusLabel;
+
   [Export] public Container MultiplayerControls;
   [Export] public Container ServerListingsContainer;
   [Export] public Container PlayerIdentityContainer;
   [Export] public Label StatusLabel;
   [Export] public Button MuteButton;
+  [Export] public Button LogoutButton;
 
   private PackedScene _listingScene = GD.Load<PackedScene>("res://scenes/menu/scenes/server_listing.tscn");
+  private bool _isAuthenticating = false;
 
   public override void _Ready()
   {
@@ -22,7 +33,34 @@ public partial class Menu : Node2D
     else
     {
       SetupMenuUI();
+      SetupLoginUI();
     }
+  }
+
+  private void SetupLoginUI()
+  {
+    // Require login before showing any of the existing menu controls.
+    SetMainMenuVisible(false);
+    LoginContainer.Visible = true;
+
+    var savedToken = Configuration.GetUserToken();
+    LoginStatusLabel.Text = $"API: {Configuration.ApiBaseUrl}";
+
+    LoginButton.Pressed += () => _ = AttemptAuth("login");
+    SignupButton.Pressed += () => _ = AttemptAuth("signup");
+    PasswordEdit.TextSubmitted += (_submittedText) =>
+    {
+      _ = AttemptAuth("login");
+    };
+
+    // If a token is already saved, log in immediately.
+    if (!string.IsNullOrWhiteSpace(savedToken))
+    {
+      CompleteLogin();
+      return;
+    }
+
+    UsernameEdit.GrabFocus();
   }
 
   private void SetupMenuUI()
@@ -86,6 +124,89 @@ public partial class Menu : Node2D
       // Update button text to show what will happen when clicked
       muteButton.Text = toggled ? "Unmute Sea" : "Mute Sea";
     };
+
+    // Clear saved token and return to the login gate.
+    LogoutButton.Pressed += PerformLogout;
+  }
+
+  private async Task AttemptAuth(string mode)
+  {
+    if (_isAuthenticating)
+    {
+      return;
+    }
+
+    var username = UsernameEdit.Text.Trim();
+    var password = PasswordEdit.Text;
+    if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+    {
+      LoginStatusLabel.Text = "Please enter username and password.";
+      LoginStatusLabel.AddThemeColorOverride("font_color", Colors.Red);
+      return;
+    }
+
+    _isAuthenticating = true;
+    LoginButton.Disabled = true;
+    SignupButton.Disabled = true;
+    LoginStatusLabel.Text = mode == "signup" ? "Signing up..." : "Logging in...";
+    LoginStatusLabel.AddThemeColorOverride("font_color", Colors.White);
+
+    var authResult = mode == "signup"
+      ? await API.SignupAsync(username, password)
+      : await API.LoginAsync(username, password);
+
+    _isAuthenticating = false;
+    LoginButton.Disabled = false;
+    SignupButton.Disabled = false;
+
+    if (!authResult.Success)
+    {
+      LoginStatusLabel.Text = authResult.ErrorMessage;
+      LoginStatusLabel.AddThemeColorOverride("font_color", Colors.Red);
+      return;
+    }
+
+    var saveError = Configuration.SaveUserToken(authResult.Token);
+    if (saveError != Error.Ok)
+    {
+      LoginStatusLabel.Text = $"Failed to save token: {saveError}";
+      LoginStatusLabel.AddThemeColorOverride("font_color", Colors.Red);
+      return;
+    }
+
+    CompleteLogin();
+  }
+
+  private void CompleteLogin()
+  {
+    LoginContainer.Visible = false;
+    SetMainMenuVisible(true);
+    UsernameEdit.ReleaseFocus();
+    PasswordEdit.ReleaseFocus();
+    DisplayStatus("Authenticated.");
+  }
+
+  private void SetMainMenuVisible(bool isVisible)
+  {
+    MainMenuContainer.Visible = isVisible;
+  }
+
+  private void PerformLogout()
+  {
+    var clearError = Configuration.ClearUserToken();
+    if (clearError != Error.Ok)
+    {
+      DisplayError($"Failed to clear token: {clearError}");
+      return;
+    }
+
+    UsernameEdit.Text = string.Empty;
+    PasswordEdit.Text = string.Empty;
+    LoginStatusLabel.Text = "Logged out. Please log in.";
+    LoginStatusLabel.AddThemeColorOverride("font_color", Colors.White);
+    LoginContainer.Visible = true;
+    SetMainMenuVisible(false);
+    UsernameEdit.GrabFocus();
   }
 
   private void JoinServer(string ipAddress, int port)

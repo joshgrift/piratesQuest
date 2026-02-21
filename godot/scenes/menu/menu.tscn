@@ -4,13 +4,21 @@
 [ext_resource type="Texture2D" uid="uid://d2v6jscs37wa2" path="res://art/banner.png" id="2_e0arn"]
 [ext_resource type="Theme" uid="uid://sj508xa6kulh" path="res://theme.tres" id="2_mcvr8"]
 
-[node name="Menu" type="Node2D" node_paths=PackedStringArray("MultiplayerControls", "ServerListingsContainer", "PlayerIdentityContainer", "StatusLabel", "MuteButton")]
+[node name="Menu" type="Node2D" node_paths=PackedStringArray("MainMenuContainer", "LoginContainer", "UsernameEdit", "PasswordEdit", "LoginButton", "SignupButton", "LoginStatusLabel", "MultiplayerControls", "ServerListingsContainer", "PlayerIdentityContainer", "StatusLabel", "MuteButton", "LogoutButton")]
 script = ExtResource("1_lti8b")
+MainMenuContainer = NodePath("CanvasLayer/Menu")
+LoginContainer = NodePath("CanvasLayer/Login")
+UsernameEdit = NodePath("CanvasLayer/Login/MarginContainer/VBoxContainer/UsernameEdit")
+PasswordEdit = NodePath("CanvasLayer/Login/MarginContainer/VBoxContainer/PasswordEdit")
+LoginButton = NodePath("CanvasLayer/Login/MarginContainer/VBoxContainer/LoginButton")
+SignupButton = NodePath("CanvasLayer/Login/MarginContainer/VBoxContainer/SignupButton")
+LoginStatusLabel = NodePath("CanvasLayer/Login/MarginContainer/VBoxContainer/LoginStatusLabel")
 MultiplayerControls = NodePath("CanvasLayer/Menu/MarginContainer/VBoxContainer/MultiplayerControls")
 ServerListingsContainer = NodePath("CanvasLayer/Menu/MarginContainer/VBoxContainer/Servers")
 PlayerIdentityContainer = NodePath("CanvasLayer/Menu/MarginContainer/VBoxContainer/PlayerIdentity")
 StatusLabel = NodePath("CanvasLayer/Menu/MarginContainer/VBoxContainer/StatusLabel")
 MuteButton = NodePath("CanvasLayer/Menu/MarginContainer/VBoxContainer/MuteButton")
+LogoutButton = NodePath("CanvasLayer/Menu/MarginContainer/VBoxContainer/LogoutButton")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
@@ -112,6 +120,64 @@ theme_override_colors/font_color = Color(0.96423227, 0.21557301, 0.23434946, 1)
 layout_mode = 2
 toggle_mode = true
 text = "Mute Ocean Noise"
+
+[node name="LogoutButton" type="Button" parent="CanvasLayer/Menu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Logout"
+
+[node name="Login" type="MarginContainer" parent="CanvasLayer"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -202.5
+offset_top = -90.0
+offset_right = 202.5
+offset_bottom = 90.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="CanvasLayer/Login"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/Login"]
+layout_mode = 2
+theme = ExtResource("2_mcvr8")
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Login/MarginContainer"]
+layout_mode = 2
+
+[node name="LoginHeader" type="Label" parent="CanvasLayer/Login/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_type_variation = &"HUD_Header"
+text = "Login"
+
+[node name="UsernameEdit" type="LineEdit" parent="CanvasLayer/Login/MarginContainer/VBoxContainer"]
+layout_mode = 2
+placeholder_text = "Username"
+
+[node name="PasswordEdit" type="LineEdit" parent="CanvasLayer/Login/MarginContainer/VBoxContainer"]
+layout_mode = 2
+placeholder_text = "Password"
+secret = true
+
+[node name="LoginButton" type="Button" parent="CanvasLayer/Login/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Login"
+
+[node name="SignupButton" type="Button" parent="CanvasLayer/Login/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Sign Up"
+
+[node name="LoginStatusLabel" type="Label" parent="CanvasLayer/Login/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Enter username and password to continue."
 
 [node name="VersionLabel" type="Label" parent="CanvasLayer"]
 anchors_preset = 7

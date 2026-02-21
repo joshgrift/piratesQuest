@@ -8,12 +8,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<User> Users => Set<User>();
     public DbSet<GameServer> GameServers => Set<GameServer>();
     public DbSet<GameState> GameStates => Set<GameState>();
+    public DbSet<Meta> Meta => Set<Meta>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>(e =>
         {
             e.HasIndex(u => u.Username).IsUnique();
+            e.Property(u => u.Role)
+                .HasConversion<string>()
+                .HasDefaultValue(UserRole.Player);
         });
 
         modelBuilder.Entity<GameState>(e =>
@@ -23,6 +27,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasOne(s => s.Server)
                 .WithMany()
                 .HasForeignKey(s => s.ServerId);
+        });
+
+        modelBuilder.Entity<Meta>(e =>
+        {
+            e.HasIndex(m => m.Key).IsUnique();
         });
     }
 }

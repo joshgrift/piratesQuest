@@ -27,7 +27,9 @@ There are two auth mechanisms:
 
 ### Player auth (JWT)
 
-`POST /api/login` accepts a username and password. If the username doesn't exist, a new account is created. If it does, the password is validated against the stored bcrypt hash. On success, a **permanent** JWT is returned (no expiry). The client sends this token as `Authorization: Bearer <token>` on protected routes.
+- `POST /api/signup` creates a new account and returns a **permanent** JWT (no expiry).
+- `POST /api/login` validates an existing account and returns a **permanent** JWT (no expiry).
+- The client sends this token as `Authorization: Bearer <token>` on protected routes.
 
 ### Server auth (shared secret)
 
@@ -37,7 +39,8 @@ Game servers authenticate by sending the shared secret in the `X-Server-Key` hea
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `POST` | `/api/login` | Public | Register or login, returns JWT |
+| `POST` | `/api/signup` | Public | Register new account, returns JWT |
+| `POST` | `/api/login` | Public | Login existing account, returns JWT |
 | `GET` | `/api/servers` | JWT | List active game servers |
 | `GET` | `/api/server/{id}/state/{user}` | Server key | Get a player's saved game state |
 | `PUT` | `/api/server/{id}/state/{user}` | Server key | Save a player's game state (opaque JSON) |
