@@ -44,6 +44,8 @@ public partial class Menu : Node2D
     LoginContainer.Visible = true;
 
     var savedToken = Configuration.GetUserToken();
+    var savedUsername = Configuration.GetUsername();
+    UsernameEdit.Text = savedUsername;
     LoginStatusLabel.Text = $"API: {Configuration.ApiBaseUrl}";
 
     LoginButton.Pressed += () => _ = AttemptAuth("login");
@@ -53,11 +55,19 @@ public partial class Menu : Node2D
       _ = AttemptAuth("login");
     };
 
-    // If a token is already saved, log in immediately.
-    if (!string.IsNullOrWhiteSpace(savedToken))
+    // If token + username are saved, log in immediately.
+    if (!string.IsNullOrWhiteSpace(savedToken) && !string.IsNullOrWhiteSpace(savedUsername))
     {
       CompleteLogin();
       return;
+    }
+
+    // Old local data may contain only a token. Clear it so the user can re-login cleanly.
+    if (!string.IsNullOrWhiteSpace(savedToken) && string.IsNullOrWhiteSpace(savedUsername))
+    {
+      _ = Configuration.ClearUserToken();
+      LoginStatusLabel.Text = "Please log in again.";
+      LoginStatusLabel.AddThemeColorOverride("font_color", Colors.White);
     }
 
     UsernameEdit.GrabFocus();
@@ -65,12 +75,9 @@ public partial class Menu : Node2D
 
   private void SetupMenuUI()
   {
-    // Player Identity Handlers
-    PlayerIdentityContainer.GetNode<LineEdit>("PlayerNameEdit").TextChanged += (newText) =>
-    {
-      var identity = GetNode<Identity>("/root/Identity");
-      identity.PlayerName = newText;
-    };
+    // Player name comes from authenticated username, so this field is display-only.
+    var playerNameEdit = PlayerIdentityContainer.GetNode<LineEdit>("PlayerNameEdit");
+    playerNameEdit.Editable = false;
 
     // Custom join
     var joinButton = MultiplayerControls.GetNodeOrNull<Button>("JoinButton");
@@ -156,11 +163,20 @@ public partial class Menu : Node2D
       return;
     }
 
+    var saveUsernameError = Configuration.SaveUsername(username);
+    if (saveUsernameError != Error.Ok)
+    {
+      LoginStatusLabel.Text = $"Failed to save username: {saveUsernameError}";
+      LoginStatusLabel.AddThemeColorOverride("font_color", Colors.Red);
+      return;
+    }
+
     CompleteLogin();
   }
 
   private void CompleteLogin()
   {
+    ApplyUsernameToIdentity(Configuration.GetUsername());
     LoginContainer.Visible = false;
     SetMainMenuVisible(true);
     UsernameEdit.ReleaseFocus();
@@ -185,11 +201,22 @@ public partial class Menu : Node2D
 
     UsernameEdit.Text = string.Empty;
     PasswordEdit.Text = string.Empty;
+    ApplyUsernameToIdentity(string.Empty);
     LoginStatusLabel.Text = "Logged out. Please log in.";
     LoginStatusLabel.AddThemeColorOverride("font_color", Colors.White);
     LoginContainer.Visible = true;
     SetMainMenuVisible(false);
     UsernameEdit.GrabFocus();
+  }
+
+  private void ApplyUsernameToIdentity(string username)
+  {
+    var safeUsername = username?.Trim() ?? string.Empty;
+    var identity = GetNode<Identity>("/root/Identity");
+    identity.PlayerName = safeUsername;
+
+    var playerNameEdit = PlayerIdentityContainer.GetNode<LineEdit>("PlayerNameEdit");
+    playerNameEdit.Text = safeUsername;
   }
 
   private async Task LoadServerListingsAsync()

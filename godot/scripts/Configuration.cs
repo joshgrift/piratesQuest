@@ -15,6 +15,7 @@ partial class Configuration : Node
   private const string LocalConfigPath = "user://settings.cfg";
   private const string AuthSection = "auth";
   private const string UserTokenKey = "user_token";
+  private const string UsernameKey = "username";
   private const string GateScenePath = "res://scenes/menu/menu.tscn";
 
   private bool _isRedirectingToGate = false;
@@ -88,7 +89,41 @@ partial class Configuration : Node
   // Convenience helper to log out / remove auth in local storage.
   public static Error ClearUserToken()
   {
-    return SaveUserToken(string.Empty);
+    var config = new ConfigFile();
+    var loadError = config.Load(LocalConfigPath);
+    if (loadError != Error.Ok && loadError != Error.FileNotFound)
+    {
+      return loadError;
+    }
+
+    config.SetValue(AuthSection, UserTokenKey, string.Empty);
+    config.SetValue(AuthSection, UsernameKey, string.Empty);
+    return config.Save(LocalConfigPath);
+  }
+
+  public static Error SaveUsername(string username)
+  {
+    var config = new ConfigFile();
+    var loadError = config.Load(LocalConfigPath);
+    if (loadError != Error.Ok && loadError != Error.FileNotFound)
+    {
+      return loadError;
+    }
+
+    config.SetValue(AuthSection, UsernameKey, username ?? string.Empty);
+    return config.Save(LocalConfigPath);
+  }
+
+  public static string GetUsername()
+  {
+    var config = new ConfigFile();
+    var loadError = config.Load(LocalConfigPath);
+    if (loadError != Error.Ok)
+    {
+      return string.Empty;
+    }
+
+    return config.GetValue(AuthSection, UsernameKey, string.Empty).AsString();
   }
 
   // Small helper for readability when enforcing gate checks.
