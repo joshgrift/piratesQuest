@@ -1,9 +1,36 @@
 # PiratesQuest
 
+## Architecture
+PiratesQuest uses three pieces:
+
+- `Game` (`godot/`): the player client and also the dedicated multiplayer server.
+- `API` (`server/`): login/signup and server list.
+- `Database` (via Docker): stores users and API data.
+
 ## Running
-To run in the editor:
-- Run `run.sh --server`
-- Run the client in the editor
+### Run backend (API + DB)
+From repo root:
+
+```bash
+cd server
+docker compose up -d
+dotnet run
+```
+
+Default API URL is `http://localhost:5236` (matches `godot/scripts/Configuration.cs`).
+
+### Run game server
+From repo root:
+
+```bash
+cd godot
+./run.sh --server
+```
+
+### Run client in editor
+- Open `godot/project.godot` in Godot 4
+- Press Play
+- Login/signup, then join a server
 
 To run without the editor:
 - Run `run.sh`
@@ -41,7 +68,7 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
 - [ ] Ship upgrades (persistent)
 - [ ] Proximity voice chat
 - [x] UI to show when you are harvesting things
-- [ ] Persistent world
+- [x] Persistent world
 - [x] Login
 - [ ] More incremental progress
 

@@ -27,9 +27,54 @@ partial class Configuration : Node
   public static int DefaultPort { get; } = 7777;
   public static string ApiBaseUrl { get; } = "http://localhost:5236";
 
+  public static int ServerId { get; private set; }
+  public static string ServerApiKey { get; private set; }
+
   public override void _Ready()
   {
+    if (IsDesignatedServerMode())
+    {
+      try
+      {
+        ParseServerArgs();
+      }
+      catch (Exception exception)
+      {
+        GD.PushError($"Fatal server startup error: {exception.Message}");
+        GetTree()?.Quit(1);
+        return;
+      }
+    }
     CallDeferred(MethodName.ConfigureWindowTitle);
+  }
+
+  private static void ParseServerArgs()
+  {
+    bool hasServerId = false;
+    bool hasApiKey = false;
+
+    var args = OS.GetCmdlineArgs();
+    for (int i = 0; i < args.Length - 1; i++)
+    {
+      switch (args[i])
+      {
+        case "--server-id":
+          if (int.TryParse(args[i + 1], out int id))
+          {
+            ServerId = id;
+            hasServerId = true;
+          }
+          break;
+        case "--server-api-key":
+          ServerApiKey = args[i + 1];
+          hasApiKey = true;
+          break;
+      }
+    }
+
+    if (!hasServerId || !hasApiKey)
+      throw new InvalidOperationException(
+        "Dedicated server requires --server-id <int> and --server-api-key <string> arguments");
   }
 
   public override void _Process(double delta)

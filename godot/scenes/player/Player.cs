@@ -5,6 +5,8 @@ using Godot;
 using Godot.Collections;
 using PiratesQuest.Data;
 using System;
+using System.Text;
+using System.Text.Json;
 
 public class OwnedComponent
 {
@@ -36,6 +38,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   private const float RecoilDecaySpeed = 2.5f; // How quickly the rocking fades (higher = faster)
 
   public bool isLimitedByCapacity = true;
+  public string UserId { get; set; }
+  public string LastSyncedStateJson { get; set; }
 
   public readonly PlayerStats Stats = new();
   public System.Collections.Generic.List<OwnedComponent> OwnedComponents = [];
@@ -115,6 +119,14 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       var identity = GetNode<Identity>("/root/Identity");
       Nickname = identity.PlayerName;
       GD.Print($"{Name} is local player with nickname {Nickname}");
+
+      var jwt = Configuration.GetUserToken();
+      if (!string.IsNullOrWhiteSpace(jwt))
+        RpcId(1, MethodName.RegisterAuth, jwt);
+
+      var syncTimer = new Timer { WaitTime = 5.0, Autostart = true };
+      syncTimer.Timeout += OnSyncTimeout;
+      AddChild(syncTimer);
     }
 
     // Try to find water plane if not set
@@ -753,6 +765,160 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     return _inventory.GetAll();
   }
 
+  [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
+  private async void RegisterAuth(string jwt)
+  {
+    if (!Multiplayer.IsServer()) return;
+
+    UserId = DecodeUserIdFromJwt(jwt);
+    if (string.IsNullOrEmpty(UserId))
+    {
+      GD.PrintErr($"{Name}: Failed to decode userId from JWT");
+      return;
+    }
+
+    GD.Print($"{Name}: Authenticated as user {UserId}");
+
+    var stateJson = await ServerAPI.LoadPlayerStateAsync(Configuration.ServerId, UserId);
+    if (stateJson != null)
+    {
+      LastSyncedStateJson = stateJson;
+      int peerId = GetMultiplayerAuthority();
+      RpcId(peerId, MethodName.ReceiveState, stateJson);
+      GD.Print($"{Name}: Sent saved state to client (peer {peerId})");
+    }
+  }
+
+  [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
+  private void ReceiveState(string stateJson)
+  {
+    if (!IsMultiplayerAuthority()) return;
+
+    var dto = JsonSerializer.Deserialize<PlayerStateDto>(stateJson,
+      new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    if (dto == null) return;
+
+    ApplyState(dto);
+    GD.Print($"{Name}: Applied saved state from server");
+  }
+
+  [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
+  private void SyncStateToServer(string stateJson)
+  {
+    if (!Multiplayer.IsServer()) return;
+    LastSyncedStateJson = stateJson;
+  }
+
+  private void OnSyncTimeout()
+  {
+    if (!IsMultiplayerAuthority()) return;
+    var dto = SerializeState();
+    var json = JsonSerializer.Serialize(dto);
+    RpcId(1, MethodName.SyncStateToServer, json);
+  }
+
+  public PlayerStateDto SerializeState()
+  {
+    var dto = new PlayerStateDto
+    {
+      Health = Health,
+      Position = [GlobalPosition.X, GlobalPosition.Y, GlobalPosition.Z],
+      IsDead = State == PlayerState.Dead
+    };
+
+    var inventory = _inventory.GetAll();
+    foreach (var item in inventory)
+      dto.Inventory[item.Key.ToString()] = item.Value;
+
+    foreach (var oc in OwnedComponents)
+    {
+      dto.Components.Add(new OwnedComponentDto
+      {
+        Name = oc.Component.name,
+        IsEquipped = oc.isEquipped
+      });
+    }
+
+    return dto;
+  }
+
+  public void ApplyState(PlayerStateDto dto)
+  {
+    foreach (var kvp in dto.Inventory)
+    {
+      if (Enum.TryParse<InventoryItemType>(kvp.Key, out var itemType))
+      {
+        _inventory.SetItem(itemType, kvp.Value);
+        EmitSignal(SignalName.InventoryChanged, (int)itemType, kvp.Value, 0);
+      }
+    }
+
+    OwnedComponents.Clear();
+    foreach (var comp in dto.Components)
+    {
+      var found = System.Array.Find(GameData.Components, c => c.name == comp.Name);
+      if (found != null)
+      {
+        OwnedComponents.Add(new OwnedComponent
+        {
+          Component = found,
+          isEquipped = comp.IsEquipped
+        });
+      }
+      else
+      {
+        GD.PrintErr($"{Name}: Unknown component '{comp.Name}' in saved state, skipping");
+      }
+    }
+    UpdatePlayerStats();
+
+    if (dto.IsDead)
+    {
+      Health = MaxHealth;
+      RandomSpawn(100, 100);
+      State = PlayerState.Alive;
+      GD.Print($"{Name}: Was dead on save, respawning fresh with saved inventory");
+    }
+    else
+    {
+      Health = dto.Health;
+      EmitSignal(SignalName.HealthUpdate, Health);
+      GlobalPosition = new Vector3(dto.Position[0], dto.Position[1], dto.Position[2]);
+    }
+  }
+
+  private static string DecodeUserIdFromJwt(string jwt)
+  {
+    var parts = jwt.Split('.');
+    if (parts.Length != 3) return null;
+
+    var payload = parts[1].Replace('-', '+').Replace('_', '/');
+    switch (payload.Length % 4)
+    {
+      case 2: payload += "=="; break;
+      case 3: payload += "="; break;
+    }
+
+    try
+    {
+      var bytes = Convert.FromBase64String(payload);
+      var json = Encoding.UTF8.GetString(bytes);
+      using var doc = JsonDocument.Parse(json);
+
+      // ClaimTypes.NameIdentifier serializes to this URI in JWTs
+      const string nameIdClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
+      if (doc.RootElement.TryGetProperty(nameIdClaim, out var nameId))
+        return nameId.GetString();
+
+      return null;
+    }
+    catch (Exception ex)
+    {
+      GD.PrintErr($"JWT decode error: {ex.Message}");
+      return null;
+    }
+  }
+
   /// <summary>
   /// Applies water physics to make the boat bob and tilt with waves.
   /// This method samples the water height at the bow and stern of the ship,
@@ -875,7 +1041,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   /// </summary>
   public override void _ExitTree()
   {
-    // Stop our creaking sound if it's playing
+    if (IsMultiplayerAuthority() && Multiplayer.MultiplayerPeer?.GetConnectionStatus() == MultiplayerPeer.ConnectionStatus.Connected)
+      OnSyncTimeout();
+
     if (_isCreakingPlaying)
     {
       var audioManager = GetNodeOrNull<AudioManager>("/root/AudioManager");

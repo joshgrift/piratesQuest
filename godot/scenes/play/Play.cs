@@ -1,6 +1,7 @@
 namespace PiratesQuest;
 
 using System;
+using System.Text.Json;
 using Godot;
 using PiratesQuest.Data;
 using System.Collections.Generic;
@@ -36,6 +37,11 @@ public partial class Play : Node3D
       Multiplayer.PeerConnected += OnPeerConnected;
       Multiplayer.PeerDisconnected += OnPeerDisconnected;
 
+      var autoSaveTimer = new Timer { WaitTime = 30.0, Autostart = true };
+      autoSaveTimer.Timeout += OnAutoSave;
+      AddChild(autoSaveTimer);
+      GD.Print("Auto-save timer started (every 30s)");
+
       // Activate free camera in server mode
       if (Configuration.IsDesignatedServerMode() && _freeCam != null)
       {
@@ -58,13 +64,45 @@ public partial class Play : Node3D
     GD.Print($"Peer {peerId} disconnected, cleaning up their player");
     _peerUsernames.Remove(peerId);
 
-    // Clean up the disconnected player's node
     var playerNode = GetNodeOrNull<Player>($"SpawnPoint/player_{peerId}");
     if (playerNode != null)
     {
+      SavePlayerState(playerNode);
       playerNode.QueueFree();
       GD.Print($"Removed player_{peerId} due to disconnect");
     }
+  }
+
+  private async void SavePlayerState(Player player)
+  {
+    if (string.IsNullOrEmpty(player.UserId))
+    {
+      GD.PrintErr($"{player.Name}: Cannot save state - no userId (auth handshake may not have completed)");
+      return;
+    }
+
+    var json = player.LastSyncedStateJson;
+    if (string.IsNullOrEmpty(json))
+    {
+      GD.PrintErr($"{player.Name}: No synced state available to save");
+      return;
+    }
+
+    await ServerAPI.SavePlayerStateAsync(Configuration.ServerId, player.UserId, json);
+  }
+
+  private void OnAutoSave()
+  {
+    var spawnPoint = GetNodeOrNull("SpawnPoint");
+    if (spawnPoint == null) return;
+
+    foreach (var child in spawnPoint.GetChildren())
+    {
+      if (child is Player player)
+        SavePlayerState(player);
+    }
+
+    GD.Print("Auto-save completed for all connected players");
   }
 
   private CannonBall ProjectileSpawnHandler(Variant data)
