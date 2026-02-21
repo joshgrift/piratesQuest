@@ -24,6 +24,8 @@ public partial class Port : Node3D, IIntractable
   {
     if (body is Player player)
     {
+      // Mark player as docked in a safe zone (no combat damage).
+      player.SetInPort(true);
       EmitSignal(SignalName.ShipDocked, this, player, GetPayload());
     }
   }
@@ -31,6 +33,8 @@ public partial class Port : Node3D, IIntractable
   {
     if (body is Player player)
     {
+      // Leaving the port re-enables normal combat damage.
+      player.SetInPort(false);
       EmitSignal(SignalName.ShipDeparted, this, player);
     }
   }

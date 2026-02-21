@@ -34,12 +34,12 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
   - [ ] Satisfying animations
   - [ ] Buy in 5, 10, 50 increments
   - [ ] Sell all button
-- [ ] Safe zone in port
+- [x] Safe zone in port
 - [ ] Stash
 - [ ] AI ships
 - [ ] Ship upgrades (persistent)
 - [ ] Proximity voice chat
-- [ ] UI to show when you are harvesting things
+- [x] UI to show when you are harvesting things
 - [ ] Persistent world
 - [ ] Login
 - [ ] More incremental progress

@@ -42,6 +42,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   // Current state of the player - controls whether they can move, shoot, or take damage
   [Export] public PlayerState State { get; private set; } = PlayerState.Alive;
+  // True while this ship is inside a port docking area.
+  // We use this to disable incoming damage in safe zones.
+  [Export] public bool IsInPort { get; private set; } = false;
 
   // ICanCollect.CanCollect - player can only collect items when alive
   public bool CanCollect => State == PlayerState.Alive;
@@ -402,6 +405,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     // Can't take damage while dead (waiting to respawn)
     if (State == PlayerState.Dead) return;
+    // Ports are safe zones: no damage while docked.
+    if (IsInPort) return;
 
     Health -= amount;
     if (Health <= 0)
@@ -413,6 +418,14 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       EmitSignal(SignalName.HealthUpdate, Health);
     }
     GD.Print($"health = {Health}");
+  }
+
+  /// <summary>
+  /// Called by Port when this player enters or exits the docking area.
+  /// </summary>
+  public void SetInPort(bool value)
+  {
+    IsInPort = value;
   }
 
   public void OnDeath()
