@@ -1,14 +1,48 @@
-[gd_scene load_steps=3 format=3 uid="uid://bkdqs4u6efsoq"]
+[gd_scene load_steps=8 format=3 uid="uid://bkdqs4u6efsoq"]
 
 [ext_resource type="Script" uid="uid://d2dggj3j345am" path="res://scenes/collectonPoint/CollectionPoint.cs" id="1_eldjc"]
 [ext_resource type="PackedScene" uid="uid://mjskkrq4qiuo" path="res://scenes/play/scenes/interaction_point.tscn" id="2_nl2ir"]
 
-[node name="Collection Point" type="Node3D" node_paths=PackedStringArray("DockingArea")]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bar_bg"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.03, 0.06, 0.12, 0.7)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bar_fill"]
+shading_mode = 0
+albedo_color = Color(0.2, 0.95, 0.35, 1)
+emission_enabled = true
+emission = Color(0.2, 0.95, 0.35, 1)
+emission_energy_multiplier = 0.35
+
+[sub_resource type="BoxMesh" id="BoxMesh_bar_bg"]
+size = Vector3(2.2, 0.18, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bar_fill"]
+size = Vector3(2.2, 0.18, 0.18)
+
+[node name="Collection Point" type="Node3D" node_paths=PackedStringArray("DockingArea", "FeedbackRoot", "FeedbackFill")]
 script = ExtResource("1_eldjc")
 DockingArea = NodePath("InteractionPoint")
+FeedbackRoot = NodePath("Feedback")
+FeedbackFill = NodePath("Feedback/BarFill")
 
 [node name="InteractionPoint" parent="." instance=ExtResource("2_nl2ir")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.5, 0)
 RingColor = Color(0, 0.99215686, 0.29803923, 0.4)
+
+[node name="Feedback" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8, 0)
+visible = false
+
+[node name="BarBackground" type="MeshInstance3D" parent="Feedback"]
+material_override = SubResource("StandardMaterial3D_bar_bg")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_bar_bg")
+
+[node name="BarFill" type="MeshInstance3D" parent="Feedback"]
+material_override = SubResource("StandardMaterial3D_bar_fill")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_bar_fill")
 
 [node name="CollectionTimer" type="Timer" parent="."]
