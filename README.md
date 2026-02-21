@@ -42,7 +42,7 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
 - [ ] Proximity voice chat
 - [x] UI to show when you are harvesting things
 - [ ] Persistent world
-- [ ] Login
+- [x] Login
 - [ ] More incremental progress
 
 - [ ] Health too expensive?

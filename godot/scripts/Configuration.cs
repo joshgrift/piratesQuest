@@ -54,25 +54,6 @@ partial class Configuration : Node
     return args.Contains("--server") || OS.HasFeature("dedicated_server");
   }
 
-  public static ServerListingInfo[] GetDefaultServerListings()
-  {
-    return
-    [
-      new ServerListingInfo
-      {
-        ServerName = "Localhost",
-        IpAddress = "127.0.0.1",
-        Port = DefaultPort
-      },
-      new ServerListingInfo
-      {
-        ServerName = "Sandbox",
-        IpAddress = "sandbox.servers.pirates.quest",
-        Port = DefaultPort
-      }
-    ];
-  }
-
   // Saves the current auth token locally.
   // Returns Godot Error.Ok on success.
   public static Error SaveUserToken(string userToken)

@@ -72,24 +72,6 @@ public partial class Menu : Node2D
       identity.PlayerName = newText;
     };
 
-    // Connect to Server Listings
-    foreach (var serverListing in Configuration.GetDefaultServerListings())
-    {
-      var listingInstance = _listingScene.Instantiate<ServerListing>();
-      listingInstance.ServerName = serverListing.ServerName;
-      listingInstance.IpAddress = serverListing.IpAddress;
-      listingInstance.Port = serverListing.Port;
-      listingInstance.PlayerCount = "x";
-      listingInstance.PlayerMax = "8";
-
-      ServerListingsContainer.AddChild(listingInstance);
-
-      listingInstance.JoinServer += (ip, port) =>
-      {
-        JoinServer(ip, port);
-      };
-    }
-
     // Custom join
     var joinButton = MultiplayerControls.GetNodeOrNull<Button>("JoinButton");
     joinButton.ButtonDown += () =>
@@ -184,6 +166,7 @@ public partial class Menu : Node2D
     UsernameEdit.ReleaseFocus();
     PasswordEdit.ReleaseFocus();
     DisplayStatus("Authenticated.");
+    _ = LoadServerListingsAsync();
   }
 
   private void SetMainMenuVisible(bool isVisible)
@@ -207,6 +190,54 @@ public partial class Menu : Node2D
     LoginContainer.Visible = true;
     SetMainMenuVisible(false);
     UsernameEdit.GrabFocus();
+  }
+
+  private async Task LoadServerListingsAsync()
+  {
+    // Remove existing rows so re-login doesn't duplicate listing entries.
+    foreach (Node child in ServerListingsContainer.GetChildren())
+    {
+      child.QueueFree();
+    }
+
+    DisplayStatus("Loading servers...");
+    var result = await API.GetServerListingsAsync();
+    if (!result.Success)
+    {
+      DisplayError(result.ErrorMessage);
+      return;
+    }
+
+    foreach (var server in result.Servers)
+    {
+      AddServerListing(server);
+    }
+
+    if (result.Servers.Length == 0)
+    {
+      DisplayStatus("No servers available right now.");
+    }
+    else
+    {
+      DisplayStatus("Servers loaded.");
+    }
+  }
+
+  private void AddServerListing(ServerListingInfo serverListing)
+  {
+    var listingInstance = _listingScene.Instantiate<ServerListing>();
+    listingInstance.ServerName = serverListing.ServerName;
+    listingInstance.IpAddress = serverListing.IpAddress;
+    listingInstance.Port = serverListing.Port;
+    listingInstance.PlayerCount = "x";
+    listingInstance.PlayerMax = "8";
+
+    ServerListingsContainer.AddChild(listingInstance);
+
+    listingInstance.JoinServer += (ip, port) =>
+    {
+      JoinServer(ip, port);
+    };
   }
 
   private void JoinServer(string ipAddress, int port)
