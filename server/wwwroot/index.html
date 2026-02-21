@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pirate's Quest</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;500&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #060e1a;
+            color: #d4c4a0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .ocean-bg {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 50% 0%, #0f2744 0%, transparent 70%),
+                radial-gradient(ellipse at 80% 100%, #1a0e2e 0%, transparent 50%),
+                #060e1a;
+            z-index: -1;
+        }
+
+        header {
+            text-align: center;
+            padding: 6rem 2rem 3rem;
+        }
+
+        header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            color: #e8d5a3;
+            text-shadow: 0 2px 20px rgba(232, 213, 163, 0.3);
+            letter-spacing: 0.05em;
+        }
+
+        header .tagline {
+            margin-top: 1rem;
+            font-size: 1.15rem;
+            color: #8a9bb5;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .version-badge {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.35rem 1rem;
+            background: rgba(232, 213, 163, 0.1);
+            border: 1px solid rgba(232, 213, 163, 0.2);
+            border-radius: 999px;
+            font-size: 0.85rem;
+            color: #c4b48a;
+            letter-spacing: 0.05em;
+        }
+
+        .content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 1.75rem;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: rgba(232, 213, 163, 0.2);
+        }
+
+        .card .icon {
+            font-size: 1.8rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card h3 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            color: #e8d5a3;
+            margin-bottom: 0.5rem;
+        }
+
+        .card p {
+            font-size: 0.9rem;
+            color: #7a8a9e;
+            line-height: 1.6;
+        }
+
+        .section {
+            margin: 4rem 0;
+        }
+
+        .section h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.6rem;
+            color: #e8d5a3;
+            margin-bottom: 1rem;
+        }
+
+        .section p {
+            color: #8a9bb5;
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .feature-list li {
+            padding: 0.5rem 0;
+            color: #8a9bb5;
+            font-size: 0.95rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .feature-list li::before {
+            content: "\2022";
+            position: absolute;
+            left: 0;
+            color: #c4a35a;
+        }
+
+        footer {
+            text-align: center;
+            padding: 4rem 2rem 2rem;
+            color: #4a5568;
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: #8a9bb5;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: #e8d5a3;
+        }
+    </style>
+</head>
+<body>
+    <div class="ocean-bg"></div>
+
+    <header>
+        <h1>Pirate's Quest</h1>
+        <p class="tagline">
+            A one-hour pirate sandbox where economy, exploration, and combat collide &mdash;
+            designed to test how humans and AIs compete, cooperate, and outplay each other in a living system.
+        </p>
+        <span class="version-badge">Alpha &middot; v0.3.0</span>
+    </header>
+
+    <div class="content">
+        <div class="card-grid">
+            <div class="card">
+                <div class="icon">&#9875;</div>
+                <h3>Explore</h3>
+                <p>Sail a sea of islands, discover resources, and chart your own course through a procedurally rich world.</p>
+            </div>
+            <div class="card">
+                <div class="icon">&#9876;</div>
+                <h3>Combat</h3>
+                <p>Engage rival ships with cannons. Destroying a big haul scatters their crew and treasure back into the world.</p>
+            </div>
+            <div class="card">
+                <div class="icon">&#9878;</div>
+                <h3>Trade</h3>
+                <p>Harvest wood, stone, and salvage. Trade between ports, upgrade your ship, and recruit rare NPCs.</p>
+            </div>
+            <div class="card">
+                <div class="icon">&#9813;</div>
+                <h3>Compete</h3>
+                <p>Collect Pirate King Skulls &mdash; the sole victory currency. The player with the most skulls at the hour's end wins.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Humans vs. AI</h2>
+            <p>
+                Pirate's Quest is a competitive multiplayer experiment. Human players face off against
+                AI-controlled pirates &mdash; from simple rule-based bots to neural nets and LLM-driven agents.
+                Each round is optimized for fast iteration, balance testing, and emergent behavior.
+                Individual victory and the meta-battle between Humans and AI are both tracked.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>Core Loop</h2>
+            <ul class="feature-list">
+                <li>Explore a procedural sea of islands with your ship</li>
+                <li>Gather resources: wood, stone, salvage</li>
+                <li>Trade between ports for profit</li>
+                <li>Complete quests from ports, NPCs, and encounters</li>
+                <li>Upgrade your ship &mdash; speed, hull, cargo, damage (trade-offs, no perfect build)</li>
+                <li>Recruit scarce NPCs that provide passive modifiers</li>
+                <li>Hunt for Pirate King Skulls to secure victory</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Downloads</h2>
+            <p>
+                Pirate's Quest is built with <a href="https://godotengine.org/" style="color:#c4a35a;">Godot Engine</a>
+                and is available for macOS and Windows.
+                Check the <a href="https://github.com/joshgrift/piratesQuest/releases" style="color:#c4a35a;">GitHub releases</a>
+                for the latest builds.
+            </p>
+        </div>
+    </div>
+
+    <footer>
+        <p>
+            Pirate's Quest &middot;
+            <a href="https://github.com/joshgrift/piratesQuest">GitHub</a>
+        </p>
+    </footer>
+</body>
+</html>

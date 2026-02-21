@@ -34,6 +34,7 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
   - [ ] Satisfying animations
   - [ ] Buy in 5, 10, 50 increments
   - [ ] Sell all button
+  - [ ] Quick buy for components
 - [x] Safe zone in port
 - [ ] Stash
 - [ ] AI ships
@@ -43,18 +44,16 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
 - [ ] Persistent world
 - [ ] Login
 - [ ] More incremental progress
-- [ ] Quick buy for components
-- [ ] Backwords should be a more gradual movement
+
 - [ ] Health too expensive?
 - [ ] Artifacts are long term growth options.
 
 ### Later
 - [ ] Quests
-- [ ] Ship Upgrades
-- [ ] API for AI characters
 - [ ] Island mesh?
    - [ ] Better island cannonball collision
 - [ ] Fix water.
+- [ ] Backwords should be a more gradual movement
 
 ### Suggestions
 - [ ] Close port menu early
