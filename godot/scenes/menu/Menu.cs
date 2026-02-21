@@ -43,9 +43,8 @@ public partial class Menu : Node2D
     SetMainMenuVisible(false);
     LoginContainer.Visible = true;
 
-    var savedToken = Configuration.GetUserToken();
-    var savedUsername = Configuration.GetUsername();
-    UsernameEdit.Text = savedUsername;
+    var loginGateState = Configuration.ResolveLoginGateState();
+    UsernameEdit.Text = loginGateState.Username;
     LoginStatusLabel.Text = $"API: {Configuration.ApiBaseUrl}";
 
     LoginButton.Pressed += () => _ = AttemptAuth("login");
@@ -55,18 +54,15 @@ public partial class Menu : Node2D
       _ = AttemptAuth("login");
     };
 
-    // If token + username are saved, log in immediately.
-    if (!string.IsNullOrWhiteSpace(savedToken) && !string.IsNullOrWhiteSpace(savedUsername))
+    if (loginGateState.ShouldAutoLogin)
     {
       CompleteLogin();
       return;
     }
 
-    // Old local data may contain only a token. Clear it so the user can re-login cleanly.
-    if (!string.IsNullOrWhiteSpace(savedToken) && string.IsNullOrWhiteSpace(savedUsername))
+    if (!string.IsNullOrWhiteSpace(loginGateState.StatusMessage))
     {
-      _ = Configuration.ClearUserToken();
-      LoginStatusLabel.Text = "Please log in again.";
+      LoginStatusLabel.Text = loginGateState.StatusMessage;
       LoginStatusLabel.AddThemeColorOverride("font_color", Colors.White);
     }
 

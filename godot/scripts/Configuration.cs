@@ -126,10 +126,39 @@ partial class Configuration : Node
     return config.GetValue(AuthSection, UsernameKey, string.Empty).AsString();
   }
 
-  // Small helper for readability when enforcing gate checks.
-  public static bool HasUserToken()
+  // A valid local session needs both token + username.
+  public static bool HasValidSession()
   {
-    return !string.IsNullOrWhiteSpace(GetUserToken());
+    return !string.IsNullOrWhiteSpace(GetUserToken()) && !string.IsNullOrWhiteSpace(GetUsername());
+  }
+
+  // Central auth bootstrap rules for the menu gate.
+  // Menu should use this instead of deciding login validity itself.
+  public static (bool ShouldAutoLogin, string Username, string StatusMessage) ResolveLoginGateState()
+  {
+    var token = GetUserToken();
+    var username = GetUsername().Trim();
+
+    // Happy path: we have everything needed to continue.
+    if (!string.IsNullOrWhiteSpace(token) && !string.IsNullOrWhiteSpace(username))
+    {
+      return (true, username, string.Empty);
+    }
+
+    // Old/incomplete local state. Clear it in one place.
+    if (!string.IsNullOrWhiteSpace(token) && string.IsNullOrWhiteSpace(username))
+    {
+      var clearError = ClearUserToken();
+      if (clearError != Error.Ok)
+      {
+        return (false, string.Empty, $"Failed to reset login state: {clearError}");
+      }
+
+      return (false, string.Empty, "Please log in again.");
+    }
+
+    // Optional convenience: keep username pre-filled when token is missing.
+    return (false, username, string.Empty);
   }
 
   // If user has no token, keep them on the gate scene (menu/login).
@@ -141,7 +170,7 @@ partial class Configuration : Node
       return;
     }
 
-    if (HasUserToken())
+    if (HasValidSession())
     {
       return;
     }
@@ -173,7 +202,7 @@ partial class Configuration : Node
     _isRedirectingToGate = false;
 
     // Re-check token right before redirect in case it changed this frame.
-    if (HasUserToken())
+    if (HasValidSession())
     {
       return;
     }
