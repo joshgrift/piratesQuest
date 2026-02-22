@@ -66,14 +66,13 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
 - [ ] Stash
 - [ ] AI ships
 - [ ] Ship upgrades (persistent)
-
 - [x] UI to show when you are harvesting things
 - [x] Persistent world
 - [x] Login
 - [ ] More incremental progress
-
 - [ ] Health too expensive?
-- [ ] Artifacts are long term growth options.
+
+- [ ] Deployed to live server
 
 ### Later
 - [ ] Quests
@@ -82,6 +81,7 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
 - [ ] Fix water.
 - [ ] Backwords should be a more gradual movement
 - [ ] Proximity voice chat
+- [ ] Artifacts are long term growth options.
 
 ### Suggestions
 - [ ] Close port menu early
