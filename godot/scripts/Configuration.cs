@@ -21,6 +21,9 @@ partial class Configuration : Node
   private bool _isRedirectingToGate = false;
   private static string _pendingMenuError = string.Empty;
 
+  private static string _memoryToken = string.Empty;
+  private static string _memoryUsername = string.Empty;
+
   public static bool RandomSpawnEnabled { get; } = true;
   public static int StartingCoin { get; } = 100;
   public static bool IsCreative { get; } = false;
@@ -29,6 +32,10 @@ partial class Configuration : Node
 
   public static int ServerId { get; private set; }
   public static string ServerApiKey { get; private set; }
+
+  public static string CmdUser { get; private set; }
+  public static string CmdPassword { get; private set; }
+  public static bool DisableSaveUser { get; private set; }
 
   public override void _Ready()
   {
@@ -44,6 +51,10 @@ partial class Configuration : Node
         GetTree()?.Quit(1);
         return;
       }
+    }
+    else
+    {
+      ParseClientArgs();
     }
     CallDeferred(MethodName.ConfigureWindowTitle);
   }
@@ -77,6 +88,26 @@ partial class Configuration : Node
         "Dedicated server requires --server-id <int> and --server-api-key <string> arguments");
   }
 
+  private static void ParseClientArgs()
+  {
+    var args = OS.GetCmdlineArgs();
+    for (int i = 0; i < args.Length; i++)
+    {
+      switch (args[i])
+      {
+        case "--user" when i + 1 < args.Length:
+          CmdUser = args[i + 1];
+          break;
+        case "--password" when i + 1 < args.Length:
+          CmdPassword = args[i + 1];
+          break;
+        case "--disableSaveUser":
+          DisableSaveUser = true;
+          break;
+      }
+    }
+  }
+
   public override void _Process(double delta)
   {
     EnforceLoginGate();
@@ -101,13 +132,15 @@ partial class Configuration : Node
     return args.Contains("--server") || OS.HasFeature("dedicated_server");
   }
 
-  // Saves the current auth token locally.
-  // Returns Godot Error.Ok on success.
   public static Error SaveUserToken(string userToken)
   {
-    var config = new ConfigFile();
+    if (DisableSaveUser)
+    {
+      _memoryToken = userToken ?? string.Empty;
+      return Error.Ok;
+    }
 
-    // Load first so we keep existing values in this file.
+    var config = new ConfigFile();
     var loadError = config.Load(LocalConfigPath);
     if (loadError != Error.Ok && loadError != Error.FileNotFound)
     {
@@ -118,10 +151,11 @@ partial class Configuration : Node
     return config.Save(LocalConfigPath);
   }
 
-  // Reads the saved auth token from local storage.
-  // Returns empty string if the file/key is missing.
   public static string GetUserToken()
   {
+    if (DisableSaveUser)
+      return _memoryToken;
+
     var config = new ConfigFile();
     var loadError = config.Load(LocalConfigPath);
     if (loadError != Error.Ok)
@@ -132,9 +166,15 @@ partial class Configuration : Node
     return config.GetValue(AuthSection, UserTokenKey, string.Empty).AsString();
   }
 
-  // Convenience helper to log out / remove auth in local storage.
   public static Error ClearUserToken()
   {
+    if (DisableSaveUser)
+    {
+      _memoryToken = string.Empty;
+      _memoryUsername = string.Empty;
+      return Error.Ok;
+    }
+
     var config = new ConfigFile();
     var loadError = config.Load(LocalConfigPath);
     if (loadError != Error.Ok && loadError != Error.FileNotFound)
@@ -149,6 +189,12 @@ partial class Configuration : Node
 
   public static Error SaveUsername(string username)
   {
+    if (DisableSaveUser)
+    {
+      _memoryUsername = username ?? string.Empty;
+      return Error.Ok;
+    }
+
     var config = new ConfigFile();
     var loadError = config.Load(LocalConfigPath);
     if (loadError != Error.Ok && loadError != Error.FileNotFound)
@@ -162,6 +208,9 @@ partial class Configuration : Node
 
   public static string GetUsername()
   {
+    if (DisableSaveUser)
+      return _memoryUsername;
+
     var config = new ConfigFile();
     var loadError = config.Load(LocalConfigPath);
     if (loadError != Error.Ok)

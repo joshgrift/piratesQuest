@@ -39,7 +39,6 @@ public partial class Menu : Node2D
 
   private void SetupLoginUI()
   {
-    // Require login before showing any of the existing menu controls.
     SetMainMenuVisible(false);
     LoginContainer.Visible = true;
 
@@ -53,6 +52,14 @@ public partial class Menu : Node2D
     {
       _ = AttemptAuth("login");
     };
+
+    if (!string.IsNullOrWhiteSpace(Configuration.CmdUser) && !string.IsNullOrWhiteSpace(Configuration.CmdPassword))
+    {
+      UsernameEdit.Text = Configuration.CmdUser;
+      PasswordEdit.Text = Configuration.CmdPassword;
+      _ = AttemptAuth("login");
+      return;
+    }
 
     if (loginGateState.ShouldAutoLogin)
     {

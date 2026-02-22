@@ -66,7 +66,7 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
 - [ ] Stash
 - [ ] AI ships
 - [ ] Ship upgrades (persistent)
-- [ ] Proximity voice chat
+
 - [x] UI to show when you are harvesting things
 - [x] Persistent world
 - [x] Login
@@ -81,6 +81,7 @@ Please submit a PR, learning godot, so any and all suggestions welcome.
    - [ ] Better island cannonball collision
 - [ ] Fix water.
 - [ ] Backwords should be a more gradual movement
+- [ ] Proximity voice chat
 
 ### Suggestions
 - [ ] Close port menu early
