@@ -19,6 +19,12 @@ interface RenderAppOptions {
   state?: Partial<PortState>;
   /** Which tab to activate after opening. Defaults to "guide" (the App default). */
   tab?: Tab;
+  /**
+   * When true, the IPC mock simulates Godot by calling window.updateState
+   * after every postMessage. This is needed for tests that exercise
+   * sendIpcAndWait (e.g. Buy & Repair, Buy All & Build).
+   */
+  simulateGodot?: boolean;
 }
 
 /**
@@ -27,13 +33,14 @@ interface RenderAppOptions {
  * Returns Testing Library queries, the PortState used, and the IPC spy.
  */
 export function renderApp(overridesOrOptions?: Partial<PortState> | RenderAppOptions) {
-  // Support both the old simple signature and the new options object.
   let stateOverrides: Partial<PortState> | undefined;
   let tab: Tab | undefined;
+  let simulateGodot = false;
 
   if (overridesOrOptions && "state" in overridesOrOptions) {
     stateOverrides = overridesOrOptions.state;
     tab = overridesOrOptions.tab;
+    simulateGodot = (overridesOrOptions as RenderAppOptions).simulateGodot ?? false;
   } else {
     stateOverrides = overridesOrOptions as Partial<PortState> | undefined;
   }
@@ -42,12 +49,24 @@ export function renderApp(overridesOrOptions?: Partial<PortState> | RenderAppOpt
   const user = userEvent.setup();
   const result = render(<App />);
 
-  // Simulate what Godot does: call window.openPort with the port data.
   act(() => {
     window.openPort?.(state);
   });
 
-  // Navigate to the requested tab if it's not the default.
+  // When simulateGodot is on, make the IPC mock behave like the real game:
+  // after every postMessage, push updated state back via window.updateState.
+  // This lets sendIpcAndWait promises resolve in tests.
+  if (simulateGodot) {
+    const spy = window.ipc!.postMessage as Mock;
+    spy.mockImplementation(() => {
+      queueMicrotask(() => {
+        act(() => {
+          window.updateState?.(state);
+        });
+      });
+    });
+  }
+
   if (tab && tab !== "guide") {
     const tabButton = screen.getByRole("button", { name: TAB_LABELS[tab] });
     act(() => {

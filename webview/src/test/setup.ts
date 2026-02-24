@@ -10,8 +10,9 @@ Object.defineProperty(window, "ipc", {
 });
 
 beforeEach(() => {
-  // Reset the IPC spy so calls from previous tests don't leak through.
-  (window.ipc!.postMessage as ReturnType<typeof vi.fn>).mockClear();
+  // Reset the IPC spy AND its implementation so nothing leaks between tests.
+  // mockReset clears calls + results AND resets to the default no-op behaviour.
+  (window.ipc!.postMessage as ReturnType<typeof vi.fn>).mockReset();
 });
 
 // Clean up the DOM after each test so components don't leak between tests.

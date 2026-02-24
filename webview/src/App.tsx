@@ -11,6 +11,23 @@ function sendIpc(msg: IpcMessage): void {
   window.ipc?.postMessage(JSON.stringify(msg));
 }
 
+/**
+ * Send an IPC message and wait for Godot to push updated state back
+ * via window.updateState(). This lets the UI chain dependent actions
+ * (e.g. buy materials, then heal) without a race condition.
+ */
+function sendIpcAndWait(msg: IpcMessage): Promise<PortState> {
+  return new Promise<PortState>((resolve) => {
+    const prev = window.updateState;
+    window.updateState = (data: PortState) => {
+      window.updateState = prev;
+      prev?.(data);
+      resolve(data);
+    };
+    sendIpc(msg);
+  });
+}
+
 function iconUrl(folder: "components" | "inventory", filename: string): string {
   return `${BASE}icons/${folder}/${filename}`;
 }
@@ -467,11 +484,13 @@ function ShipyardTab({ state }: { state: PortState }) {
                   <button
                     className="repair-btn repair-btn-gold"
                     disabled={maxBuyHeal <= 0}
-                    onClick={() => {
+                    onClick={async () => {
                       const items: { type: string; quantity: number }[] = [];
                       if (woodToBuy > 0) items.push({ type: "Wood", quantity: woodToBuy });
                       if (fishToBuy > 0) items.push({ type: "Fish", quantity: fishToBuy });
-                      if (items.length > 0) sendIpc({ action: "buy_items", items });
+                      if (items.length > 0) {
+                        await sendIpcAndWait({ action: "buy_items", items });
+                      }
                       sendIpc({ action: "heal" });
                     }}
                   >
@@ -737,9 +756,9 @@ function ComponentCard({
           <button
             className="component-action-btn buy-and-build"
             disabled={!buyAndBuildInfo.affordable}
-            onClick={() => {
+            onClick={async () => {
               if (buyAndBuildInfo.needed.length > 0) {
-                sendIpc({ action: "buy_items", items: buyAndBuildInfo.needed });
+                await sendIpcAndWait({ action: "buy_items", items: buyAndBuildInfo.needed });
               }
               sendIpc({ action: "purchase_component", name: component.name });
             }}

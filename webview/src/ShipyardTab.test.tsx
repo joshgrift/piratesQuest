@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { renderApp, getIpcMessages } from "./test/helpers";
 import {
   makeShopItem,
@@ -8,9 +8,11 @@ import {
   makeStatChange,
 } from "./test/fixtures";
 
-function renderShipyard(overrides?: Parameters<typeof renderApp>[0] extends infer O ? O : never) {
-  const stateOverrides = overrides && "state" in overrides ? overrides.state : overrides;
-  return renderApp({ state: stateOverrides, tab: "shipyard" });
+function renderShipyard(opts?: {
+  state?: Partial<import("./types").PortState>;
+  simulateGodot?: boolean;
+}) {
+  return renderApp({ state: opts?.state, tab: "shipyard", simulateGodot: opts?.simulateGodot });
 }
 
 describe("ShipyardTab", () => {
@@ -139,7 +141,7 @@ describe("ShipyardTab", () => {
       expect(screen.getByRole("button", { name: "Buy & Repair" })).toBeInTheDocument();
     });
 
-    it("Buy & Repair sends buy_items then heal IPC", async () => {
+    it("Buy & Repair sends buy_items, waits for state update, then sends heal", async () => {
       const { user, ipcSpy } = renderShipyard({
         state: {
           health: 99,
@@ -150,20 +152,24 @@ describe("ShipyardTab", () => {
           ],
           inventory: { Coin: 1000, Wood: 0, Fish: 0 },
         },
+        simulateGodot: true,
       });
       ipcSpy.mockClear();
       await user.click(screen.getByRole("button", { name: "Buy & Repair" }));
 
-      const messages = getIpcMessages(ipcSpy);
-      // Should buy resources first, then heal
-      expect(messages).toContainEqual({
-        action: "buy_items",
-        items: expect.arrayContaining([
-          { type: "Wood", quantity: 5 },
-          { type: "Fish", quantity: 1 },
-        ]),
+      // The heal is sent after awaiting the updateState callback from Godot,
+      // so we need to wait for the async chain to complete.
+      await waitFor(() => {
+        const messages = getIpcMessages(ipcSpy);
+        expect(messages).toContainEqual({
+          action: "buy_items",
+          items: expect.arrayContaining([
+            { type: "Wood", quantity: 5 },
+            { type: "Fish", quantity: 1 },
+          ]),
+        });
+        expect(messages).toContainEqual({ action: "heal" });
       });
-      expect(messages).toContainEqual({ action: "heal" });
     });
 
     it("Buy & Repair is disabled when not affordable", () => {
@@ -179,6 +185,36 @@ describe("ShipyardTab", () => {
         },
       });
       expect(screen.getByRole("button", { name: "Buy & Repair" })).toBeDisabled();
+    });
+
+    it("buys only wood when fish is already plentiful, then heals", async () => {
+      // Regression: 50 fish, 0 wood, 20 gold — previously sent two separate
+      // IPC messages synchronously, so the heal raced the buy.
+      const { user, ipcSpy } = renderShipyard({
+        state: {
+          health: 95,
+          maxHealth: 100,
+          itemsForSale: [
+            makeShopItem({ type: "Wood", buyPrice: 2 }),
+            makeShopItem({ type: "Fish", buyPrice: 3 }),
+          ],
+          inventory: { Coin: 20, Wood: 0, Fish: 50 },
+        },
+        simulateGodot: true,
+      });
+      ipcSpy.mockClear();
+      await user.click(screen.getByRole("button", { name: "Buy & Repair" }));
+
+      await waitFor(() => {
+        const messages = getIpcMessages(ipcSpy);
+        // Should only buy wood (fish already plentiful)
+        expect(messages).toContainEqual({
+          action: "buy_items",
+          items: [{ type: "Wood", quantity: 10 }],
+        });
+        // And then heal after the buy completes
+        expect(messages).toContainEqual({ action: "heal" });
+      });
     });
 
     it("does not show Buy & Repair when shop lacks Wood or Fish", () => {
@@ -521,25 +557,28 @@ describe("ShipyardTab", () => {
       expect(screen.getByRole("button", { name: "Buy All & Build" })).toBeInTheDocument();
     });
 
-    it("Buy All & Build sends buy_items then purchase_component", async () => {
+    it("Buy All & Build sends buy_items, waits for update, then purchase_component", async () => {
       const { user, ipcSpy } = renderShipyard({
         state: {
           components: [makeComponentData({ name: "Hull", cost: { Iron: 5 } })],
           itemsForSale: [makeShopItem({ type: "Iron", buyPrice: 10 })],
           inventory: { Coin: 100, Iron: 2 },
         },
+        simulateGodot: true,
       });
       ipcSpy.mockClear();
       await user.click(screen.getByRole("button", { name: "Buy All & Build" }));
 
-      const messages = getIpcMessages(ipcSpy);
-      expect(messages).toContainEqual({
-        action: "buy_items",
-        items: [{ type: "Iron", quantity: 3 }],
-      });
-      expect(messages).toContainEqual({
-        action: "purchase_component",
-        name: "Hull",
+      await waitFor(() => {
+        const messages = getIpcMessages(ipcSpy);
+        expect(messages).toContainEqual({
+          action: "buy_items",
+          items: [{ type: "Iron", quantity: 3 }],
+        });
+        expect(messages).toContainEqual({
+          action: "purchase_component",
+          name: "Hull",
+        });
       });
     });
 
