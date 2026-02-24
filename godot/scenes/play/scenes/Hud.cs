@@ -453,6 +453,7 @@ public partial class Hud : Control
       Health = _player.Health,
       MaxHealth = _player.MaxHealth,
       ComponentCapacity = (int)_player.Stats.GetStat(PlayerStat.ComponentCapacity),
+      IsCreative = Configuration.IsCreative,
     };
   }
 
@@ -512,6 +513,15 @@ public partial class Hud : Control
         break;
       case HealMessage:
         HandleHeal();
+        break;
+      case SetInventoryMessage si:
+        HandleSetInventory(si);
+        break;
+      case ClearComponentsMessage:
+        HandleClearComponents();
+        break;
+      case SetHealthMessage sh:
+        HandleSetHealth(sh);
         break;
       default:
         GD.Print($"HUD: Unknown IPC message type");
@@ -622,6 +632,65 @@ public partial class Hud : Control
     _player.EmitSignal(Player.SignalName.HealthUpdate, _player.Health);
 
     GD.Print($"HUD: Healed {healthToHeal} HP. Cost: {woodCost} wood, {fishCost} fish.");
+  }
+
+  /// <summary>
+  /// Creative-mode only: sets inventory items to exact quantities.
+  /// Checks Configuration.IsCreative server-side to prevent cheating
+  /// via a modded webview.
+  /// </summary>
+  private void HandleSetInventory(SetInventoryMessage msg)
+  {
+    if (!Configuration.IsCreative)
+    {
+      GD.PrintErr("HUD: set_inventory rejected — creative mode is not enabled");
+      return;
+    }
+
+    foreach (var req in msg.Items)
+    {
+      if (!Enum.TryParse<InventoryItemType>(req.Type, out var type)) continue;
+
+      int current = _player.GetInventoryCount(type);
+      int delta = req.Quantity - current;
+      _player.UpdateInventory(type, delta);
+      GD.Print($"HUD: [Creative] Set {req.Type} to {req.Quantity} (delta {delta})");
+    }
+  }
+
+  /// <summary>
+  /// Creative-mode only: removes all owned components and resets stats.
+  /// </summary>
+  private void HandleClearComponents()
+  {
+    if (!Configuration.IsCreative)
+    {
+      GD.PrintErr("HUD: clear_components rejected — creative mode is not enabled");
+      return;
+    }
+
+    int count = _player.OwnedComponents.Count;
+    _player.OwnedComponents.Clear();
+    _player.UpdatePlayerStats();
+    GD.Print($"HUD: [Creative] Cleared {count} components");
+  }
+
+  /// <summary>
+  /// Creative-mode only: sets the player's health to an exact value,
+  /// clamped between 1 and MaxHealth.
+  /// </summary>
+  private void HandleSetHealth(SetHealthMessage msg)
+  {
+    if (!Configuration.IsCreative)
+    {
+      GD.PrintErr("HUD: set_health rejected — creative mode is not enabled");
+      return;
+    }
+
+    int clamped = Math.Clamp(msg.Health, 1, _player.MaxHealth);
+    _player.Health = clamped;
+    _player.EmitSignal(Player.SignalName.HealthUpdate, _player.Health);
+    GD.Print($"HUD: [Creative] Set health to {clamped}");
   }
 
   public override void _ExitTree()

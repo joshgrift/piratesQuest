@@ -11,6 +11,7 @@ export interface PortState {
   health: number;
   maxHealth: number;
   componentCapacity: number;
+  isCreative: boolean;
 }
 
 /** A tradeable item at this port with buy and/or sell prices. */
@@ -54,7 +55,10 @@ export type IpcMessage =
   | { action: "equip_component"; name: string }
   | { action: "unequip_component"; name: string }
   | { action: "heal" }
-  | { action: "focus_parent" };
+  | { action: "focus_parent" }
+  | { action: "set_inventory"; items: { type: string; quantity: number }[] }
+  | { action: "clear_components" }
+  | { action: "set_health"; health: number };
 
 // ── Window augmentation for godot_wry bridge ───────────────────────
 

@@ -20,6 +20,7 @@ public record PortStateDto
   public int Health { get; init; }
   public int MaxHealth { get; init; }
   public int ComponentCapacity { get; init; }
+  public bool IsCreative { get; init; }
 }
 
 public record ShopItemDto(string Type, int BuyPrice, int SellPrice);
@@ -52,6 +53,9 @@ public record StatChangeDto(string Stat, string Modifier, float Value);
 [JsonDerivedType(typeof(UnequipComponentMessage), "unequip_component")]
 [JsonDerivedType(typeof(HealMessage), "heal")]
 [JsonDerivedType(typeof(FocusParentMessage), "focus_parent")]
+[JsonDerivedType(typeof(SetInventoryMessage), "set_inventory")]
+[JsonDerivedType(typeof(ClearComponentsMessage), "clear_components")]
+[JsonDerivedType(typeof(SetHealthMessage), "set_health")]
 public record IpcMessage;
 
 public record BuyItemsMessage : IpcMessage
@@ -84,6 +88,30 @@ public record HealMessage : IpcMessage;
 public record ReadyMessage : IpcMessage;
 
 public record FocusParentMessage : IpcMessage;
+
+/// <summary>
+/// Creative-mode only: sets a specific inventory item to an exact quantity.
+/// Rejected by the server if creative mode is not enabled.
+/// </summary>
+public record SetInventoryMessage : IpcMessage
+{
+  public ItemQuantity[] Items { get; init; } = [];
+}
+
+/// <summary>
+/// Creative-mode only: removes all owned components.
+/// Rejected by the server if creative mode is not enabled.
+/// </summary>
+public record ClearComponentsMessage : IpcMessage;
+
+/// <summary>
+/// Creative-mode only: sets the player's health to an exact value.
+/// Rejected by the server if creative mode is not enabled.
+/// </summary>
+public record SetHealthMessage : IpcMessage
+{
+  public int Health { get; init; }
+}
 
 /// <summary>
 /// An item type + quantity pair used in buy/sell messages.

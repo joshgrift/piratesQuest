@@ -52,7 +52,7 @@ PID1=$!
 if [[ "${SERVER_ONLY}" == "false" ]]; then
   sleep 0.5
 
-  CLIENT_ARGS="--webview-url ${WEBVIEW_URL}"
+  CLIENT_ARGS="--webview-url ${WEBVIEW_URL} --creative"
   if [[ -n "${CLIENT_USER}" && -n "${CLIENT_PASS}" ]]; then
     CLIENT_ARGS="${CLIENT_ARGS} --user ${CLIENT_USER} --password ${CLIENT_PASS} --disableSaveUser"
   fi

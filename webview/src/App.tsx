@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import "./App.css";
-import type { PortState, IpcMessage, ComponentData, OwnedComponent } from "./types";
+import type { PortState, IpcMessage, ComponentData, OwnedComponent, ShopItem } from "./types";
 
-type Tab = "market" | "shipyard";
+type Tab = "market" | "shipyard" | "creative";
 type TradeMode = "buy" | "sell";
 
 const BASE = import.meta.env.BASE_URL;
@@ -106,12 +106,22 @@ export default function App() {
         >
           Shipyard
         </button>
+        {portState?.isCreative && (
+          <button
+            className={`tab-btn creative-tab-btn ${activeTab === "creative" ? "active" : ""}`}
+            onClick={() => setActiveTab("creative")}
+          >
+            Creative
+          </button>
+        )}
       </div>
 
       {portState && (
         <div className="tab-content">
           {activeTab === "market" ? (
             <MarketTab state={portState} />
+          ) : activeTab === "creative" && portState.isCreative ? (
+            <CreativeTab state={portState} />
           ) : (
             <ShipyardTab state={portState} />
           )}
@@ -331,6 +341,183 @@ function MarketTab({ state }: { state: PortState }) {
   );
 }
 
+// ── Creative Tab ─────────────────────────────────────────────────────
+
+const ITEM_TYPES = ["Wood", "Iron", "Fish", "Tea", "Coin", "CannonBall", "Trophy"];
+const STEP_AMOUNTS = [1, 50, 100] as const;
+
+function CreativeTab({ state }: { state: PortState }) {
+  const [flashItem, setFlashItem] = useState<string | null>(null);
+
+  const flash = (key: string) => {
+    setFlashItem(key);
+    setTimeout(() => setFlashItem(null), 400);
+  };
+
+  const setItem = (type: string, quantity: number) => {
+    const clamped = Math.max(0, quantity);
+    sendIpc({ action: "set_inventory", items: [{ type, quantity: clamped }] });
+    flash(type);
+  };
+
+  const setAllTo = (amount: number) => {
+    const items = ITEM_TYPES.map((t) => ({ type: t, quantity: amount }));
+    sendIpc({ action: "set_inventory", items });
+    flash("__all__");
+  };
+
+  const healthPct = state.maxHealth > 0 ? (state.health / state.maxHealth) * 100 : 0;
+  const healthHue = Math.round((healthPct / 100) * 120);
+
+  return (
+    <>
+      <div className="creative-banner">Creative Mode</div>
+
+      {/* ── Inventory ── */}
+      <div className="section-title">Inventory</div>
+
+      <div className="creative-presets">
+        <button className="creative-preset-btn" onClick={() => setAllTo(0)}>
+          Clear All
+        </button>
+        <button className="creative-preset-btn" onClick={() => setAllTo(100)}>
+          100 Each
+        </button>
+        <button className="creative-preset-btn" onClick={() => setAllTo(1000)}>
+          1k Each
+        </button>
+        <button className="creative-preset-btn" onClick={() => setAllTo(100000)}>
+          100k Each
+        </button>
+      </div>
+
+      {ITEM_TYPES.map((type) => {
+        const current = state.inventory[type] ?? 0;
+        return (
+          <div
+            className={`creative-item ${flashItem === type || flashItem === "__all__" ? "creative-flash" : ""}`}
+            key={type}
+          >
+            <img
+              className="creative-item-icon"
+              src={inventoryIcon(type)}
+              alt={type}
+            />
+            <div className="creative-item-name">{type}</div>
+            <div className="creative-stepper">
+              {[...STEP_AMOUNTS].reverse().map((n) => (
+                <button
+                  key={`minus-${n}`}
+                  className="qty-btn"
+                  disabled={current - n < 0}
+                  onClick={() => setItem(type, current - n)}
+                >
+                  -{n}
+                </button>
+              ))}
+              <div className="creative-qty-value">{current}</div>
+              {STEP_AMOUNTS.map((n) => (
+                <button
+                  key={`plus-${n}`}
+                  className="qty-btn"
+                  onClick={() => setItem(type, current + n)}
+                >
+                  +{n}
+                </button>
+              ))}
+              <button
+                className="qty-btn qty-btn-reset"
+                disabled={current === 0}
+                onClick={() => setItem(type, 0)}
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        );
+      })}
+
+      <div className="section-sep" />
+
+      {/* ── Health ── */}
+      <div className="section-title">Health</div>
+      <div className="card creative-health-section">
+        <div className="health-bar-container">
+          <div className="health-bar">
+            <div
+              className="health-bar-fill"
+              style={{
+                width: `${healthPct}%`,
+                backgroundColor: `hsl(${healthHue}, 75%, 42%)`,
+              }}
+            />
+          </div>
+          <div className="health-text">
+            {state.health} / {state.maxHealth}
+          </div>
+        </div>
+        <div className="creative-health-buttons">
+          <button
+            className="creative-preset-btn"
+            onClick={() => sendIpc({ action: "set_health", health: 1 })}
+          >
+            1 HP
+          </button>
+          <button
+            className="creative-preset-btn"
+            onClick={() =>
+              sendIpc({ action: "set_health", health: Math.round(state.maxHealth * 0.25) })
+            }
+          >
+            25%
+          </button>
+          <button
+            className="creative-preset-btn"
+            onClick={() =>
+              sendIpc({ action: "set_health", health: Math.round(state.maxHealth * 0.5) })
+            }
+          >
+            50%
+          </button>
+          <button
+            className="creative-preset-btn"
+            onClick={() =>
+              sendIpc({ action: "set_health", health: state.maxHealth })
+            }
+          >
+            Full
+          </button>
+        </div>
+      </div>
+
+      <div className="section-sep" />
+
+      {/* ── Components ── */}
+      <div className="section-title">Components</div>
+      <div className="card">
+        <div className="creative-components-info">
+          {state.ownedComponents.length === 0 ? (
+            <span className="empty-state">No components owned</span>
+          ) : (
+            <span>
+              {state.ownedComponents.length} owned
+              {" · "}
+              {state.ownedComponents.filter((c) => c.isEquipped).length} equipped
+            </span>
+          )}
+        </div>
+        <button
+          className="creative-danger-btn"
+          disabled={state.ownedComponents.length === 0}
+          onClick={() => sendIpc({ action: "clear_components" })}
+        >
+          Delete All Components
+        </button>
+      </div>
+    </>
+  );
+}
+
 // ── Shipyard Tab ─────────────────────────────────────────────────────
 
 function ShipyardTab({ state }: { state: PortState }) {
@@ -360,10 +547,11 @@ function ShipyardTab({ state }: { state: PortState }) {
   for (const { count, data } of equipped) {
     for (const sc of data.statChanges) {
       if (!statBonuses[sc.stat]) statBonuses[sc.stat] = { add: 0, multi: 1 };
+      const bonus = statBonuses[sc.stat]!;
       if (sc.modifier === "Additive") {
-        statBonuses[sc.stat].add += sc.value * count;
+        bonus.add += sc.value * count;
       } else {
-        statBonuses[sc.stat].multi *= Math.pow(sc.value, count);
+        bonus.multi *= Math.pow(sc.value, count);
       }
     }
   }
@@ -379,24 +567,28 @@ function ShipyardTab({ state }: { state: PortState }) {
   const fishAvail = state.inventory["Fish"] ?? 0;
   const maxHeal = Math.min(healthNeeded, Math.floor(woodAvail / 5), fishAvail);
   const healthPct = state.maxHealth > 0 ? (state.health / state.maxHealth) * 100 : 0;
-  const healthBarPos = 100 - healthPct;
+  const healthHue = Math.round((healthPct / 100) * 120); // 0 = red, 120 = green
 
-  // Buy & Heal: figure out how much Wood/Fish to purchase to fully heal
+  // Buy & Heal: find the most HP healable by buying Wood/Fish from the shop
   const woodShop = state.itemsForSale.find(i => i.type === "Wood");
   const fishShop = state.itemsForSale.find(i => i.type === "Fish");
   const coinsAvail = state.inventory["Coin"] ?? 0;
 
-  // Wood/Fish still needed after existing inventory
-  const woodToBuy = woodShop ? Math.max(0, healthNeeded * 5 - woodAvail) : null;
-  const fishToBuy = fishShop ? Math.max(0, healthNeeded - fishAvail) : null;
-  const buyHealGoldCost =
-    woodToBuy !== null && fishToBuy !== null
-      ? woodToBuy * (woodShop!.buyPrice) + fishToBuy * (fishShop!.buyPrice)
-      : null;
-  const canBuyAndHeal =
-    buyHealGoldCost !== null &&
-    healthNeeded > 0 &&
-    coinsAvail >= buyHealGoldCost;
+  let maxBuyHeal = 0;
+  if (woodShop && fishShop && healthNeeded > 0) {
+    for (let h = 1; h <= healthNeeded; h++) {
+      const goldNeeded =
+        Math.max(0, h * 5 - woodAvail) * woodShop.buyPrice +
+        Math.max(0, h - fishAvail) * fishShop.buyPrice;
+      if (goldNeeded > coinsAvail) break;
+      maxBuyHeal = h;
+    }
+  }
+  const woodToBuy = Math.max(0, maxBuyHeal * 5 - woodAvail);
+  const fishToBuy = Math.max(0, maxBuyHeal - fishAvail);
+  const buyHealGoldCost = woodShop && fishShop
+    ? woodToBuy * woodShop.buyPrice + fishToBuy * fishShop.buyPrice
+    : null;
 
   return (
     <>
@@ -409,7 +601,7 @@ function ShipyardTab({ state }: { state: PortState }) {
               className="health-bar-fill"
               style={{
                 width: `${healthPct}%`,
-                backgroundPosition: `${healthBarPos}% 0`,
+                backgroundColor: `hsl(${healthHue}, 75%, 42%)`,
               }}
             />
           </div>
@@ -417,58 +609,65 @@ function ShipyardTab({ state }: { state: PortState }) {
             {state.health} / {state.maxHealth}
           </div>
         </div>
-        <button
-          className="heal-btn"
-          disabled={maxHeal <= 0}
-          onClick={() => sendIpc({ action: "heal" })}
-        >
-          {healthNeeded <= 0
-            ? "Hull at Full Strength"
-            : `Repair Hull (+${maxHeal} HP)`}
-        </button>
-        {healthNeeded > 0 && (
-          <div className="heal-cost">
-            <div>Cost: {maxHeal * 5} Wood + {maxHeal} Fish per repair</div>
-            <div className="heal-resources">
-              <span className={woodAvail < maxHeal * 5 ? "resource-short" : ""}>
-                Wood: {woodAvail}
-              </span>
-              <span className={fishAvail < maxHeal ? "resource-short" : ""}>
-                Fish: {fishAvail}
-              </span>
-            </div>
-            {maxHeal < healthNeeded && (
-              <div className="heal-limited">
-                (limited by {Math.floor(woodAvail / 5) <= fishAvail ? "Wood" : "Fish"})
-              </div>
-            )}
-          </div>
-        )}
-        {healthNeeded > 0 && buyHealGoldCost !== null && (
+        {healthNeeded <= 0 ? (
+          <div className="hull-full">Hull at Full Strength</div>
+        ) : (
           <>
-            <div className="heal-divider">— or —</div>
-            <button
-              className="heal-btn heal-btn-gold"
-              disabled={!canBuyAndHeal}
-              onClick={() => {
-                const items: { type: string; quantity: number }[] = [];
-                if (woodToBuy! > 0) items.push({ type: "Wood", quantity: woodToBuy! });
-                if (fishToBuy! > 0) items.push({ type: "Fish", quantity: fishToBuy! });
-                if (items.length > 0) sendIpc({ action: "buy_items", items });
-                sendIpc({ action: "heal" });
-              }}
-            >
-              Buy Resources & Repair (+{healthNeeded} HP)
-            </button>
-            <div className="heal-cost">
-              <div>Cost: {buyHealGoldCost} Gold</div>
-              {woodToBuy! > 0 && <div className="heal-buy-detail">Buy {woodToBuy} Wood @ {woodShop!.buyPrice}G ea</div>}
-              {fishToBuy! > 0 && <div className="heal-buy-detail">Buy {fishToBuy} Fish @ {fishShop!.buyPrice}G ea</div>}
-              <div className="heal-resources">
-                <span className={!canBuyAndHeal ? "resource-short" : ""}>
-                  Gold: {coinsAvail}
-                </span>
+            <div className="repair-options">
+              <div className="repair-row">
+                <button
+                  className="repair-btn"
+                  disabled={maxHeal <= 0}
+                  onClick={() => sendIpc({ action: "heal" })}
+                >
+                  Repair Hull
+                </button>
+                <div className="repair-costs">
+                  <span className={`cost-chip ${woodAvail < healthNeeded * 5 ? "chip-short" : "chip-wood"}`}>
+                    <img src={inventoryIcon("Wood")} alt="Wood" className="chip-icon" />{healthNeeded * 5}
+                  </span>
+                  <span className={`cost-chip ${fishAvail < healthNeeded ? "chip-short" : "chip-fish"}`}>
+                    <img src={inventoryIcon("Fish")} alt="Fish" className="chip-icon" />{healthNeeded}
+                  </span>
+                  <span className="repair-hp">+{maxHeal} HP</span>
+                </div>
               </div>
+              {buyHealGoldCost !== null && (
+                <div className="repair-row">
+                  <button
+                    className="repair-btn repair-btn-gold"
+                    disabled={maxBuyHeal <= 0}
+                    onClick={() => {
+                      const items: { type: string; quantity: number }[] = [];
+                      if (woodToBuy > 0) items.push({ type: "Wood", quantity: woodToBuy });
+                      if (fishToBuy > 0) items.push({ type: "Fish", quantity: fishToBuy });
+                      if (items.length > 0) sendIpc({ action: "buy_items", items });
+                      sendIpc({ action: "heal" });
+                    }}
+                  >
+                    Buy & Repair
+                  </button>
+                  <div className="repair-costs">
+                    <span className={`cost-chip ${maxBuyHeal <= 0 ? "chip-short" : "chip-gold"}`}>
+                      <img src={inventoryIcon("Coin")} alt="Gold" className="chip-icon" />{buyHealGoldCost}
+                    </span>
+                    <span className="repair-hp">+{maxBuyHeal} HP</span>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="repair-inventory">
+              <span className={woodAvail < healthNeeded * 5 ? "resource-short" : ""}>
+                <img src={inventoryIcon("Wood")} alt="Wood" className="chip-icon" />{woodAvail}
+              </span>
+              <span className={fishAvail < healthNeeded ? "resource-short" : ""}>
+                <img src={inventoryIcon("Fish")} alt="Fish" className="chip-icon" />{fishAvail}
+              </span>
+              {buyHealGoldCost !== null && (
+                <span className={maxBuyHeal <= 0 ? "resource-short" : ""}>
+                  <img src={inventoryIcon("Coin")} alt="Gold" className="chip-icon" />{coinsAvail}
+                </span>
+              )}
             </div>
           </>
         )}

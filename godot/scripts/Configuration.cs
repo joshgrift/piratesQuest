@@ -26,7 +26,7 @@ partial class Configuration : Node
 
   public static bool RandomSpawnEnabled { get; } = true;
   public static int StartingCoin { get; } = 100;
-  public static bool IsCreative { get; } = false;
+  public static bool IsCreative { get; private set; } = false;
   public static int DefaultPort { get; } = 7777;
   public static string ApiBaseUrl { get; } = "http://localhost:5236";
 
@@ -107,6 +107,9 @@ partial class Configuration : Node
           break;
         case "--webview-url" when i + 1 < args.Length:
           WebViewUrl = args[i + 1];
+          break;
+        case "--creative":
+          IsCreative = true;
           break;
       }
     }

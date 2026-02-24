@@ -27,11 +27,6 @@ public class PlayerStats
     Stats[PlayerStat.CollectionIron] = 1.0f;
     Stats[PlayerStat.ShipCapacity] = 1000.0f;
     Stats[PlayerStat.ComponentCapacity] = 4.0f;
-
-    if (Configuration.IsCreative)
-    {
-      Stats[PlayerStat.ShipCapacity] = 100000000.0f;
-    }
   }
 
   public float GetStat(PlayerStat stat)
