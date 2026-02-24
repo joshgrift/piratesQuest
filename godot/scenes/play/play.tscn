@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3 uid="uid://c8c63pod53w2l"]
+[gd_scene load_steps=35 format=3 uid="uid://c8c63pod53w2l"]
 
 [ext_resource type="Script" uid="uid://cie1vrfri8q8x" path="res://scenes/play/Play.cs" id="1_j5m8q"]
 [ext_resource type="Material" uid="uid://75rdt22mc6g" path="res://art/sky/day_sky.tres" id="1_octoo"]
@@ -136,11 +136,22 @@ BuyPrice = 100000
 SellPrice = 0
 metadata/_custom_type_script = "uid://b81r8qngpan6y"
 
+[sub_resource type="Resource" id="Resource_blg3p"]
+script = ExtResource("10_10igl")
+ItemType = 2
+SellPrice = 8
+metadata/_custom_type_script = "uid://b81r8qngpan6y"
+
 [sub_resource type="Resource" id="Resource_mfrq5"]
 script = ExtResource("10_10igl")
 ItemType = 5
 BuyPrice = 2
 SellPrice = 1
+metadata/_custom_type_script = "uid://b81r8qngpan6y"
+
+[sub_resource type="Resource" id="Resource_ha3kl"]
+script = ExtResource("10_10igl")
+ItemType = 2
 metadata/_custom_type_script = "uid://b81r8qngpan6y"
 
 [node name="Play" type="Node3D" node_paths=PackedStringArray("_playerSpawner", "_projectileSpawner", "_deadPlayerSpawner", "_freeCam", "hud")]
@@ -507,12 +518,12 @@ ItemsForSale = Array[Object]([SubResource("Resource_a0nu5"), SubResource("Resour
 [node name="KrakenFall" parent="Interactables" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -110.64748, 1, -104.08782)
 PortName = "Krakenfall"
-ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_3sgb2"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l")])
+ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_3sgb2"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l"), SubResource("Resource_blg3p")])
 
 [node name="Haven" parent="Interactables" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 139.80185, 1, -103.99682)
 PortName = "Haven"
-ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_mfrq5"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l")])
+ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_mfrq5"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l"), SubResource("Resource_ha3kl")])
 
 [node name="DeadPlayerSpawner" type="MultiplayerSpawner" parent="."]
 spawn_path = NodePath("../DeadPlayers")
