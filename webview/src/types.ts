@@ -53,7 +53,8 @@ export type IpcMessage =
   | { action: "purchase_component"; name: string }
   | { action: "equip_component"; name: string }
   | { action: "unequip_component"; name: string }
-  | { action: "heal" };
+  | { action: "heal" }
+  | { action: "focus_parent" };
 
 // ── Window augmentation for godot_wry bridge ───────────────────────
 

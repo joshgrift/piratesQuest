@@ -62,6 +62,13 @@ export default function App() {
     };
 
     sendIpc({ action: "ready" });
+
+    // When the user clicks the webview, the OS gives it keyboard focus.
+    // We immediately ask Godot to reclaim focus so movement key events
+    // always reach the game and never get "stuck".
+    const returnFocus = () => sendIpc({ action: "focus_parent" });
+    window.addEventListener("focus", returnFocus);
+    return () => window.removeEventListener("focus", returnFocus);
   }, []);
 
   if (!portState && !isClosing) return null;

@@ -114,6 +114,9 @@ public partial class Hud : Control
 
     if (_webView != null)
     {
+      // Return keyboard focus to the game window
+      _webView.Call("focus_parent");
+
       _webView.Call("eval", "window.closePort && window.closePort()");
       // Wait for the CSS slide-out animation (400ms) then hide the overlay
       GetTree().CreateTimer(0.45f).Timeout += HideWebView;
@@ -341,6 +344,7 @@ public partial class Hud : Control
     _webView.Set("transparent", false);
     _webView.Set("devtools", true);
     _webView.Set("forward_input_events", true);
+    _webView.Set("focused_when_created", false);
 
     AddChild(_webView);
 
@@ -392,6 +396,11 @@ public partial class Hud : Control
   {
     _portOpen = true;
     CallDeferred(MethodName.SyncWebViewSize);
+
+    // Keep keyboard focus on Godot so movement key-up events
+    // are never missed. The webview only needs mouse clicks.
+    if (_webView != null)
+      _webView.Call("focus_parent");
   }
 
   /// <summary>
@@ -482,6 +491,9 @@ public partial class Hud : Control
     {
       case ReadyMessage:
         HandleWebViewReady();
+        return;
+      case FocusParentMessage:
+        _webView?.Call("focus_parent");
         return;
       case BuyItemsMessage buy:
         HandleBuyItems(buy);

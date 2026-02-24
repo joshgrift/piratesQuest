@@ -51,6 +51,7 @@ public record StatChangeDto(string Stat, string Modifier, float Value);
 [JsonDerivedType(typeof(EquipComponentMessage), "equip_component")]
 [JsonDerivedType(typeof(UnequipComponentMessage), "unequip_component")]
 [JsonDerivedType(typeof(HealMessage), "heal")]
+[JsonDerivedType(typeof(FocusParentMessage), "focus_parent")]
 public record IpcMessage;
 
 public record BuyItemsMessage : IpcMessage
@@ -81,6 +82,8 @@ public record UnequipComponentMessage : IpcMessage
 public record HealMessage : IpcMessage;
 
 public record ReadyMessage : IpcMessage;
+
+public record FocusParentMessage : IpcMessage;
 
 /// <summary>
 /// An item type + quantity pair used in buy/sell messages.
