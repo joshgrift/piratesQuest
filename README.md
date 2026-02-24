@@ -31,7 +31,7 @@ All scripts are in the repo root and run from there.
 |--------|-------------|
 | `build-game.sh` | Exports the Godot project to macOS and Windows builds, zipped into `dist/<version>/`. |
 | `run.sh` | Runs a local dev session. Starts the backend, a game server, and a client side-by-side. Supports `--server` (server only), `--user`, and `--password` flags. |
-| `publish-backend.sh` | Publishes the API server in Release configuration to `server/bin/Release/net*/publish/`. |
+| `publish-backend.sh` | Builds the webview + API into a Docker image (`piratesquest-api`). Pass an optional tag argument (default `latest`). |
 | `manage.sh` | Admin CLI for the REST API. Manage users, game servers, roles, and game version. Requires `PQ_API_URL` and either `PQ_TOKEN` or a login. |
 
 ## Releasing
@@ -39,7 +39,12 @@ All scripts are in the repo root and run from there.
 - Run `./build-game.sh`
 - Add new Git Release in github
 - Upload builds in dist to github release
-- Run `publish-backend.sh` to publish the backend and the webview UI.
+- Run `./publish-backend.sh` to build the Docker image (`piratesquest-api`)
+- Deploy the image to your cloud provider with these env vars:
+  - `ConnectionStrings__Default` — Postgres connection string
+  - `Jwt__Key` — JWT signing key (≥ 32 bytes)
+  - `ServerApiKey` — shared key for game-server → API auth
+  - The container listens on port **8080**
 
 ## Port WebView
 
@@ -95,7 +100,7 @@ The build output goes to `server/fragments/webview/`, which the API serves as st
 - [x] UI to show when you are harvesting things
 - [x] Persistent world
 - [x] Login
-- [ ] More incremental progress
+- [x] More incremental progress
 - [x] Health too expensive?
 
 - [ ] Deployed to live server

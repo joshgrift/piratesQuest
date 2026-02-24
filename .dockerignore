@@ -1,0 +1,8 @@
+godot/
+dist/
+.git/
+*.md
+*.sh
+webview/node_modules/
+server/bin/
+server/obj/
