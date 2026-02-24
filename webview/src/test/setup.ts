@@ -1,6 +1,18 @@
 import "@testing-library/jest-dom";
-import { afterEach, vi } from "vitest";
+import { afterEach, beforeEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
+
+// Provide a mock IPC channel that tests can spy on.
+// App.tsx calls window.ipc?.postMessage(json) to send messages to Godot.
+Object.defineProperty(window, "ipc", {
+  value: { postMessage: vi.fn() },
+  writable: true,
+});
+
+beforeEach(() => {
+  // Reset the IPC spy so calls from previous tests don't leak through.
+  (window.ipc!.postMessage as ReturnType<typeof vi.fn>).mockClear();
+});
 
 // Clean up the DOM after each test so components don't leak between tests.
 afterEach(() => {
@@ -11,13 +23,6 @@ afterEach(() => {
   delete window.openPort;
   delete window.closePort;
   delete window.updateState;
-});
-
-// Provide a mock IPC channel that tests can spy on.
-// App.tsx calls window.ipc?.postMessage(json) to send messages to Godot.
-Object.defineProperty(window, "ipc", {
-  value: { postMessage: vi.fn() },
-  writable: true,
 });
 
 // jsdom's requestAnimationFrame doesn't fire callbacks synchronously,
