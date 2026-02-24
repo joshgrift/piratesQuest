@@ -330,24 +330,23 @@ function ShipyardTab({ state }: { state: PortState }) {
   const equippedCount = state.ownedComponents.filter((c) => c.isEquipped).length;
   const canEquipMore = equippedCount < state.componentCapacity;
 
-  const equipped = state.ownedComponents
-    .filter((oc) => oc.isEquipped)
-    .map((oc) => ({
-      owned: oc,
-      data: state.components.find((c) => c.name === oc.name),
-    }))
-    .filter((x): x is { owned: OwnedComponent; data: ComponentData } => !!x.data);
+  const countBy = (ocs: OwnedComponent[]) => {
+    const m = new Map<string, number>();
+    ocs.forEach((oc) => m.set(oc.name, (m.get(oc.name) ?? 0) + 1));
+    return m;
+  };
 
-  const ownedUnequipped = state.ownedComponents
-    .filter((oc) => !oc.isEquipped)
-    .map((oc) => ({
-      owned: oc,
-      data: state.components.find((c) => c.name === oc.name),
-    }))
-    .filter((x): x is { owned: OwnedComponent; data: ComponentData } => !!x.data);
+  const equippedCounts = countBy(state.ownedComponents.filter((oc) => oc.isEquipped));
+  const equipped = Array.from(equippedCounts.entries())
+    .map(([name, count]) => ({ count, data: state.components.find((c) => c.name === name) }))
+    .filter((x): x is { count: number; data: ComponentData } => !!x.data);
 
-  const ownedNames = new Set(state.ownedComponents.map((oc) => oc.name));
-  const forSale = state.components.filter((c) => !ownedNames.has(c.name));
+  const unequippedCounts = countBy(state.ownedComponents.filter((oc) => !oc.isEquipped));
+  const ownedUnequipped = Array.from(unequippedCounts.entries())
+    .map(([name, count]) => ({ count, data: state.components.find((c) => c.name === name) }))
+    .filter((x): x is { count: number; data: ComponentData } => !!x.data);
+
+  const forSale = state.components;
 
   const canAfford = (cost: Record<string, number>): boolean => {
     return Object.entries(cost).every(
@@ -434,10 +433,11 @@ function ShipyardTab({ state }: { state: PortState }) {
       {equipped.length === 0 ? (
         <div className="empty-state mb-12">No components equipped</div>
       ) : (
-        equipped.map(({ data }) => (
+        equipped.map(({ count, data }) => (
           <ComponentCard
             key={data.name}
             component={data}
+            count={count}
             actionLabel="Unequip"
             actionClass="unequip"
             onAction={() =>
@@ -453,10 +453,11 @@ function ShipyardTab({ state }: { state: PortState }) {
         <>
           <div className="section-sep" />
           <div className="section-title">Owned Components</div>
-          {ownedUnequipped.map(({ data }) => (
+          {ownedUnequipped.map(({ count, data }) => (
             <ComponentCard
               key={data.name}
               component={data}
+              count={count}
               actionLabel="Equip"
               actionClass="equip"
               disabled={!canEquipMore}
@@ -499,6 +500,7 @@ function ShipyardTab({ state }: { state: PortState }) {
 
 interface ComponentCardProps {
   component: ComponentData;
+  count?: number;
   actionLabel: string;
   actionClass: "buy" | "equip" | "unequip";
   disabled?: boolean;
@@ -510,6 +512,7 @@ interface ComponentCardProps {
 
 function ComponentCard({
   component,
+  count,
   actionLabel,
   actionClass,
   disabled,
@@ -538,11 +541,16 @@ function ComponentCard({
     : null;
   return (
     <div className={`component-card ${actionClass === "unequip" ? "equipped" : ""}`}>
-      <img
-        className="component-icon"
-        src={iconUrl("components", component.icon)}
-        alt={component.name}
-      />
+      <div className="component-icon-wrap">
+        <img
+          className="component-icon"
+          src={iconUrl("components", component.icon)}
+          alt={component.name}
+        />
+        {count !== undefined && count > 1 && (
+          <span className="component-count">{count}</span>
+        )}
+      </div>
       <div className="component-body">
         <div className="component-name">{component.name}</div>
         <div className="component-desc">{component.description}</div>

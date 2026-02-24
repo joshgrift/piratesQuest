@@ -398,10 +398,35 @@ body {
   background: rgba(107, 223, 107, 0.04);
 }
 
+.component-icon-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+}
+
+.component-count {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: #d4a748;
+  color: #0d1b2a;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: monospace;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  line-height: 1;
+}
+
 .component-icon {
   width: 40px;
   height: 40px;
-  flex-shrink: 0;
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.2);
   padding: 4px;
