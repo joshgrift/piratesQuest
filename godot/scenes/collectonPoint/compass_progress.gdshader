@@ -29,6 +29,11 @@ uniform vec4 bg_tint : source_color = vec4(0.04, 0.09, 0.17, 0.55);
 uniform float outer_radius : hint_range(0.2, 0.5) = 0.44;
 uniform float ring_width : hint_range(0.02, 0.15) = 0.065;
 
+// Resource icon texture — set from C# based on the collection point's ResourceType.
+// Rendered as a gold silhouette in the center of the compass.
+// repeat_disable prevents tiling; filter_linear smooths edges at small sizes.
+uniform sampler2D resource_icon : filter_linear, repeat_disable;
+
 
 void vertex() {
 	// === BILLBOARD EFFECT ===
@@ -118,28 +123,33 @@ void fragment() {
 	diamonds = clamp(diamonds, 0.0, 1.0);
 
 
-	// ========== 5. COMPASS ROSE (8-pointed star) ==========
-	// The iconic nautical star. It slowly rotates for a magical feel
-	// and brightens as progress increases.
+	// ========== 5. COMPASS ROSE + RESOURCE ICON ==========
 	float rose_r = inner_r - 0.05;
+
+	// --- 5a. Rotating 8-pointed star (faint backdrop behind the icon) ---
 	float rose_spin = TIME * 0.25;
 	float star_a = atan(uv.x, uv.y) + rose_spin;
 
-	// Primary 4-pointed star (tall N/S and E/W arms)
 	float s1 = abs(cos(star_a * 2.0));
 	float s1_r = rose_r * (0.2 + s1 * 0.8);
 	float star1 = 1.0 - smoothstep(s1_r - aa, s1_r + aa, dist);
 
-	// Secondary 4-pointed star rotated 45° (shorter diagonal arms)
 	float s2 = abs(sin(star_a * 2.0));
 	float s2_r = rose_r * 0.55 * (0.2 + s2 * 0.8);
 	float star2 = 1.0 - smoothstep(s2_r - aa, s2_r + aa, dist);
 
-	// Center jewel with a gentle pulse
-	float jewel_pulse = sin(TIME * 1.5) * 0.25 + 0.75;
-	float jewel = (1.0 - smoothstep(0.02, 0.03, dist)) * jewel_pulse;
+	float compass = max(star1, star2 * 0.7);
 
-	float compass = max(max(star1, star2 * 0.7), jewel);
+	// --- 5b. Resource icon (gold silhouette in the center) ---
+	// Map the center area to [0,1] texture coordinates so the icon
+	// fills a circle of radius icon_r inside the compass.
+	float icon_r = rose_r * 0.65;
+	vec2 icon_uv = uv / (icon_r * 2.0) + 0.5;
+	// Circular mask — clips the icon to a clean circle
+	float icon_mask = 1.0 - smoothstep(icon_r - aa * 2.0, icon_r + aa * 2.0, dist);
+	// Sample the resource texture; its alpha channel defines the icon shape
+	vec4 icon_tex = texture(resource_icon, icon_uv);
+	float icon_alpha = icon_tex.a * icon_mask;
 
 
 	// ========== 6. THIN DECORATIVE INNER RING ==========
@@ -201,12 +211,18 @@ void fragment() {
 	final_col = mix(final_col, deco_col, deco_ring * 0.5);
 	final_a = max(final_a, deco_ring * 0.35);
 
-	// 6 — Compass rose (brightens as collection nears completion)
+	// 6a — Compass rose (faint rotating backdrop)
 	float rose_glow = 0.2 + progress * 0.8;
 	vec3 rose_col = mix(bg_tint.rgb * 1.5, gold_light.rgb, rose_glow);
-	final_col = mix(final_col, rose_col, compass * 0.65);
-	final_a = max(final_a, compass * 0.45);
-	emission += rose_col * compass * progress * 0.4;
+	final_col = mix(final_col, rose_col, compass * 0.3);
+	final_a = max(final_a, compass * 0.25);
+	emission += rose_col * compass * progress * 0.15;
+
+	// 6b — Resource icon (original colours, glows brighter with progress)
+	vec3 icon_col = icon_tex.rgb;
+	final_col = mix(final_col, icon_col, icon_alpha * 0.95);
+	final_a = max(final_a, icon_alpha * 0.9);
+	emission += icon_col * icon_alpha * (0.2 + progress * 0.4);
 
 	// 7 — Outer aura
 	emission += gold.rgb * aura;

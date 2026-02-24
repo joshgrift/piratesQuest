@@ -1,4 +1,5 @@
 using Godot;
+using PiratesQuest;
 using PiratesQuest.Data;
 using PiratesQuest.Attributes;
 using System.Collections.Generic;
@@ -42,6 +43,11 @@ public partial class CollectionPoint : Node3D, IDropper
     {
       _shaderMaterial = (ShaderMaterial)mat.Duplicate();
       FeedbackRing.MaterialOverride = _shaderMaterial;
+
+      // Pass this point's resource icon to the compass shader so the
+      // center shows what's being collected (wood, fish, iron, etc.).
+      Texture2D icon = Icons.GetInventoryIcon(ResourceType);
+      _shaderMaterial.SetShaderParameter("resource_icon", icon);
     }
 
     SetProgress(0.0f, false);
