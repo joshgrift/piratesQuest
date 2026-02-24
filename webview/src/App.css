@@ -974,3 +974,155 @@ body {
 .creative-flash {
   animation: creativeFlash 0.4s ease-out;
 }
+
+/* ── Guide Tab ────────────────────────────────────────────────────────── */
+
+.guide-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.guide-portrait-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.guide-portrait {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid #d4a748;
+  box-shadow: 0 0 20px rgba(212, 167, 72, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
+  object-fit: cover;
+  animation: guideFloat 3s ease-in-out infinite;
+}
+
+@keyframes guideFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.guide-name {
+  font-family: "New Rocker", cursive;
+  font-size: 18px;
+  color: #d4a748;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.guide-speech {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(139, 105, 20, 0.3);
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  min-height: 80px;
+  position: relative;
+}
+
+.guide-speech::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid rgba(139, 105, 20, 0.3);
+}
+
+.guide-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #e0d5c0;
+  white-space: pre-line;
+}
+
+.guide-cursor {
+  color: #d4a748;
+  animation: guideBlink 0.6s step-start infinite;
+}
+
+@keyframes guideBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.guide-skip-hint {
+  text-align: center;
+  font-size: 10px;
+  color: #5a6a7a;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+.guide-responses {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.guide-response-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(139, 105, 20, 0.25);
+  border-left: 3px solid rgba(212, 167, 72, 0.4);
+  border-radius: 6px;
+  color: #c8bda8;
+  font-family: "Texturina", serif;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  animation: guideResponseFadeIn 0.3s ease both;
+}
+
+@keyframes guideResponseFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.guide-response-btn:hover {
+  background: rgba(212, 167, 72, 0.1);
+  border-left-color: #d4a748;
+  color: #e0d5c0;
+  transform: translateX(4px);
+}
+
+.guide-response-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(212, 167, 72, 0.15);
+  color: #d4a748;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
