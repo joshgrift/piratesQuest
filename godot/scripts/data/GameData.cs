@@ -1,6 +1,5 @@
 namespace PiratesQuest.Data;
 
-using Godot;
 using Godot.Collections;
 
 public static class GameData
@@ -10,7 +9,7 @@ public static class GameData
     {
       name = "Advanced Sails",
       description = "Increases ship acceleration by 25%",
-      icon = GD.Load<Texture2D>("res://art/components/acceleration.png"),
+      icon = "acceleration.png",
       cost = new Dictionary<InventoryItemType, int>
       {
         { InventoryItemType.Wood, 250 },
@@ -29,7 +28,7 @@ public static class GameData
     {
       name = "Reinforced Sails",
       description = "Increases ship max speed by 15%",
-      icon = GD.Load<Texture2D>("res://art/components/speed.png"),
+      icon = "speed.png",
       cost = new Dictionary<InventoryItemType, int>
       {
         { InventoryItemType.Wood, 250 },
@@ -48,7 +47,7 @@ public static class GameData
     {
       name = "Reinforced Hull",
       description = "Increases ship health by 50 points",
-      icon = GD.Load<Texture2D>("res://art/components/hull.png"),
+      icon = "hull.png",
       cost = new Dictionary<InventoryItemType, int>
       {
         { InventoryItemType.Iron, 100 },
@@ -67,7 +66,7 @@ public static class GameData
     {
       name = "Expanded Cargo Hold",
       description = "Increases ship capacity by 100",
-      icon = GD.Load<Texture2D>("res://art/components/cargo.png"),
+      icon = "cargo.png",
       cost = new Dictionary<InventoryItemType, int>
       {
         { InventoryItemType.Wood, 250 },
@@ -86,7 +85,7 @@ public static class GameData
     {
       name = "Masterwork Cannons",
       description = "Increases attack damage by 25%",
-      icon = GD.Load<Texture2D>("res://art/components/damage.png"),
+      icon = "damage.png",
       cost = new Dictionary<InventoryItemType, int>
       {
         { InventoryItemType.Iron, 150 },
@@ -105,7 +104,7 @@ public static class GameData
     {
       name = "Long-Range Cannons",
       description = "Increases attack range by 20%",
-      icon = GD.Load<Texture2D>("res://art/components/range.png"),
+      icon = "range.png",
       cost = new Dictionary<InventoryItemType, int>
       {
         { InventoryItemType.Iron, 150 },
@@ -124,7 +123,7 @@ public static class GameData
     {
       name = "Automated Health Regeneration",
       description = "Increases health regeneration by 5 points per minute",
-      icon = GD.Load<Texture2D>("res://art/components/heal.png"),
+      icon = "heal.png",
       cost = new Dictionary<InventoryItemType, int>
       {
         { InventoryItemType.Tea, 250 },
@@ -143,7 +142,7 @@ public static class GameData
     {
       name = "Advanced Fish Nets",
       description = "Increases fish collection rate by 50%",
-      icon = GD.Load<Texture2D>("res://art/components/collect_fish.png"),
+      icon = "collect_fish.png",
       cost = new Dictionary<InventoryItemType, int>
       {
         { InventoryItemType.Wood, 100 },
@@ -163,7 +162,7 @@ public static class GameData
     {
       name = "Reinforced Lumber Tools",
       description = "Increases wood collection rate by 50%",
-      icon = GD.Load<Texture2D>("res://art/components/collect_wood.png"),
+      icon = "collect_wood.png",
       cost = new Dictionary<InventoryItemType, int>
       {
         { InventoryItemType.Iron, 100 },
@@ -183,7 +182,7 @@ public static class GameData
     {
       name = "Enhanced Mining Tools",
       description = "Increases iron collection rate by 50%",
-      icon = GD.Load<Texture2D>("res://art/components/collect_iron.png"),
+      icon = "collect_iron.png",
       cost = new Dictionary<InventoryItemType, int>
       {
         { InventoryItemType.Iron, 100 },

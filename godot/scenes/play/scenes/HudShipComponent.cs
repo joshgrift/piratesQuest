@@ -39,11 +39,8 @@ public partial class HudShipComponent : MarginContainer
     ComponentNameLabel.Text = component.name;
     ComponentDescriptionLabel.Text = component.description;
 
-    // Set component icon
-    Image img = component.icon.GetImage();
-    img.Resize(100, 100);
-    ImageTexture resizedTexture = ImageTexture.CreateFromImage(img);
-    ComponentIcon.Texture = resizedTexture;
+    // Icon is now a filename string served by the webview — no Texture2D to display here.
+    ComponentIcon.Texture = null;
 
     switch (status)
     {

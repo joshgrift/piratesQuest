@@ -5,15 +5,17 @@ dotnet build godot || exit 1
 # Local development defaults.
 SERVER_ID="${SERVER_ID:-2}"
 SERVER_API_KEY="${SERVER_API_KEY:-dev-server-api-key}"
+WEBVIEW_URL="http://localhost:5173/fragments/webview/"
 
 # Parse CLI arguments
 SERVER_ONLY=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --server)   SERVER_ONLY=true; shift ;;
-    --user)     CLIENT_USER="$2"; shift 2 ;;
-    --password) CLIENT_PASS="$2"; shift 2 ;;
-    *)          shift ;;
+    --server)      SERVER_ONLY=true; shift ;;
+    --user)        CLIENT_USER="$2"; shift 2 ;;
+    --password)    CLIENT_PASS="$2"; shift 2 ;;
+    --webview-url) WEBVIEW_URL="$2"; shift 2 ;;
+    *)             shift ;;
   esac
 done
 
@@ -21,7 +23,13 @@ done
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
+YELLOW='\033[0;33m'
 RESET='\033[0m'
+
+echo -e "${YELLOW}=== Starting WebView Dev Server ===${RESET}"
+npm --prefix webview install
+npm --prefix webview run dev 2>&1 | sed "s/^/$(echo -e ${YELLOW})[WebView ]$(echo -e ${RESET}) /" &
+PID_WEBVIEW=$!
 
 echo -e "${BLUE}=== Starting Backend ===${RESET}"
 # Kill any existing process on port 5236
@@ -44,9 +52,9 @@ PID1=$!
 if [[ "${SERVER_ONLY}" == "false" ]]; then
   sleep 0.5
 
-  CLIENT_ARGS=""
+  CLIENT_ARGS="--webview-url ${WEBVIEW_URL}"
   if [[ -n "${CLIENT_USER}" && -n "${CLIENT_PASS}" ]]; then
-    CLIENT_ARGS="--user ${CLIENT_USER} --password ${CLIENT_PASS} --disableSaveUser"
+    CLIENT_ARGS="${CLIENT_ARGS} --user ${CLIENT_USER} --password ${CLIENT_PASS} --disableSaveUser"
   fi
 
   echo -e "${GREEN}=== Starting Client ===${RESET}"
@@ -58,5 +66,5 @@ else
   wait $PID1
 fi
 
-kill $PID_API 2>/dev/null
+kill $PID_API $PID_WEBVIEW 2>/dev/null
 echo "=== Terminated ==="

@@ -10,7 +10,6 @@ using System.Collections.Generic;
 public partial class Hud : Control
 {
   [Export] public Tree InventoryList;
-  [Export] public PortUi PortUIContainer;
   [Export] public Label HealthLabel;
   [Export] public Node3D PlayersContainer;
   [Export] public Tree LeaderboardTree;
@@ -20,30 +19,31 @@ public partial class Hud : Control
   private Player _player;
   private int _retryCount = 0;
   private const int MaxRetries = 30;
-  // Using Godot Dictionary for tree references (needed for Godot interop)
   private Godot.Collections.Dictionary<InventoryItemType, TreeItem> InventoryTreeReferences = [];
   private TreeItem rootInventoryItem = null;
 
-  // Track pending changes for each item type to handle rapid inventory updates
-  // Key: item type, Value: tuple of (accumulated change, timer reference)
-  // Using System.Collections.Generic.Dictionary because Godot.Dictionary doesn't support C# tuples
   private System.Collections.Generic.Dictionary<InventoryItemType, (int accumulatedChange, SceneTreeTimer timer)> _pendingChanges = new();
 
-  // WebView (godot_wry) — always-visible panel on the right third of the screen.
-  // It's a native OS overlay, so we manually size it in physical window pixels.
+  // ── WebView (port-only panel, right 1/3 of screen) ──────────────
   private Node _webView;
   private bool _webViewCreated;
-
-  private static readonly System.Collections.Generic.Dictionary<InventoryItemType, int> _webViewShopPrices = new()
+  // True once the React app has sent the "ready" IPC message
+  private bool _webViewReady;
+  // If the player docks before the webview is ready, we queue the open
+  private bool _pendingOpen;
+  // True while the port UI is visible on screen
+  private bool _portOpen;
+  // Currently docked port data (null when not in port)
+  private ShopItemData[] _currentPortItems;
+  private string _currentPortName;
+  // camelCase JSON for the webview
+  private static readonly JsonSerializerOptions _jsonOpts = new()
   {
-    { InventoryItemType.CannonBall, 2 },
-    { InventoryItemType.Wood, 4 },
-    { InventoryItemType.Fish, 5 },
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
   };
 
   public override void _Ready()
   {
-    PortUIContainer.Visible = false;
     if (Multiplayer.IsServer())
     {
       GD.Print("Skipping HUD, acting as server");
@@ -52,7 +52,6 @@ public partial class Hud : Control
     }
 
     var ports = GetTree().GetNodesInGroup("ports");
-
     GD.Print($"HUD found {ports.Count} ports in the scene");
 
     foreach (Port port in ports.Cast<Port>())
@@ -76,37 +75,52 @@ public partial class Hud : Control
     UpdateLeaderboard();
   }
 
+  // ── Port Dock / Depart ───────────────────────────────────────────
+
   private void OnPlayerEnteredPort(Port port, Player player, Variant payload)
   {
+    if (_player == null || player.Name != _player.Name) return;
     GD.Print($"Player {player.Name} entered port {port.PortName}");
-    if (player.Name == _player.Name)
+
+    var payloadDict = (Dictionary)payload;
+    _currentPortName = (string)payloadDict["PortName"];
+
+    var godotArray = payloadDict["ItemsForSale"].AsGodotArray();
+    _currentPortItems = new ShopItemData[godotArray.Count];
+    for (int i = 0; i < godotArray.Count; i++)
+      _currentPortItems[i] = (ShopItemData)godotArray[i];
+
+    EnsureWebViewCreated();
+
+    if (_webViewReady)
     {
-      PortUIContainer.Player = _player;
-      PortUIContainer.Visible = true;
-      var payloadDict = (Dictionary)payload;
-      PortUIContainer.ChangeName((string)payloadDict["PortName"]);
-
-      // Convert Godot Array to ShopItemData[]
-      var godotArray = payloadDict["ItemsForSale"].AsGodotArray();
-      var shopItems = new ShopItemData[godotArray.Count];
-      for (int i = 0; i < godotArray.Count; i++)
-      {
-        shopItems[i] = (ShopItemData)godotArray[i];
-      }
-
-      GD.Print($"Setting port UI stock with {shopItems.Length} items");
-      PortUIContainer.SetStock(shopItems);
-      PortUIContainer.UpdateShipMenu();
+      ShowWebView();
+      PushPortState("openPort");
+    }
+    else
+    {
+      _pendingOpen = true;
     }
   }
 
   private void OnPlayerDepartedPort(Port port, Player player)
   {
-    if (player.Name == _player.Name)
+    if (_player == null || player.Name != _player.Name) return;
+    GD.Print($"Player {player.Name} departed port");
+
+    _currentPortItems = null;
+    _currentPortName = null;
+    _pendingOpen = false;
+
+    if (_webView != null)
     {
-      PortUIContainer.Visible = false;
+      _webView.Call("eval", "window.closePort && window.closePort()");
+      // Wait for the CSS slide-out animation (400ms) then hide the overlay
+      GetTree().CreateTimer(0.45f).Timeout += HideWebView;
     }
   }
+
+  // ── Find Local Player ────────────────────────────────────────────
 
   private void FindLocalPlayer()
   {
@@ -116,15 +130,12 @@ public partial class Hud : Control
       return;
     }
 
-    // If the client has been disconnected (for example join rejected),
-    // Multiplayer.GetUniqueId() will throw engine errors. Stop retries safely.
     if (!IsMultiplayerActive())
     {
       GD.Print("HUD stopped player lookup because multiplayer is not active.");
       return;
     }
 
-    // Find the player that we control
     var myPeerId = Multiplayer.GetUniqueId();
     GD.Print($"{PlayersContainer.GetChildCount()}");
     _player = PlayersContainer.GetNodeOrNull<Player>($"player_{myPeerId}");
@@ -151,33 +162,27 @@ public partial class Hud : Control
 
       GD.Print($"HUD connected to Player{myPeerId}");
 
-      CreateWebView();
+      // Pre-create the webview off-screen so the page is loaded before first dock
+      EnsureWebViewCreated();
     }
     else
     {
       _retryCount++;
       if (_retryCount < MaxRetries)
-      {
-        // Retry in the next frame
         GetTree().CreateTimer(0.033f).Timeout += FindLocalPlayer;
-      }
       else
-      {
         GD.PrintErr($"Could not find Player{myPeerId} after {MaxRetries} attempts");
-      }
     }
   }
 
   private bool IsMultiplayerActive()
   {
     var peer = Multiplayer.MultiplayerPeer;
-    if (peer == null)
-    {
-      return false;
-    }
-
+    if (peer == null) return false;
     return peer.GetConnectionStatus() == MultiplayerPeer.ConnectionStatus.Connected;
   }
+
+  // ── Leaderboard ──────────────────────────────────────────────────
 
   private void UpdateLeaderboard()
   {
@@ -191,8 +196,6 @@ public partial class Hud : Control
     var players = PlayersContainer.GetChildren().OfType<Player>()
       .OrderByDescending(p => p.GetInventoryCount(InventoryItemType.Trophy));
 
-    // Get the local player's nickname to compare against
-    // _player is the reference to our local player (the one we control)
     string localPlayerNickname = _player?.Nickname;
 
     foreach (var leaderboardPlayer in players)
@@ -204,21 +207,18 @@ public partial class Hud : Control
       item.SetIcon(0, Icons.GetInventoryIcon(InventoryItemType.Trophy));
       item.SetText(1, leaderboardPlayer.Nickname);
 
-      // Highlight the current player's row with a green tint
-      // TreeItem.SetCustomColor sets the text color for a specific column
-      // We check if this player is us by comparing nicknames
       if (leaderboardPlayer.Nickname == localPlayerNickname)
       {
-        // Color is created with RGB values from 0-1 (not 0-255)
-        // This is a nice green color: slightly muted so it's readable
         Color greenTint = new Color(0.4f, 0.9f, 0.4f);
-        item.SetCustomColor(0, greenTint);  // Trophy count column
-        item.SetCustomColor(1, greenTint);  // Name column
+        item.SetCustomColor(0, greenTint);
+        item.SetCustomColor(1, greenTint);
       }
     }
 
     GetTree().CreateTimer(5.0f).Timeout += UpdateLeaderboard;
   }
+
+  // ── HUD Inventory Display ────────────────────────────────────────
 
   private void InitializeInventory()
   {
@@ -226,7 +226,7 @@ public partial class Hud : Control
 
     InventoryList.Columns = 2;
     InventoryList.MouseFilter = Control.MouseFilterEnum.Ignore;
-    InventoryList.HideRoot = true; // Hide the root item and its line
+    InventoryList.HideRoot = true;
 
     InventoryList.SetColumnCustomMinimumWidth(0, 32);
     InventoryList.SetColumnCustomMinimumWidth(1, 100);
@@ -235,7 +235,7 @@ public partial class Hud : Control
 
     InventoryList.AddThemeConstantOverride("draw_relationship_lines", 0);
     InventoryList.AddThemeConstantOverride("draw_guides", 0);
-    InventoryList.AddThemeConstantOverride("v_separation", 0); // Remove vertical spacing between items
+    InventoryList.AddThemeConstantOverride("v_separation", 0);
 
     var emptyStylebox = new StyleBoxEmpty();
     InventoryList.AddThemeStyleboxOverride("panel", emptyStylebox);
@@ -250,26 +250,20 @@ public partial class Hud : Control
 
   private void OnInventoryChanged(InventoryItemType itemType, int newAmount, int change)
   {
-    PushInventoryToWebView();
+    // Push updated state to port webview when docked
+    if (_currentPortItems != null)
+      PushPortState("updateState");
 
     if (_player.isLimitedByCapacity)
-    {
       StatusListContainer.GetNode<Control>("Heavy").Visible = true;
-    }
     else
-    {
       StatusListContainer.GetNode<Control>("Heavy").Visible = false;
-    }
 
     if (InventoryTreeReferences.TryGetValue(itemType, out TreeItem itemEntry))
     {
-      // Calculate the accumulated change (handles rapid inventory updates)
       int totalChange = change;
       if (_pendingChanges.TryGetValue(itemType, out var pending))
-      {
-        // Add to existing accumulated change
         totalChange = pending.accumulatedChange + change;
-      }
 
       string increase = "";
 
@@ -284,9 +278,7 @@ public partial class Hud : Control
         itemEntry.SetCustomColor(1, new Color(0.9f, 0.4f, 0.4f));
       }
 
-      // Start or reset the timer for this item type
       StartColorResetTimer(itemType, itemEntry, totalChange);
-
       itemEntry.SetText(1, newAmount.ToString() + increase);
       return;
     }
@@ -299,53 +291,30 @@ public partial class Hud : Control
     }
   }
 
-  /// <summary>
-  /// Creates or resets a timer that clears the color/change indicator after 2 seconds.
-  /// If a timer already exists for this item type, we disconnect the old callback
-  /// and create a new timer, effectively "resetting" the countdown.
-  /// </summary>
-  /// <param name="itemType">The inventory item type (used as key to track timers)</param>
-  /// <param name="item">The TreeItem to reset</param>
-  /// <param name="accumulatedChange">The total accumulated change to track</param>
   private void StartColorResetTimer(InventoryItemType itemType, TreeItem item, int accumulatedChange)
   {
-    // If there's already a pending timer for this item, we need to "cancel" it
-    // SceneTreeTimer can't be truly cancelled, but we can disconnect its callback
-    // and let it expire harmlessly
-    if (_pendingChanges.TryGetValue(itemType, out var existing))
-    {
-      // Remove from tracking - the old timer will fire but do nothing
-      // because ResetItemDisplay checks if the timer is still the active one
+    if (_pendingChanges.TryGetValue(itemType, out var _))
       _pendingChanges.Remove(itemType);
-    }
 
-    // Create a new timer
     SceneTreeTimer timer = GetTree().CreateTimer(2.2f);
-
-    // Store the pending change info
     _pendingChanges[itemType] = (accumulatedChange, timer);
 
-    // Connect the timeout - capture the timer reference to verify it's still active
     timer.Timeout += () =>
     {
-      // Only reset if this timer is still the active one for this item type
-      // (prevents stale timers from resetting after a newer change came in)
       if (_pendingChanges.TryGetValue(itemType, out var current) && current.timer == timer)
       {
         item.ClearCustomColor(1);
         string currentText = item.GetText(1);
         string numberOnly = currentText.Split(' ')[0];
         item.SetText(1, numberOnly);
-
-        // Clean up the tracking entry
         _pendingChanges.Remove(itemType);
       }
     };
   }
 
-  // ── WebView (always-visible right panel) ────────────────────────────
+  // ── WebView (port-only right panel) ──────────────────────────────
 
-  private void CreateWebView()
+  private void EnsureWebViewCreated()
   {
     if (_webViewCreated) return;
     _webViewCreated = true;
@@ -367,7 +336,7 @@ public partial class Hud : Control
     }
 
     _webView = control;
-    _webView.Set("url", $"{Configuration.ApiBaseUrl}/fragments/info-panel/");
+    _webView.Set("url", Configuration.WebViewUrl);
     _webView.Set("full_window_size", false);
     _webView.Set("transparent", false);
     _webView.Set("devtools", true);
@@ -375,16 +344,14 @@ public partial class Hud : Control
 
     AddChild(_webView);
 
-    // Position/size the native overlay and keep it in sync on resize.
-    // Deferred so the engine finishes updating viewport/canvas first.
     CallDeferred(MethodName.SyncWebViewSize);
     GetTree().Root.SizeChanged += OnWindowResized;
-
     _webView.Connect("ipc_message", new Callable(this, MethodName.OnIpcMessage));
 
-    // Send initial inventory
-    PushInventoryToWebView();
-    GD.Print("HUD: WebView created (right 1/3)");
+    // Start off-screen so the page loads in the background
+    HideWebView();
+
+    GD.Print("HUD: WebView created off-screen (preloading)");
   }
 
   private void OnWindowResized()
@@ -394,10 +361,8 @@ public partial class Hud : Control
 
   /// <summary>
   /// Positions the native webview overlay as the right 1/3 of the window.
-  /// godot_wry reads get_screen_position() (= canvas_scale * Position) for
-  /// the overlay's physical position, and get_size() for its physical size.
-  /// We derive the virtual position from the canvas transform so this works
-  /// regardless of stretch mode or aspect ratio.
+  /// godot_wry uses physical pixels for its native OS overlay, so we
+  /// convert from the canvas stretch mode's virtual coordinates.
   /// </summary>
   private void SyncWebViewSize()
   {
@@ -405,64 +370,246 @@ public partial class Hud : Control
 
     var windowSize = DisplayServer.WindowGetSize();
 
-    // The canvas transform maps virtual coords → physical window coords.
-    // Invert the scale to go from physical → virtual.
-    var canvasXform = GetViewport().GetCanvasTransform();
-    float scaleX = canvasXform.X.X;
-    float scaleY = canvasXform.Y.Y;
-
-    // Virtual position so that get_screen_position() returns the correct
-    // physical position (right 1/3 boundary).
-    wv.Position = new Vector2(windowSize.X * 2f / 3f / scaleX, 0);
-
-    // Physical pixel size — godot_wry passes get_size() straight to the OS.
+    // Always set a valid size so the page can load/render
     wv.Size = new Vector2(windowSize.X / 3f, windowSize.Y);
-  }
 
-  private void OnIpcMessage(string message)
-  {
-    var parsed = Json.ParseString(message);
-    if (parsed.VariantType != Variant.Type.Dictionary) return;
-
-    var dict = parsed.AsGodotDictionary();
-    string action = dict.ContainsKey("action") ? dict["action"].AsString() : "";
-
-    if (action == "purchase")
+    if (_portOpen)
     {
-      string itemType = dict["itemType"].AsString();
-      int quantity = dict["quantity"].AsInt32();
-      HandleWebViewPurchase(itemType, quantity);
+      var canvasXform = GetViewport().GetCanvasTransform();
+      float scaleX = canvasXform.X.X;
+      wv.Position = new Vector2(windowSize.X * 2f / 3f / scaleX, 0);
+    }
+    else
+    {
+      wv.Position = new Vector2(99999, 0);
     }
   }
 
-  private void PushInventoryToWebView()
+  /// <summary>
+  /// Moves the webview overlay on-screen (right 1/3).
+  /// </summary>
+  private void ShowWebView()
+  {
+    _portOpen = true;
+    CallDeferred(MethodName.SyncWebViewSize);
+  }
+
+  /// <summary>
+  /// Moves the webview overlay off-screen so it's invisible but still loaded.
+  /// </summary>
+  private void HideWebView()
+  {
+    _portOpen = false;
+    CallDeferred(MethodName.SyncWebViewSize);
+  }
+
+  // ── Build & push full port state to webview ──────────────────────
+
+  private PortStateDto BuildPortState()
+  {
+    var inventory = new System.Collections.Generic.Dictionary<string, int>();
+    foreach (InventoryItemType type in Enum.GetValues(typeof(InventoryItemType)))
+      inventory[type.ToString()] = _player.GetInventoryCount(type);
+
+    var shopItems = (_currentPortItems ?? [])
+      .Select(si => new ShopItemDto(si.ItemType.ToString(), si.BuyPrice, si.SellPrice))
+      .ToArray();
+
+    var components = GameData.Components
+      .Select(c => new ComponentDto(
+        c.name, c.description, c.icon,
+        c.cost.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
+        c.statChanges.Select(sc => new StatChangeDto(
+          sc.Stat.ToString(), sc.Modifier.ToString(), sc.Value
+        )).ToArray()
+      ))
+      .ToArray();
+
+    var ownedComponents = _player.OwnedComponents
+      .Select(oc => new OwnedComponentDto { Name = oc.Component.name, IsEquipped = oc.isEquipped })
+      .ToArray();
+
+    var stats = new System.Collections.Generic.Dictionary<string, float>();
+    foreach (var kvp in _player.Stats.GetAllStats())
+      stats[kvp.Key.ToString()] = kvp.Value;
+
+    return new PortStateDto
+    {
+      PortName = _currentPortName ?? "",
+      ItemsForSale = shopItems,
+      Inventory = inventory,
+      Components = components,
+      OwnedComponents = ownedComponents,
+      Stats = stats,
+      Health = _player.Health,
+      MaxHealth = _player.MaxHealth,
+      ComponentCapacity = (int)_player.Stats.GetStat(PlayerStat.ComponentCapacity),
+    };
+  }
+
+  /// <summary>
+  /// Serializes the current port state and pushes it to the webview
+  /// by calling the named window function (openPort or updateState).
+  /// </summary>
+  private void PushPortState(string windowFunction)
   {
     if (_player == null || _webView == null) return;
 
-    var items = new System.Collections.Generic.Dictionary<string, int>();
-    foreach (InventoryItemType type in Enum.GetValues(typeof(InventoryItemType)))
-    {
-      items[type.ToString()] = _player.GetInventoryCount(type);
-    }
-
-    var json = JsonSerializer.Serialize(items);
+    var dto = BuildPortState();
+    var json = JsonSerializer.Serialize(dto, _jsonOpts);
     _webView.Call("eval",
-      $"window.updateInventory && window.updateInventory({json})");
+      $"window.{windowFunction} && window.{windowFunction}({json})");
   }
 
-  private void HandleWebViewPurchase(string itemType, int quantity)
+  // ── Receive typed IPC messages from React ────────────────────────
+
+  private void OnIpcMessage(string message)
   {
     if (_player == null) return;
 
-    if (!Enum.TryParse<InventoryItemType>(itemType, out var type)) return;
-    if (!_webViewShopPrices.TryGetValue(type, out int unitPrice)) return;
+    IpcMessage msg;
+    try
+    {
+      msg = JsonSerializer.Deserialize<IpcMessage>(message, _jsonOpts);
+    }
+    catch (Exception ex)
+    {
+      GD.PrintErr($"HUD: Failed to parse IPC message: {ex.Message}");
+      return;
+    }
 
-    int totalCost = unitPrice * quantity;
-    bool success = _player.UpdateInventory(type, quantity, -totalCost);
+    switch (msg)
+    {
+      case ReadyMessage:
+        HandleWebViewReady();
+        return;
+      case BuyItemsMessage buy:
+        HandleBuyItems(buy);
+        break;
+      case SellItemsMessage sell:
+        HandleSellItems(sell);
+        break;
+      case PurchaseComponentMessage pc:
+        HandlePurchaseComponent(pc);
+        break;
+      case EquipComponentMessage eq:
+        HandleEquipComponent(eq);
+        break;
+      case UnequipComponentMessage ue:
+        HandleUnequipComponent(ue);
+        break;
+      case HealMessage:
+        HandleHeal();
+        break;
+      default:
+        GD.Print($"HUD: Unknown IPC message type");
+        break;
+    }
 
-    GD.Print(success
-      ? $"HUD: Purchased {quantity}x {itemType} for {totalCost} coin"
-      : $"HUD: Purchase failed — not enough coin");
+    // After every action, push refreshed state to the webview
+    if (_currentPortItems != null)
+      PushPortState("updateState");
+  }
+
+  private void HandleWebViewReady()
+  {
+    GD.Print("HUD: WebView ready");
+    _webViewReady = true;
+
+    // If the player docked before the page finished loading, open now
+    if (_pendingOpen && _currentPortItems != null)
+    {
+      _pendingOpen = false;
+      ShowWebView();
+      PushPortState("openPort");
+    }
+  }
+
+  private void HandleBuyItems(BuyItemsMessage msg)
+  {
+    if (_currentPortItems == null) return;
+
+    foreach (var req in msg.Items)
+    {
+      if (!Enum.TryParse<InventoryItemType>(req.Type, out var type)) continue;
+
+      var shopItem = _currentPortItems.FirstOrDefault(si => si.ItemType == type);
+      if (shopItem == null || shopItem.BuyPrice <= 0) continue;
+
+      int totalCost = shopItem.BuyPrice * req.Quantity;
+      bool ok = _player.UpdateInventory(type, req.Quantity, -totalCost);
+      GD.Print(ok
+        ? $"HUD: Bought {req.Quantity}x {req.Type} for {totalCost} coin"
+        : $"HUD: Buy failed for {req.Type}");
+    }
+  }
+
+  private void HandleSellItems(SellItemsMessage msg)
+  {
+    if (_currentPortItems == null) return;
+
+    foreach (var req in msg.Items)
+    {
+      if (!Enum.TryParse<InventoryItemType>(req.Type, out var type)) continue;
+
+      var shopItem = _currentPortItems.FirstOrDefault(si => si.ItemType == type);
+      if (shopItem == null || shopItem.SellPrice <= 0) continue;
+
+      int totalRevenue = shopItem.SellPrice * req.Quantity;
+      bool ok = _player.UpdateInventory(type, -req.Quantity, totalRevenue);
+      GD.Print(ok
+        ? $"HUD: Sold {req.Quantity}x {req.Type} for {totalRevenue} coin"
+        : $"HUD: Sell failed for {req.Type}");
+    }
+  }
+
+  private void HandlePurchaseComponent(PurchaseComponentMessage msg)
+  {
+    var component = GameData.Components.FirstOrDefault(c => c.name == msg.Name);
+    if (component == null) return;
+    _player.PurchaseComponent(component);
+  }
+
+  private void HandleEquipComponent(EquipComponentMessage msg)
+  {
+    var component = GameData.Components.FirstOrDefault(c => c.name == msg.Name);
+    if (component == null) return;
+    _player.EquipComponent(component);
+  }
+
+  private void HandleUnequipComponent(UnequipComponentMessage msg)
+  {
+    var component = GameData.Components.FirstOrDefault(c => c.name == msg.Name);
+    if (component == null) return;
+    _player.UnEquipComponent(component);
+  }
+
+  private void HandleHeal()
+  {
+    int healthNeeded = _player.MaxHealth - _player.Health;
+    if (healthNeeded <= 0) return;
+
+    int woodAvailable = _player.GetInventoryCount(InventoryItemType.Wood);
+    int fishAvailable = _player.GetInventoryCount(InventoryItemType.Fish);
+
+    const int WoodCostPerHealth = 5;
+    const int FishCostPerHealth = 1;
+
+    int maxHealFromWood = woodAvailable / WoodCostPerHealth;
+    int maxHealFromFish = fishAvailable / FishCostPerHealth;
+    int healthToHeal = Math.Min(healthNeeded, Math.Min(maxHealFromWood, maxHealFromFish));
+
+    if (healthToHeal <= 0) return;
+
+    int woodCost = healthToHeal * WoodCostPerHealth;
+    int fishCost = healthToHeal * FishCostPerHealth;
+
+    _player.UpdateInventory(InventoryItemType.Wood, -woodCost);
+    _player.UpdateInventory(InventoryItemType.Fish, -fishCost);
+    _player.Health += healthToHeal;
+    _player.EmitSignal(Player.SignalName.HealthUpdate, _player.Health);
+
+    GD.Print($"HUD: Healed {healthToHeal} HP. Cost: {woodCost} wood, {fishCost} fish.");
   }
 
   public override void _ExitTree()

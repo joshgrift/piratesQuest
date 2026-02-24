@@ -36,6 +36,7 @@ partial class Configuration : Node
   public static string CmdUser { get; private set; }
   public static string CmdPassword { get; private set; }
   public static bool DisableSaveUser { get; private set; }
+  public static string WebViewUrl { get; private set; } = $"{ApiBaseUrl}/fragments/webview/";
 
   public override void _Ready()
   {
@@ -103,6 +104,9 @@ partial class Configuration : Node
           break;
         case "--disableSaveUser":
           DisableSaveUser = true;
+          break;
+        case "--webview-url" when i + 1 < args.Length:
+          WebViewUrl = args[i + 1];
           break;
       }
     }

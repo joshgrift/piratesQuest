@@ -5,6 +5,7 @@ PiratesQuest uses three pieces:
 
 - `Game` (`godot/`): the player client and also the dedicated multiplayer server.
 - `API` (`server/`): login/signup and server list.
+- `WebView` (`webview/`): React/TypeScript port UI, served as a native browser overlay via godot_wry.
 - `Database` (via Docker): stores users and API data.
 
 ## Running
@@ -40,30 +41,32 @@ All scripts are in the repo root and run from there.
 - Upload builds in dist to github release
 - Run `publish-backend.sh` to publish the backend and the webview UI.
 
-## WebView (Info Panel)
+## Port WebView
 
-The game embeds a native browser panel on the right third of the screen using [godot_wry](https://github.com/doceazedo/godot_wry). It loads a React app served by the API at `/fragments/info-panel/`.
+The game uses a native browser panel ([godot_wry](https://github.com/doceazedo/godot_wry)) for the port UI. When the player docks at a port, a React/TypeScript app slides in on the right third of the screen, replacing the old Godot-based port menu. It handles buying/selling goods, purchasing and managing ship components, viewing stats, and repairing the hull.
 
 **How it works:**
-- `Hud.cs` creates the WebView once the local player is found. It's always visible.
-- The React app (`server/webview-app/`) shows inventory, a shop, and game controls.
-- Communication is two-way:
-  - **Godot → React**: `eval()` calls `window.updateInventory(data)` on every inventory change.
-  - **React → Godot**: `window.ipc.postMessage(json)` sends purchase requests, handled via the `ipc_message` signal in `Hud.cs`.
+- `Hud.cs` creates the WebView when the player first docks. It stays hidden until needed.
+- On dock, Godot pushes the full port state via `eval("window.openPort({...})")`.
+- On depart, Godot calls `eval("window.closePort()")` to trigger a slide-out animation.
+- After any action (buy, sell, equip, heal), Godot pushes refreshed state via `updateState`.
+- All IPC messages are typed on both sides (TypeScript discriminated unions, C# polymorphic records).
 
-**Canvas stretch fix:** The project uses `canvas_items` stretch mode (1920x1080 base). Since godot_wry is a native OS overlay (not Godot-rendered), `get_size()` returns virtual pixels but the overlay needs physical pixels. `SyncWebViewSize()` uses the canvas transform to convert between the two coordinate systems.
+**Canvas stretch fix:** The project uses `canvas_items` stretch mode (1920x1080 base). Since godot_wry is a native OS overlay (not Godot-rendered), `SyncWebViewSize()` converts between virtual and physical pixel coordinates.
 
 **Editor note (Godot 4.5+):** Native webviews don't work in embedded mode. Uncheck "Embed Game on Next Play" in the Game panel before running.
 
-### Building the React app
+See [`webview/README.md`](webview/README.md) for more details.
+
+### Building the port UI
 
 ```bash
-cd server/webview-app
+cd webview
 npm install
 npm run build
 ```
 
-The build output goes to `server/fragments/info-panel/`, which the API serves as static files.
+The build output goes to `server/fragments/webview/`, which the API serves as static files.
 
 ## Third Party
 - [GoDot](https://godotengine.org/)
@@ -78,10 +81,10 @@ The build output goes to `server/fragments/info-panel/`, which the API serves as
 
 ## TODO
 ### 0.4.0 Alpha
-- [ ] React UI so it can explain a lot more
-  - [ ] More details
+- [x] React UI so it can explain a lot more
+  - [x] More details
   - [ ] Stacking components
-  - [ ] Satisfying animations
+  - [x] Satisfying animations
   - [ ] Buy in 5, 10, 50 increments
   - [ ] Sell all button
   - [ ] Quick buy for components
