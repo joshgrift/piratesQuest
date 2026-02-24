@@ -1,6 +1,8 @@
 using Godot;
 using PiratesQuest;
+using System;
 using System.Linq;
+using System.Text.Json;
 using PiratesQuest.Data;
 using Godot.Collections;
 using System.Collections.Generic;
@@ -26,6 +28,18 @@ public partial class Hud : Control
   // Key: item type, Value: tuple of (accumulated change, timer reference)
   // Using System.Collections.Generic.Dictionary because Godot.Dictionary doesn't support C# tuples
   private System.Collections.Generic.Dictionary<InventoryItemType, (int accumulatedChange, SceneTreeTimer timer)> _pendingChanges = new();
+
+  // WebView (godot_wry) — always-visible panel on the right third of the screen.
+  // It's a native OS overlay, so we manually size it in physical window pixels.
+  private Node _webView;
+  private bool _webViewCreated;
+
+  private static readonly System.Collections.Generic.Dictionary<InventoryItemType, int> _webViewShopPrices = new()
+  {
+    { InventoryItemType.CannonBall, 2 },
+    { InventoryItemType.Wood, 4 },
+    { InventoryItemType.Fish, 5 },
+  };
 
   public override void _Ready()
   {
@@ -136,6 +150,8 @@ public partial class Hud : Control
       };
 
       GD.Print($"HUD connected to Player{myPeerId}");
+
+      CreateWebView();
     }
     else
     {
@@ -234,6 +250,8 @@ public partial class Hud : Control
 
   private void OnInventoryChanged(InventoryItemType itemType, int newAmount, int change)
   {
+    PushInventoryToWebView();
+
     if (_player.isLimitedByCapacity)
     {
       StatusListContainer.GetNode<Control>("Heavy").Visible = true;
@@ -323,5 +341,133 @@ public partial class Hud : Control
         _pendingChanges.Remove(itemType);
       }
     };
+  }
+
+  // ── WebView (always-visible right panel) ────────────────────────────
+
+  private void CreateWebView()
+  {
+    if (_webViewCreated) return;
+    _webViewCreated = true;
+
+    if (!ClassDB.ClassExists("WebView"))
+    {
+      GD.Print("WebView (godot_wry) plugin not available — skipping");
+      return;
+    }
+
+    var scene = GD.Load<PackedScene>("res://scenes/play/scenes/webview_node.tscn");
+    if (scene == null) return;
+
+    var instance = scene.Instantiate();
+    if (instance is not Control control)
+    {
+      instance.QueueFree();
+      return;
+    }
+
+    _webView = control;
+    _webView.Set("url", $"{Configuration.ApiBaseUrl}/fragments/info-panel/");
+    _webView.Set("full_window_size", false);
+    _webView.Set("transparent", false);
+    _webView.Set("devtools", true);
+    _webView.Set("forward_input_events", true);
+
+    AddChild(_webView);
+
+    // Position/size the native overlay and keep it in sync on resize.
+    // Deferred so the engine finishes updating viewport/canvas first.
+    CallDeferred(MethodName.SyncWebViewSize);
+    GetTree().Root.SizeChanged += OnWindowResized;
+
+    _webView.Connect("ipc_message", new Callable(this, MethodName.OnIpcMessage));
+
+    // Send initial inventory
+    PushInventoryToWebView();
+    GD.Print("HUD: WebView created (right 1/3)");
+  }
+
+  private void OnWindowResized()
+  {
+    CallDeferred(MethodName.SyncWebViewSize);
+  }
+
+  /// <summary>
+  /// Positions the native webview overlay as the right 1/3 of the window.
+  /// godot_wry reads get_screen_position() (= canvas_scale * Position) for
+  /// the overlay's physical position, and get_size() for its physical size.
+  /// We derive the virtual position from the canvas transform so this works
+  /// regardless of stretch mode or aspect ratio.
+  /// </summary>
+  private void SyncWebViewSize()
+  {
+    if (_webView is not Control wv) return;
+
+    var windowSize = DisplayServer.WindowGetSize();
+
+    // The canvas transform maps virtual coords → physical window coords.
+    // Invert the scale to go from physical → virtual.
+    var canvasXform = GetViewport().GetCanvasTransform();
+    float scaleX = canvasXform.X.X;
+    float scaleY = canvasXform.Y.Y;
+
+    // Virtual position so that get_screen_position() returns the correct
+    // physical position (right 1/3 boundary).
+    wv.Position = new Vector2(windowSize.X * 2f / 3f / scaleX, 0);
+
+    // Physical pixel size — godot_wry passes get_size() straight to the OS.
+    wv.Size = new Vector2(windowSize.X / 3f, windowSize.Y);
+  }
+
+  private void OnIpcMessage(string message)
+  {
+    var parsed = Json.ParseString(message);
+    if (parsed.VariantType != Variant.Type.Dictionary) return;
+
+    var dict = parsed.AsGodotDictionary();
+    string action = dict.ContainsKey("action") ? dict["action"].AsString() : "";
+
+    if (action == "purchase")
+    {
+      string itemType = dict["itemType"].AsString();
+      int quantity = dict["quantity"].AsInt32();
+      HandleWebViewPurchase(itemType, quantity);
+    }
+  }
+
+  private void PushInventoryToWebView()
+  {
+    if (_player == null || _webView == null) return;
+
+    var items = new System.Collections.Generic.Dictionary<string, int>();
+    foreach (InventoryItemType type in Enum.GetValues(typeof(InventoryItemType)))
+    {
+      items[type.ToString()] = _player.GetInventoryCount(type);
+    }
+
+    var json = JsonSerializer.Serialize(items);
+    _webView.Call("eval",
+      $"window.updateInventory && window.updateInventory({json})");
+  }
+
+  private void HandleWebViewPurchase(string itemType, int quantity)
+  {
+    if (_player == null) return;
+
+    if (!Enum.TryParse<InventoryItemType>(itemType, out var type)) return;
+    if (!_webViewShopPrices.TryGetValue(type, out int unitPrice)) return;
+
+    int totalCost = unitPrice * quantity;
+    bool success = _player.UpdateInventory(type, quantity, -totalCost);
+
+    GD.Print(success
+      ? $"HUD: Purchased {quantity}x {itemType} for {totalCost} coin"
+      : $"HUD: Purchase failed — not enough coin");
+  }
+
+  public override void _ExitTree()
+  {
+    if (_webViewCreated)
+      GetTree().Root.SizeChanged -= OnWindowResized;
   }
 }

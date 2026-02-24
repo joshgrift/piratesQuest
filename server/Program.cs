@@ -179,11 +179,24 @@ app.MapPut("/api/server/{id}/state/{user}", async (int id, string user, HttpCont
 
 // ---------------------------------------------------------------------------
 // GET /fragments/{spaId}/{**path}  [public]
-// Serves the SPA's index.html, falling back for client-side routing.
-// Static assets (js/css) are handled by the static files middleware above.
+// SPA fallback: if the path matches an actual file on disk, serve it with
+// the correct MIME type. Otherwise return index.html for client-side routing.
 // ---------------------------------------------------------------------------
-app.MapGet("/fragments/{spaId}/{**path}", (string spaId) =>
+var mimeProvider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+
+app.MapGet("/fragments/{spaId}/{**path}", (string spaId, string? path) =>
 {
+    if (!string.IsNullOrEmpty(path))
+    {
+        var filePath = Path.Combine(fragmentsPath, spaId, path);
+        if (File.Exists(filePath))
+        {
+            if (!mimeProvider.TryGetContentType(filePath, out var contentType))
+                contentType = "application/octet-stream";
+            return Results.File(filePath, contentType);
+        }
+    }
+
     var indexPath = Path.Combine(fragmentsPath, spaId, "index.html");
     return File.Exists(indexPath)
         ? Results.File(indexPath, "text/html")
