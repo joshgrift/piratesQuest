@@ -652,6 +652,48 @@ body {
   color: #8b9ab5;
   margin-top: 4px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.heal-resources {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  color: #a0b0c8;
+}
+
+.resource-short {
+  color: #c06060;
+}
+
+.heal-limited {
+  color: #a08040;
+  font-style: italic;
+}
+
+.heal-divider {
+  text-align: center;
+  font-size: 10px;
+  color: #5a6a7a;
+  margin: 6px 0 4px;
+}
+
+.heal-btn-gold {
+  background: linear-gradient(135deg, #5a4010 0%, #7a5a18 100%);
+  border-color: #b8860b;
+  color: #f0d060;
+}
+
+.heal-btn-gold:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7a5a18 0%, #9a7a28 100%);
+  border-color: #d4a017;
+}
+
+.heal-buy-detail {
+  color: #7a8a9a;
+  font-size: 10px;
 }
 
 /* ── Stats Grid ───────────────────────────────────────────────────── */
@@ -679,6 +721,21 @@ body {
 .stat-value {
   color: #e0d5c0;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-bonus {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6bdf6b;
+  background: rgba(107, 223, 107, 0.1);
+  border: 1px solid rgba(107, 223, 107, 0.25);
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-family: monospace;
+  white-space: nowrap;
 }
 
 /* ── Empty State ──────────────────────────────────────────────────── */

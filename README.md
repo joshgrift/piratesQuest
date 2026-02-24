@@ -83,11 +83,11 @@ The build output goes to `server/fragments/webview/`, which the API serves as st
 ### 0.4.0 Alpha
 - [x] React UI so it can explain a lot more
   - [x] More details
-  - [ ] Stacking components
+  - [x] Stacking components
   - [x] Satisfying animations
-  - [ ] Buy in 5, 10, 50 increments
-  - [ ] Sell all button
-  - [ ] Quick buy for components
+  - [x] Buy in 5, 10, 50 increments
+  - [x] Sell all button
+  - [x] Quick buy for components
 - [x] Safe zone in port
 - [ ] Stash
 - [ ] AI ships
@@ -96,7 +96,7 @@ The build output goes to `server/fragments/webview/`, which the API serves as st
 - [x] Persistent world
 - [x] Login
 - [ ] More incremental progress
-- [ ] Health too expensive?
+- [x] Health too expensive?
 
 - [ ] Deployed to live server
 

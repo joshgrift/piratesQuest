@@ -355,6 +355,19 @@ function ShipyardTab({ state }: { state: PortState }) {
 
   const forSale = state.components;
 
+  // Total additive/multiplicative contribution per stat from all equipped components
+  const statBonuses: Record<string, { add: number; multi: number }> = {};
+  for (const { count, data } of equipped) {
+    for (const sc of data.statChanges) {
+      if (!statBonuses[sc.stat]) statBonuses[sc.stat] = { add: 0, multi: 1 };
+      if (sc.modifier === "Additive") {
+        statBonuses[sc.stat].add += sc.value * count;
+      } else {
+        statBonuses[sc.stat].multi *= Math.pow(sc.value, count);
+      }
+    }
+  }
+
   const canAfford = (cost: Record<string, number>): boolean => {
     return Object.entries(cost).every(
       ([type, amount]) => (state.inventory[type] ?? 0) >= amount
@@ -367,6 +380,23 @@ function ShipyardTab({ state }: { state: PortState }) {
   const maxHeal = Math.min(healthNeeded, Math.floor(woodAvail / 5), fishAvail);
   const healthPct = state.maxHealth > 0 ? (state.health / state.maxHealth) * 100 : 0;
   const healthBarPos = 100 - healthPct;
+
+  // Buy & Heal: figure out how much Wood/Fish to purchase to fully heal
+  const woodShop = state.itemsForSale.find(i => i.type === "Wood");
+  const fishShop = state.itemsForSale.find(i => i.type === "Fish");
+  const coinsAvail = state.inventory["Coin"] ?? 0;
+
+  // Wood/Fish still needed after existing inventory
+  const woodToBuy = woodShop ? Math.max(0, healthNeeded * 5 - woodAvail) : null;
+  const fishToBuy = fishShop ? Math.max(0, healthNeeded - fishAvail) : null;
+  const buyHealGoldCost =
+    woodToBuy !== null && fishToBuy !== null
+      ? woodToBuy * (woodShop!.buyPrice) + fishToBuy * (fishShop!.buyPrice)
+      : null;
+  const canBuyAndHeal =
+    buyHealGoldCost !== null &&
+    healthNeeded > 0 &&
+    coinsAvail >= buyHealGoldCost;
 
   return (
     <>
@@ -398,8 +428,49 @@ function ShipyardTab({ state }: { state: PortState }) {
         </button>
         {healthNeeded > 0 && (
           <div className="heal-cost">
-            Cost: {maxHeal * 5} Wood + {maxHeal} Fish
+            <div>Cost: {maxHeal * 5} Wood + {maxHeal} Fish per repair</div>
+            <div className="heal-resources">
+              <span className={woodAvail < maxHeal * 5 ? "resource-short" : ""}>
+                Wood: {woodAvail}
+              </span>
+              <span className={fishAvail < maxHeal ? "resource-short" : ""}>
+                Fish: {fishAvail}
+              </span>
+            </div>
+            {maxHeal < healthNeeded && (
+              <div className="heal-limited">
+                (limited by {Math.floor(woodAvail / 5) <= fishAvail ? "Wood" : "Fish"})
+              </div>
+            )}
           </div>
+        )}
+        {healthNeeded > 0 && buyHealGoldCost !== null && (
+          <>
+            <div className="heal-divider">— or —</div>
+            <button
+              className="heal-btn heal-btn-gold"
+              disabled={!canBuyAndHeal}
+              onClick={() => {
+                const items: { type: string; quantity: number }[] = [];
+                if (woodToBuy! > 0) items.push({ type: "Wood", quantity: woodToBuy! });
+                if (fishToBuy! > 0) items.push({ type: "Fish", quantity: fishToBuy! });
+                if (items.length > 0) sendIpc({ action: "buy_items", items });
+                sendIpc({ action: "heal" });
+              }}
+            >
+              Buy Resources & Repair (+{healthNeeded} HP)
+            </button>
+            <div className="heal-cost">
+              <div>Cost: {buyHealGoldCost} Gold</div>
+              {woodToBuy! > 0 && <div className="heal-buy-detail">Buy {woodToBuy} Wood @ {woodShop!.buyPrice}G ea</div>}
+              {fishToBuy! > 0 && <div className="heal-buy-detail">Buy {fishToBuy} Fish @ {fishShop!.buyPrice}G ea</div>}
+              <div className="heal-resources">
+                <span className={!canBuyAndHeal ? "resource-short" : ""}>
+                  Gold: {coinsAvail}
+                </span>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
@@ -407,14 +478,24 @@ function ShipyardTab({ state }: { state: PortState }) {
       <div className="section-title">Ship Stats</div>
       <div className="card mb-12">
         <div className="stats-grid">
-          {Object.entries(state.stats).map(([stat, value]) => (
-            <div className="stat-row" key={stat}>
-              <span className="stat-label">{formatStatName(stat)}</span>
-              <span className="stat-value">
-                {typeof value === "number" ? Math.round(value * 100) / 100 : value}
-              </span>
-            </div>
-          ))}
+          {Object.entries(state.stats).map(([stat, value]) => {
+            const bonus = statBonuses[stat];
+            const parts: string[] = [];
+            if (bonus?.add) parts.push(`+${fmt(bonus.add)}`);
+            if (bonus?.multi && bonus.multi !== 1)
+              parts.push(`+${Math.round((bonus.multi - 1) * 100)}%`);
+            return (
+              <div className="stat-row" key={stat}>
+                <span className="stat-label">{formatStatName(stat)}</span>
+                <span className="stat-value">
+                  {typeof value === "number" ? fmt(value) : value}
+                  {parts.length > 0 && (
+                    <span className="stat-bonus">{parts.join(" ")}</span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -451,6 +532,7 @@ function ShipyardTab({ state }: { state: PortState }) {
               sendIpc({ action: "unequip_component", name: data.name })
             }
             inventory={state.inventory}
+            stats={state.stats}
           />
         ))
       )}
@@ -472,6 +554,7 @@ function ShipyardTab({ state }: { state: PortState }) {
                 sendIpc({ action: "equip_component", name: data.name })
               }
               inventory={state.inventory}
+              stats={state.stats}
             />
           ))}
         </>
@@ -494,6 +577,7 @@ function ShipyardTab({ state }: { state: PortState }) {
                 sendIpc({ action: "purchase_component", name: comp.name })
               }
               inventory={state.inventory}
+              stats={state.stats}
               itemsForSale={state.itemsForSale}
             />
           ))}
@@ -514,7 +598,13 @@ interface ComponentCardProps {
   showCost?: boolean;
   onAction: () => void;
   inventory: Record<string, number>;
+  stats: Record<string, number>;
   itemsForSale?: ShopItem[];
+}
+
+function fmt(n: number): string {
+  const r = Math.round(n * 100) / 100;
+  return r % 1 === 0 ? String(r) : r.toFixed(2).replace(/\.?0+$/, "");
 }
 
 function ComponentCard({
@@ -526,6 +616,7 @@ function ComponentCard({
   showCost,
   onAction,
   inventory,
+  stats,
   itemsForSale,
 }: ComponentCardProps) {
   const buyAndBuildInfo = itemsForSale
@@ -583,12 +674,23 @@ function ComponentCard({
           {component.statChanges.map((sc) => {
             const label = formatStatName(sc.stat);
             const isMulti = sc.modifier === "Multiplicative";
-            const display = isMulti
-              ? `+${Math.round((sc.value - 1) * 100)}%`
-              : `+${sc.value}`;
+            if (actionClass === "unequip") {
+              const display = isMulti
+                ? `+${Math.round((sc.value - 1) * 100)}%`
+                : `+${fmt(sc.value)}`;
+              return (
+                <span key={sc.stat} className="stat-change positive">
+                  {label}: {display}
+                </span>
+              );
+            }
+            const current = stats[sc.stat] ?? 0;
+            const projected = isMulti
+              ? current * sc.value
+              : current + sc.value;
             return (
               <span key={sc.stat} className="stat-change positive">
-                {label}: {display}
+                {label}: {fmt(current)} → {fmt(projected)}
               </span>
             );
           })}
