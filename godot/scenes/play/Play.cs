@@ -211,24 +211,51 @@ public partial class Play : Node3D
       return;
     }
 
-    // Block duplicate usernames (case-insensitive) currently connected to this server.
-    foreach (var entry in _peerUsernames)
+    // If this username is already connected, replace the old session with this one.
+    // This lets the newest login win (useful if the player reconnects or logs in from another device).
+    var existingPeerId = FindConnectedPeerIdByUsername(normalizedUsername, peerId);
+    if (existingPeerId.HasValue)
     {
-      if (entry.Key == peerId)
-      {
-        continue;
-      }
+      var oldPeerId = existingPeerId.Value;
+      GD.Print($"Username '{normalizedUsername}' is already connected on peer {oldPeerId}. Replacing with peer {peerId}.");
 
-      if (string.Equals(entry.Value, normalizedUsername, StringComparison.OrdinalIgnoreCase))
+      // Remove the old username mapping now so the new peer can be registered immediately.
+      // OnPeerDisconnected will run shortly after and clean up the old player node.
+      _peerUsernames.Remove(oldPeerId);
+
+      // Disconnect the old client so the new login can take over.
+      // The old client will return to menu via OnServerDisconnected.
+      if (IsPeerConnected(oldPeerId))
       {
-        RejectPeer(peerId, "That username is already in this server.");
-        return;
+        Multiplayer.MultiplayerPeer?.DisconnectPeer((int)oldPeerId, true);
       }
     }
 
     _peerUsernames[peerId] = normalizedUsername;
     SpawnPlayer(peerId);
     SetSpawnedPlayerNickname(peerId, normalizedUsername);
+  }
+
+  /// <summary>
+  /// Finds another connected peer using the same username (case-insensitive).
+  /// Returns null if no duplicate is found.
+  /// </summary>
+  private long? FindConnectedPeerIdByUsername(string username, long peerIdToIgnore)
+  {
+    foreach (var entry in _peerUsernames)
+    {
+      if (entry.Key == peerIdToIgnore)
+      {
+        continue;
+      }
+
+      if (string.Equals(entry.Value, username, StringComparison.OrdinalIgnoreCase))
+      {
+        return entry.Key;
+      }
+    }
+
+    return null;
   }
 
   private void RegisterLocalUsernameWithServer()
