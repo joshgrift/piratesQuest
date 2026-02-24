@@ -887,7 +887,8 @@ function VaultTab({ state }: { state: PortState }) {
   const upgradeCost = vault.level < 5 ? getVaultUpgradeCost(vault.level) : null;
   const canAffordUpgrade = upgradeCost
     ? Object.entries(upgradeCost).every(
-        ([type, amount]) => (state.inventory[type] ?? 0) >= amount
+        ([type, amount]) =>
+          (state.inventory[type] ?? 0) + (vault.items[type] ?? 0) >= amount
       )
     : false;
 
@@ -925,8 +926,11 @@ function VaultTab({ state }: { state: PortState }) {
     <>
       {/* Vault Header */}
       <div className="vault-header">
-        <div className="vault-level-badge">Level {vault.level}</div>
-        <div className="vault-port-label">{vault.portName}</div>
+        <img className="vault-header-icon" src={iconUrl("inventory", "vault.png")} alt="Vault" />
+        <div className="vault-header-info">
+          <div className="vault-level-badge">Level {vault.level}</div>
+          <div className="vault-port-label">{vault.portName}</div>
+        </div>
       </div>
 
       {/* Capacity Bars */}
@@ -967,11 +971,14 @@ function VaultTab({ state }: { state: PortState }) {
           <div className="card vault-upgrade-card">
             <div className="vault-upgrade-cost">
               {Object.entries(upgradeCost).map(([type, amount]) => {
-                const owned = state.inventory[type] ?? 0;
+                const inInventory = state.inventory[type] ?? 0;
+                const inVault = vault.items[type] ?? 0;
+                const total = inInventory + inVault;
                 return (
                   <span
                     key={type}
-                    className={`cost-chip ${owned < amount ? "chip-short" : type === "Coin" ? "chip-gold" : type === "Wood" ? "chip-wood" : "chip-iron"}`}
+                    className={`cost-chip ${total < amount ? "chip-short" : type === "Coin" ? "chip-gold" : type === "Wood" ? "chip-wood" : "chip-iron"}`}
+                    title={`Inventory: ${inInventory} + Vault: ${inVault}`}
                   >
                     <img src={inventoryIcon(type)} alt={type} className="chip-icon" />
                     {amount}
@@ -1332,7 +1339,138 @@ function CreativeTab({ state }: { state: PortState }) {
           Delete All Components
         </button>
       </div>
+
+      <div className="section-sep" />
+
+      <div className="section-title">Vault</div>
+      <div className="card">
+        {state.vault ? (
+          <>
+            <div className="creative-vault-info">
+              <img
+                className="creative-vault-icon"
+                src={iconUrl("inventory", "vault.png")}
+                alt="Vault"
+              />
+              <div>
+                <div className="creative-vault-detail">
+                  <strong>{state.vault.portName}</strong> · Level {state.vault.level}
+                </div>
+                <div className="creative-vault-detail-sub">
+                  {Object.values(state.vault.items).reduce((s, n) => s + n, 0)} items stored
+                </div>
+              </div>
+            </div>
+            <div className="creative-vault-buttons">
+              {([1, 2, 3, 4, 5] as const).map((lvl) => (
+                <button
+                  key={lvl}
+                  className={`creative-preset-btn ${state.vault?.level === lvl ? "creative-preset-active" : ""}`}
+                  onClick={() =>
+                    sendIpc({ action: "set_vault", portName: state.vault!.portName, level: lvl })
+                  }
+                >
+                  Lvl {lvl}
+                </button>
+              ))}
+            </div>
+            <button
+              className="creative-danger-btn"
+              onClick={() => sendIpc({ action: "delete_vault" })}
+            >
+              Delete Vault
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="creative-components-info">
+              <span className="empty-state">No vault built</span>
+            </div>
+            <div className="creative-vault-buttons">
+              <button
+                className="creative-preset-btn"
+                onClick={() =>
+                  sendIpc({ action: "set_vault", portName: state.portName, level: 1 })
+                }
+              >
+                Build Here (Lvl 1)
+              </button>
+              <button
+                className="creative-preset-btn"
+                onClick={() =>
+                  sendIpc({ action: "set_vault", portName: state.portName, level: 5 })
+                }
+              >
+                Build Here (Lvl 5)
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="section-sep" />
+
+      <DebugStatePanel state={state} />
     </>
+  );
+}
+
+/** Builds a PlayerStateDto-shaped object from the current PortState. */
+function buildServerState(state: PortState) {
+  return {
+    Inventory: { ...state.inventory },
+    Components: state.ownedComponents.map((c) => ({
+      Name: c.name,
+      IsEquipped: c.isEquipped,
+    })),
+    Health: state.health,
+    Vault: state.vault
+      ? {
+          PortName: state.vault.portName,
+          Level: state.vault.level,
+          Items: { ...state.vault.items },
+        }
+      : null,
+  };
+}
+
+function DebugStatePanel({ state }: { state: PortState }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const serverState = buildServerState(state);
+  const json = JSON.stringify(serverState, null, 2);
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(json).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+
+  return (
+    <div className="creative-debug-section">
+      <button
+        className="creative-debug-toggle"
+        onClick={() => setOpen((o) => !o)}
+      >
+        {open ? "▾" : "▸"} Server State
+      </button>
+      {open && (
+        <>
+          <div className="creative-debug-toolbar">
+            <button className="creative-debug-copy" onClick={copyToClipboard}>
+              {copied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+          <textarea
+            className="creative-debug-textarea"
+            readOnly
+            value={json}
+            rows={18}
+          />
+        </>
+      )}
+    </div>
   );
 }
 
@@ -1609,7 +1747,7 @@ const GUIDE_DIALOGUE: Record<string, DialogueNode> = {
     responses: [{ label: "That's a relief! What else?", next: "root" }],
   },
   vault_upgrade: {
-    text: "Yer vault starts small, but ye can upgrade it up to 5 levels! Each level increases how many items and how much gold it can hold. The catch? Each upgrade costs exponentially more Wood, Iron, and Gold.\n\nLevel 1 holds 50 items and 500 gold. By level 5, ye can store 2,500 items and 75,000 gold!",
+    text: "Yer vault starts small, but ye can upgrade it up to 5 levels! Each level increases how many items and how much gold it can hold. The catch? Each upgrade costs exponentially more Wood, Iron, and Gold.\n\nLevel 1 holds 50 items and 500 gold. By level 5, ye can store 2,500 items and 75,000 gold!\n\nHere's a handy trick \u2014 when upgradin', the game pulls resources from yer inventory first, then dips into the vault for the rest. So ye can stash yer upgrade materials right in the vault itself!",
     responses: [
       { label: "How do I build one?", next: "vault_build" },
       { label: "Ask about something else", next: "root" },

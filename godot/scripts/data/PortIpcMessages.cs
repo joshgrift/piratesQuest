@@ -80,6 +80,8 @@ public record StatChangeDto(string Stat, string Modifier, float Value);
 [JsonDerivedType(typeof(UpgradeVaultMessage), "upgrade_vault")]
 [JsonDerivedType(typeof(VaultDepositMessage), "vault_deposit")]
 [JsonDerivedType(typeof(VaultWithdrawMessage), "vault_withdraw")]
+[JsonDerivedType(typeof(SetVaultMessage), "set_vault")]
+[JsonDerivedType(typeof(DeleteVaultMessage), "delete_vault")]
 public record IpcMessage;
 
 public record BuyItemsMessage : IpcMessage
@@ -154,6 +156,16 @@ public record VaultWithdrawMessage : IpcMessage
 {
   public ItemQuantity[] Items { get; init; } = [];
 }
+
+/// <summary>Creative-mode only: set or create a vault at a port with a given level.</summary>
+public record SetVaultMessage : IpcMessage
+{
+  public string PortName { get; init; } = "";
+  public int Level { get; init; } = 1;
+}
+
+/// <summary>Creative-mode only: delete the player's vault entirely.</summary>
+public record DeleteVaultMessage : IpcMessage;
 
 /// <summary>
 /// An item type + quantity pair used in buy/sell messages.

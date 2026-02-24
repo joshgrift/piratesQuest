@@ -60,9 +60,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   // Build cost: what it takes to construct a level-1 vault
   public static readonly Dictionary<InventoryItemType, int> VaultBuildCost = new()
   {
-    { InventoryItemType.Wood, 50 },
-    { InventoryItemType.Iron, 25 },
-    { InventoryItemType.Coin, 100 },
+    { InventoryItemType.Wood, 100 },
+    { InventoryItemType.Iron, 200 },
+    { InventoryItemType.Coin, 1000 },
   };
 
   /// <summary>
@@ -75,8 +75,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     return new Dictionary<InventoryItemType, int>
     {
       { InventoryItemType.Wood, 100 * multiplier },
-      { InventoryItemType.Iron, 50 * multiplier },
-      { InventoryItemType.Coin, 200 * multiplier },
+      { InventoryItemType.Iron, 200 * multiplier },
+      { InventoryItemType.Coin, 1000 * multiplier },
     };
   }
 
@@ -818,20 +818,57 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   }
 
   /// <summary>
-  /// Upgrade the vault to the next level. Deducts resources.
+  /// Upgrade the vault to the next level.
+  /// Pulls resources from inventory first, then from the vault for the remainder.
   /// </summary>
   public bool UpgradeVault()
   {
     if (VaultPortName == null || VaultLevel >= VaultMaxLevel)
       return false;
 
-    var cost = GetVaultUpgradeCost(VaultLevel);
-    if (!MakePurchase(cost))
+    int multiplier = (int)Math.Pow(3, VaultLevel - 1);
+    int woodCost = 100 * multiplier;
+    int ironCost = 50 * multiplier;
+    int coinCost = 200 * multiplier;
+
+    // Check that inventory + vault together can cover each cost
+    if (_inventory.GetItemCount(InventoryItemType.Wood) + GetVaultAmount(InventoryItemType.Wood) < woodCost)
       return false;
+    if (_inventory.GetItemCount(InventoryItemType.Iron) + GetVaultAmount(InventoryItemType.Iron) < ironCost)
+      return false;
+    if (_inventory.GetItemCount(InventoryItemType.Coin) + GetVaultAmount(InventoryItemType.Coin) < coinCost)
+      return false;
+
+    // Deduct each resource: inventory first, vault for the remainder
+    DeductFromInventoryAndVault(InventoryItemType.Wood, woodCost);
+    DeductFromInventoryAndVault(InventoryItemType.Iron, ironCost);
+    DeductFromInventoryAndVault(InventoryItemType.Coin, coinCost);
 
     VaultLevel++;
     GD.Print($"{Name}: Upgraded vault to level {VaultLevel}");
     return true;
+  }
+
+  /// <summary>
+  /// Removes the given amount from inventory first, then vault for the rest.
+  /// Caller must verify sufficient total exists before calling.
+  /// </summary>
+  private void DeductFromInventoryAndVault(InventoryItemType item, int amount)
+  {
+    int remaining = amount;
+    int fromInventory = Math.Min(remaining, _inventory.GetItemCount(item));
+    if (fromInventory > 0)
+    {
+      UpdateInventory(item, -fromInventory);
+      remaining -= fromInventory;
+    }
+    if (remaining > 0)
+    {
+      int vaultHas = GetVaultAmount(item);
+      VaultItems[item] = vaultHas - remaining;
+      if (VaultItems[item] <= 0)
+        VaultItems.Remove(item);
+    }
   }
 
   /// <summary>

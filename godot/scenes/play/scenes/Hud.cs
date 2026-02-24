@@ -556,6 +556,12 @@ public partial class Hud : Control
       case VaultWithdrawMessage vw:
         HandleVaultWithdraw(vw);
         break;
+      case SetVaultMessage sv:
+        HandleSetVault(sv);
+        break;
+      case DeleteVaultMessage:
+        HandleDeleteVault();
+        break;
       default:
         GD.Print($"HUD: Unknown IPC message type");
         break;
@@ -771,6 +777,40 @@ public partial class Hud : Control
         ? $"HUD: Withdrew {req.Quantity}x {req.Type} from vault"
         : $"HUD: Vault withdraw failed for {req.Type}");
     }
+  }
+
+  private void HandleSetVault(SetVaultMessage msg)
+  {
+    if (!Configuration.IsCreative)
+    {
+      GD.PrintErr("HUD: set_vault rejected — creative mode is not enabled");
+      return;
+    }
+
+    int level = Math.Clamp(msg.Level, 1, Player.VaultMaxLevel);
+    string portName = string.IsNullOrWhiteSpace(msg.PortName)
+      ? (_currentPortName ?? "Creative Port")
+      : msg.PortName;
+
+    _player.VaultPortName = portName;
+    _player.VaultLevel = level;
+    if (_player.VaultItems == null)
+      _player.VaultItems = new System.Collections.Generic.Dictionary<InventoryItemType, int>();
+    GD.Print($"HUD: [Creative] Set vault at {portName} level {level}");
+  }
+
+  private void HandleDeleteVault()
+  {
+    if (!Configuration.IsCreative)
+    {
+      GD.PrintErr("HUD: delete_vault rejected — creative mode is not enabled");
+      return;
+    }
+
+    _player.VaultPortName = null;
+    _player.VaultLevel = 0;
+    _player.VaultItems = new System.Collections.Generic.Dictionary<InventoryItemType, int>();
+    GD.Print("HUD: [Creative] Deleted vault");
   }
 
   public override void _ExitTree()
