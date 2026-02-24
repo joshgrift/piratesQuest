@@ -12,6 +12,19 @@ export interface PortState {
   maxHealth: number;
   componentCapacity: number;
   isCreative: boolean;
+  /** Null when the player hasn't built a vault yet. */
+  vault: VaultState | null;
+}
+
+/** The player's vault snapshot pushed from Godot. */
+export interface VaultState {
+  portName: string;
+  level: number;
+  items: Record<string, number>;
+  /** True when the player is docked at the port where their vault is. */
+  isHere: boolean;
+  itemCapacity: number;
+  goldCapacity: number;
 }
 
 /** A tradeable item at this port with buy and/or sell prices. */
@@ -58,7 +71,11 @@ export type IpcMessage =
   | { action: "focus_parent" }
   | { action: "set_inventory"; items: { type: string; quantity: number }[] }
   | { action: "clear_components" }
-  | { action: "set_health"; health: number };
+  | { action: "set_health"; health: number }
+  | { action: "build_vault" }
+  | { action: "upgrade_vault" }
+  | { action: "vault_deposit"; items: { type: string; quantity: number }[] }
+  | { action: "vault_withdraw"; items: { type: string; quantity: number }[] };
 
 // ── Window augmentation for godot_wry bridge ───────────────────────
 

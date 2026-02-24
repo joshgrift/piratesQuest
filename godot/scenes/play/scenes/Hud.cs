@@ -442,6 +442,26 @@ public partial class Hud : Control
     foreach (var kvp in _player.Stats.GetAllStats())
       stats[kvp.Key.ToString()] = kvp.Value;
 
+    // Build vault snapshot (null if player hasn't built one yet)
+    VaultStateDto vaultState = null;
+    if (_player.VaultPortName != null)
+    {
+      bool isHere = _player.VaultPortName == (_currentPortName ?? "");
+      var vaultItems = new System.Collections.Generic.Dictionary<string, int>();
+      foreach (var kvp in _player.VaultItems)
+        vaultItems[kvp.Key.ToString()] = kvp.Value;
+
+      vaultState = new VaultStateDto
+      {
+        PortName = _player.VaultPortName,
+        Level = _player.VaultLevel,
+        Items = vaultItems,
+        IsHere = isHere,
+        ItemCapacity = Player.VaultItemCapacity[_player.VaultLevel],
+        GoldCapacity = Player.VaultGoldCapacity[_player.VaultLevel],
+      };
+    }
+
     return new PortStateDto
     {
       PortName = _currentPortName ?? "",
@@ -454,6 +474,7 @@ public partial class Hud : Control
       MaxHealth = _player.MaxHealth,
       ComponentCapacity = (int)_player.Stats.GetStat(PlayerStat.ComponentCapacity),
       IsCreative = Configuration.IsCreative,
+      Vault = vaultState,
     };
   }
 
@@ -522,6 +543,18 @@ public partial class Hud : Control
         break;
       case SetHealthMessage sh:
         HandleSetHealth(sh);
+        break;
+      case BuildVaultMessage:
+        HandleBuildVault();
+        break;
+      case UpgradeVaultMessage:
+        HandleUpgradeVault();
+        break;
+      case VaultDepositMessage vd:
+        HandleVaultDeposit(vd);
+        break;
+      case VaultWithdrawMessage vw:
+        HandleVaultWithdraw(vw);
         break;
       default:
         GD.Print($"HUD: Unknown IPC message type");
@@ -691,6 +724,53 @@ public partial class Hud : Control
     _player.Health = clamped;
     _player.EmitSignal(Player.SignalName.HealthUpdate, _player.Health);
     GD.Print($"HUD: [Creative] Set health to {clamped}");
+  }
+
+  // ── Vault handlers ────────────────────────────────────────────────
+
+  private void HandleBuildVault()
+  {
+    if (_currentPortName == null) return;
+    bool ok = _player.BuildVault(_currentPortName);
+    GD.Print(ok
+      ? $"HUD: Built vault at {_currentPortName}"
+      : "HUD: Build vault failed");
+  }
+
+  private void HandleUpgradeVault()
+  {
+    bool ok = _player.UpgradeVault();
+    GD.Print(ok
+      ? $"HUD: Upgraded vault to level {_player.VaultLevel}"
+      : "HUD: Upgrade vault failed");
+  }
+
+  private void HandleVaultDeposit(VaultDepositMessage msg)
+  {
+    if (_currentPortName == null || _player.VaultPortName != _currentPortName) return;
+
+    foreach (var req in msg.Items)
+    {
+      if (!Enum.TryParse<InventoryItemType>(req.Type, out var type)) continue;
+      bool ok = _player.VaultDeposit(type, req.Quantity);
+      GD.Print(ok
+        ? $"HUD: Deposited {req.Quantity}x {req.Type} into vault"
+        : $"HUD: Vault deposit failed for {req.Type}");
+    }
+  }
+
+  private void HandleVaultWithdraw(VaultWithdrawMessage msg)
+  {
+    if (_currentPortName == null || _player.VaultPortName != _currentPortName) return;
+
+    foreach (var req in msg.Items)
+    {
+      if (!Enum.TryParse<InventoryItemType>(req.Type, out var type)) continue;
+      bool ok = _player.VaultWithdraw(type, req.Quantity);
+      GD.Print(ok
+        ? $"HUD: Withdrew {req.Quantity}x {req.Type} from vault"
+        : $"HUD: Vault withdraw failed for {req.Type}");
+    }
   }
 
   public override void _ExitTree()

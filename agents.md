@@ -7,7 +7,9 @@ I am a godot beginner so please explain what you do, keep the code simple, and a
 
 The goal of this project is to learn C# and godot at the same time. Give me api descriptions and easy to use descriptions.
 
-Never ask me to send you a file. Always look for it.
+Some more rules:
+- Never ask me to send you a file. Always look for it.
+- Always build to verify your changes work. Don't run though, I will do that
 
 # React
 When you are editing react, be creative. If you want to make some significant changes, just ask real quick, but do so anytime you see opportunity to improvement. We want the UI to be fun, pretty, animated, and informative. It's our way to guide the user to the game loop.

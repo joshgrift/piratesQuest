@@ -68,9 +68,9 @@ describe("GuideTab", () => {
     it("shows numbered badges on response buttons", () => {
       const { container } = renderGuide();
       const nums = container.querySelectorAll(".guide-response-num");
-      expect(nums).toHaveLength(10);
+      expect(nums).toHaveLength(11);
       expect(nums[0]!.textContent).toBe("1");
-      expect(nums[9]!.textContent).toBe("10");
+      expect(nums[10]!.textContent).toBe("11");
     });
   });
 

@@ -21,6 +21,26 @@ public record PortStateDto
   public int MaxHealth { get; init; }
   public int ComponentCapacity { get; init; }
   public bool IsCreative { get; init; }
+
+  /// <summary>
+  /// The player's vault info. Null when no vault has been built yet.
+  /// IsHere is true when the vault is at this port (enables the full UI).
+  /// </summary>
+  public VaultStateDto Vault { get; init; }
+}
+
+/// <summary>
+/// Vault snapshot sent to the React UI.
+/// </summary>
+public record VaultStateDto
+{
+  public string PortName { get; init; } = "";
+  public int Level { get; init; }
+  public Dictionary<string, int> Items { get; init; } = new();
+  /// <summary>True when the player is docked at the port where their vault is.</summary>
+  public bool IsHere { get; init; }
+  public int ItemCapacity { get; init; }
+  public int GoldCapacity { get; init; }
 }
 
 public record ShopItemDto(string Type, int BuyPrice, int SellPrice);
@@ -56,6 +76,10 @@ public record StatChangeDto(string Stat, string Modifier, float Value);
 [JsonDerivedType(typeof(SetInventoryMessage), "set_inventory")]
 [JsonDerivedType(typeof(ClearComponentsMessage), "clear_components")]
 [JsonDerivedType(typeof(SetHealthMessage), "set_health")]
+[JsonDerivedType(typeof(BuildVaultMessage), "build_vault")]
+[JsonDerivedType(typeof(UpgradeVaultMessage), "upgrade_vault")]
+[JsonDerivedType(typeof(VaultDepositMessage), "vault_deposit")]
+[JsonDerivedType(typeof(VaultWithdrawMessage), "vault_withdraw")]
 public record IpcMessage;
 
 public record BuyItemsMessage : IpcMessage
@@ -111,6 +135,24 @@ public record ClearComponentsMessage : IpcMessage;
 public record SetHealthMessage : IpcMessage
 {
   public int Health { get; init; }
+}
+
+/// <summary>Build a new vault at the current port (one per player).</summary>
+public record BuildVaultMessage : IpcMessage;
+
+/// <summary>Upgrade the vault to the next level.</summary>
+public record UpgradeVaultMessage : IpcMessage;
+
+/// <summary>Move items from inventory into the vault.</summary>
+public record VaultDepositMessage : IpcMessage
+{
+  public ItemQuantity[] Items { get; init; } = [];
+}
+
+/// <summary>Move items from the vault back into inventory.</summary>
+public record VaultWithdrawMessage : IpcMessage
+{
+  public ItemQuantity[] Items { get; init; } = [];
 }
 
 /// <summary>

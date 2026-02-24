@@ -431,4 +431,107 @@ describe("MarketTab", () => {
       expect(screen.getByText(/999 Gold/)).toBeInTheDocument();
     });
   });
+
+  // ── Hold capacity ──────────────────────────────────────────────────
+
+  describe("hold capacity", () => {
+    it("caps max buyable when hold is nearly full", () => {
+      renderMarket({
+        state: {
+          itemsForSale: [makeShopItem({ type: "Wood", buyPrice: 1 })],
+          inventory: { Coin: 1000, Wood: 95 },
+          stats: { ShipCapacity: 100 },
+        },
+      });
+      // Only 5 units of space left, even though we can afford 1000
+      const plusBtn = screen.getByRole("button", { name: "+" });
+      expect(plusBtn).toBeEnabled();
+
+      // +5 should still be enabled (exactly fills hold)
+      expect(screen.getByRole("button", { name: "+5" })).toBeEnabled();
+      // +50 would exceed hold — should be disabled
+      expect(screen.getByRole("button", { name: "+50" })).toBeDisabled();
+      // +100 would exceed hold — should be disabled
+      expect(screen.getByRole("button", { name: "+100" })).toBeDisabled();
+    });
+
+    it("disables + button when hold is completely full", () => {
+      renderMarket({
+        state: {
+          itemsForSale: [makeShopItem({ type: "Wood", buyPrice: 1 })],
+          inventory: { Coin: 1000, Wood: 100 },
+          stats: { ShipCapacity: 100 },
+        },
+      });
+      expect(screen.getByRole("button", { name: "+" })).toBeDisabled();
+    });
+
+    it("accounts for items already in the cart across multiple item types", async () => {
+      const { user } = renderMarket({
+        state: {
+          itemsForSale: [
+            makeShopItem({ type: "Wood", buyPrice: 1 }),
+            makeShopItem({ type: "Fish", buyPrice: 1 }),
+          ],
+          inventory: { Coin: 1000 },
+          stats: { ShipCapacity: 3 },
+        },
+      });
+
+      // Buy 2 Wood — leaves 1 space for Fish
+      const plusBtns = screen.getAllByRole("button", { name: "+" });
+      await user.click(plusBtns[0]!); // Wood +1
+      await user.click(plusBtns[0]!); // Wood +1
+
+      // Fish + button should still work once (1 space left)
+      expect(plusBtns[1]!).toBeEnabled();
+      await user.click(plusBtns[1]!); // Fish +1
+
+      // Now hold is full — Fish + should be disabled
+      expect(plusBtns[1]!).toBeDisabled();
+      // Wood + should also be disabled
+      expect(plusBtns[0]!).toBeDisabled();
+    });
+
+    it("uses the more restrictive of gold and hold limits", () => {
+      renderMarket({
+        state: {
+          itemsForSale: [makeShopItem({ type: "Wood", buyPrice: 10 })],
+          // Can afford 5 (50 / 10) but only room for 3
+          inventory: { Coin: 50, Wood: 97 },
+          stats: { ShipCapacity: 100 },
+        },
+      });
+      // +5 would exceed hold (only 3 spaces) — disabled
+      expect(screen.getByRole("button", { name: "+5" })).toBeDisabled();
+    });
+
+    it("does not restrict sell mode", async () => {
+      const { user } = renderMarket({
+        state: {
+          itemsForSale: [makeShopItem({ type: "Wood", buyPrice: 0, sellPrice: 5 })],
+          inventory: { Coin: 10, Wood: 200 },
+          stats: { ShipCapacity: 100 },
+        },
+      });
+      await user.click(screen.getByRole("button", { name: "Sell Goods" }));
+      // Hold is over capacity but selling should still work
+      expect(screen.getByRole("button", { name: "+" })).toBeEnabled();
+    });
+
+    it("treats missing ShipCapacity as unlimited", async () => {
+      const { user, container } = renderMarket({
+        state: {
+          itemsForSale: [makeShopItem({ type: "Wood", buyPrice: 1 })],
+          inventory: { Coin: 1000, Wood: 999 },
+          stats: {},
+        },
+      });
+      // No capacity stat → no hold limit, just gold limit
+      expect(screen.getByRole("button", { name: "+" })).toBeEnabled();
+      await user.click(screen.getByRole("button", { name: "+" }));
+      const qtyDisplay = container.querySelector(".qty-value")!;
+      expect(qtyDisplay.textContent).toBe("1");
+    });
+  });
 });

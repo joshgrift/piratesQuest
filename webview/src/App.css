@@ -975,6 +975,255 @@ body {
   animation: creativeFlash 0.4s ease-out;
 }
 
+/* ── Vault Tab ────────────────────────────────────────────────────────── */
+
+.vault-tab-btn.active {
+  color: #5ec4d4 !important;
+  border-bottom-color: #3ea8b8 !important;
+  background: rgba(94, 196, 212, 0.1) !important;
+}
+
+.vault-tab-btn:hover {
+  color: #5ec4d4 !important;
+  background: rgba(94, 196, 212, 0.06) !important;
+}
+
+.vault-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.vault-level-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  background: linear-gradient(180deg, rgba(94, 196, 212, 0.2) 0%, rgba(62, 168, 184, 0.15) 100%);
+  border: 1px solid rgba(94, 196, 212, 0.4);
+  border-radius: 20px;
+  font-family: "New Rocker", cursive;
+  font-size: 14px;
+  color: #5ec4d4;
+  white-space: nowrap;
+}
+
+.vault-port-label {
+  font-size: 12px;
+  color: #8b9ab5;
+}
+
+.vault-capacity-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vault-capacity-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vault-capacity-label {
+  font-size: 12px;
+  color: #8b9ab5;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.vault-capacity-bar {
+  flex: 1;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 5px;
+  border: 1px solid rgba(94, 196, 212, 0.2);
+  overflow: hidden;
+}
+
+.vault-capacity-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.vault-fill-items {
+  background: linear-gradient(90deg, #3ea8b8, #5ec4d4);
+}
+
+.vault-fill-gold {
+  background: linear-gradient(90deg, #b8860b, #d4a748);
+}
+
+.vault-capacity-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: #e0d5c0;
+  white-space: nowrap;
+  min-width: 70px;
+  text-align: right;
+  font-family: monospace;
+}
+
+.vault-upgrade-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vault-upgrade-cost {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.vault-upgrade-btn {
+  padding: 7px 16px;
+  background: linear-gradient(180deg, #3ea8b8 0%, #2a7a88 100%);
+  border: 1px solid #5ec4d4;
+  border-radius: 6px;
+  color: #fff;
+  font-family: "New Rocker", cursive;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+.vault-upgrade-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #5ec4d4 0%, #3ea8b8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(94, 196, 212, 0.3);
+}
+
+.vault-upgrade-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.chip-iron {
+  background: rgba(100, 120, 150, 0.3);
+  color: #a0b4d0;
+  border: 1px solid rgba(100, 120, 150, 0.4);
+}
+
+.vault-gold-row {
+  border-left: 3px solid rgba(212, 167, 72, 0.4);
+}
+
+.vault-footer {
+  margin-top: 10px;
+}
+
+/* ── Vault Build Screen ─────────────────────────────────────────────── */
+
+.vault-build-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 30px 16px;
+  text-align: center;
+}
+
+.vault-build-icon {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  animation: guideFloat 3s ease-in-out infinite;
+}
+
+.vault-build-title {
+  font-family: "New Rocker", cursive;
+  font-size: 22px;
+  color: #5ec4d4;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.vault-build-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #8b9ab5;
+  max-width: 280px;
+}
+
+.vault-build-cost {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.vault-build-btn {
+  padding: 10px 28px;
+  background: linear-gradient(180deg, #3ea8b8 0%, #2a7a88 100%);
+  border: 1px solid #5ec4d4;
+  border-radius: 8px;
+  color: #fff;
+  font-family: "New Rocker", cursive;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.vault-build-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #5ec4d4 0%, #3ea8b8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(94, 196, 212, 0.35);
+}
+
+.vault-build-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ── Vault Away Screen ──────────────────────────────────────────────── */
+
+.vault-away-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 30px 16px;
+  text-align: center;
+}
+
+.vault-away-icon {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  opacity: 0.6;
+}
+
+.vault-away-title {
+  font-family: "New Rocker", cursive;
+  font-size: 20px;
+  color: #8b9ab5;
+}
+
+.vault-away-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #8b9ab5;
+  max-width: 260px;
+}
+
+.vault-away-desc strong {
+  color: #d4a748;
+}
+
+.vault-away-summary {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: #5a6a80;
+}
+
 /* ── Guide Tab ────────────────────────────────────────────────────────── */
 
 .guide-container {

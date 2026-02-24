@@ -40,7 +40,7 @@ Ports are safe zones — you cannot take damage while docked. Each port is uniqu
 - **Crew** — Some ports have crew members available for hire.
 - **Components** — Purchase and equip ship upgrades.
 - **Healing** — Repair your ship using resources.
-- **Stash** — Store items safely so they survive your death.
+- **Vault** — Build a personal vault to store items and gold safely (survives death).
 
 ## Your Ship
 
@@ -98,7 +98,21 @@ Death is punishing but not permanent:
 - You lose **all** equipped components.
 - You respawn after a short delay at a random location with basic supplies.
 
-To protect against losses, use **stash locations** at ports to store valuable items before heading into danger.
+To protect against losses, build a **vault** at a port to store valuable items and gold before heading into danger. Each player can build one vault at any port. Vault contents are completely safe from death.
+
+### Vault
+
+Each player may build a single vault at any port on the map. The vault stores items and gold separately from your ship's inventory — everything inside survives death.
+
+| Level | Item Capacity | Gold Capacity |
+|-------|--------------|---------------|
+| 1     | 50           | 500           |
+| 2     | 150          | 2,000         |
+| 3     | 400          | 8,000         |
+| 4     | 1,000        | 25,000        |
+| 5     | 2,500        | 75,000        |
+
+Upgrading the vault costs Wood, Iron, and Gold — each level costs roughly three times the previous one. Choose your vault's port wisely, since you only get one!
 
 ## AI Ships
 

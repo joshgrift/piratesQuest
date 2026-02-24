@@ -4,6 +4,7 @@ import type {
   ComponentData,
   OwnedComponent,
   StatChange,
+  VaultState,
 } from "../types";
 
 // ── Factory functions ────────────────────────────────────────────────
@@ -61,11 +62,24 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
     inventory: { Wood: 10, Coin: 50, Fish: 5 },
     components: [makeComponentData()],
     ownedComponents: [],
-    stats: { Speed: 5, Acceleration: 3 },
+    stats: { Speed: 5, Acceleration: 3, ShipCapacity: 1000 },
     health: 80,
     maxHealth: 100,
     componentCapacity: 4,
     isCreative: false,
+    vault: null,
+    ...overrides,
+  };
+}
+
+export function makeVaultState(overrides?: Partial<VaultState>): VaultState {
+  return {
+    portName: "Tortuga",
+    level: 1,
+    items: {},
+    isHere: true,
+    itemCapacity: 50,
+    goldCapacity: 500,
     ...overrides,
   };
 }

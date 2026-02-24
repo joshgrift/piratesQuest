@@ -94,8 +94,7 @@ The build output goes to `server/fragments/webview/`, which the API serves as st
   - [x] Sell all button
   - [x] Quick buy for components
 - [x] Safe zone in port
-- [ ] Stash
-- [ ] AI ships
+- [x] Vault (stash)
 - [ ] Ship upgrades (persistent)
 - [x] UI to show when you are harvesting things
 - [x] Persistent world
@@ -113,6 +112,7 @@ The build output goes to `server/fragments/webview/`, which the API serves as st
 - [ ] Backwords should be a more gradual movement
 - [ ] Proximity voice chat
 - [ ] Artifacts are long term growth options.
+- [ ] AI ships
 
 ### Suggestions
 - [ ] Close port menu early

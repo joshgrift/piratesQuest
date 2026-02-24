@@ -44,6 +44,42 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   public readonly PlayerStats Stats = new();
   public System.Collections.Generic.List<OwnedComponent> OwnedComponents = [];
 
+  // ── Vault ────────────────────────────────────────────────────────
+  // Each player can build one vault at a single port.
+  // Null VaultPortName means no vault exists yet.
+
+  public string VaultPortName { get; set; }
+  public int VaultLevel { get; set; }
+  public System.Collections.Generic.Dictionary<InventoryItemType, int> VaultItems { get; set; } = new();
+
+  // Capacities per vault level (index 0 = unused, 1-5 = levels)
+  public static readonly int[] VaultItemCapacity = [0, 500, 1000, 2000, 4000, 6000];
+  public static readonly int[] VaultGoldCapacity = [0, 2000, 4000, 8000, 16000, 32000];
+  public const int VaultMaxLevel = 5;
+
+  // Build cost: what it takes to construct a level-1 vault
+  public static readonly Dictionary<InventoryItemType, int> VaultBuildCost = new()
+  {
+    { InventoryItemType.Wood, 50 },
+    { InventoryItemType.Iron, 25 },
+    { InventoryItemType.Coin, 100 },
+  };
+
+  /// <summary>
+  /// Returns the upgrade cost to go from the given level to level+1.
+  /// Costs triple each tier: base * 3^(level-1).
+  /// </summary>
+  public static Dictionary<InventoryItemType, int> GetVaultUpgradeCost(int currentLevel)
+  {
+    int multiplier = (int)Math.Pow(3, currentLevel - 1);
+    return new Dictionary<InventoryItemType, int>
+    {
+      { InventoryItemType.Wood, 100 * multiplier },
+      { InventoryItemType.Iron, 50 * multiplier },
+      { InventoryItemType.Coin, 200 * multiplier },
+    };
+  }
+
   // Current state of the player - controls whether they can move, shoot, or take damage
   [Export] public PlayerState State { get; private set; } = PlayerState.Alive;
   // True while this ship is inside a port docking area.
@@ -757,6 +793,121 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     return _inventory.GetAll();
   }
 
+  // ── Vault Operations ──────────────────────────────────────────────
+
+  /// <summary>
+  /// Build a brand-new vault at the given port. Deducts resources.
+  /// Returns false if the player already has a vault or can't afford it.
+  /// </summary>
+  public bool BuildVault(string portName)
+  {
+    if (VaultPortName != null)
+    {
+      GD.PrintErr($"{Name}: Already has a vault at {VaultPortName}");
+      return false;
+    }
+
+    if (!MakePurchase(VaultBuildCost))
+      return false;
+
+    VaultPortName = portName;
+    VaultLevel = 1;
+    VaultItems = new System.Collections.Generic.Dictionary<InventoryItemType, int>();
+    GD.Print($"{Name}: Built vault at {portName}");
+    return true;
+  }
+
+  /// <summary>
+  /// Upgrade the vault to the next level. Deducts resources.
+  /// </summary>
+  public bool UpgradeVault()
+  {
+    if (VaultPortName == null || VaultLevel >= VaultMaxLevel)
+      return false;
+
+    var cost = GetVaultUpgradeCost(VaultLevel);
+    if (!MakePurchase(cost))
+      return false;
+
+    VaultLevel++;
+    GD.Print($"{Name}: Upgraded vault to level {VaultLevel}");
+    return true;
+  }
+
+  /// <summary>
+  /// Move items from the player's inventory into the vault.
+  /// Respects the vault's item and gold capacity limits.
+  /// </summary>
+  public bool VaultDeposit(InventoryItemType item, int amount)
+  {
+    if (VaultPortName == null || amount <= 0)
+      return false;
+
+    // Check the player actually has the items
+    if (_inventory.GetItemCount(item) < amount)
+      return false;
+
+    int currentVaultTotal = GetVaultItemCount();
+    int currentVaultGold = GetVaultAmount(InventoryItemType.Coin);
+
+    if (item == InventoryItemType.Coin)
+    {
+      // Gold has its own capacity limit
+      if (currentVaultGold + amount > VaultGoldCapacity[VaultLevel])
+        return false;
+    }
+    else
+    {
+      // Non-gold items share the item capacity
+      int nonGoldVaultTotal = currentVaultTotal - currentVaultGold;
+      if (nonGoldVaultTotal + amount > VaultItemCapacity[VaultLevel])
+        return false;
+    }
+
+    // Move the items
+    _inventory.UpdateItem(item, -amount);
+    VaultItems[item] = GetVaultAmount(item) + amount;
+
+    EmitSignal(SignalName.InventoryChanged, (int)item, _inventory.GetItemCount(item), -amount);
+    GD.Print($"{Name}: Deposited {amount}x {item} into vault");
+    return true;
+  }
+
+  /// <summary>
+  /// Move items from the vault back into the player's inventory.
+  /// </summary>
+  public bool VaultWithdraw(InventoryItemType item, int amount)
+  {
+    if (VaultPortName == null || amount <= 0)
+      return false;
+
+    int vaultAmount = GetVaultAmount(item);
+    if (vaultAmount < amount)
+      return false;
+
+    VaultItems[item] = vaultAmount - amount;
+    if (VaultItems[item] <= 0)
+      VaultItems.Remove(item);
+
+    _inventory.UpdateItem(item, amount);
+    EmitSignal(SignalName.InventoryChanged, (int)item, _inventory.GetItemCount(item), amount);
+    GD.Print($"{Name}: Withdrew {amount}x {item} from vault");
+    return true;
+  }
+
+  private int GetVaultItemCount()
+  {
+    int total = 0;
+    foreach (var kvp in VaultItems)
+      total += kvp.Value;
+    return total;
+  }
+
+  private int GetVaultAmount(InventoryItemType item)
+  {
+    return VaultItems.TryGetValue(item, out var v) ? v : 0;
+  }
+
   [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
   private async void RegisterAuth(string jwt)
   {
@@ -831,6 +982,20 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       });
     }
 
+    // Persist vault if the player has one
+    if (VaultPortName != null)
+    {
+      var vaultDto = new VaultDto
+      {
+        PortName = VaultPortName,
+        Level = VaultLevel,
+        Items = new System.Collections.Generic.Dictionary<string, int>()
+      };
+      foreach (var kvp in VaultItems)
+        vaultDto.Items[kvp.Key.ToString()] = kvp.Value;
+      dto.Vault = vaultDto;
+    }
+
     return dto;
   }
 
@@ -863,6 +1028,20 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       }
     }
     UpdatePlayerStats();
+
+    // Restore vault state
+    if (dto.Vault != null)
+    {
+      VaultPortName = dto.Vault.PortName;
+      VaultLevel = dto.Vault.Level;
+      VaultItems = new System.Collections.Generic.Dictionary<InventoryItemType, int>();
+      foreach (var kvp in dto.Vault.Items)
+      {
+        if (Enum.TryParse<InventoryItemType>(kvp.Key, out var itemType))
+          VaultItems[itemType] = kvp.Value;
+      }
+      GD.Print($"{Name}: Restored vault at {VaultPortName} (level {VaultLevel})");
+    }
 
     if (dto.IsDead)
     {
