@@ -8,40 +8,37 @@ PiratesQuest uses three pieces:
 - `Database` (via Docker): stores users and API data.
 
 ## Running
-### Run backend (API + DB)
-From repo root:
 
 ```bash
-cd server
-docker compose up -d
-dotnet run
+./run.sh
 ```
 
-Default API URL is `http://localhost:5236` (matches `godot/scripts/Configuration.cs`).
-
-### Run game server
-From repo root:
-
-```bash
-cd godot
-./run.sh --server
-```
+Starts the backend (Docker DB + API), a game server, and a client. Use `--server` to skip the client. Default API URL is `http://localhost:5236`.
 
 ### Run client in editor
 - Open `godot/project.godot` in Godot 4
 - Press Play
 - Login/signup, then join a server
 
-To run without the editor:
-- Run `run.sh`
-
 Please submit a PR, learning godot, so any and all suggestions welcome.
+
+## Scripts
+
+All scripts are in the repo root and run from there.
+
+| Script | Description |
+|--------|-------------|
+| `build-game.sh` | Exports the Godot project to macOS and Windows builds, zipped into `dist/<version>/`. |
+| `run.sh` | Runs a local dev session. Starts the backend, a game server, and a client side-by-side. Supports `--server` (server only), `--user`, and `--password` flags. |
+| `publish-backend.sh` | Publishes the API server in Release configuration to `server/bin/Release/net*/publish/`. |
+| `manage.sh` | Admin CLI for the REST API. Manage users, game servers, roles, and game version. Requires `PQ_API_URL` and either `PQ_TOKEN` or a login. |
 
 ## Releasing
 - Update Version in Project Settings
-- Run `./build.sh`
+- Run `./build-game.sh`
 - Add new Git Release in github
 - Upload builds in dist to github release
+- Run `publish-backend.sh` to publish the backend and the webview UI.
 
 ## WebView (Info Panel)
 
