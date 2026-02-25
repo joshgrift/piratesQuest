@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://dlrh5wfe14fhm" path="res://art/kenny_pirate/rocks-c.glb" id="4_axprv"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_opda4"]
-height = 5.0
+height = 10.0
 radius = 2.1
 
 [node name="TerrainBlock" type="Node3D"]
@@ -25,5 +25,5 @@ collision_layer = 4
 collision_mask = 7
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.9782715, 0)
 shape = SubResource("CylinderShape3D_opda4")
