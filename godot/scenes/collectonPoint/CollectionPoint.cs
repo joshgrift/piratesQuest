@@ -16,6 +16,10 @@ public partial class CollectionPoint : Node3D, IDropper
   private ShaderMaterial _shaderMaterial;
   private Tween _pulseTween;
 
+  // True when all collectors failed their last collection attempt (inventory full).
+  // Drives the "blocked" visual on the compass shader.
+  private bool _isBlocked = false;
+
   [Export] public InventoryItemType ResourceType = InventoryItemType.Wood;
   [Export] public int CollectionPerSecond = 4;
   [Export] public float CollectionSpeed = 2.0f;
@@ -63,6 +67,16 @@ public partial class CollectionPoint : Node3D, IDropper
       return;
     }
 
+    if (_isBlocked)
+    {
+      // Ship is full — show the compass locked at 100% in "blocked" colours.
+      SetProgress(1.0f, true);
+      _shaderMaterial?.SetShaderParameter("blocked", 1.0f);
+      return;
+    }
+
+    _shaderMaterial?.SetShaderParameter("blocked", 0.0f);
+
     // Timer fills from 0 -> 1 while waiting for the next resource payout.
     float progress = 1.0f - (float)(_collectionTimer.TimeLeft / _collectionTimer.WaitTime);
     SetProgress(progress, true);
@@ -84,14 +98,17 @@ public partial class CollectionPoint : Node3D, IDropper
 
   private void OnCollectionTimeout()
   {
+    bool anySucceeded = false;
     foreach (var collector in _collectors)
     {
-      collector.CollectResource(ResourceType, CollectionPerSecond);
+      if (collector.CollectResource(ResourceType, CollectionPerSecond))
+        anySucceeded = true;
     }
 
     if (_collectors.Count > 0)
     {
-      PlayFeedbackPulse();
+      _isBlocked = !anySucceeded;
+      if (anySucceeded) PlayFeedbackPulse();
     }
   }
 
@@ -100,6 +117,7 @@ public partial class CollectionPoint : Node3D, IDropper
     if (body is ICanCollect collector)
     {
       _collectors.Add(collector);
+      _isBlocked = false; // re-evaluate on next timeout
       SetProgress(0.0f, true);
     }
   }
@@ -111,6 +129,7 @@ public partial class CollectionPoint : Node3D, IDropper
       _collectors.Remove(collector);
       if (_collectors.Count == 0)
       {
+        _isBlocked = false;
         SetProgress(0.0f, false);
       }
     }

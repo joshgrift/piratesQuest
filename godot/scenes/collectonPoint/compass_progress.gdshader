@@ -34,6 +34,10 @@ uniform float ring_width : hint_range(0.02, 0.15) = 0.065;
 // repeat_disable prevents tiling; filter_linear smooths edges at small sizes.
 uniform sampler2D resource_icon : filter_linear, repeat_disable;
 
+// 0.0 = normal collection, 1.0 = inventory full / blocked.
+// Set from C# when all collectors fail. Tints the compass red-amber.
+uniform float blocked : hint_range(0.0, 1.0) = 0.0;
+
 
 void vertex() {
 	// === BILLBOARD EFFECT ===
@@ -227,6 +231,18 @@ void fragment() {
 	// 7 — Outer aura
 	emission += gold.rgb * aura;
 	final_a = max(final_a, aura * 0.4);
+
+	// ========== BLOCKED STATE (inventory full) ==========
+	// When blocked, tint everything a deep red-amber and pulse slowly
+	// so the player knows their ship is full and collection has stopped.
+	if (blocked > 0.5) {
+		vec3 blocked_red = vec3(0.7, 0.15, 0.08);
+		float blocked_pulse = sin(TIME * 2.5) * 0.15 + 0.85;
+
+		final_col = mix(final_col, blocked_red, 0.75);
+		emission = blocked_red * final_a * blocked_pulse * 0.6;
+		final_a *= blocked_pulse;
+	}
 
 	// Discard fully transparent pixels for GPU performance
 	if (final_a < 0.01) discard;
