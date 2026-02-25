@@ -388,34 +388,14 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     );
 
     // --- Turning (left/right) ------------------------------------------------
-    // By default, turning is based directly on the left/right input.
-    float effectiveTurnInput = turnInput;
-
-    // When backing up, players usually expect steering to flip:
-    //   - Pressing "left" while REVERSING should turn the ship visually left,
-    //     relative to the direction of movement (like a car in reverse).
-    // IMPORTANT: we only want this when the ship is actually MOVING backwards,
-    // not just when the player taps the "move_back" key to slow down.
-    //
-    // _currentSpeed is our scalar "forward speed" along the ship's facing:
-    //   - _currentSpeed > 0  => moving forward
-    //   - _currentSpeed < 0  => moving backward
-    if (_currentSpeed < 0.0f)
+    if (turnInput != 0.0f)
     {
-      // Flip steering only while truly reversing.
-      effectiveTurnInput = -effectiveTurnInput;
+      // Negative sign keeps "move_right" turning the ship to the right.
+      RotateY(-turnInput * Stats.GetStat(PlayerStat.ShipTurnSpeed) * (float)delta);
     }
 
-    if (effectiveTurnInput != 0.0f)
-    {
-      // Rotate the ship. Negative sign keeps "move_right" turning the ship
-      // to the right when moving forward.
-      RotateY(-effectiveTurnInput * Stats.GetStat(PlayerStat.ShipTurnSpeed) * (float)delta);
-    }
-
-    // Store current turn input (after inversion) for banking effect
-    // used in ApplyWaterPhysics.
-    _currentTurnInput = effectiveTurnInput;
+    // Store current turn input for banking effect used in ApplyWaterPhysics.
+    _currentTurnInput = turnInput;
 
     // Move the ship in the direction it's facing
     // The pivot's forward direction is -Z in local space
