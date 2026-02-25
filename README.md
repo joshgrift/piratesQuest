@@ -100,19 +100,29 @@ The build output goes to `server/fragments/webview/`, which the API serves as st
 - [x] Persistent world
 - [x] Login
 - [x] More incremental progress
-- [x] Health too expensive?
-
+- [x] Health too expensive, balance it
+- [x] Reverted backwards movement
 - [ ] Deployed to live server
+- [ ] bulk icon doesn't show over 
+      1001 doesn't show full inventory
+      1000 does show it
+      999 does show it
+      980 does show it
+      1000 doesn't show full inventory
+      999 does show
+- [ ] Game freezes on first explosion animation
+- [ ] You keep your velocity when you respawn
+- [ ] Jitter when hitting a rock! 
+- [x] Port is a safe zone
 
 ### Later
 - [ ] Quests
-- [ ] Island mesh?
+- [ ] Better Island mesh
    - [ ] Better island cannonball collision
-- [ ] Fix water.
-- [ ] Backwords should be a more gradual movement
-- [ ] Proximity voice chat
-- [ ] Artifacts are long term growth options.
 - [ ] AI ships
+- [ ] Fix water.
+- [ ] Characters
+- [ ] Map
 
 ### Suggestions
 - [ ] Close port menu early
@@ -120,3 +130,23 @@ The build output goes to `server/fragments/webview/`, which the API serves as st
 - [ ] In Combat Timer
   - [ ] Can't heal if you're in combat
   - [ ] When in port, the timer pauses
+- [ ] Proximity voice chat
+- [ ] Artifacts as a long term growth option
+- [ ] Minigames
+  - [ ] Capture the flag
+- [ ] Weapons
+  - [ ] Sea Mines
+  - [ ] Mermaid summoning
+  - [ ] Bow Cannon (weak)
+  - [ ] Grenade Shot
+- [ ] Suggestion: Slow turn speed when going fast
+- [ ] Player Economy
+- [ ] Remove Trophies
+- [ ] Burry items instead of vault, can check the spot for a chance to find the treasure
+- [ ] Do think there should be some sort of defence move if possible. Don't know what it could be but would be helpful.
+- [ ] In game wiki
+- [ ] Easier to see which cannon is space and Shift
+- [ ] Event driven bonuses (increase in fishing here)
+- [ ] Cracken
+- [ ] Curses
+
