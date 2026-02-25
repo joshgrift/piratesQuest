@@ -103,7 +103,7 @@ The build output goes to `server/fragments/webview/`, which the API serves as st
 - [x] Health too expensive, balance it
 - [x] Reverted backwards movement
 - [ ] Deployed to live server
-- [ ] bulk icon doesn't show over 
+- [ ] bulk icon doesn't show properly 
       1001 doesn't show full inventory
       1000 does show it
       999 does show it
@@ -111,7 +111,7 @@ The build output goes to `server/fragments/webview/`, which the API serves as st
       1000 doesn't show full inventory
       999 does show
 - [ ] Game freezes on first explosion animation
-- [ ] You keep your velocity when you respawn
+- [x] You keep your velocity when you respawn
 - [ ] Jitter when hitting a rock! 
 - [x] Port is a safe zone
 

@@ -37,7 +37,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   private const float RecoilRollAmount = 0.40f; // Radians, tweak for more/less rocking
   private const float RecoilDecaySpeed = 2.5f; // How quickly the rocking fades (higher = faster)
 
-  public bool isLimitedByCapacity = true;
+  public bool isLimitedByCapacity = false;
   public string UserId { get; set; }
   public string LastSyncedStateJson { get; set; }
 
@@ -545,6 +545,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       UpdateInventory(InventoryItemType.Coin, topUp);
     }
 
+    // Reset movement so the player doesn't carry pre-death momentum
+    Velocity = Vector3.Zero;
+    _targetVelocity = Vector3.Zero;
+    _currentSpeed = 0.0f;
+
     // Reset health to maximum
     Health = MaxHealth;
     EmitSignal(SignalName.HealthUpdate, Health);
@@ -733,6 +738,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     // Not a bug, we want to allow the user to exceed capacity if they do something in bulk
     if (amount > 0 && _inventory.GetTotalItemCount([InventoryItemType.Coin]) >= Stats.GetStat(PlayerStat.ShipCapacity))
     {
+      isLimitedByCapacity = true;
       GD.PrintErr($"{Name} cannot collect {amount} {item} - inventory full");
       return false;
     }
@@ -747,6 +753,13 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (price != 0)
     {
       _inventory.UpdateItem(InventoryItemType.Coin, price);
+    }
+
+    // Update the flag BEFORE emitting signals so the HUD sees the correct value
+    isLimitedByCapacity = _inventory.GetTotalItemCount([InventoryItemType.Coin]) >= Stats.GetStat(PlayerStat.ShipCapacity);
+
+    if (price != 0)
+    {
       EmitSignal(SignalName.InventoryChanged, (int)InventoryItemType.Coin, _inventory.GetItemCount(InventoryItemType.Coin), price);
     }
 
@@ -755,10 +768,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (item == InventoryItemType.Coin && amount > 0)
     {
       var audioManager = GetNode<AudioManager>("/root/AudioManager");
-      audioManager.PlaySound("res://art/sounds/jcsounds/Misc Sfx/sfx_coin_clink_01.wav", volumeDb: -5.0f); // Slightly quieter
+      audioManager.PlaySound("res://art/sounds/jcsounds/Misc Sfx/sfx_coin_clink_01.wav", volumeDb: -5.0f);
     }
 
-    isLimitedByCapacity = _inventory.GetTotalItemCount([InventoryItemType.Coin]) > Stats.GetStat(PlayerStat.ShipCapacity);
     GD.Print($"{Name} updated inventory: {item} by {amount} (price: {price})");
     return true;
   }
@@ -1023,6 +1035,16 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       if (Enum.TryParse<InventoryItemType>(kvp.Key, out var itemType))
       {
         _inventory.SetItem(itemType, kvp.Value);
+      }
+    }
+
+    // Recalculate capacity flag before emitting signals so HUD gets the right value
+    isLimitedByCapacity = _inventory.GetTotalItemCount([InventoryItemType.Coin]) >= Stats.GetStat(PlayerStat.ShipCapacity);
+
+    foreach (var kvp in dto.Inventory)
+    {
+      if (Enum.TryParse<InventoryItemType>(kvp.Key, out var itemType))
+      {
         EmitSignal(SignalName.InventoryChanged, (int)itemType, kvp.Value, 0);
       }
     }
