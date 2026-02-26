@@ -28,6 +28,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = signingKey
         };
+
+        // After the token signature is verified, confirm the user still exists
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (userId is null || !int.TryParse(userId, out var id))
+                {
+                    context.Fail("Invalid token: missing user ID.");
+                    return;
+                }
+
+                var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                if (!await db.Users.AnyAsync(u => u.Id == id))
+                {
+                    context.Fail("User no longer exists.");
+                }
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
@@ -38,6 +58,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+    app.Logger.LogInformation("Database connection established and migrations applied.");
 }
 
 app.UseDefaultFiles();
@@ -89,10 +110,14 @@ app.MapPost("/api/signup", async (LoginRequest request, AppDbContext db) =>
     if (user is not null)
         return Results.Conflict(new { error = "Username already exists" });
 
+    // First user ever created becomes the admin automatically
+    var isFirstUser = !await db.Users.AnyAsync();
+
     user = new User
     {
         Username = request.Username,
-        PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+        Role = isFirstUser ? UserRole.Admin : UserRole.Player
     };
     db.Users.Add(user);
     await db.SaveChangesAsync();
@@ -174,6 +199,10 @@ app.MapPut("/api/server/{id}/state/{user}", async (int id, string user, HttpCont
     }
 
     await db.SaveChangesAsync();
+
+    var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("API");
+    logger.LogInformation("Saved state for user '{User}' on server {ServerId}.", user, id);
+
     return Results.Ok();
 }).AddEndpointFilter(ServerAuthFilter);
 
@@ -319,6 +348,9 @@ app.MapDelete("/api/management/server/{id}", async (int id, AppDbContext db) =>
 
     return Results.Ok(new { deleted = id });
 }).RequireAuthorization().AddEndpointFilter(AdminAuthFilter);
+
+app.Lifetime.ApplicationStarted.Register(() =>
+    app.Logger.LogInformation("API is ready and listening for requests."));
 
 app.Run();
 

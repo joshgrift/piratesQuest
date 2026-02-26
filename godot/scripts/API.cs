@@ -43,12 +43,12 @@ public static class API
     return AuthenticateAsync("/api/signup", username, password);
   }
 
-  public static async Task<(bool Success, ServerListingInfo[] Servers, string ErrorMessage)> GetServerListingsAsync()
+  public static async Task<(bool Success, ServerListingInfo[] Servers, string ErrorMessage, bool IsUnauthorized)> GetServerListingsAsync()
   {
     var token = Configuration.GetUserToken();
     if (string.IsNullOrWhiteSpace(token))
     {
-      return (false, Array.Empty<ServerListingInfo>(), "Missing user token.");
+      return (false, Array.Empty<ServerListingInfo>(), "Missing user token.", false);
     }
 
     try
@@ -61,10 +61,10 @@ public static class API
       {
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
-          return (false, Array.Empty<ServerListingInfo>(), "Session expired. Please log in again.");
+          return (false, Array.Empty<ServerListingInfo>(), "Session expired. Please log in again.", true);
         }
 
-        return (false, Array.Empty<ServerListingInfo>(), $"Could not load servers ({(int)response.StatusCode}).");
+        return (false, Array.Empty<ServerListingInfo>(), $"Could not load servers ({(int)response.StatusCode}).", false);
       }
 
       var responseText = await response.Content.ReadAsStringAsync();
@@ -84,12 +84,12 @@ public static class API
         };
       }
 
-      return (true, servers, string.Empty);
+      return (true, servers, string.Empty, false);
     }
     catch (Exception exception)
     {
       GD.PrintErr($"API server list exception: {exception}");
-      return (false, Array.Empty<ServerListingInfo>(), "Could not reach API server.");
+      return (false, Array.Empty<ServerListingInfo>(), "Could not reach API server.", false);
     }
   }
 

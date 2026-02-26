@@ -2,8 +2,17 @@
 
 dotnet build godot || exit 1
 
+# Kill any processes occupying ports we need (webview:5173, API:5236, DB:5433)
+for PORT in 5173 5236 7777; do
+  EXISTING_PID=$(lsof -ti tcp:$PORT)
+  if [[ -n "$EXISTING_PID" ]]; then
+    echo "Killing existing process on port $PORT (PID $EXISTING_PID)..."
+    kill $EXISTING_PID 2>/dev/null
+  fi
+done
+
 # Local development defaults.
-SERVER_ID="${SERVER_ID:-2}"
+SERVER_ID="${SERVER_ID:-1}"
 SERVER_API_KEY="${SERVER_API_KEY:-dev-server-api-key}"
 WEBVIEW_URL="http://localhost:5173/fragments/webview/"
 
@@ -32,14 +41,14 @@ npm --prefix webview run dev 2>&1 | sed "s/^/$(echo -e ${YELLOW})[WebView ]$(ech
 PID_WEBVIEW=$!
 
 echo -e "${BLUE}=== Starting Backend ===${RESET}"
-# Kill any existing process on port 5236
-EXISTING_PID=$(lsof -ti tcp:5236)
-if [[ -n "$EXISTING_PID" ]]; then
-  echo "Killing existing process on port 5236 (PID $EXISTING_PID)..."
-  kill "$EXISTING_PID" 2>/dev/null
+if ! docker info >/dev/null 2>&1; then
+  echo -e "${RED}Error: Docker is not running. Please start Docker Desktop and try again.${RESET}"
+  exit 1
 fi
-
-docker compose -f api/docker-compose.yml up -d
+if ! docker compose -f api/docker-compose.yml ps --status running 2>/dev/null | grep -q "db"; then
+  echo "Database container not running, starting it..."
+  docker compose -f api/docker-compose.yml up -d
+fi
 dotnet run --project api 2>&1 | sed "s/^/$(echo -e ${BLUE})[API     ]$(echo -e ${RESET}) /" &
 PID_API=$!
 

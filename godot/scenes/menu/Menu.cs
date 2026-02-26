@@ -240,6 +240,14 @@ public partial class Menu : Node2D
     var result = await API.GetServerListingsAsync();
     if (!result.Success)
     {
+      if (result.IsUnauthorized)
+      {
+        PerformLogout();
+        LoginStatusLabel.Text = result.ErrorMessage;
+        LoginStatusLabel.AddThemeColorOverride("font_color", Colors.Red);
+        return;
+      }
+
       DisplayError(result.ErrorMessage);
       return;
     }

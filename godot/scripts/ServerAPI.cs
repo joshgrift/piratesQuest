@@ -40,7 +40,14 @@ public static class ServerAPI
     }
   }
 
-  public static async Task<string> LoadPlayerStateAsync(int serverId, string userId)
+  /// <summary>
+  /// Loads a player's saved state from the API.
+  /// Returns (stateJson, isError):
+  ///   - (json, false)  = state loaded successfully
+  ///   - (null, false)  = no saved state exists (404) — player starts fresh
+  ///   - (null, true)   = API unreachable or returned an error
+  /// </summary>
+  public static async Task<(string StateJson, bool IsError)> LoadPlayerStateAsync(int serverId, string userId)
   {
     try
     {
@@ -52,23 +59,23 @@ public static class ServerAPI
       if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
       {
         GD.Print($"No saved state for user {userId}");
-        return null;
+        return (null, false);
       }
 
       if (!response.IsSuccessStatusCode)
       {
         GD.PrintErr($"Failed to load state for user {userId}: HTTP {(int)response.StatusCode}");
-        return null;
+        return (null, true);
       }
 
       var json = await response.Content.ReadAsStringAsync();
       GD.Print($"Loaded state for user {userId}");
-      return json;
+      return (json, false);
     }
     catch (Exception ex)
     {
       GD.PrintErr($"Exception loading state for user {userId}: {ex.Message}");
-      return null;
+      return (null, true);
     }
   }
 }
