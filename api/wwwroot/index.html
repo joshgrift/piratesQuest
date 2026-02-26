@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pirate's Quest</title>
+    <title>Pirate's Quest — Open-World Pirate Sandbox MMO</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=New+Rocker&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=New+Rocker&family=Texturina:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -17,17 +17,18 @@
             --parchment: #f0e6d0;
             --ocean-dark: #04080f;
             --ocean-mid: #0a1628;
-            --ocean-blue: #0f2744;
             --text-muted: #8a9bb5;
             --text-body: #c4bfb0;
             --card-bg: rgba(255, 255, 255, 0.03);
             --card-border: rgba(255, 255, 255, 0.06);
+            --danger: #d06060;
+            --safe: #3a9a6a;
         }
 
         html { scroll-behavior: smooth; }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Texturina', Georgia, serif;
             background: var(--ocean-dark);
             color: var(--text-body);
             min-height: 100vh;
@@ -50,8 +51,14 @@
             position: absolute;
             inset: 0;
             background: url('images/banner.png') center/cover no-repeat;
-            filter: brightness(0.45) saturate(1.1);
+            filter: brightness(0.35) saturate(1.2);
             z-index: 0;
+            animation: slow-zoom 30s ease-in-out infinite alternate;
+        }
+
+        @keyframes slow-zoom {
+            from { transform: scale(1); }
+            to { transform: scale(1.06); }
         }
 
         .hero-bg::after {
@@ -60,38 +67,48 @@
             inset: 0;
             background: linear-gradient(
                 to bottom,
-                rgba(4, 8, 15, 0.3) 0%,
-                rgba(4, 8, 15, 0.1) 40%,
-                rgba(4, 8, 15, 0.6) 80%,
+                rgba(4, 8, 15, 0.5) 0%,
+                rgba(4, 8, 15, 0) 30%,
+                rgba(4, 8, 15, 0.4) 70%,
                 var(--ocean-dark) 100%
             );
         }
 
+        .hero-waves {
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            z-index: 2;
+            line-height: 0;
+        }
+
+        .hero-waves svg { display: block; width: 100%; height: 80px; }
+
         .hero-content {
             position: relative;
-            z-index: 1;
+            z-index: 3;
             padding: 2rem;
             max-width: 800px;
         }
 
         .hero h1 {
             font-family: 'New Rocker', serif;
-            font-size: clamp(3rem, 8vw, 6rem);
+            font-size: clamp(3.5rem, 9vw, 7rem);
             color: var(--gold);
-            text-shadow:
-                0 0 40px rgba(212, 168, 67, 0.4),
-                0 4px 30px rgba(0, 0, 0, 0.8);
+            text-shadow: 0 0 60px rgba(212, 168, 67, 0.4), 0 4px 40px rgba(0, 0, 0, 0.9);
             letter-spacing: 0.04em;
-            line-height: 1.1;
+            line-height: 1.05;
         }
 
-        .hero .subtitle {
-            margin-top: 1.25rem;
-            font-size: clamp(1rem, 2.5vw, 1.3rem);
-            color: var(--parchment);
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
-            line-height: 1.6;
-            max-width: 600px;
+        .hero .tagline {
+            margin-top: 1.5rem;
+            font-family: 'New Rocker', serif;
+            font-size: clamp(1.3rem, 3vw, 1.8rem);
+            color: var(--gold-light);
+            text-shadow: 0 2px 15px rgba(0, 0, 0, 0.8);
+            line-height: 1.5;
+            max-width: 550px;
             margin-left: auto;
             margin-right: auto;
         }
@@ -100,13 +117,14 @@
             display: inline-block;
             margin-top: 1.5rem;
             padding: 0.4rem 1.2rem;
-            background: rgba(212, 168, 67, 0.15);
+            background: rgba(212, 168, 67, 0.12);
             border: 1px solid rgba(212, 168, 67, 0.3);
             border-radius: 999px;
             font-size: 0.85rem;
             color: var(--gold);
             letter-spacing: 0.06em;
             backdrop-filter: blur(8px);
+            transition: all 0.3s;
         }
 
         .hero-cta {
@@ -121,9 +139,9 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.85rem 2rem;
+            padding: 0.9rem 2.2rem;
             border-radius: 8px;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Texturina', Georgia, serif;
             font-size: 0.95rem;
             font-weight: 600;
             text-decoration: none;
@@ -135,12 +153,12 @@
         .btn-primary {
             background: linear-gradient(135deg, var(--gold), var(--gold-dark));
             color: #1a0e05;
-            box-shadow: 0 4px 20px rgba(212, 168, 67, 0.3);
+            box-shadow: 0 4px 25px rgba(212, 168, 67, 0.3);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 30px rgba(212, 168, 67, 0.45);
+            box-shadow: 0 8px 35px rgba(212, 168, 67, 0.5);
         }
 
         .btn-ghost {
@@ -158,23 +176,21 @@
         .scroll-hint {
             position: absolute;
             bottom: 2rem;
-            z-index: 1;
-            animation: bob 2s ease-in-out infinite;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 1.5rem;
+            z-index: 3;
+            animation: bob 2.5s ease-in-out infinite;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 1.6rem;
         }
 
         @keyframes bob {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(8px); }
+            50% { transform: translateY(10px); }
         }
 
-        /* ── Content ── */
-        .content { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+        /* ── Shared ── */
+        .content { max-width: 1000px; margin: 0 auto; padding: 0 2rem; }
 
-        section {
-            padding: 5rem 0;
-        }
+        section { padding: 6rem 0; }
 
         .section-label {
             font-family: 'New Rocker', serif;
@@ -187,370 +203,282 @@
 
         h2 {
             font-family: 'New Rocker', serif;
-            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
             color: var(--gold-light);
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
             line-height: 1.2;
         }
 
-        .section-intro {
+        .section-text {
             color: var(--text-muted);
             font-size: 1.05rem;
-            line-height: 1.7;
-            max-width: 700px;
+            line-height: 1.8;
+            max-width: 650px;
         }
 
-        /* ── Divider ── */
         .divider {
             border: none;
             height: 1px;
-            background: linear-gradient(
-                to right,
-                transparent,
-                rgba(212, 168, 67, 0.25),
-                transparent
-            );
+            background: linear-gradient(to right, transparent, rgba(212, 168, 67, 0.2), transparent);
             margin: 0;
         }
 
-        /* ── Gameplay Overview ── */
-        .gameplay-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2.5rem;
+        /* ── Fade-in ── */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease-out, transform 0.7s ease-out;
         }
 
-        .gameplay-card {
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── Pillars ── */
+        .pillars {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .pillar {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 2rem;
-            transition: all 0.3s;
+            border-radius: 18px;
+            padding: 2.5rem 1.75rem;
             position: relative;
             overflow: hidden;
+            transition: all 0.35s;
         }
 
-        .gameplay-card::before {
+        .pillar::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 3px;
             background: linear-gradient(90deg, transparent, var(--gold), transparent);
             opacity: 0;
             transition: opacity 0.3s;
         }
 
-        .gameplay-card:hover {
+        .pillar:hover {
             border-color: rgba(212, 168, 67, 0.2);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 50px rgba(0, 0, 0, 0.4);
         }
 
-        .gameplay-card:hover::before {
-            opacity: 1;
-        }
+        .pillar:hover::before { opacity: 1; }
 
-        .gameplay-card .card-icon {
-            width: 56px;
-            height: 56px;
+        .pillar .icon {
+            width: 128px;
+            height: 128px;
             border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.25rem;
-            font-size: 1.6rem;
-            overflow: hidden;
-        }
-
-        .gameplay-card .card-icon img {
-            width: 100%;
-            height: 100%;
             object-fit: cover;
-            border-radius: 12px;
+            margin-bottom: 1.25rem;
+            display: block;
         }
 
-        .gameplay-card h3 {
+        .pillar h3 {
             font-family: 'New Rocker', serif;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             color: var(--gold-light);
             margin-bottom: 0.6rem;
         }
 
-        .gameplay-card p {
+        .pillar p {
             font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.75;
+        }
+
+        /* ── Big quote / flavor ── */
+        .flavor {
+            text-align: center;
+            padding: 5rem 2rem;
+            position: relative;
+        }
+
+        .flavor blockquote {
+            font-family: 'New Rocker', serif;
+            font-size: clamp(1.3rem, 3vw, 2rem);
+            color: var(--gold-light);
+            line-height: 1.5;
+            max-width: 700px;
+            margin: 0 auto;
+            font-style: italic;
+            position: relative;
+        }
+
+        .flavor blockquote::before {
+            content: '\201C';
+            position: absolute;
+            top: -0.4em;
+            left: -0.5em;
+            font-size: 4rem;
+            color: rgba(212, 168, 67, 0.15);
+            font-style: normal;
+        }
+
+        /* ── Ship showcase ── */
+        .ships-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .ship-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            transition: all 0.35s;
+            position: relative;
+        }
+
+        .ship-card:hover {
+            border-color: rgba(212, 168, 67, 0.25);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .ship-card .ship-numeral {
+            font-family: 'New Rocker', serif;
+            font-size: 3.5rem;
+            color: rgba(212, 168, 67, 0.1);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .ship-card h3 {
+            font-family: 'New Rocker', serif;
+            font-size: 1.4rem;
+            color: var(--gold-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .ship-card p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* ── Encounters row ── */
+        .encounters {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .encounter-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            transition: all 0.35s;
+        }
+
+        .encounter-card:hover {
+            border-color: rgba(212, 168, 67, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .encounter-card .enc-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .encounter-card h3 {
+            font-family: 'New Rocker', serif;
+            font-size: 1.15rem;
+            color: var(--gold-light);
+            margin-bottom: 0.4rem;
+        }
+
+        .encounter-card p {
+            font-size: 0.85rem;
             color: var(--text-muted);
             line-height: 1.65;
         }
 
-        /* ── Resources ── */
-        .resources-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.25rem;
-            margin-top: 2.5rem;
-            justify-content: center;
-        }
-
-        .resource-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.6rem;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 14px;
-            padding: 1.5rem 1.25rem;
-            min-width: 110px;
-            transition: all 0.25s;
-        }
-
-        .resource-item:hover {
-            border-color: rgba(212, 168, 67, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .resource-item img {
-            width: 40px;
-            height: 40px;
-            image-rendering: pixelated;
-        }
-
-        .resource-item .label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            font-weight: 500;
+        .encounter-card .risk-tag {
+            display: inline-block;
+            margin-top: 0.75rem;
+            padding: 0.2rem 0.65rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
         }
 
-        .resource-item .desc {
-            font-size: 0.75rem;
-            color: rgba(138, 155, 181, 0.6);
-            text-align: center;
-            max-width: 100px;
-        }
+        .risk-low { background: rgba(58, 154, 106, 0.1); color: var(--safe); border: 1px solid rgba(58, 154, 106, 0.2); }
+        .risk-med { background: rgba(212, 168, 67, 0.08); color: var(--gold); border: 1px solid rgba(212, 168, 67, 0.2); }
+        .risk-high { background: rgba(160, 48, 48, 0.1); color: var(--danger); border: 1px solid rgba(160, 48, 48, 0.2); }
 
-        /* ── Components (Upgrades) ── */
-        .components-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 1rem;
-            margin-top: 2.5rem;
-        }
-
-        .component-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 14px;
-            overflow: hidden;
-            transition: all 0.3s;
-        }
-
-        .component-card:hover {
-            border-color: rgba(212, 168, 67, 0.25);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .component-card .comp-img {
-            width: 100%;
-            aspect-ratio: 1;
-            object-fit: cover;
-            display: block;
-        }
-
-        .component-card .comp-label {
-            padding: 0.75rem;
-            text-align: center;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            font-weight: 500;
-            letter-spacing: 0.03em;
-        }
-
-        /* ── Characters ── */
-        .characters-strip {
+        /* ── Captains ── */
+        .captains {
             display: flex;
             gap: 1.5rem;
             margin-top: 2.5rem;
-            overflow-x: auto;
-            padding-bottom: 1rem;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(212, 168, 67, 0.3) transparent;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
-        .characters-strip::-webkit-scrollbar {
-            height: 6px;
-        }
-
-        .characters-strip::-webkit-scrollbar-thumb {
-            background: rgba(212, 168, 67, 0.3);
-            border-radius: 3px;
-        }
-
-        .character-portrait {
-            flex-shrink: 0;
-            width: 120px;
-            height: 120px;
+        .captain {
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
-            border: 3px solid rgba(212, 168, 67, 0.3);
+            border: 3px solid rgba(212, 168, 67, 0.2);
             overflow: hidden;
-            transition: all 0.3s;
+            transition: all 0.35s;
         }
 
-        .character-portrait:hover {
+        .captain:hover {
             border-color: var(--gold);
-            transform: scale(1.08);
-            box-shadow: 0 0 25px rgba(212, 168, 67, 0.3);
+            transform: scale(1.15) rotate(-3deg);
+            box-shadow: 0 0 30px rgba(212, 168, 67, 0.3);
         }
 
-        .character-portrait img {
+        .captain img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        /* ── Controls ── */
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2.5rem;
-        }
-
-        .control-group h3 {
-            font-family: 'New Rocker', serif;
-            color: var(--gold-light);
-            font-size: 1rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .key-row {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.5rem 0;
-        }
-
-        .key {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 36px;
-            height: 32px;
-            padding: 0 8px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 6px;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--parchment);
-            letter-spacing: 0.02em;
-        }
-
-        .key-desc {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        /* ── How It Works (Core Loop) ── */
-        .loop-steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2.5rem;
-            counter-reset: step;
-        }
-
-        .loop-step {
-            position: relative;
-            padding: 1.75rem;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 14px;
-            counter-increment: step;
-        }
-
-        .loop-step::before {
-            content: counter(step);
-            font-family: 'New Rocker', serif;
-            font-size: 2rem;
-            color: rgba(212, 168, 67, 0.15);
-            position: absolute;
-            top: 0.75rem;
-            right: 1rem;
-        }
-
-        .loop-step h3 {
-            font-family: 'New Rocker', serif;
-            font-size: 1.05rem;
-            color: var(--gold-light);
-            margin-bottom: 0.5rem;
-        }
-
-        .loop-step p {
-            font-size: 0.88rem;
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
-
-        /* ── HvAI ── */
-        .hvai-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            align-items: center;
-            margin-top: 2.5rem;
-        }
-
-        .hvai-text p {
-            color: var(--text-muted);
-            line-height: 1.8;
-            font-size: 0.95rem;
-            margin-bottom: 1rem;
-        }
-
-        .hvai-visual {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-        }
-
-        .hvai-visual .portrait-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
-            overflow: hidden;
+        /* ── Download CTA ── */
+        .download-section {
             text-align: center;
+            padding: 7rem 0 6rem;
         }
 
-        .hvai-visual .portrait-card img {
-            width: 100%;
-            aspect-ratio: 1;
-            object-fit: cover;
+        .download-btns {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
         }
 
-        .hvai-visual .portrait-card .tag {
-            padding: 0.5rem;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            font-weight: 600;
+        #download-version {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin-top: 0.5rem;
         }
-
-        .tag-human { color: #6dbf6d; }
-        .tag-ai { color: #6db0e8; }
 
         /* ── Footer ── */
         footer {
             text-align: center;
-            padding: 4rem 2rem 2.5rem;
-            color: rgba(138, 155, 181, 0.4);
-            font-size: 0.85rem;
+            padding: 3rem 2rem 2rem;
+            color: rgba(138, 155, 181, 0.3);
+            font-size: 0.82rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
         }
 
         footer a {
@@ -559,9 +487,7 @@
             transition: color 0.2s;
         }
 
-        footer a:hover {
-            color: var(--gold);
-        }
+        footer a:hover { color: var(--gold); }
 
         footer .footer-links {
             display: flex;
@@ -570,24 +496,101 @@
             margin-bottom: 1.5rem;
         }
 
+        .server-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(138, 155, 181, 0.3);
+            display: inline-block;
+            transition: background 0.3s;
+        }
+
+        .status-dot.online {
+            background: #3a9a6a;
+            box-shadow: 0 0 6px rgba(58, 154, 106, 0.5);
+        }
+
+        .status-dot.offline {
+            background: #d06060;
+            box-shadow: 0 0 6px rgba(208, 96, 96, 0.4);
+        }
+
+        .early-access {
+            max-width: 700px;
+            margin: 2rem auto 0;
+            padding: 2rem 2.5rem;
+            background: rgba(212, 168, 67, 0.04);
+            border: 1px solid rgba(212, 168, 67, 0.15);
+            border-radius: 12px;
+            text-align: left;
+        }
+
+        .early-access .ea-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .early-access .ea-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: rgba(212, 168, 67, 0.12);
+            border: 1px solid rgba(212, 168, 67, 0.3);
+            border-radius: 6px;
+            font-family: 'New Rocker', serif;
+            font-size: 0.8rem;
+            color: var(--gold);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .early-access .ea-title {
+            font-family: 'New Rocker', serif;
+            font-size: 1.1rem;
+            color: var(--gold-light);
+        }
+
+        .early-access p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.75;
+            margin-bottom: 0.75rem;
+        }
+
+        .early-access p:last-child {
+            margin-bottom: 0;
+        }
+
+        .early-access a {
+            color: var(--gold);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .early-access a:hover {
+            text-decoration: underline;
+        }
+
         /* ── Responsive ── */
-        @media (max-width: 768px) {
-            .hvai-section {
-                grid-template-columns: 1fr;
-            }
+        @media (max-width: 900px) {
+            .pillars, .ships-row, .encounters { grid-template-columns: 1fr; }
+        }
 
-            .components-grid {
-                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            }
-
-            .character-portrait {
-                width: 90px;
-                height: 90px;
-            }
-
-            section {
-                padding: 3.5rem 0;
-            }
+        @media (max-width: 600px) {
+            .captain { width: 70px; height: 70px; }
+            section { padding: 4rem 0; }
         }
     </style>
 </head>
@@ -598,342 +601,247 @@
     <div class="hero-bg"></div>
     <div class="hero-content">
         <h1>Pirate's Quest</h1>
-        <p class="subtitle">
-            Sail the high seas, plunder rival ships, trade between ports, and claim victory
-            in a one-hour multiplayer pirate sandbox &mdash; where humans and AI collide.
+        <p class="tagline">
+            Sail. Trade. Fight. Betray.<br>
+            This sea has no rules.
         </p>
-        <span class="version-badge">Alpha &middot; v0.3.0</span>
+        <span class="version-badge" id="version-badge">Loading&hellip;</span>
         <div class="hero-cta">
-            <a href="https://github.com/joshgrift/piratesQuest/releases/latest" class="btn btn-primary">
-                &#9875; Download Latest
+            <a href="https://github.com/joshgrift/piratesQuest/releases/latest" class="btn btn-primary" id="download-btn">
+                &#9875; Download
             </a>
-            <a href="#how-to-play" class="btn btn-ghost">
-                Learn More
-            </a>
+            <a href="#world" class="btn btn-ghost">Learn More</a>
         </div>
+    </div>
+    <div class="hero-waves">
+        <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
+            <path fill="var(--ocean-dark)" d="M0,40 C360,80 720,0 1080,40 C1260,60 1380,50 1440,40 L1440,80 L0,80 Z">
+                <animate attributeName="d"
+                    values="M0,40 C360,80 720,0 1080,40 C1260,60 1380,50 1440,40 L1440,80 L0,80 Z;
+                            M0,50 C360,10 720,70 1080,30 C1260,20 1380,60 1440,50 L1440,80 L0,80 Z;
+                            M0,40 C360,80 720,0 1080,40 C1260,60 1380,50 1440,40 L1440,80 L0,80 Z"
+                    dur="8s" repeatCount="indefinite"/>
+            </path>
+            <path fill="var(--ocean-dark)" opacity="0.5" d="M0,55 C320,30 640,70 960,45 C1200,30 1360,60 1440,55 L1440,80 L0,80 Z">
+                <animate attributeName="d"
+                    values="M0,55 C320,30 640,70 960,45 C1200,30 1360,60 1440,55 L1440,80 L0,80 Z;
+                            M0,45 C320,70 640,30 960,55 C1200,70 1360,35 1440,45 L1440,80 L0,80 Z;
+                            M0,55 C320,30 640,70 960,45 C1200,30 1360,60 1440,55 L1440,80 L0,80 Z"
+                    dur="6s" repeatCount="indefinite"/>
+            </path>
+        </svg>
     </div>
     <div class="scroll-hint">&#8964;</div>
 </section>
 
 <div class="content">
 
-<!-- ═══════ GAMEPLAY ═══════ -->
-<section id="how-to-play">
-    <p class="section-label">Set Sail</p>
-    <h2>How to Play</h2>
-    <p class="section-intro">
-        Command your pirate ship across a sea filled with islands, resources, ports, and rival
-        captains. Gather riches, upgrade your vessel, and buy trophies to prove you're the
-        greatest pirate on the water.
+<!-- ═══════ THE PITCH ═══════ -->
+<section id="world" class="fade-in">
+    <p class="section-label">Open-World Sandbox MMO</p>
+    <h2>Sail. Trade. Fight. Betray.</h2>
+    <p class="section-text">
+        Pirate's Quest drops you into a persistent open sea filled with islands,
+        ports, and rival captains. Alliances are fluid, trust is earned (and broken),
+        and every encounter with another player is a negotiation &mdash;
+        fight, trade, or sail away.
     </p>
-
-    <div class="gameplay-grid">
-        <div class="gameplay-card">
-            <div class="card-icon">
-                <img src="images/components/speed.png" alt="Sail">
-            </div>
-            <h3>Sail &amp; Explore</h3>
-            <p>
-                Navigate with <strong>W/S</strong> to control speed and <strong>A/D</strong> to steer.
-                Discover islands, find resource collection points marked in green, and dock at
-                ports marked in red.
-            </p>
-        </div>
-        <div class="gameplay-card">
-            <div class="card-icon">
-                <img src="images/components/damage.png" alt="Combat">
-            </div>
-            <h3>Broadside Combat</h3>
-            <p>
-                Fire cannons left with <strong>Q</strong> and right with <strong>E</strong>.
-                Sink enemy ships and their loot scatters into the water for you to collect.
-                Watch your health and cannon reload status.
-            </p>
-        </div>
-        <div class="gameplay-card">
-            <div class="card-icon">
-                <img src="images/inventory/coin.png" alt="Trade" style="image-rendering: pixelated;">
-            </div>
-            <h3>Trade at Ports</h3>
-            <p>
-                Each port buys and sells different goods at different prices. Harvest tea, fish,
-                wood, and iron from collection points, then sell high at the right port. Buy
-                low, sell high &mdash; a pirate's guide to economics.
-            </p>
-        </div>
-        <div class="gameplay-card">
-            <div class="card-icon">
-                <img src="images/inventory/trophy.png" alt="Win" style="image-rendering: pixelated;">
-            </div>
-            <h3>Claim Victory</h3>
-            <p>
-                Buy trophies at ports with your hard-earned gold. The pirate with
-                the most trophies when the round ends is crowned the winner. Every decision
-                matters in this one-hour showdown.
-            </p>
-        </div>
-    </div>
 </section>
 
 <hr class="divider">
 
-<!-- ═══════ RESOURCES ═══════ -->
-<section>
-    <p class="section-label">Plunder &amp; Pillage</p>
-    <h2>Resources &amp; Cargo</h2>
-    <p class="section-intro">
-        The seas are rich with goods. Slow your ship near green collection markers to harvest
-        resources, or sink an enemy and loot their haul from the wreckage.
-    </p>
+<!-- ═══════ THREE PILLARS ═══════ -->
+<section class="fade-in">
+    <p class="section-label">Three Ways to Play</p>
+    <h2>Find Your Fortune</h2>
 
-    <div class="resources-row">
-        <div class="resource-item">
-            <img src="images/inventory/coin.png" alt="Gold">
-            <span class="label">Gold</span>
-            <span class="desc">Currency for buying &amp; upgrading</span>
-        </div>
-        <div class="resource-item">
-            <img src="images/inventory/tea.png" alt="Tea">
-            <span class="label">Tea</span>
-            <span class="desc">Valuable trade good</span>
-        </div>
-        <div class="resource-item">
-            <img src="images/inventory/wood.png" alt="Wood">
-            <span class="label">Wood</span>
-            <span class="desc">Crafting &amp; trade</span>
-        </div>
-        <div class="resource-item">
-            <img src="images/inventory/iron.png" alt="Iron">
-            <span class="label">Iron</span>
-            <span class="desc">Used for components</span>
-        </div>
-        <div class="resource-item">
-            <img src="images/inventory/fish.png" alt="Fish">
-            <span class="label">Fish</span>
-            <span class="desc">Trade commodity</span>
-        </div>
-        <div class="resource-item">
-            <img src="images/inventory/cannon_ball.png" alt="Cannonballs">
-            <span class="label">Cannonballs</span>
-            <span class="desc">Ammunition supply</span>
-        </div>
-        <div class="resource-item">
-            <img src="images/inventory/trophy.png" alt="Trophy">
-            <span class="label">Trophy</span>
-            <span class="desc">Victory points</span>
-        </div>
-    </div>
-</section>
-
-<hr class="divider">
-
-<!-- ═══════ UPGRADES ═══════ -->
-<section>
-    <p class="section-label">Outfit Your Ship</p>
-    <h2>Ship Components</h2>
-    <p class="section-intro">
-        Equip up to four components at a time. Each upgrade improves one stat but may come with
-        trade-offs &mdash; there's no perfect build. Customize your playstyle: speed demon,
-        armored trader, or cannon-heavy warship.
-    </p>
-
-    <div class="components-grid">
-        <div class="component-card">
-            <img class="comp-img" src="images/components/speed.png" alt="Speed">
-            <div class="comp-label">Speed</div>
-        </div>
-        <div class="component-card">
-            <img class="comp-img" src="images/components/acceleration.png" alt="Acceleration">
-            <div class="comp-label">Acceleration</div>
-        </div>
-        <div class="component-card">
-            <img class="comp-img" src="images/components/damage.png" alt="Damage">
-            <div class="comp-label">Attack Damage</div>
-        </div>
-        <div class="component-card">
-            <img class="comp-img" src="images/components/range.png" alt="Range">
-            <div class="comp-label">Attack Range</div>
-        </div>
-        <div class="component-card">
-            <img class="comp-img" src="images/components/hull.png" alt="Hull">
-            <div class="comp-label">Hull Strength</div>
-        </div>
-        <div class="component-card">
-            <img class="comp-img" src="images/components/heal.png" alt="Heal">
-            <div class="comp-label">Health Regen</div>
-        </div>
-        <div class="component-card">
-            <img class="comp-img" src="images/components/cargo.png" alt="Cargo">
-            <div class="comp-label">Cargo Capacity</div>
-        </div>
-        <div class="component-card">
-            <img class="comp-img" src="images/components/revenue.png" alt="Revenue">
-            <div class="comp-label">Revenue</div>
-        </div>
-        <div class="component-card">
-            <img class="comp-img" src="images/components/collect_fish.png" alt="Collect Fish">
-            <div class="comp-label">Fish Harvesting</div>
-        </div>
-        <div class="component-card">
-            <img class="comp-img" src="images/components/collect_wood.png" alt="Collect Wood">
-            <div class="comp-label">Wood Harvesting</div>
-        </div>
-        <div class="component-card">
-            <img class="comp-img" src="images/components/collect_iron.png" alt="Collect Iron">
-            <div class="comp-label">Iron Harvesting</div>
-        </div>
-    </div>
-</section>
-
-<hr class="divider">
-
-<!-- ═══════ CORE LOOP ═══════ -->
-<section>
-    <p class="section-label">The Pirate's Path</p>
-    <h2>Core Loop</h2>
-    <p class="section-intro">
-        Each round is a tense one-hour race. Here's how every great pirate captain rises to glory.
-    </p>
-
-    <div class="loop-steps">
-        <div class="loop-step">
-            <h3>Harvest</h3>
-            <p>Sail to green markers near islands and in open water to collect tea, fish, wood, and iron.</p>
-        </div>
-        <div class="loop-step">
+    <div class="pillars">
+        <div class="pillar">
+            <img class="icon" src="images/money_bag.png" alt="Trade">
             <h3>Trade</h3>
-            <p>Dock at red-marked ports. Each port has different prices &mdash; buy low, sell high across islands.</p>
+            <p>
+                Every port has its own player-driven economy. Buy low, sail far,
+                sell high. Prices shift with supply and demand, so the best
+                trade route is the one nobody else has found yet.
+            </p>
         </div>
-        <div class="loop-step">
-            <h3>Upgrade</h3>
-            <p>Use gold and resources to buy ship components. Equip up to four &mdash; every build has trade-offs.</p>
+        <div class="pillar">
+            <img class="icon" src="images/quest.png" alt="Quest">
+            <h3>Quest</h3>
+            <p>
+                Characters at ports offer quests for unique rewards &mdash; rare gear,
+                powerful artifacts, or new crew members. Some quests lead to other quests.
+                Some lead to trouble.
+            </p>
         </div>
-        <div class="loop-step">
+        <div class="pillar">
+            <img class="icon" src="images/cannon_shooting.png" alt="Fight">
             <h3>Fight</h3>
-            <p>Sink rival pirates and loot their floating cargo. Destroyed ships drop everything they carried.</p>
-        </div>
-        <div class="loop-step">
-            <h3>Win</h3>
-            <p>Spend gold on trophies at ports. Most trophies at the end of the round wins the game.</p>
+            <p>
+                Broadside cannons, 2-second cooldowns, and loot that scatters into
+                the water when a ship sinks. The rewards scale with the risk &mdash;
+                and sometimes the biggest reward is the look on another player's face.
+            </p>
         </div>
     </div>
 </section>
 
-<hr class="divider">
-
-<!-- ═══════ HUMANS vs AI ═══════ -->
-<section>
-    <p class="section-label">The Experiment</p>
-    <h2>Humans vs. AI</h2>
-
-    <div class="hvai-section">
-        <div class="hvai-text">
-            <p>
-                Pirate's Quest is more than a game &mdash; it's a competitive experiment.
-                Human players face off against AI-controlled pirates, from simple rule-based
-                bots to neural nets and LLM-driven agents.
-            </p>
-            <p>
-                Each round is optimized for fast iteration, balance testing, and emergent
-                behavior. Individual victories and the broader meta-battle between
-                Humans and AI are both tracked on the leaderboard.
-            </p>
-            <p>
-                A sandbox server is always available for testing builds and experimenting
-                with the botting platform.
-            </p>
-        </div>
-        <div class="hvai-visual">
-            <div class="portrait-card">
-                <img src="images/characters/character1.png" alt="Human Player">
-                <div class="tag tag-human">Human</div>
-            </div>
-            <div class="portrait-card">
-                <img src="images/characters/character3.png" alt="AI Pirate">
-                <div class="tag tag-ai">AI Bot</div>
-            </div>
-            <div class="portrait-card">
-                <img src="images/characters/character5.png" alt="Human Player">
-                <div class="tag tag-human">Human</div>
-            </div>
-            <div class="portrait-card">
-                <img src="images/characters/character7.png" alt="AI Pirate">
-                <div class="tag tag-ai">AI Bot</div>
-            </div>
-        </div>
-    </div>
-</section>
+<!-- ═══════ FLAVOR QUOTE ═══════ -->
+<div class="flavor fade-in">
+    <blockquote>
+        Every session is different because the world is shaped
+        by the players in it.
+    </blockquote>
+</div>
 
 <hr class="divider">
 
-<!-- ═══════ CHARACTERS ═══════ -->
-<section>
-    <p class="section-label">Choose Your Captain</p>
-    <h2>Pirate Captains</h2>
-    <p class="section-intro">
-        Pick from a roster of pirate captains, each with their own look. More characters unlocked as the game evolves.
+<!-- ═══════ YOUR SHIP ═══════ -->
+<section class="fade-in">
+    <p class="section-label">Your Vessel</p>
+    <h2>Your Ship Is Everything</h2>
+    <p class="section-text">
+        Start as a nimble Sloop. Upgrade to a Brigantine. Become a Galleon.
+        Each tier is bigger, tougher, and carries more component slots &mdash;
+        but upgrading costs serious resources.
+        Equip components to specialize your playstyle: speed demon, armored trader,
+        or cannon-heavy warship. No perfect build exists, so every choice matters.
     </p>
 
-    <div class="characters-strip">
-        <div class="character-portrait"><img src="images/characters/character1.png" alt="Captain 1"></div>
-        <div class="character-portrait"><img src="images/characters/character2.png" alt="Captain 2"></div>
-        <div class="character-portrait"><img src="images/characters/character3.png" alt="Captain 3"></div>
-        <div class="character-portrait"><img src="images/characters/character4.png" alt="Captain 4"></div>
-        <div class="character-portrait"><img src="images/characters/character5.png" alt="Captain 5"></div>
-        <div class="character-portrait"><img src="images/characters/character6.png" alt="Captain 6"></div>
-        <div class="character-portrait"><img src="images/characters/character7.png" alt="Captain 7"></div>
-        <div class="character-portrait"><img src="images/characters/character8.png" alt="Captain 8"></div>
+    <div class="ships-row">
+        <div class="ship-card">
+            <div class="ship-numeral">I</div>
+            <h3>Sloop</h3>
+            <p>Small, nimble, and free. Where every pirate begins.</p>
+        </div>
+        <div class="ship-card">
+            <div class="ship-numeral">II</div>
+            <h3>Brigantine</h3>
+            <p>More firepower, more cargo, more trouble for your enemies.</p>
+        </div>
+        <div class="ship-card">
+            <div class="ship-numeral">III</div>
+            <h3>Galleon</h3>
+            <p>The biggest ship on the sea. A floating fortress of destruction.</p>
+        </div>
     </div>
 </section>
 
 <hr class="divider">
 
-<!-- ═══════ CONTROLS ═══════ -->
-<section>
-    <p class="section-label">Man the Helm</p>
-    <h2>Controls</h2>
+<!-- ═══════ RISK & REWARD ═══════ -->
+<section class="fade-in">
+    <p class="section-label">High Stakes</p>
+    <h2>Death Is Expensive</h2>
+    <p class="section-text">
+        Sink and you lose half your cargo and all your equipped components.
+        Ship upgrades and artifacts survive, so your long-term progress is safe &mdash;
+        but that haul of iron you were about to sell? Gone.
+        Smart pirates build a <strong>vault</strong> at a port before heading into danger.
+        Everything inside is untouchable, even by death.
+    </p>
+</section>
 
-    <div class="controls-grid">
-        <div class="control-group">
-            <h3>Movement</h3>
-            <div class="key-row">
-                <span class="key">W</span>
-                <span class="key-desc">Increase speed</span>
-            </div>
-            <div class="key-row">
-                <span class="key">S</span>
-                <span class="key-desc">Decrease speed</span>
-            </div>
-            <div class="key-row">
-                <span class="key">A</span>
-                <span class="key-desc">Turn left</span>
-            </div>
-            <div class="key-row">
-                <span class="key">D</span>
-                <span class="key-desc">Turn right</span>
-            </div>
+<hr class="divider">
+
+<!-- ═══════ THE SEA ═══════ -->
+<section class="fade-in">
+    <p class="section-label">Dangerous Waters</p>
+    <h2>You're Never Alone</h2>
+    <p class="section-text" style="margin-bottom: 0.5rem;">
+        AI-controlled ships roam alongside players. There's always something
+        happening on the sea, whether you're looking for a fight or trying to avoid one.
+    </p>
+
+    <div class="encounters">
+        <div class="encounter-card">
+            <div class="enc-icon">&#9973;</div>
+            <h3>Traders</h3>
+            <p>Fat merchant ships sailing between ports. Easy pickings with a full cargo hold.</p>
+            <span class="risk-tag risk-low">Easy Prey</span>
         </div>
-        <div class="control-group">
-            <h3>Cannons</h3>
-            <div class="key-row">
-                <span class="key">Q</span> <span class="key-desc">or</span> <span class="key">,</span>
-                <span class="key-desc">Fire left broadside</span>
-            </div>
-            <div class="key-row">
-                <span class="key">E</span> <span class="key-desc">or</span> <span class="key">.</span>
-                <span class="key-desc">Fire right broadside</span>
-            </div>
+        <div class="encounter-card">
+            <div class="enc-icon">&#9760;</div>
+            <h3>Pirates</h3>
+            <p>They hunt you. They steal your cargo. They carry loot worth fighting for.</p>
+            <span class="risk-tag risk-med">Dangerous</span>
         </div>
-        <div class="control-group">
-            <h3>Camera</h3>
-            <div class="key-row">
-                <span class="key">Scroll</span>
-                <span class="key-desc">Zoom in / out</span>
+        <div class="encounter-card">
+            <div class="enc-icon">&#9875;</div>
+            <h3>Fleets</h3>
+            <p>Entire armadas guarding legendary treasure. Bring friends or don't bother.</p>
+            <span class="risk-tag risk-high">Suicide Solo</span>
+        </div>
+    </div>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════ MULTIPLAYER ═══════ -->
+<section class="fade-in">
+    <p class="section-label">Trust No One</p>
+    <h2>Every Encounter Is a Choice</h2>
+    <p class="section-text">
+        There are no teams and no factions. You decide what every player encounter
+        means. Team up to take down a fleet. Race a rival to the best trade route.
+        Shake hands and split the loot &mdash; or don't.
+        Communication happens through emotes, keeping things fast
+        and expressive without breaking the flow.
+    </p>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════ CAPTAINS ═══════ -->
+<section class="fade-in" style="text-align: center;">
+    <p class="section-label">Assemble Your Crew</p>
+    <h2>Pirate Crew</h2>
+    <p class="section-text" style="margin: 0 auto 0.5rem; text-align: center;">
+        No ship sails itself. Recruit crew members at ports to unlock
+        special abilities and give your vessel the edge it needs.
+    </p>
+
+    <div class="captains">
+        <div class="captain"><img src="images/characters/character1.png" alt="Captain"></div>
+        <div class="captain"><img src="images/characters/character2.png" alt="Captain"></div>
+        <div class="captain"><img src="images/characters/character3.png" alt="Captain"></div>
+        <div class="captain"><img src="images/characters/character4.png" alt="Captain"></div>
+        <div class="captain"><img src="images/characters/character5.png" alt="Captain"></div>
+        <div class="captain"><img src="images/characters/character6.png" alt="Captain"></div>
+        <div class="captain"><img src="images/characters/character7.png" alt="Captain"></div>
+        <div class="captain"><img src="images/characters/character8.png" alt="Captain"></div>
+    </div>
+</section>
+
+</div>
+
+<hr class="divider">
+
+<!-- ═══════ DISCLAIMER ═══════ -->
+<section class="fade-in" style="padding-bottom: 2rem;">
+    <div class="content">
+        <div class="early-access">
+            <div class="ea-header">
+                <span class="ea-badge">Prototype</span>
+                <span class="ea-title">Early Development</span>
             </div>
-            <div class="key-row">
-                <span class="key">Drag</span>
-                <span class="key-desc">Rotate camera</span>
-            </div>
+            <p>
+                Pirate's Quest is an <strong>early-stage prototype</strong> and mostly a personal learning
+                project. It exists to
+                experiment with Godot, C#, AI driven development, and multiplayer game design. Expect some rough edges, missing
+                features, and a whole lot of changes.
+            </p>
+            <p>
+                Additionally, a significant amount of content is AI-generated to make it easier to experiment. That includes much of this website, much
+                of the artwork, and portions of the game code. Eventually, I'd like to replace the AI-generated content with handcrafted work, but for now it helps me iterate faster and focus on the core gameplay.
+            </p>
+            <p>
+                Feedback and contributions are welcome on
+                <a href="https://github.com/joshgrift/piratesQuest">GitHub</a>.
+            </p>
+            <p>
+                - <a href="https://github.com/joshgrift">Josh Grift</a>
+            </p>
         </div>
     </div>
 </section>
@@ -941,28 +849,23 @@
 <hr class="divider">
 
 <!-- ═══════ DOWNLOAD ═══════ -->
-<section style="text-align: center;">
-    <p class="section-label">Join the Crew</p>
-    <h2>Download Pirate's Quest</h2>
-    <p class="section-intro" style="margin: 0 auto 2rem;">
-        Available for macOS and Windows. Built with
-        <a href="https://godotengine.org/" style="color: var(--gold);">Godot Engine</a>.
-        Grab the latest build and set sail.
-    </p>
-    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-        <a href="https://github.com/joshgrift/piratesQuest/releases/latest" class="btn btn-primary">
-            &#9875; Get Latest Release
-        </a>
-        <a href="https://github.com/joshgrift/piratesQuest/releases" class="btn btn-ghost">
-            All Releases
-        </a>
-        <a href="https://github.com/joshgrift/piratesQuest" class="btn btn-ghost">
-            View on GitHub
-        </a>
+<section class="download-section fade-in" id="download">
+    <div class="content">
+        <p class="section-label">Join the Crew</p>
+        <h2>Set Sail</h2>
+        <p class="section-text" style="margin: 0 auto; text-align: center;">
+            macOS &amp; Windows. Built with
+            <a href="https://godotengine.org/" style="color: var(--gold);">Godot Engine</a>.
+        </p>
+        <p id="download-version"></p>
+        <div class="download-btns">
+            <a href="https://github.com/joshgrift/piratesQuest/releases/latest" class="btn btn-primary">
+                &#9875; Download
+            </a>
+            <a href="https://github.com/joshgrift/piratesQuest" class="btn btn-ghost">GitHub</a>
+        </div>
     </div>
 </section>
-
-</div>
 
 <!-- ═══════ FOOTER ═══════ -->
 <footer>
@@ -971,8 +874,58 @@
         <a href="https://github.com/joshgrift/piratesQuest/releases">Releases</a>
         <a href="https://godotengine.org/">Godot Engine</a>
     </div>
-    <p>Pirate's Quest &middot; Humans vs. AI on the High Seas</p>
+
+    <div class="server-status">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Checking server&hellip;</span>
+    </div>
 </footer>
+
+<script>
+    (async function fetchStatus() {
+        const badge = document.getElementById('version-badge');
+        const dlVersion = document.getElementById('download-version');
+        const dlBtn = document.getElementById('download-btn');
+        const dot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+
+        try {
+            const res = await fetch('/api/status');
+            const data = await res.json();
+            const v = data.version || 'unknown';
+
+            badge.textContent = 'Alpha \u00B7 v' + v;
+            dlBtn.textContent = '\u2693 Download v' + v;
+
+            dot.classList.add('online');
+            statusText.textContent = 'Server online \u00B7 v' + v;
+
+            if (data.updatedAt) {
+                const date = new Date(data.updatedAt);
+                dlVersion.textContent = 'v' + v + ' \u2014 ' +
+                    date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            }
+        } catch {
+            badge.textContent = 'Alpha';
+            dot.classList.add('offline');
+            statusText.textContent = 'Server offline';
+        }
+    })();
+
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        },
+        { threshold: 0.1, rootMargin: '0px 0px -60px 0px' }
+    );
+
+    document.querySelectorAll('.fade-in').forEach((el) => observer.observe(el));
+</script>
 
 </body>
 </html>
