@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
-import { renderApp, getIpcMessages } from "./test/helpers";
-import { makeOwnedComponent, makeComponentData } from "./test/fixtures";
+import { renderApp, getIpcMessages } from "../test/helpers";
+import { makeOwnedComponent, makeComponentData } from "../test/fixtures";
 
 function renderCreative(
   overrides?: Parameters<typeof renderApp>[0] extends infer O ? O : never,
@@ -408,7 +408,7 @@ describe("CreativeTab", () => {
     });
 
     it("clamp prevents negative inventory via -1 on 0", async () => {
-      const { user, ipcSpy } = renderCreative({
+      const { ipcSpy } = renderCreative({
         state: { inventory: { Wood: 0 } },
       });
       const woodRow = screen.getByText("Wood").closest(".creative-item")!;

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { screen, act, fireEvent, within } from "@testing-library/react";
-import { renderApp } from "./test/helpers";
+import { screen, act, fireEvent } from "@testing-library/react";
+import { renderApp } from "../test/helpers";
 
 // The Guide tab is the default tab, so renderApp() lands here automatically.
 function renderGuide() {
@@ -68,9 +68,9 @@ describe("GuideTab", () => {
     it("shows numbered badges on response buttons", () => {
       const { container } = renderGuide();
       const nums = container.querySelectorAll(".guide-response-num");
-      expect(nums).toHaveLength(11);
+      expect(nums).toHaveLength(12);
       expect(nums[0]!.textContent).toBe("1");
-      expect(nums[10]!.textContent).toBe("11");
+      expect(nums[11]!.textContent).toBe("12");
     });
   });
 

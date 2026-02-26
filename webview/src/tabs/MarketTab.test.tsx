@@ -1,12 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { screen, within } from "@testing-library/react";
-import { renderApp, getIpcMessages } from "./test/helpers";
-import { makeShopItem } from "./test/fixtures";
+import { renderApp, getIpcMessages } from "../test/helpers";
+import { makeShopItem } from "../test/fixtures";
 
 // Helper: render the app with the Market tab open.
-function renderMarket(overrides?: Parameters<typeof renderApp>[0] extends infer O ? O : never) {
-  const stateOverrides = overrides && "state" in overrides ? overrides.state : overrides;
-  return renderApp({ state: stateOverrides, tab: "market" });
+function renderMarket(overrides?: { state?: Partial<import("../types").PortState> }) {
+  return renderApp({ state: overrides?.state, tab: "market" });
 }
 
 describe("MarketTab", () => {
@@ -105,7 +104,7 @@ describe("MarketTab", () => {
       });
       await user.click(screen.getByRole("button", { name: "+" }));
       // qty should now be 1
-      const shopItem = screen.getByText("Wood").closest(".shop-item")!;
+      const shopItem = screen.getByText("Wood").closest(".shop-item") as HTMLElement;
       expect(within(shopItem).getByText("1")).toBeInTheDocument();
     });
 
@@ -158,7 +157,7 @@ describe("MarketTab", () => {
         },
       });
       await user.click(screen.getByRole("button", { name: "+5" }));
-      const shopItem = screen.getByText("Wood").closest(".shop-item")!;
+      const shopItem = screen.getByText("Wood").closest(".shop-item") as HTMLElement;
       const qtyValue = within(shopItem).getByText("5", { selector: ".qty-value" });
       expect(qtyValue).toBeInTheDocument();
     });
@@ -184,7 +183,7 @@ describe("MarketTab", () => {
       await user.click(screen.getByRole("button", { name: "+5" }));
       await user.click(screen.getByRole("button", { name: "×" }));
       // The qty-value element should show 0
-      const shopItem = screen.getByText("Wood").closest(".shop-item")!;
+      const shopItem = screen.getByText("Wood").closest(".shop-item") as HTMLElement;
       expect(within(shopItem).getByText("0")).toBeInTheDocument();
     });
   });
@@ -345,7 +344,7 @@ describe("MarketTab", () => {
       await user.click(screen.getByRole("button", { name: "Purchase" }));
 
       // After confirm, qty should be back to 0
-      const shopItem = screen.getByText("Wood").closest(".shop-item")!;
+      const shopItem = screen.getByText("Wood").closest(".shop-item") as HTMLElement;
       expect(within(shopItem).getByText("0")).toBeInTheDocument();
     });
 
@@ -395,7 +394,7 @@ describe("MarketTab", () => {
       await user.click(plusBtns[1]!); // Fish +1
       await user.click(plusBtns[1]!); // Fish +1
 
-      const footer = screen.getByRole("button", { name: "Purchase" }).closest(".trade-footer")!;
+      const footer = screen.getByRole("button", { name: "Purchase" }).closest(".trade-footer") as HTMLElement;
       expect(within(footer).getByText("44")).toBeInTheDocument();
     });
   });

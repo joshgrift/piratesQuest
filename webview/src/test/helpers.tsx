@@ -89,5 +89,5 @@ export function renderApp(overridesOrOptions?: Partial<PortState> | RenderAppOpt
  * Returns parsed objects so tests can assert on structured data.
  */
 export function getIpcMessages(spy: Mock): unknown[] {
-  return spy.mock.calls.map(([json]: [string]) => JSON.parse(json));
+  return spy.mock.calls.map((args) => JSON.parse(args[0] as string));
 }

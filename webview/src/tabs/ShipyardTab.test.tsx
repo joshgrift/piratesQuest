@@ -1,15 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
-import { renderApp, getIpcMessages } from "./test/helpers";
+import { renderApp, getIpcMessages } from "../test/helpers";
 import {
   makeShopItem,
   makeComponentData,
   makeOwnedComponent,
   makeStatChange,
-} from "./test/fixtures";
+} from "../test/fixtures";
 
 function renderShipyard(opts?: {
-  state?: Partial<import("./types").PortState>;
+  state?: Partial<import("../types").PortState>;
   simulateGodot?: boolean;
 }) {
   return renderApp({ state: opts?.state, tab: "shipyard", simulateGodot: opts?.simulateGodot });
