@@ -11,6 +11,8 @@ export interface PortState {
   health: number;
   maxHealth: number;
   componentCapacity: number;
+  shipTier: number;
+  shipTiers: ShipTierData[];
   isCreative: boolean;
   /** Null when the player hasn't built a vault yet. */
   vault: VaultState | null;
@@ -32,6 +34,14 @@ export interface ShopItem {
   type: string;
   buyPrice: number;
   sellPrice: number;
+}
+
+/** Ship tier data pushed from Godot. */
+export interface ShipTierData {
+  name: string;
+  description: string;
+  componentSlots: number;
+  cost: Record<string, number>;
 }
 
 /** A ship component definition from GameData. */
@@ -68,6 +78,7 @@ export type IpcMessage =
   | { action: "equip_component"; name: string }
   | { action: "unequip_component"; name: string }
   | { action: "heal" }
+  | { action: "upgrade_ship" }
   | { action: "focus_parent" }
   | { action: "set_inventory"; items: { type: string; quantity: number }[] }
   | { action: "clear_components" }

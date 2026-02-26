@@ -44,6 +44,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   public readonly PlayerStats Stats = new();
   public System.Collections.Generic.List<OwnedComponent> OwnedComponents = [];
 
+  // ── Ship Tier ──────────────────────────────────────────────────────
+  // 0 = Sloop (small), 1 = Brigantine (medium), 2 = Galleon (large).
+  // Persists through death — this is a permanent upgrade.
+  public int ShipTier { get; set; } = 0;
+
   // ── Vault ────────────────────────────────────────────────────────
   // Each player can build one vault at a single port.
   // Null VaultPortName means no vault exists yet.
@@ -178,6 +183,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
         GD.PrintErr($"{Name}: Could not find WaterPlane!");
       }
     }
+
+    // Apply ship tier visuals (collision + mesh) for the starting tier
+    ApplyShipTier();
 
     if (Configuration.RandomSpawnEnabled)
       RandomSpawn(100, 100);
@@ -657,6 +665,10 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   {
     Stats.ResetStats();
 
+    // Override component capacity based on ship tier
+    if (ShipTier >= 0 && ShipTier < GameData.ShipTiers.Length)
+      Stats.Stats[PlayerStat.ComponentCapacity] = GameData.ShipTiers[ShipTier].ComponentSlots;
+
     foreach (var ownedComponent in OwnedComponents)
     {
       if (ownedComponent.isEquipped)
@@ -783,6 +795,57 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   public Dictionary<InventoryItemType, int> GetInventory()
   {
     return _inventory.GetAll();
+  }
+
+  // ── Ship Tier Operations ────────────────────────────────────────
+
+  /// <summary>
+  /// Upgrades the ship to the next tier if the player can afford it.
+  /// Each tier unlocks a bigger ship model, a larger collision shape,
+  /// and +2 component slots. Ship tier persists through death.
+  /// </summary>
+  public bool UpgradeShip()
+  {
+    int nextTier = ShipTier + 1;
+    if (nextTier >= GameData.ShipTiers.Length)
+    {
+      GD.PrintErr($"{Name}: Already at max ship tier ({ShipTier})");
+      return false;
+    }
+
+    var tierData = GameData.ShipTiers[nextTier];
+    if (!MakePurchase(tierData.Cost))
+    {
+      GD.PrintErr($"{Name}: Cannot afford ship tier {nextTier} ({tierData.Name})");
+      return false;
+    }
+
+    ShipTier = nextTier;
+    ApplyShipTier();
+    UpdatePlayerStats();
+    GD.Print($"{Name}: Upgraded ship to tier {ShipTier} ({tierData.Name})");
+    return true;
+  }
+
+  /// <summary>
+  /// Switches the visible ship mesh and active collision shape
+  /// to match the current ShipTier. Called on upgrade and when
+  /// restoring saved state.
+  /// </summary>
+  public void ApplyShipTier()
+  {
+    for (int i = 0; i < GameData.ShipTiers.Length; i++)
+    {
+      // Toggle ship graphics — only the current tier is visible
+      var shipNode = GetNodeOrNull<Node3D>($"ship-tier{i + 1}");
+      if (shipNode != null)
+        shipNode.Visible = i == ShipTier;
+
+      // Toggle collision shapes — only the current tier is active
+      var collisionNode = GetNodeOrNull<CollisionPolygon3D>($"collision-tier{i + 1}");
+      if (collisionNode != null)
+        collisionNode.Disabled = i != ShipTier;
+    }
   }
 
   // ── Vault Operations ──────────────────────────────────────────────
@@ -946,12 +1009,23 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (string.IsNullOrEmpty(UserId))
     {
       GD.PrintErr($"{Name}: Failed to decode userId from JWT");
+      int peerId = GetMultiplayerAuthority();
+      RpcId(peerId, MethodName.OnTokenInvalid, "Session expired. Please log in again.");
       return;
     }
 
     GD.Print($"{Name}: Authenticated as user {UserId}");
 
-    var stateJson = await ServerAPI.LoadPlayerStateAsync(Configuration.ServerId, UserId);
+    var (stateJson, isError) = await ServerAPI.LoadPlayerStateAsync(Configuration.ServerId, UserId);
+
+    if (isError)
+    {
+      GD.PrintErr($"{Name}: API unreachable, rejecting player {UserId}");
+      int peerId = GetMultiplayerAuthority();
+      RpcId(peerId, MethodName.OnApiUnreachable, "Server unreachable");
+      return;
+    }
+
     if (stateJson != null)
     {
       LastSyncedStateJson = stateJson;
@@ -959,6 +1033,31 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       RpcId(peerId, MethodName.ReceiveState, stateJson);
       GD.Print($"{Name}: Sent saved state to client (peer {peerId})");
     }
+  }
+
+  /// <summary>
+  /// Called by the server on the client when the backend API can't be reached.
+  /// Sets a user-visible error and sends the player back to the main menu.
+  /// </summary>
+  [Rpc(MultiplayerApi.RpcMode.Authority)]
+  private void OnApiUnreachable(string reason)
+  {
+    if (!IsMultiplayerAuthority()) return;
+    Configuration.SetPendingMenuError(reason);
+    GetTree().ChangeSceneToFile("res://scenes/menu/menu.tscn");
+  }
+
+  /// <summary>
+  /// Called by the server on the client when the JWT token is invalid or expired.
+  /// Clears the saved token so the player must log in again, then returns to menu.
+  /// </summary>
+  [Rpc(MultiplayerApi.RpcMode.Authority)]
+  private void OnTokenInvalid(string reason)
+  {
+    if (!IsMultiplayerAuthority()) return;
+    Configuration.ClearUserToken();
+    Configuration.SetPendingMenuError(reason);
+    GetTree().ChangeSceneToFile("res://scenes/menu/menu.tscn");
   }
 
   [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
@@ -995,7 +1094,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     {
       Health = Health,
       Position = [GlobalPosition.X, GlobalPosition.Y, GlobalPosition.Z],
-      IsDead = State == PlayerState.Dead
+      IsDead = State == PlayerState.Dead,
+      ShipTier = ShipTier
     };
 
     var inventory = _inventory.GetAll();
@@ -1066,6 +1166,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
         GD.PrintErr($"{Name}: Unknown component '{comp.Name}' in saved state, skipping");
       }
     }
+    UpdatePlayerStats();
+
+    // Restore ship tier (persists through death)
+    ShipTier = Math.Clamp(dto.ShipTier, 0, GameData.ShipTiers.Length - 1);
+    ApplyShipTier();
     UpdatePlayerStats();
 
     // Restore vault state

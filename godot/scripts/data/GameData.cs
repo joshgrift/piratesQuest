@@ -2,8 +2,60 @@ namespace PiratesQuest.Data;
 
 using Godot.Collections;
 
+/// <summary>
+/// Defines the cost and component slot count for each ship tier.
+/// Tier 1 is the starting ship — no cost required.
+/// </summary>
+public class ShipTierData
+{
+  public string Name;
+  public string Description;
+  public int ComponentSlots;
+  public Dictionary<InventoryItemType, int> Cost;
+}
+
 public static class GameData
 {
+  // Ship tiers: each upgrade adds 2 more component slots and unlocks a bigger ship model.
+  // Costs are intentionally high — upgrades are meant to be major milestones.
+  public static readonly ShipTierData[] ShipTiers = [
+    new ShipTierData
+    {
+      Name = "Sloop",
+      Description = "A nimble starter vessel",
+      ComponentSlots = 4,
+      Cost = new Dictionary<InventoryItemType, int>()
+    },
+    new ShipTierData
+    {
+      Name = "Brigantine",
+      Description = "A sturdy mid-size warship with extra component slots",
+      ComponentSlots = 6,
+      Cost = new Dictionary<InventoryItemType, int>
+      {
+        { InventoryItemType.Wood, 300 },
+        { InventoryItemType.Iron, 250 },
+        { InventoryItemType.Fish, 150 },
+        { InventoryItemType.Tea, 100 },
+        { InventoryItemType.Coin, 2000 }
+      }
+    },
+    new ShipTierData
+    {
+      Name = "Galleon",
+      Description = "A fearsome capital ship with maximum component capacity",
+      ComponentSlots = 8,
+      Cost = new Dictionary<InventoryItemType, int>
+      {
+        { InventoryItemType.Wood, 400 },
+        { InventoryItemType.Iron, 300 },
+        { InventoryItemType.Fish, 150 },
+        { InventoryItemType.Tea, 100 },
+        { InventoryItemType.Coin, 5000 }
+      }
+    }
+  ];
+
   static public Component[] Components = [
     new Component
     {

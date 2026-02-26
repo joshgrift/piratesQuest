@@ -473,6 +473,13 @@ public partial class Hud : Control
       Health = _player.Health,
       MaxHealth = _player.MaxHealth,
       ComponentCapacity = (int)_player.Stats.GetStat(PlayerStat.ComponentCapacity),
+      ShipTier = _player.ShipTier,
+      ShipTiers = GameData.ShipTiers
+        .Select(t => new ShipTierDto(
+          t.Name, t.Description, t.ComponentSlots,
+          t.Cost.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value)
+        ))
+        .ToArray(),
       IsCreative = Configuration.IsCreative,
       Vault = vaultState,
     };
@@ -543,6 +550,9 @@ public partial class Hud : Control
         break;
       case SetHealthMessage sh:
         HandleSetHealth(sh);
+        break;
+      case UpgradeShipMessage:
+        HandleUpgradeShip();
         break;
       case BuildVaultMessage:
         HandleBuildVault();
@@ -730,6 +740,16 @@ public partial class Hud : Control
     _player.Health = clamped;
     _player.EmitSignal(Player.SignalName.HealthUpdate, _player.Health);
     GD.Print($"HUD: [Creative] Set health to {clamped}");
+  }
+
+  // ── Ship upgrade handler ─────────────────────────────────────────
+
+  private void HandleUpgradeShip()
+  {
+    bool ok = _player.UpgradeShip();
+    GD.Print(ok
+      ? $"HUD: Upgraded ship to tier {_player.ShipTier}"
+      : "HUD: Ship upgrade failed");
   }
 
   // ── Vault handlers ────────────────────────────────────────────────

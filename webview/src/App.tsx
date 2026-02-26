@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import "./App.css";
-import type { PortState, IpcMessage, ComponentData, OwnedComponent, ShopItem } from "./types";
+import type { PortState, IpcMessage, ComponentData, OwnedComponent, ShopItem, ShipTierData } from "./types";
 
 type Tab = "market" | "shipyard" | "vault" | "guide" | "creative";
 type TradeMode = "buy" | "sell";
@@ -542,6 +542,18 @@ function ShipyardTab({ state }: { state: PortState }) {
         )}
       </div>
 
+      {/* Ship Upgrade */}
+      {state.shipTiers && state.shipTiers.length > 0 && (
+        <>
+          <div className="section-title">Ship Class</div>
+          <ShipUpgradeCard
+            currentTier={state.shipTier ?? 0}
+            tiers={state.shipTiers}
+            inventory={state.inventory}
+          />
+        </>
+      )}
+
       {/* Stats */}
       <div className="section-title">Ship Stats</div>
       <div className="card mb-12">
@@ -652,6 +664,113 @@ function ShipyardTab({ state }: { state: PortState }) {
         </>
       )}
     </>
+  );
+}
+
+// ── Ship Upgrade Card ────────────────────────────────────────────────
+
+function ShipUpgradeCard({
+  currentTier,
+  tiers,
+  inventory,
+}: {
+  currentTier: number;
+  tiers: ShipTierData[];
+  inventory: Record<string, number>;
+}) {
+  const currentData = tiers[currentTier];
+  const nextTier = currentTier + 1;
+  const nextData = nextTier < tiers.length ? tiers[nextTier] : undefined;
+
+  const canAffordUpgrade =
+    nextData != null &&
+    Object.entries(nextData.cost).every(
+      ([type, amount]) => (inventory[type] ?? 0) >= amount
+    );
+
+  return (
+    <div className="card ship-upgrade-card">
+      <div className="ship-upgrade-current">
+        <div className="ship-upgrade-tier-badge">Tier {currentTier + 1}</div>
+        <div className="ship-upgrade-info">
+          <span className="ship-upgrade-name">{currentData?.name ?? "Unknown"}</span>
+          <span className="ship-upgrade-slots">
+            {currentData?.componentSlots ?? 4} component slots
+          </span>
+        </div>
+      </div>
+
+      {nextData == null ? (
+        <div className="ship-upgrade-max">Maximum Ship Class Reached</div>
+      ) : (
+        <ShipUpgradeNextTier
+          nextTier={nextTier}
+          nextData={nextData}
+          currentSlots={currentData?.componentSlots ?? 4}
+          canAfford={canAffordUpgrade}
+          inventory={inventory}
+        />
+      )}
+    </div>
+  );
+}
+
+function ShipUpgradeNextTier({
+  nextTier,
+  nextData,
+  currentSlots,
+  canAfford,
+  inventory,
+}: {
+  nextTier: number;
+  nextData: ShipTierData;
+  currentSlots: number;
+  canAfford: boolean;
+  inventory: Record<string, number>;
+}) {
+  return (
+    <div className="ship-upgrade-next">
+      <div className="ship-upgrade-arrow">▼</div>
+      <div className="ship-upgrade-preview">
+        <div className="ship-upgrade-tier-badge tier-next">
+          Tier {nextTier + 1}
+        </div>
+        <div className="ship-upgrade-info">
+          <span className="ship-upgrade-name">{nextData.name}</span>
+          <span className="ship-upgrade-desc">{nextData.description}</span>
+          <span className="ship-upgrade-slots">
+            {nextData.componentSlots} component slots
+            <span className="ship-upgrade-slot-bonus">
+              (+{nextData.componentSlots - currentSlots})
+            </span>
+          </span>
+        </div>
+      </div>
+      <div className="ship-upgrade-cost">
+        {Object.entries(nextData.cost).map(([type, amount]) => (
+          <span
+            key={type}
+            className={`cost-chip ${
+              (inventory[type] ?? 0) < amount ? "unaffordable" : `chip-${type.toLowerCase()}`
+            }`}
+          >
+            <img
+              src={inventoryIcon(type)}
+              alt={type}
+              className="chip-icon"
+            />
+            {amount}
+          </span>
+        ))}
+      </div>
+      <button
+        className="ship-upgrade-btn"
+        disabled={!canAfford}
+        onClick={() => sendIpc({ action: "upgrade_ship" })}
+      >
+        Upgrade to {nextData.name}
+      </button>
+    </div>
   );
 }
 
@@ -1491,6 +1610,7 @@ const GUIDE_DIALOGUE: Record<string, DialogueNode> = {
       { label: "What are resources for?", next: "resources" },
       { label: "How do I collect resources?", next: "collecting" },
       { label: "How do ship upgrades work?", next: "upgrades" },
+      { label: "How do I upgrade my ship class?", next: "ship_tiers" },
       { label: "What if I'm overburdened?", next: "overburdened" },
       { label: "How does the leaderboard work?", next: "leaderboard" },
       { label: "What happens when I die?", next: "death" },
@@ -1654,7 +1774,31 @@ const GUIDE_DIALOGUE: Record<string, DialogueNode> = {
   },
   upgrades_wrong: {
     text: "I wish, love! When ye die, ALL equipped components are lost forever. It's a cruel sea \u2014 only load up on upgrades when ye've got the firepower to keep 'em!",
-    responses: [{ label: "I'll be careful! What else?", next: "root" }],
+    responses: [
+      { label: "What about upgrading my ship class?", next: "ship_tiers" },
+      { label: "I'll be careful! What else?", next: "root" },
+    ],
+  },
+
+  // ── Ship Tiers ──
+  ship_tiers: {
+    text: "Now yer talkin'! Every pirate starts with a Sloop \u2014 nimble but small. Ye can upgrade to a Brigantine and then a mighty Galleon at the Shipyard! Each class adds 2 more component slots, a bigger hull, and looks far more intimidatin'.",
+    responses: [
+      { label: "What does it cost?", next: "ship_tiers_cost" },
+      { label: "Do I lose my ship class when I die?", next: "ship_tiers_death" },
+      { label: "Ask about something else", next: "root" },
+    ],
+  },
+  ship_tiers_cost: {
+    text: "It ain't cheap! The Brigantine runs ye 300 Wood, 250 Iron, 150 Fish, 100 Tea, and 2,000 Gold. The Galleon? Even steeper \u2014 400 Wood, 300 Iron, 150 Fish, 100 Tea, and 5,000 Gold. Fill yer hold to the brim!",
+    responses: [
+      { label: "Do I keep it when I die?", next: "ship_tiers_death" },
+      { label: "That's pricey! What else?", next: "root" },
+    ],
+  },
+  ship_tiers_death: {
+    text: "Here's the good news \u2014 yer ship class is PERMANENT! Unlike components, it survives death. Once ye upgrade, ye keep that bigger ship forever. It's the best investment a pirate can make!",
+    responses: [{ label: "I'm saving up! What else?", next: "root" }],
   },
 
   // ── Overburdened ──

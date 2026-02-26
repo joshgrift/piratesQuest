@@ -66,6 +66,12 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
     health: 80,
     maxHealth: 100,
     componentCapacity: 4,
+    shipTier: 0,
+    shipTiers: [
+      { name: "Sloop", description: "A nimble starter vessel", componentSlots: 4, cost: {} },
+      { name: "Brigantine", description: "A sturdy mid-size warship", componentSlots: 6, cost: { Wood: 300, Iron: 250, Fish: 150, Tea: 100, Coin: 2000 } },
+      { name: "Galleon", description: "A fearsome capital ship", componentSlots: 8, cost: { Wood: 400, Iron: 300, Fish: 150, Tea: 100, Coin: 5000 } },
+    ],
     isCreative: false,
     vault: null,
     ...overrides,

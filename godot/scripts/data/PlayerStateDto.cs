@@ -9,6 +9,7 @@ public class PlayerStateDto
   public int Health { get; set; }
   public float[] Position { get; set; } = [0, 2, 0];
   public bool IsDead { get; set; }
+  public int ShipTier { get; set; }
 
   /// <summary>Null when the player hasn't built a vault yet.</summary>
   public VaultDto Vault { get; set; }

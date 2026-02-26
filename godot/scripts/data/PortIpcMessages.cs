@@ -20,6 +20,8 @@ public record PortStateDto
   public int Health { get; init; }
   public int MaxHealth { get; init; }
   public int ComponentCapacity { get; init; }
+  public int ShipTier { get; init; }
+  public ShipTierDto[] ShipTiers { get; init; } = [];
   public bool IsCreative { get; init; }
 
   /// <summary>
@@ -44,6 +46,13 @@ public record VaultStateDto
 }
 
 public record ShopItemDto(string Type, int BuyPrice, int SellPrice);
+
+public record ShipTierDto(
+  string Name,
+  string Description,
+  int ComponentSlots,
+  Dictionary<string, int> Cost
+);
 
 public record ComponentDto(
   string Name,
@@ -80,6 +89,7 @@ public record StatChangeDto(string Stat, string Modifier, float Value);
 [JsonDerivedType(typeof(UpgradeVaultMessage), "upgrade_vault")]
 [JsonDerivedType(typeof(VaultDepositMessage), "vault_deposit")]
 [JsonDerivedType(typeof(VaultWithdrawMessage), "vault_withdraw")]
+[JsonDerivedType(typeof(UpgradeShipMessage), "upgrade_ship")]
 [JsonDerivedType(typeof(SetVaultMessage), "set_vault")]
 [JsonDerivedType(typeof(DeleteVaultMessage), "delete_vault")]
 public record IpcMessage;
@@ -138,6 +148,9 @@ public record SetHealthMessage : IpcMessage
 {
   public int Health { get; init; }
 }
+
+/// <summary>Upgrade the ship to the next tier.</summary>
+public record UpgradeShipMessage : IpcMessage;
 
 /// <summary>Build a new vault at the current port (one per player).</summary>
 public record BuildVaultMessage : IpcMessage;

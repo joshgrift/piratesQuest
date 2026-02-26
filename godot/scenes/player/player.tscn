@@ -62,20 +62,19 @@ volume_db = 31.056
 
 [node name="collision-tier1" type="CollisionPolygon3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -3.333, 3, -3.792)
-visible = false
 depth = 10.0
 polygon = PackedVector2Array(1.0824568, 3.1109843, 1.1123765, 7.9579754, 5.4706793, 7.9978685, 5.5006, 3.1109843, 3.2965147, -0.7386844)
 
 [node name="collision-tier2" type="CollisionPolygon3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -3.333, 3, -3.792)
-visible = false
 depth = 10.0
+disabled = true
 polygon = PackedVector2Array(1.0824568, 3.1109843, 1.0270555, 8.966755, 5.690176, 8.893503, 5.5006, 3.1109843, 3.2542484, -1.5065784)
 
 [node name="collision-tier3" type="CollisionPolygon3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -3.333, 3, -3.792)
-visible = false
 depth = 10.0
+disabled = true
 polygon = PackedVector2Array(0.96075225, 0.235363, 1.0270555, 8.966755, 5.690176, 8.893503, 5.546334, 0.0045797825, 3.1841187, -4.007578)
 
 [node name="ship-tier3" type="Node3D" parent="."]
@@ -92,6 +91,7 @@ transform = Transform3D(0.017906236, 0, -0.99983966, 0, 1, 0, 0.99983966, 0, 0.0
 
 [node name="ship-tier2" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7724174, 0)
+visible = false
 
 [node name="ship-medium2" parent="ship-tier2" instance=ExtResource("4_je7p5")]
 transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 0, -2.0272794, 0)
@@ -104,7 +104,6 @@ transform = Transform3D(0.017906236, 0, -0.99983966, 0, 1, 0, 0.99983966, 0, 0.0
 
 [node name="ship-tier1" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7724174, 0)
-visible = false
 
 [node name="ship-small2" parent="ship-tier1" instance=ExtResource("2_onrkg")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, -2.0243583, 0)

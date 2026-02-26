@@ -61,13 +61,19 @@ Resources are gathered from collection points scattered around the map and from 
 
 Gold is the primary measure of success. The **leaderboard** ranks players by their gold.
 
-### Ship Level
+### Ship Class
 
-As you progress, your ship levels up, unlocking more component slots, additional cannons, and higher base stats. A higher-level ship is more powerful but also a bigger target.
+Your ship starts as a **Sloop** — small and nimble. By spending resources at the Shipyard, you can upgrade through three tiers. Each tier unlocks a bigger ship model, a new collision profile, and **+2 component slots**. Ship class upgrades are **permanent** and survive death.
+
+| Tier | Class | Component Slots | Cost |
+|------|-------|----------------|------|
+| 1 | Sloop | 4 | — (starting ship) |
+| 2 | Brigantine | 6 | 300 Wood, 250 Iron, 150 Fish, 100 Tea, 2,000 Gold |
+| 3 | Galleon | 8 | 400 Wood, 300 Iron, 150 Fish, 100 Tea, 5,000 Gold |
 
 ### Components
 
-Components are equippable upgrades that modify your ship's stats. You can only have a limited number equipped at a time (determined by your ship level). Components are **lost on death**.
+Components are equippable upgrades that modify your ship's stats. You can only have a limited number equipped at a time (determined by your ship class). Components are **lost on death**.
 
 | Component | Effect | Cost |
 |---|---|---|

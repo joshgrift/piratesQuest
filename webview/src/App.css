@@ -1486,3 +1486,128 @@ body {
   font-weight: 700;
   flex-shrink: 0;
 }
+
+/* ── Ship Upgrade Card ─────────────────────────────────────────────── */
+
+.ship-upgrade-card {
+  margin-bottom: 12px;
+}
+
+.ship-upgrade-current {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.ship-upgrade-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(212, 167, 72, 0.2);
+  border: 1px solid rgba(212, 167, 72, 0.4);
+  color: #d4a748;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.ship-upgrade-tier-badge.tier-next {
+  background: rgba(100, 180, 255, 0.15);
+  border-color: rgba(100, 180, 255, 0.35);
+  color: #7ac0ff;
+}
+
+.ship-upgrade-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ship-upgrade-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #e0d5c0;
+}
+
+.ship-upgrade-desc {
+  font-size: 12px;
+  color: #a89b84;
+}
+
+.ship-upgrade-slots {
+  font-size: 12px;
+  color: #c8bda8;
+}
+
+.ship-upgrade-slot-bonus {
+  color: #5dca5d;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.ship-upgrade-max {
+  text-align: center;
+  padding: 10px;
+  color: #d4a748;
+  font-size: 13px;
+  font-style: italic;
+  border-top: 1px solid rgba(139, 105, 20, 0.15);
+  margin-top: 4px;
+}
+
+.ship-upgrade-next {
+  border-top: 1px solid rgba(139, 105, 20, 0.15);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.ship-upgrade-arrow {
+  text-align: center;
+  font-size: 14px;
+  color: rgba(212, 167, 72, 0.4);
+  margin-bottom: 6px;
+}
+
+.ship-upgrade-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.ship-upgrade-cost {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.ship-upgrade-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(100, 180, 255, 0.35);
+  background: linear-gradient(135deg, rgba(100, 180, 255, 0.15), rgba(60, 130, 220, 0.15));
+  color: #7ac0ff;
+  font-family: "Texturina", serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ship-upgrade-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(100, 180, 255, 0.25), rgba(60, 130, 220, 0.25));
+  border-color: rgba(100, 180, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+.ship-upgrade-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
