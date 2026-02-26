@@ -87,6 +87,7 @@ export type IpcMessage =
   | { action: "upgrade_vault" }
   | { action: "vault_deposit"; items: { type: string; quantity: number }[] }
   | { action: "vault_withdraw"; items: { type: string; quantity: number }[] }
+  | { action: "set_ship_tier"; tier: number }
   | { action: "set_vault"; portName: string; level: number }
   | { action: "delete_vault" };
 

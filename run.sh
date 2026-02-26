@@ -37,6 +37,7 @@ RESET='\033[0m'
 
 echo -e "${YELLOW}=== Starting WebView Dev Server ===${RESET}"
 npm --prefix webview install
+npm --prefix webview run build || exit 1
 npm --prefix webview run dev 2>&1 | sed "s/^/$(echo -e ${YELLOW})[WebView ]$(echo -e ${RESET}) /" &
 PID_WEBVIEW=$!
 
