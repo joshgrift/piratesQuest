@@ -150,6 +150,23 @@ export function CreativeTab({ state }: { state: PortState }) {
 
       <div className="section-sep" />
 
+      <div className="section-title">Ship Tier</div>
+      <div className="card">
+        <div className="creative-vault-buttons">
+          {(state.shipTiers ?? []).map((tier, i) => (
+            <button
+              key={i}
+              className={`creative-preset-btn ${state.shipTier === i ? "creative-preset-active" : ""}`}
+              onClick={() => sendIpc({ action: "set_ship_tier", tier: i })}
+            >
+              {tier.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="section-sep" />
+
       <div className="section-title">Components</div>
       <div className="card">
         <div className="creative-components-info">

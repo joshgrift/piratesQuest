@@ -566,6 +566,9 @@ public partial class Hud : Control
       case VaultWithdrawMessage vw:
         HandleVaultWithdraw(vw);
         break;
+      case SetShipTierMessage st:
+        HandleSetShipTier(st);
+        break;
       case SetVaultMessage sv:
         HandleSetVault(sv);
         break;
@@ -740,6 +743,25 @@ public partial class Hud : Control
     _player.Health = clamped;
     _player.EmitSignal(Player.SignalName.HealthUpdate, _player.Health);
     GD.Print($"HUD: [Creative] Set health to {clamped}");
+  }
+
+  /// <summary>
+  /// Creative-mode only: sets the player's ship tier directly,
+  /// bypassing costs. Applies the visual/collision swap immediately.
+  /// </summary>
+  private void HandleSetShipTier(SetShipTierMessage msg)
+  {
+    if (!Configuration.IsCreative)
+    {
+      GD.PrintErr("HUD: set_ship_tier rejected — creative mode is not enabled");
+      return;
+    }
+
+    int tier = Math.Clamp(msg.Tier, 0, GameData.ShipTiers.Length - 1);
+    _player.ShipTier = tier;
+    _player.ApplyShipTier();
+    _player.UpdatePlayerStats();
+    GD.Print($"HUD: [Creative] Set ship tier to {tier} ({GameData.ShipTiers[tier].Name})");
   }
 
   // ── Ship upgrade handler ─────────────────────────────────────────

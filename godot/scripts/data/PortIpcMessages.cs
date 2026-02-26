@@ -90,6 +90,7 @@ public record StatChangeDto(string Stat, string Modifier, float Value);
 [JsonDerivedType(typeof(VaultDepositMessage), "vault_deposit")]
 [JsonDerivedType(typeof(VaultWithdrawMessage), "vault_withdraw")]
 [JsonDerivedType(typeof(UpgradeShipMessage), "upgrade_ship")]
+[JsonDerivedType(typeof(SetShipTierMessage), "set_ship_tier")]
 [JsonDerivedType(typeof(SetVaultMessage), "set_vault")]
 [JsonDerivedType(typeof(DeleteVaultMessage), "delete_vault")]
 public record IpcMessage;
@@ -168,6 +169,12 @@ public record VaultDepositMessage : IpcMessage
 public record VaultWithdrawMessage : IpcMessage
 {
   public ItemQuantity[] Items { get; init; } = [];
+}
+
+/// <summary>Creative-mode only: set the player's ship tier directly (0-based index).</summary>
+public record SetShipTierMessage : IpcMessage
+{
+  public int Tier { get; init; }
 }
 
 /// <summary>Creative-mode only: set or create a vault at a port with a given level.</summary>
