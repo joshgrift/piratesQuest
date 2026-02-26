@@ -39,8 +39,8 @@ if [[ -n "$EXISTING_PID" ]]; then
   kill "$EXISTING_PID" 2>/dev/null
 fi
 
-docker compose -f server/docker-compose.yml up -d
-dotnet run --project server 2>&1 | sed "s/^/$(echo -e ${BLUE})[API     ]$(echo -e ${RESET}) /" &
+docker compose -f api/docker-compose.yml up -d
+dotnet run --project api 2>&1 | sed "s/^/$(echo -e ${BLUE})[API     ]$(echo -e ${RESET}) /" &
 PID_API=$!
 
 sleep 1

@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   base: '/fragments/webview/',
   build: {
-    outDir: '../server/fragments/webview',
+    outDir: '../api/fragments/webview',
     emptyOutDir: true,
   },
   test: {

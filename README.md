@@ -4,7 +4,7 @@
 PiratesQuest uses three pieces:
 
 - `Game` (`godot/`): the player client and also the dedicated multiplayer server.
-- `API` (`server/`): login/signup and server list.
+- `API` (`api/`): login/signup and server list.
 - `WebView` (`webview/`): React/TypeScript port UI, served as a native browser overlay via godot_wry.
 - `Database` (via Docker): stores users and API data.
 
@@ -71,7 +71,7 @@ npm install
 npm run build
 ```
 
-The build output goes to `server/fragments/webview/`, which the API serves as static files.
+The build output goes to `api/fragments/webview/`, which the API serves as static files.
 
 ## Third Party
 - [GoDot](https://godotengine.org/)
@@ -95,7 +95,7 @@ The build output goes to `server/fragments/webview/`, which the API serves as st
   - [x] Quick buy for components
 - [x] Safe zone in port
 - [x] Vault (stash)
-- [ ] Ship upgrades (persistent)
+- [x] Ship upgrades (persistent)
 - [x] UI to show when you are harvesting things
 - [x] Persistent world
 - [x] Login

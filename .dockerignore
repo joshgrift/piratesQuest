@@ -4,5 +4,5 @@ dist/
 *.md
 *.sh
 webview/node_modules/
-server/bin/
-server/obj/
+api/bin/
+api/obj/

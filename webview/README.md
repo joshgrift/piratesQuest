@@ -20,7 +20,7 @@ npm install
 npm run build
 ```
 
-Build output goes to `../server/fragments/webview/`, which the API server serves as static files. The webview loads from `{ApiBaseUrl}/fragments/webview/`.
+Build output goes to `../api/fragments/webview/`, which the API server serves as static files. The webview loads from `{ApiBaseUrl}/fragments/webview/`.
 
 ## Development
 
