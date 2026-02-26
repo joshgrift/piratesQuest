@@ -10,8 +10,45 @@ using PiratesQuest.Server.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Digital Ocean provides a PostgreSQL URI (postgresql://user:pass@host:port/db?sslmode=...)
+// but Npgsql needs ADO.NET format (Host=...;Port=...;Database=...). This helper converts
+// URI-format strings automatically so either format works.
+static string NormalizeConnectionString(string connStr)
+{
+    if (!connStr.StartsWith("postgresql://") && !connStr.StartsWith("postgres://"))
+        return connStr;
+
+    var uri = new Uri(connStr);
+    var userInfo = uri.UserInfo.Split(':');
+    var username = Uri.UnescapeDataString(userInfo[0]);
+    var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+    var database = uri.AbsolutePath.TrimStart('/');
+
+    var result = $"Host={uri.Host};Port={uri.Port};Database={database};Username={username};Password={password}";
+
+    // Parse query-string params (e.g. ?sslmode=require)
+    var query = uri.Query.TrimStart('?');
+    if (!string.IsNullOrEmpty(query))
+    {
+        foreach (var param in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = param.Split('=', 2);
+            var key = parts[0].ToLower();
+            var value = parts.Length > 1 ? parts[1] : "";
+
+            if (key == "sslmode")
+                result += $";SSL Mode={value};Trust Server Certificate=true";
+        }
+    }
+
+    return result;
+}
+
+var rawConnStr = builder.Configuration.GetConnectionString("Default") ?? "";
+var connectionString = NormalizeConnectionString(rawConnStr);
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+    options.UseNpgsql(connectionString));
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured");
