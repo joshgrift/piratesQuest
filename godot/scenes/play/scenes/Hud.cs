@@ -27,6 +27,10 @@ public partial class Hud : Control
   // ── WebView (port-only panel, right 1/3 of screen) ──────────────
   private Node _webView;
   private bool _webViewCreated;
+  // CanvasLayer bypasses the canvas_items stretch transform so
+  // get_screen_position() returns raw physical pixel values —
+  // exactly what godot_wry's PhysicalPosition expects.
+  private CanvasLayer _webViewLayer;
   // True once the React app has sent the "ready" IPC message
   private bool _webViewReady;
   // If the player docks before the webview is ready, we queue the open
@@ -346,7 +350,12 @@ public partial class Hud : Control
     _webView.Set("forward_input_events", true);
     _webView.Set("focused_when_created", false);
 
-    AddChild(_webView);
+    // CanvasLayer bypasses the canvas_items stretch so the WebView's
+    // get_screen_position()/get_size() return raw physical pixels —
+    // exactly what WRY's PhysicalPosition/PhysicalSize expect.
+    _webViewLayer = new CanvasLayer();
+    AddChild(_webViewLayer);
+    _webViewLayer.AddChild(_webView);
 
     CallDeferred(MethodName.SyncWebViewSize);
     GetTree().Root.SizeChanged += OnWindowResized;
@@ -365,28 +374,41 @@ public partial class Hud : Control
 
   /// <summary>
   /// Positions the native webview overlay as the right 1/3 of the window.
-  /// godot_wry uses physical pixels for its native OS overlay, so we
-  /// convert from the canvas stretch mode's virtual coordinates.
+  ///
+  /// Godot 4 on macOS inflates the viewport by screen_get_max_scale()
+  /// (the highest DPI across ALL monitors). godot_wry wraps coordinates
+  /// as WRY PhysicalPosition/PhysicalSize, and WRY divides by the
+  /// CURRENT monitor's backingScaleFactor. When those differ (e.g.
+  /// Retina laptop + 1x external monitor), the webview ends up off-screen.
+  ///
+  /// Fix: multiply by currentScreenScale / maxScreenScale to get the
+  /// actual physical pixel dimensions for the current monitor.
   /// </summary>
   private void SyncWebViewSize()
   {
     if (_webView is not Control wv) return;
 
-    var windowSize = DisplayServer.WindowGetSize();
+    var vpSize = GetTree().Root.Size;
 
-    // Always set a valid size so the page can load/render
-    wv.Size = new Vector2(windowSize.X / 3f, windowSize.Y);
+    // Godot inflates vpSize by the highest DPI scale across all screens.
+    // WRY divides by the current screen's scale. Undo the mismatch.
+    float maxScale = 1f;
+    for (int i = 0; i < DisplayServer.GetScreenCount(); i++)
+      maxScale = Math.Max(maxScale, DisplayServer.ScreenGetScale(i));
+
+    float currentScale = DisplayServer.ScreenGetScale(
+      DisplayServer.WindowGetCurrentScreen());
+
+    float correction = currentScale / maxScale;
+    float w = vpSize.X * correction;
+    float h = vpSize.Y * correction;
+
+    wv.Size = new Vector2(w / 3f, h);
 
     if (_portOpen)
-    {
-      var canvasXform = GetViewport().GetCanvasTransform();
-      float scaleX = canvasXform.X.X;
-      wv.Position = new Vector2(windowSize.X * 2f / 3f / scaleX, 0);
-    }
+      wv.Position = new Vector2(w * 2f / 3f, 0);
     else
-    {
       wv.Position = new Vector2(99999, 0);
-    }
   }
 
   /// <summary>
