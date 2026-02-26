@@ -30,7 +30,7 @@ All scripts are in the repo root and run from there.
 | Script | Description |
 |--------|-------------|
 | `build-game.sh` | Exports the Godot project to macOS and Windows builds, zipped into `dist/<version>/`. |
-| `run.sh` | Runs a local dev session. Starts the backend, a game server, and a client side-by-side. Supports `--server` (server only), `--user`, and `--password` flags. |
+| `run.sh` | Runs a local dev session. Starts the backend, a game server, and a client side-by-side. Supports `--server` (server only), `--prod` (use production API at pirates.quest), `--user`, and `--password` flags. |
 | `publish-backend.sh` | Builds the webview + API into a Docker image (`piratesquest-api`). Pass an optional tag argument (default `latest`). |
 | `manage.sh` | Admin CLI for the REST API. Manage users, game servers, roles, and game version. Requires `PQ_API_URL` and either `PQ_TOKEN` or a login. |
 

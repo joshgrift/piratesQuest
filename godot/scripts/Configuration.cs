@@ -28,7 +28,8 @@ partial class Configuration : Node
   public static int StartingCoin { get; } = 100;
   public static bool IsCreative { get; private set; } = false;
   public static int DefaultPort { get; } = 7777;
-  public static string ApiBaseUrl { get; } = "http://localhost:5236";
+  // Override with --api-url <url> to point at a remote API (e.g. http://pirates.quest).
+  public static string ApiBaseUrl { get; private set; } = "http://localhost:5236";
 
   public static int ServerId { get; private set; }
   public static string ServerApiKey { get; private set; }
@@ -36,6 +37,7 @@ partial class Configuration : Node
   public static string CmdUser { get; private set; }
   public static string CmdPassword { get; private set; }
   public static bool DisableSaveUser { get; private set; }
+  // Defaults to {ApiBaseUrl}/fragments/webview/. Override with --webview-url <url>.
   public static string WebViewUrl { get; private set; } = $"{ApiBaseUrl}/fragments/webview/";
 
   public override void _Ready()
@@ -81,6 +83,9 @@ partial class Configuration : Node
           ServerApiKey = args[i + 1];
           hasApiKey = true;
           break;
+        case "--api-url":
+          ApiBaseUrl = args[i + 1].TrimEnd('/');
+          break;
       }
     }
 
@@ -91,6 +96,8 @@ partial class Configuration : Node
 
   private static void ParseClientArgs()
   {
+    bool hasExplicitWebViewUrl = false;
+
     var args = OS.GetCmdlineArgs();
     for (int i = 0; i < args.Length; i++)
     {
@@ -107,11 +114,23 @@ partial class Configuration : Node
           break;
         case "--webview-url" when i + 1 < args.Length:
           WebViewUrl = args[i + 1];
+          hasExplicitWebViewUrl = true;
+          break;
+        case "--api-url" when i + 1 < args.Length:
+          ApiBaseUrl = args[i + 1].TrimEnd('/');
           break;
         case "--creative":
           IsCreative = true;
           break;
       }
+    }
+
+    // When --api-url is provided without an explicit --webview-url,
+    // recalculate the webview URL from the new API base.
+    // In production the webview is served from the same host as the API.
+    if (!hasExplicitWebViewUrl)
+    {
+      WebViewUrl = $"{ApiBaseUrl}/fragments/webview/";
     }
   }
 

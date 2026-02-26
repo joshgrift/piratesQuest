@@ -15,6 +15,7 @@ done
 SERVER_ID="${SERVER_ID:-1}"
 SERVER_API_KEY="${SERVER_API_KEY:-dev-server-api-key}"
 WEBVIEW_URL="http://localhost:5173/fragments/webview/"
+PROD_API_URL=""
 
 # Parse CLI arguments
 SERVER_ONLY=false
@@ -24,6 +25,7 @@ while [[ $# -gt 0 ]]; do
     --user)        CLIENT_USER="$2"; shift 2 ;;
     --password)    CLIENT_PASS="$2"; shift 2 ;;
     --webview-url) WEBVIEW_URL="$2"; shift 2 ;;
+    --prod)        PROD_API_URL="https://pirates.quest"; shift ;;
     *)             shift ;;
   esac
 done
@@ -35,34 +37,42 @@ RED='\033[0;31m'
 YELLOW='\033[0;33m'
 RESET='\033[0m'
 
-echo -e "${YELLOW}=== Starting WebView Dev Server ===${RESET}"
-npm --prefix webview install
-npm --prefix webview run build || exit 1
-npm --prefix webview run dev 2>&1 | sed "s/^/$(echo -e ${YELLOW})[WebView ]$(echo -e ${RESET}) /" &
-PID_WEBVIEW=$!
+if [[ -n "${PROD_API_URL}" ]]; then
+  echo -e "${BLUE}=== Using production API: ${PROD_API_URL} ===${RESET}"
+  # In production the webview is served from the same host as the API.
+  WEBVIEW_URL="${PROD_API_URL}/fragments/webview/"
+  GODOT_API_ARGS="--api-url ${PROD_API_URL}"
+else
+  echo -e "${YELLOW}=== Starting WebView Dev Server ===${RESET}"
+  npm --prefix webview install
+  npm --prefix webview run build || exit 1
+  npm --prefix webview run dev 2>&1 | sed "s/^/$(echo -e ${YELLOW})[WebView ]$(echo -e ${RESET}) /" &
+  PID_WEBVIEW=$!
 
-echo -e "${BLUE}=== Starting Backend ===${RESET}"
-if ! docker info >/dev/null 2>&1; then
-  echo -e "${RED}Error: Docker is not running. Please start Docker Desktop and try again.${RESET}"
-  exit 1
+  echo -e "${BLUE}=== Starting Backend ===${RESET}"
+  if ! docker info >/dev/null 2>&1; then
+    echo -e "${RED}Error: Docker is not running. Please start Docker Desktop and try again.${RESET}"
+    exit 1
+  fi
+  if ! docker compose -f api/docker-compose.yml ps --status running 2>/dev/null | grep -q "db"; then
+    echo "Database container not running, starting it..."
+    docker compose -f api/docker-compose.yml up -d
+  fi
+  dotnet run --project api 2>&1 | sed "s/^/$(echo -e ${BLUE})[API     ]$(echo -e ${RESET}) /" &
+  PID_API=$!
+  GODOT_API_ARGS=""
 fi
-if ! docker compose -f api/docker-compose.yml ps --status running 2>/dev/null | grep -q "db"; then
-  echo "Database container not running, starting it..."
-  docker compose -f api/docker-compose.yml up -d
-fi
-dotnet run --project api 2>&1 | sed "s/^/$(echo -e ${BLUE})[API     ]$(echo -e ${RESET}) /" &
-PID_API=$!
 
 sleep 1
 
 echo -e "${RED}=== Starting Server ===${RESET}"
-/Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --position 0,50 --server --server-id "${SERVER_ID}" --server-api-key "${SERVER_API_KEY}" 2>&1 | sed "s/^/$(echo -e ${RED})[Server]$(echo -e ${RESET}) /" &
+/Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --position 0,50 --server --server-id "${SERVER_ID}" --server-api-key "${SERVER_API_KEY}" ${GODOT_API_ARGS} 2>&1 | sed "s/^/$(echo -e ${RED})[Server]$(echo -e ${RESET}) /" &
 PID1=$!
 
 if [[ "${SERVER_ONLY}" == "false" ]]; then
   sleep 0.5
 
-  CLIENT_ARGS="--webview-url ${WEBVIEW_URL} --creative"
+  CLIENT_ARGS="--webview-url ${WEBVIEW_URL} --creative ${GODOT_API_ARGS}"
   if [[ -n "${CLIENT_USER}" && -n "${CLIENT_PASS}" ]]; then
     CLIENT_ARGS="${CLIENT_ARGS} --user ${CLIENT_USER} --password ${CLIENT_PASS} --disableSaveUser"
   fi
@@ -76,5 +86,5 @@ else
   wait $PID1
 fi
 
-kill $PID_API $PID_WEBVIEW 2>/dev/null
+kill $PID_API $PID_WEBVIEW 2>/dev/null || true
 echo "=== Terminated ==="
