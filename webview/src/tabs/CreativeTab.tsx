@@ -3,8 +3,9 @@ import { sendIpc } from "../utils/ipc";
 import { iconUrl, inventoryIcon } from "../utils/helpers";
 import type { PortState } from "../types";
 
-const ITEM_TYPES = ["Wood", "Iron", "Fish", "Tea", "Coin", "CannonBall", "Trophy"];
+const ITEM_TYPES = ["Coin", "Wood", "Iron", "Fish", "Tea", "CannonBall", "Trophy"];
 const STEP_AMOUNTS = [1, 50, 100] as const;
+const GOLD_STEP_AMOUNTS = [10, 100, 1000] as const;
 
 export function CreativeTab({ state }: { state: PortState }) {
   const [flashItem, setFlashItem] = useState<string | null>(null);
@@ -52,6 +53,7 @@ export function CreativeTab({ state }: { state: PortState }) {
 
       {ITEM_TYPES.map((type) => {
         const current = state.inventory[type] ?? 0;
+        const steps = type === "Coin" ? GOLD_STEP_AMOUNTS : STEP_AMOUNTS;
         return (
           <div
             className={`creative-item ${flashItem === type || flashItem === "__all__" ? "creative-flash" : ""}`}
@@ -64,7 +66,7 @@ export function CreativeTab({ state }: { state: PortState }) {
             />
             <div className="creative-item-name">{type}</div>
             <div className="creative-stepper">
-              {[...STEP_AMOUNTS].reverse().map((n) => (
+              {[...steps].reverse().map((n) => (
                 <button
                   key={`minus-${n}`}
                   className="qty-btn"
@@ -75,7 +77,7 @@ export function CreativeTab({ state }: { state: PortState }) {
                 </button>
               ))}
               <div className="creative-qty-value">{current}</div>
-              {STEP_AMOUNTS.map((n) => (
+              {steps.map((n) => (
                 <button
                   key={`plus-${n}`}
                   className="qty-btn"
