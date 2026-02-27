@@ -253,6 +253,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     // Can't shoot while dead (waiting to respawn)
     if (State == PlayerState.Dead) return;
 
+    // Can't shoot while docked in a port
+    if (IsInPort) return;
+
     // Check if player has cannonballs in inventory
     if (_inventory.GetItemCount(InventoryItemType.CannonBall) <= 0)
     {
