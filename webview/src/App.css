@@ -1222,6 +1222,18 @@ body {
   border: 1px solid rgba(100, 120, 150, 0.4);
 }
 
+.chip-coin {
+  background: rgba(184, 134, 11, 0.2);
+  color: #f0d060;
+  border: 1px solid rgba(184, 134, 11, 0.35);
+}
+
+.chip-tea {
+  background: rgba(60, 140, 80, 0.2);
+  color: #80c890;
+  border: 1px solid rgba(60, 140, 80, 0.35);
+}
+
 .vault-gold-row {
   border-left: 3px solid rgba(212, 167, 72, 0.4);
 }
