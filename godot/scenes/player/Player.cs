@@ -90,6 +90,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   // True while this ship is inside a port docking area.
   // We use this to disable incoming damage in safe zones.
   [Export] public bool IsInPort { get; private set; } = false;
+  // True for a brief window after ApplyShipTier() swaps collision shapes.
+  // Prevents a spurious ShipDeparted signal while the physics engine catches up.
+  public bool IsSwappingShipTier { get; private set; } = false;
 
   // ICanCollect.CanCollect - player can only collect items when alive
   public bool CanCollect => State == PlayerState.Alive;
@@ -837,6 +840,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   /// </summary>
   public void ApplyShipTier()
   {
+    IsSwappingShipTier = true;
+
     for (int i = 0; i < GameData.ShipTiers.Length; i++)
     {
       // Toggle ship graphics — only the current tier is visible
@@ -849,6 +854,10 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       if (collisionNode != null)
         collisionNode.Disabled = i != ShipTier;
     }
+
+    // Clear the flag after a short delay so BodyExited from the collision
+    // swap doesn't cause the port to emit a spurious ShipDeparted signal.
+    GetTree().CreateTimer(0.1f).Timeout += () => IsSwappingShipTier = false;
   }
 
   // ── Vault Operations ──────────────────────────────────────────────

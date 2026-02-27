@@ -123,7 +123,7 @@ public partial class Hud : Control
 
       _webView.Call("eval", "window.closePort && window.closePort()");
       // Wait for the CSS slide-out animation (400ms) then hide the overlay
-      GetTree().CreateTimer(0.45f).Timeout += HideWebView;
+      GetTree().CreateTimer(0.45f).Timeout += () => { if (_currentPortName == null) HideWebView(); };
     }
   }
 

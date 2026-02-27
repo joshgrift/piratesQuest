@@ -5,8 +5,8 @@ echo "Building and exporting project..."
 # Extract version from project.godot
 VERSION=$(grep 'config/version=' godot/project.godot | sed 's/config\/version="\(.*\)"/\1/')
 
-# Create version directory
-VERSION_DIR="dist/$VERSION"
+# Create version directory (use absolute path so Godot resolves it correctly with --path flag)
+VERSION_DIR="$(pwd)/dist/$VERSION"
 
 # Check if version directory already exists
 if [ -d "$VERSION_DIR" ]; then
@@ -39,6 +39,12 @@ mkdir -p "$VERSION_DIR/piratesquest-windows-x64"
 # Create zip from the windows folder
 cd "$VERSION_DIR" && zip -r "piratesquest-windows-x64.zip" "piratesquest-windows-x64" && cd ../..
 
+echo "==== Building Linux Server (x64) ===="
+mkdir -p "$VERSION_DIR/piratesquest-server-linux-x64"
+/Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --headless --export-debug "Linux-server" "$VERSION_DIR/piratesquest-server-linux-x64/piratesquest-server"
+# Create zip from the linux server folder
+cd "$VERSION_DIR" && zip -r "piratesquest-server-linux-x64.zip" "piratesquest-server-linux-x64" && cd ../..
+
 echo "==== Cleaning up .command files ===="
 find "$VERSION_DIR" -name "*.command" -type f -delete
 
@@ -50,3 +56,5 @@ echo "  - piratesquest-server.app (macOS server app)"
 echo "  - piratesquest-server-macos.zip (macOS server zip)"
 echo "  - piratesquest-windows-x64/ (Windows x64 client folder)"
 echo "  - piratesquest-windows-x64.zip (Windows x64 client zip)"
+echo "  - piratesquest-server-linux-x64/ (Linux x64 server folder)"
+echo "  - piratesquest-server-linux-x64.zip (Linux x64 server zip)"

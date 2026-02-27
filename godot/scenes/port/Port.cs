@@ -44,6 +44,11 @@ public partial class Port : Node3D, IIntractable
   private void EmitDepartedIfStillOut(Player player)
   {
     if (player.IsInPort) return;
+    // A ship-tier upgrade swaps collision shapes, which fires BodyExited but
+    // may never fire BodyEntered again (Godot won't detect a stationary body
+    // re-entering an area when a shape is re-enabled).  IsSwappingShipTier
+    // tells us to ignore this transient exit.
+    if (player.IsSwappingShipTier) return;
     EmitSignal(SignalName.ShipDeparted, this, player);
   }
 
