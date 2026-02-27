@@ -35,8 +35,16 @@ public partial class Port : Node3D, IIntractable
     {
       // Leaving the port re-enables normal combat damage.
       player.SetInPort(false);
-      EmitSignal(SignalName.ShipDeparted, this, player);
+      // Defer the signal so that a same-frame BodyEntered (e.g. from a ship tier
+      // collision swap) can set IsInPort back to true before we emit ShipDeparted.
+      CallDeferred(MethodName.EmitDepartedIfStillOut, player);
     }
+  }
+
+  private void EmitDepartedIfStillOut(Player player)
+  {
+    if (player.IsInPort) return;
+    EmitSignal(SignalName.ShipDeparted, this, player);
   }
 
   public Variant GetPayload()
