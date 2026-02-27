@@ -28,8 +28,8 @@ partial class Configuration : Node
   public static int StartingCoin { get; } = 100;
   public static bool IsCreative { get; private set; } = false;
   public static int DefaultPort { get; } = 7777;
-  // Override with --api-url <url> to point at a remote API (e.g. http://pirates.quest).
-  public static string ApiBaseUrl { get; private set; } = "http://localhost:5236";
+  // Override with --api-url <url> to point at a remote API (e.g. http://localhost:5236).
+  public static string ApiBaseUrl { get; private set; } = "https://pirates.quest";
 
   public static int ServerId { get; private set; }
   public static string ServerApiKey { get; private set; }
