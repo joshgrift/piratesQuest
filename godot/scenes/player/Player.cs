@@ -47,7 +47,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   // ── Ship Tier ──────────────────────────────────────────────────────
   // 0 = Sloop (small), 1 = Brigantine (medium), 2 = Galleon (large).
   // Persists through death — this is a permanent upgrade.
-  public int ShipTier { get; set; } = 0;
+  [Export] public int ShipTier { get; set; } = 0;
 
   // ── Vault ────────────────────────────────────────────────────────
   // Each player can build one vault at a single port.
