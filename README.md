@@ -102,17 +102,15 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
 - [x] More incremental progress
 - [x] Health too expensive, balance it
 - [x] Reverted backwards movement
-- [ ] Deployed to live server
-- [ ] bulk icon doesn't show properly 
+- [x] Deployed to live server
+- [x] bulk icon doesn't show properly 
       1001 doesn't show full inventory
       1000 does show it
       999 does show it
       980 does show it
       1000 doesn't show full inventory
       999 does show
-- [ ] Game freezes on first explosion animation
 - [x] You keep your velocity when you respawn
-- [ ] Jitter when hitting a rock! 
 - [x] Port is a safe zone
 
 ### Later
@@ -123,6 +121,8 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
 - [ ] Fix water.
 - [ ] Characters
 - [ ] Map
+- [ ] Game freezes on first explosion animation
+- [ ] Jitter when hitting a rock! 
 
 ### Suggestions
 - [ ] Close port menu early

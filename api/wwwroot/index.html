@@ -330,32 +330,54 @@
         }
 
         .ship-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 18px;
-            padding: 2.5rem 1.5rem;
+            background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(4,8,15,0.5) 100%);
+            border: 1px solid rgba(180, 200, 220, 0.15);
+            border-radius: 16px;
+            padding: 2rem 1.5rem 3.5rem;
             text-align: center;
-            transition: all 0.35s;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
+            overflow: hidden;
         }
+
+        /* shimmer bar at top, revealed on hover */
+        .ship-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(158, 184, 212, 0.7), transparent);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .ship-card:hover::before { opacity: 1; }
 
         .ship-card:hover {
-            border-color: rgba(212, 168, 67, 0.25);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,67,0.1);
         }
 
+        /* Numeral as large watermark in bottom-right */
         .ship-card .ship-numeral {
             font-family: 'New Rocker', serif;
-            font-size: 3.5rem;
-            color: rgba(212, 168, 67, 0.1);
+            font-size: 7rem;
+            color: #9eb8d4;
+            opacity: 0.14;
+            position: absolute;
+            bottom: -1.5rem;
+            right: 0.75rem;
             line-height: 1;
-            margin-bottom: 0.5rem;
+            pointer-events: none;
+            user-select: none;
+            transition: opacity 0.4s;
         }
+
+        .ship-card:hover .ship-numeral { opacity: 0.28; }
 
         .ship-card h3 {
             font-family: 'New Rocker', serif;
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             color: var(--gold-light);
             margin-bottom: 0.5rem;
         }
@@ -364,7 +386,49 @@
             font-size: 0.88rem;
             color: var(--text-muted);
             line-height: 1.7;
+            position: relative;
+            z-index: 1;
         }
+
+        /* Tier II — Brigantine: warm gold tones */
+        .ships-row .ship-card:nth-child(2) {
+            border-color: rgba(212, 168, 67, 0.28);
+        }
+        .ships-row .ship-card:nth-child(2)::before {
+            background: linear-gradient(90deg, transparent, rgba(212,168,67,0.7), transparent);
+        }
+        .ships-row .ship-card:nth-child(2) .ship-numeral {
+            color: var(--gold);
+            opacity: 0.18;
+        }
+        .ships-row .ship-card:nth-child(2) h3 { color: var(--gold); }
+        .ships-row .ship-card:nth-child(2):hover .ship-numeral { opacity: 0.35; }
+        .ships-row .ship-card:nth-child(2):hover {
+            border-color: rgba(212,168,67,0.55);
+            box-shadow: 0 20px 60px rgba(212,168,67,0.12), 0 0 0 1px rgba(212,168,67,0.1);
+        }
+
+        /* Tier III — Galleon: full gold glory */
+        .ships-row .ship-card:nth-child(3) {
+            border-color: rgba(212, 168, 67, 0.5);
+            background: linear-gradient(145deg, rgba(212,168,67,0.09) 0%, rgba(4,8,15,0.4) 100%);
+            box-shadow: 0 0 50px rgba(212,168,67,0.1), inset 0 0 60px rgba(212,168,67,0.03);
+        }
+        .ships-row .ship-card:nth-child(3)::before {
+            background: linear-gradient(90deg, transparent, rgba(232,213,163,0.9), transparent);
+            opacity: 0.5;
+        }
+        .ships-row .ship-card:nth-child(3) .ship-numeral {
+            color: var(--gold);
+            opacity: 0.22;
+            font-size: 8.5rem;
+        }
+        .ships-row .ship-card:nth-child(3) h3 { color: var(--gold); font-size: 1.65rem; }
+        .ships-row .ship-card:nth-child(3):hover {
+            border-color: var(--gold);
+            box-shadow: 0 24px 80px rgba(212,168,67,0.3), 0 0 0 1px rgba(212,168,67,0.2), inset 0 0 60px rgba(212,168,67,0.05);
+        }
+        .ships-row .ship-card:nth-child(3):hover .ship-numeral { opacity: 0.4; }
 
         /* ── Encounters row ── */
         .encounters {
@@ -375,29 +439,46 @@
         }
 
         .encounter-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 18px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(4,8,15,0.5) 100%);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
             padding: 2rem 1.5rem;
             text-align: center;
-            transition: all 0.35s;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
         }
 
+        /* shimmer bar, color set per-card below */
+        .encounter-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .encounter-card:hover::before { opacity: 1; }
+
         .encounter-card:hover {
-            border-color: rgba(212, 168, 67, 0.15);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
         }
 
         .encounter-card .enc-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .encounter-card:hover .enc-icon {
+            transform: translateY(-2px);
         }
 
         .encounter-card h3 {
             font-family: 'New Rocker', serif;
-            font-size: 1.15rem;
-            color: var(--gold-light);
+            font-size: 1.3rem;
             margin-bottom: 0.4rem;
         }
 
@@ -421,6 +502,48 @@
         .risk-low { background: rgba(58, 154, 106, 0.1); color: var(--safe); border: 1px solid rgba(58, 154, 106, 0.2); }
         .risk-med { background: rgba(212, 168, 67, 0.08); color: var(--gold); border: 1px solid rgba(212, 168, 67, 0.2); }
         .risk-high { background: rgba(160, 48, 48, 0.1); color: var(--danger); border: 1px solid rgba(160, 48, 48, 0.2); }
+
+        /* Traders — green / safe */
+        .encounters .encounter-card:nth-child(1) {
+            border-color: rgba(58, 154, 106, 0.2);
+        }
+        .encounters .encounter-card:nth-child(1)::before {
+            background: linear-gradient(90deg, transparent, rgba(58,154,106,0.65), transparent);
+        }
+        .encounters .encounter-card:nth-child(1) h3 { color: #6dcfa0; }
+        .encounters .encounter-card:nth-child(1):hover {
+            border-color: rgba(58,154,106,0.5);
+            box-shadow: 0 20px 60px rgba(58,154,106,0.13), 0 0 0 1px rgba(58,154,106,0.08);
+        }
+
+        /* Pirates — gold / warning */
+        .encounters .encounter-card:nth-child(2) {
+            border-color: rgba(212, 168, 67, 0.28);
+        }
+        .encounters .encounter-card:nth-child(2)::before {
+            background: linear-gradient(90deg, transparent, rgba(212,168,67,0.7), transparent);
+        }
+        .encounters .encounter-card:nth-child(2) h3 { color: var(--gold); }
+        .encounters .encounter-card:nth-child(2):hover {
+            border-color: rgba(212,168,67,0.55);
+            box-shadow: 0 20px 60px rgba(212,168,67,0.15), 0 0 0 1px rgba(212,168,67,0.1);
+        }
+
+        /* Fleets — red / danger */
+        .encounters .encounter-card:nth-child(3) {
+            border-color: rgba(208, 96, 96, 0.35);
+            background: linear-gradient(145deg, rgba(208,96,96,0.07) 0%, rgba(4,8,15,0.4) 100%);
+            box-shadow: 0 0 45px rgba(208,96,96,0.08);
+        }
+        .encounters .encounter-card:nth-child(3)::before {
+            background: linear-gradient(90deg, transparent, rgba(208,96,96,0.8), transparent);
+            opacity: 0.45;
+        }
+        .encounters .encounter-card:nth-child(3) h3 { color: #e87878; font-size: 1.45rem; }
+        .encounters .encounter-card:nth-child(3):hover {
+            border-color: rgba(208,96,96,0.65);
+            box-shadow: 0 24px 80px rgba(208,96,96,0.22), 0 0 0 1px rgba(208,96,96,0.15), inset 0 0 60px rgba(208,96,96,0.04);
+        }
 
         /* ── Captains ── */
         .captains {
@@ -607,8 +730,13 @@
         </p>
         <span class="version-badge" id="version-badge">Loading&hellip;</span>
         <div class="hero-cta">
-            <a href="https://github.com/joshgrift/piratesQuest/releases/latest" class="btn btn-primary" id="download-btn">
-                &#9875; Download
+            <a href="https://github.com/joshgrift/piratesQuest/releases/latest" class="btn btn-primary" id="download-macos-hero">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                macOS
+            </a>
+            <a href="https://github.com/joshgrift/piratesQuest/releases/latest" class="btn btn-primary" id="download-windows-hero">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.45L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+                Windows
             </a>
             <a href="#world" class="btn btn-ghost">Learn More</a>
         </div>
@@ -631,7 +759,7 @@
             </path>
         </svg>
     </div>
-    <div class="scroll-hint">&#8964;</div>
+    <div class="scroll-hint"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></div>
 </section>
 
 <div class="content">
@@ -755,19 +883,19 @@
 
     <div class="encounters">
         <div class="encounter-card">
-            <div class="enc-icon">&#9973;</div>
+            <div class="enc-icon"><img src="/images/characters/character18.png" width="160" height="160" alt="Trader" aria-hidden="true"></div>
             <h3>Traders</h3>
-            <p>Fat merchant ships sailing between ports. Easy pickings with a full cargo hold.</p>
+            <p>Fat merchant ships sailing between ports. Easy pickings with a full cargo.</p>
             <span class="risk-tag risk-low">Easy Prey</span>
         </div>
         <div class="encounter-card">
-            <div class="enc-icon">&#9760;</div>
+            <div class="enc-icon"><img src="/images/characters/character20.png" width="160" height="160" alt="Pirate" aria-hidden="true"></div>
             <h3>Pirates</h3>
             <p>They hunt you. They steal your cargo. They carry loot worth fighting for.</p>
             <span class="risk-tag risk-med">Dangerous</span>
         </div>
         <div class="encounter-card">
-            <div class="enc-icon">&#9875;</div>
+            <div class="enc-icon"><img src="/images/characters/character22.png" width="160" height="160" alt="Fleet" aria-hidden="true"></div>
             <h3>Fleets</h3>
             <p>Entire armadas guarding legendary treasure. Bring friends or don't bother.</p>
             <span class="risk-tag risk-high">Suicide Solo</span>
@@ -838,6 +966,7 @@
             <p>
                 Feedback and contributions are welcome on
                 <a href="https://github.com/joshgrift/piratesQuest">GitHub</a>.
+                See the <a href="https://github.com/joshgrift/piratesQuest/releases">changelog</a> for what's new.
             </p>
             <p>
                 - <a href="https://github.com/joshgrift">Josh Grift</a>
@@ -859,9 +988,15 @@
         </p>
         <p id="download-version"></p>
         <div class="download-btns">
-            <a href="https://github.com/joshgrift/piratesQuest/releases/latest" class="btn btn-primary">
-                &#9875; Download
+            <a href="https://github.com/joshgrift/piratesQuest/releases/latest" class="btn btn-primary" id="download-macos">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                macOS
             </a>
+            <a href="https://github.com/joshgrift/piratesQuest/releases/latest" class="btn btn-primary" id="download-windows">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.45L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+                Windows
+            </a>
+            <a href="https://github.com/joshgrift/piratesQuest/releases" class="btn btn-ghost">Changelog</a>
             <a href="https://github.com/joshgrift/piratesQuest" class="btn btn-ghost">GitHub</a>
         </div>
     </div>
@@ -885,7 +1020,6 @@
     (async function fetchStatus() {
         const badge = document.getElementById('version-badge');
         const dlVersion = document.getElementById('download-version');
-        const dlBtn = document.getElementById('download-btn');
         const dot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
 
@@ -893,16 +1027,23 @@
             const res = await fetch('/api/status');
             const data = await res.json();
             const v = data.version || 'unknown';
+            const alphaNum = v.split('.')[1] || v;
 
-            badge.textContent = 'Alpha \u00B7 v' + v;
-            dlBtn.textContent = '\u2693 Download v' + v;
+            badge.textContent = 'Alpha ' + alphaNum;
+
+            const macosUrl = 'https://github.com/joshgrift/piratesQuest/releases/download/' + v + '/piratesquest-macos.zip';
+            const winUrl = 'https://github.com/joshgrift/piratesQuest/releases/download/' + v + '/piratesquest-windows-x64.zip';
+            document.getElementById('download-macos-hero').href = macosUrl;
+            document.getElementById('download-windows-hero').href = winUrl;
+            document.getElementById('download-macos').href = macosUrl;
+            document.getElementById('download-windows').href = winUrl;
 
             dot.classList.add('online');
-            statusText.textContent = 'Server online \u00B7 v' + v;
+            statusText.textContent = 'Server online \u00B7 Alpha ' + alphaNum;
 
             if (data.updatedAt) {
                 const date = new Date(data.updatedAt);
-                dlVersion.textContent = 'v' + v + ' \u2014 ' +
+                dlVersion.textContent = 'Alpha ' + alphaNum + ' \u2014 ' +
                     date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
             }
         } catch {
