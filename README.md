@@ -85,33 +85,14 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
 
 
 ## TODO
-### 0.4.0 Alpha
-- [x] React UI so it can explain a lot more
-  - [x] More details
-  - [x] Stacking components
-  - [x] Satisfying animations
-  - [x] Buy in 5, 10, 50 increments
-  - [x] Sell all button
-  - [x] Quick buy for components
-- [x] Safe zone in port
-- [x] Vault (stash)
-- [x] Ship upgrades (persistent)
-- [x] UI to show when you are harvesting things
-- [x] Persistent world
-- [x] Login
-- [x] More incremental progress
-- [x] Health too expensive, balance it
-- [x] Reverted backwards movement
-- [x] Deployed to live server
-- [x] bulk icon doesn't show properly 
-      1001 doesn't show full inventory
-      1000 does show it
-      999 does show it
-      980 does show it
-      1000 doesn't show full inventory
-      999 does show
-- [x] You keep your velocity when you respawn
-- [x] Port is a safe zone
+### 0.5.0 Alpha
+- [ ] Names above the ships
+- [ ] Sign up is really annoying
+- [ ] Ship models aren't showing
+- [ ] Vault didn't work
+- [ ] Something to stop people from coming off the map
+- [ ] Dynamic Islands
+- [ ] Romance Scarlett
 
 ### Later
 - [ ] Quests
@@ -123,6 +104,8 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
 - [ ] Map
 - [ ] Game freezes on first explosion animation
 - [ ] Jitter when hitting a rock! 
+- [ ] EU Servers
+
 
 ### Suggestions
 - [ ] Close port menu early
@@ -132,7 +115,7 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
   - [ ] When in port, the timer pauses
 - [ ] Proximity voice chat
 - [ ] Artifacts as a long term growth option
-- [ ] Minigames
+- [ ] Mini games
   - [ ] Capture the flag
 - [ ] Weapons
   - [ ] Sea Mines
@@ -143,10 +126,11 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
 - [ ] Player Economy
 - [ ] Remove Trophies
 - [ ] Burry items instead of vault, can check the spot for a chance to find the treasure
-- [ ] Do think there should be some sort of defence move if possible. Don't know what it could be but would be helpful.
+- [ ] Do think there should be some sort of defense move if possible. Don't know what it could be but would be helpful.
 - [ ] In game wiki
 - [ ] Easier to see which cannon is space and Shift
 - [ ] Event driven bonuses (increase in fishing here)
 - [ ] Cracken
 - [ ] Curses
+- [ ] Change cannon angle
 
