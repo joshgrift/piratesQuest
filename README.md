@@ -93,6 +93,9 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
 - [ ] Something to stop people from coming off the map
 - [ ] Dynamic Islands
 - [ ] Romance Scarlett
+- [ ] Local Build uses local server and UI
+- [ ] Release & main problems
+- [ ] React main menu
 
 ### Later
 - [ ] Quests

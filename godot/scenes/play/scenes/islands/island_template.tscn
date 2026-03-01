@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://b0sq51fam11u"]
+
+[ext_resource type="Script" uid="uid://c7oaqxe301mth" path="res://scenes/play/IslandGenerator.cs" id="1_isl"]
+
+[sub_resource type="Curve3D" id="Curve3D_5q07d"]
+
+[node name="Island" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11.762142, 0)
+script = ExtResource("1_isl")
+WaterHeight = 3.5
+BeachFraction = 0.88
+NoiseScale = 0.3
+SubdivisionDepth = 5
+TreeCount = 100
+
+[node name="IslandPath" type="Path3D" parent="."]
+curve = SubResource("Curve3D_5q07d")
