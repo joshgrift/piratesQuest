@@ -87,15 +87,19 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
 ## TODO
 ### 0.5.0 Alpha
 - [ ] Names above the ships
-- [ ] Sign up is really annoying
 - [ ] Ship models aren't showing
 - [ ] Vault didn't work
 - [ ] Something to stop people from coming off the map
 - [ ] Dynamic Islands
-- [ ] Romance Scarlett
+- [x] Romance Scarlett
 - [ ] Local Build uses local server and UI
-- [ ] Release & main problems
+- [ ] Release & main vs version UI problems
+  - [ ] Main menu & website are deployed, but maybe port UI is packaged with game instead? 
 - [ ] React main menu
+  - [ ] Sign up is really annoying
+- [ ] Website should actually ping servers instead of pinging API
+- [ ] Discord bot to notify folks when folks are online
+- [ ] Discord link on website (invite only somehow)
 
 ### Later
 - [ ] Quests
