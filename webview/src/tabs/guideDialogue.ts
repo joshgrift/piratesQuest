@@ -23,7 +23,71 @@ export const GUIDE_DIALOGUE: Record<string, DialogueNode> = {
       { label: "What happens when I die?", next: "death" },
       { label: "What can I do at ports?", next: "ports" },
       { label: "How does the vault work?", next: "vault" },
+      { label: "If I win a duel, can I win a smile too?", next: "flirt" },
     ],
+  },
+
+  // ── Flirting ──
+  flirt: {
+    text: "Well now, look at ye comin' in hot. Bold eyes, bold mouth. I can work with that. Keep talkin', sailor.",
+    responses: [
+      { label: "Your smile could calm a storm, Scarlett.", next: "flirt_smooth" },
+      { label: "I'd sail through cannon fire just to hear ye laugh.", next: "flirt_confident" },
+      { label: "Steal my heart if ye must, just leave me enough to buy ye rum.", next: "flirt_playful" },
+      { label: "I'll quit while I'm ahead... before ye start missin' me.", next: "root" },
+    ],
+  },
+  flirt_smooth: {
+    text: "Mmm. Smooth as polished teak. Ye're makin' me grin, troublemaker. But I don't swoon for talk alone.",
+    responses: [
+      { label: "Then put me through my paces, and watch me shine.", next: "flirt_test" },
+      { label: "Fine, then hear this: I'd risk broadside fire for one dance with ye.", next: "flirt_confident" },
+      { label: "I'll save the rest for moonlight, sweetheart.", next: "root" },
+    ],
+  },
+  flirt_confident: {
+    text: "Ha! Reckless and romantic. I do enjoy a pirate with spine. Keep that up and I might save ye the seat closest to me.",
+    responses: [
+      { label: "Test me then, and keep that seat warm for me.", next: "flirt_test" },
+      { label: "Maybe ye deserve sweeter words: your eyes outshine lanternlight.", next: "flirt_smooth" },
+      { label: "I'll leave ye wanting more, captain.", next: "root" },
+    ],
+  },
+  flirt_playful: {
+    text: "Cheeky too? Dangerous combination. I like it. The sea's cruel, so I keep good company and sharper wit.",
+    responses: [
+      { label: "Then keep me close and test me, captain.", next: "flirt_test" },
+      { label: "Aye? Then give me yer fiercest comeback, gorgeous.", next: "flirt_comeback" },
+      { label: "I'll stop talkin' now and let ye wonder about me.", next: "root" },
+    ],
+  },
+  flirt_comeback: {
+    text: "Fiercest comeback? Easy: if I steal yer heart, ye still owe docking fees. Sweet lines don't pay port taxes, pretty sailor.",
+    responses: [
+      { label: "Take the coin and the heart. Now test me.", next: "flirt_test" },
+      { label: "I'll be back with better lines and better loot.", next: "root" },
+    ],
+  },
+  flirt_test: {
+    text: "Alright, hotshot. Let's see if that swagger comes with brains.\n\nBefore a risky run, what's the smart move?",
+    responses: [
+      { label: "I'd stash valuables in the vault, load cannonballs, then sail out to impress ye.", next: "flirt_end_cute" },
+      { label: "I'd blow all my gold on one shiny upgrade and pray ye're into chaos.", next: "flirt_end_sassy" },
+      { label: "I'd sail overburdened and trust my pretty face to save me.", next: "flirt_end_sassy" },
+      { label: "I'll charm ye later, after I handle business.", next: "root" },
+    ],
+  },
+  flirt_end_cute: {
+    text: "Now that's attractive. Smart, prepared, and dangerous in all the right ways.\n\nBring me trophies, keep yer crew alive, and maybe I'll save ye a private toast when ye dock.",
+    responses: [{ label: "Save me that smile, Scarlett. I'll see ye at the next port.", next: "flirt_finale" }],
+  },
+  flirt_end_sassy: {
+    text: "Oh sweetheart, that plan's a shipwreck in slow motion. If bad decisions were treasure maps, ye'd already own the sea.",
+    responses: [{ label: "Fair shot, captain. I'll return with better moves and better lines.", next: "root" }],
+  },
+  flirt_finale: {
+    text: "Aye. Keep that fire, keep that discipline, and don't get sunk. Do that, and next time ye dock... I'll be waitin' with rum and a smile meant just for ye.",
+    responses: [{ label: "Then wait for me, Scarlett. I'll see ye soon.", next: "root" }],
   },
 
   // ── Sailing ──
