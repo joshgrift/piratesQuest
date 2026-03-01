@@ -84,7 +84,7 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
   - [JCSounds](https://jcsounds.itch.io/piratesfxvol1)
 
 
-## TODO
+## ROADMAP
 ### 0.5.0 Alpha
 - [ ] Names above the ships
 - [ ] Ship models aren't showing
@@ -97,22 +97,26 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
   - [ ] Main menu & website are deployed, but maybe port UI is packaged with game instead? 
 - [ ] React main menu
   - [ ] Sign up is really annoying
+  - [ ] Changelog on main menu
+  - [ ] Version on main menu
 - [ ] Website should actually ping servers instead of pinging API
 - [ ] Discord bot to notify folks when folks are online
 - [ ] Discord link on website (invite only somehow)
+- [ ] Check game version when joining server
 
-### Later
+### 0.6.0 Alpha
 - [ ] Quests
+- [ ] Characters
+- [ ] AI ships
+
+### Planned
 - [ ] Better Island mesh
    - [ ] Better island cannonball collision
-- [ ] AI ships
 - [ ] Fix water.
-- [ ] Characters
-- [ ] Map
+- [ ] In game map
 - [ ] Game freezes on first explosion animation
 - [ ] Jitter when hitting a rock! 
 - [ ] EU Servers
-
 
 ### Suggestions
 - [ ] Close port menu early
@@ -121,7 +125,6 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
   - [ ] Can't heal if you're in combat
   - [ ] When in port, the timer pauses
 - [ ] Proximity voice chat
-- [ ] Artifacts as a long term growth option
 - [ ] Mini games
   - [ ] Capture the flag
 - [ ] Weapons
