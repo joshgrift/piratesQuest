@@ -34,10 +34,32 @@ public partial class IslandGenerator : Node3D
   /// <summary>FastNoiseLite frequency. Lower = larger noise features.</summary>
   [Export] public float NoiseScale = 0.08f;
   /// <summary>
-  /// Number of subdivision passes. Each pass multiplies triangle count by 4.
-  /// Depth 3 → 64× triangles per original. Keep ≤ 4 for reasonable mesh sizes.
+  /// How strongly noise affects terrain height (0 = smooth hill, 1 = very noisy hill).
+  /// Keep this low for clean island silhouettes.
   /// </summary>
-  [Export(PropertyHint.Range, "1,5")] public int SubdivisionDepth = 3;
+  [Export(PropertyHint.Range, "0.0,1.0,0.01")] public float NoiseStrength = 0.20f;
+  /// <summary>
+  /// Distance in world units used to smooth noise samples.
+  /// Higher values reduce tiny ripples by averaging nearby noise values.
+  /// </summary>
+  [Export(PropertyHint.Range, "0.0,8.0,0.1")] public float NoiseSmoothingDistance = 1.5f;
+  /// <summary>
+  /// Number of subdivision passes. Each pass multiplies triangle count by 4.
+  /// Depth 2 already adds a lot of detail (16x triangles per original).
+  /// Keep this low so generated scene files stay Git-friendly.
+  /// </summary>
+  [Export(PropertyHint.Range, "1,5")] public int SubdivisionDepth = 2;
+  /// <summary>
+  /// Hard cap for generated triangles.
+  /// If SubdivisionDepth would exceed this budget, depth is automatically reduced.
+  /// This keeps .tscn sizes under control even on large islands.
+  /// </summary>
+  [Export(PropertyHint.Range, "128,20000,1")] public int MaxTerrainTriangles = 5000;
+  /// <summary>
+  /// Minimum 2D distance between sampled points from IslandPath.
+  /// Higher values simplify the polygon before triangulation.
+  /// </summary>
+  [Export(PropertyHint.Range, "0.1,10.0,0.1")] public float PathPointSpacing = 1.5f;
 
   [ExportGroup("Trees")]
   /// <summary>Target number of palm trees to scatter across the island.</summary>
@@ -102,7 +124,7 @@ public partial class IslandGenerator : Node3D
     }
 
     // ── 1. Build polygon from path ──────────────────────────────────────────
-    var polygon = BuildPolygonFromPath(path);
+    var polygon = BuildPolygonFromPath(path, PathPointSpacing);
     if (polygon.Count < 3)
     {
       GD.PrintErr("IslandGenerator: Polygon has fewer than 3 vertices after deduplication.");
@@ -124,7 +146,10 @@ public partial class IslandGenerator : Node3D
       triangles.Add((poly[indices[i]], poly[indices[i + 1]], poly[indices[i + 2]]));
 
     // ── 4. Subdivide ────────────────────────────────────────────────────────
-    for (int d = 0; d < SubdivisionDepth; d++)
+    // Clamp requested subdivision depth to stay inside triangle budget.
+    int baseTriangleCount = triangles.Count;
+    int effectiveSubdivisionDepth = GetSafeSubdivisionDepth(baseTriangleCount);
+    for (int d = 0; d < effectiveSubdivisionDepth; d++)
     {
       var next = new List<(Vector2, Vector2, Vector2)>(triangles.Count * 4);
       foreach (var (a, b, c) in triangles)
@@ -206,7 +231,7 @@ public partial class IslandGenerator : Node3D
     // ── 9. Trees ────────────────────────────────────────────────────────────
     PlaceTrees(poly, refDist, noise);
 
-    GD.Print($"IslandGenerator: built {triangles.Count} triangles.");
+    GD.Print($"IslandGenerator: built {triangles.Count} triangles (requested depth={SubdivisionDepth}, used depth={effectiveSubdivisionDepth}).");
   }
 
   // ──────────────────────────────── Mesh Helpers ────────────────────────────────
@@ -236,12 +261,45 @@ public partial class IslandGenerator : Node3D
     //   Hill zone   (remaining interior):   gradual rise from WaterHeight → MaxHeight
     const float shoreZone = 0.15f;
     float cliffT = Mathf.SmoothStep(0f, shoreZone, radial);
-    float hillT  = Mathf.SmoothStep(shoreZone, 1.0f, radial);
+    float hillT = Mathf.SmoothStep(shoreZone, 1.0f, radial);
 
-    // Noise applied only to the hill so the cliff stays consistently steep.
-    float noiseVal = (noise.GetNoise2D(xz.X, xz.Y) + 1f) * 0.5f;
+    // Base shape (no noise): sharp shoreline rise + smooth hill to peak.
+    float baseHeight = cliffT * WaterHeight + hillT * (MaxHeight - WaterHeight);
 
-    return cliffT * WaterHeight + hillT * (MaxHeight - WaterHeight) * (0.4f + 0.6f * noiseVal);
+    // Smooth the raw noise so we avoid tiny ripples.
+    // Convert [0,1] to [-1,1] so noise can go up/down around base height.
+    float smoothedNoise01 = GetSmoothedNoise01(xz, noise);
+    float smoothedNoiseSigned = smoothedNoise01 * 2f - 1f;
+
+    // Fade noise near shore and keep amplitude easy to control in meters.
+    float hillRange = Mathf.Max(0f, MaxHeight - WaterHeight);
+    float noiseAmplitude = hillRange * NoiseStrength * hillT;
+
+    float result = baseHeight + smoothedNoiseSigned * noiseAmplitude;
+    return Mathf.Clamp(result, 0f, MaxHeight);
+  }
+
+  /// <summary>
+  /// Returns smoothed noise in [0,1].
+  /// Uses 5 taps (center + 4 cardinal offsets) for a cheap blur.
+  /// </summary>
+  private float GetSmoothedNoise01(Vector2 xz, FastNoiseLite noise)
+  {
+    float d = Mathf.Max(0f, NoiseSmoothingDistance);
+    if (d <= 0.001f)
+      return (noise.GetNoise2D(xz.X, xz.Y) + 1f) * 0.5f;
+
+    // 5-sample average:
+    // center + right + left + forward + back
+    float sum =
+      noise.GetNoise2D(xz.X, xz.Y) +
+      noise.GetNoise2D(xz.X + d, xz.Y) +
+      noise.GetNoise2D(xz.X - d, xz.Y) +
+      noise.GetNoise2D(xz.X, xz.Y + d) +
+      noise.GetNoise2D(xz.X, xz.Y - d);
+
+    float avg = sum / 5f; // still in [-1,1]
+    return (avg + 1f) * 0.5f;
   }
 
   /// <summary>Minimum perpendicular distance from <paramref name="point"/> to any polygon edge.</summary>
@@ -301,22 +359,15 @@ public partial class IslandGenerator : Node3D
       tree.Scale = Vector3.One * TreeScale;
 
       treesNode.AddChild(tree);
+      // Only own the instance root.
+      // Important: do NOT recursively own children, or Godot may serialize imported
+      // palm meshes into the island scene as huge ArrayMesh subresources.
       tree.Owner = GetTree().EditedSceneRoot;
-      SetOwnerRecursive(tree, GetTree().EditedSceneRoot);
 
       placed++;
     }
 
     GD.Print($"IslandGenerator: placed {placed}/{TreeCount} trees.");
-  }
-
-  private void SetOwnerRecursive(Node node, Node owner)
-  {
-    foreach (var child in node.GetChildren())
-    {
-      child.Owner = owner;
-      SetOwnerRecursive(child, owner);
-    }
   }
 
   // ──────────────────────────────── Clear ────────────────────────────────
@@ -336,19 +387,54 @@ public partial class IslandGenerator : Node3D
 
   // ──────────────────────────────── Geometry Utilities ────────────────────────────────
 
-  private static List<Vector2> BuildPolygonFromPath(Path3D path)
+  private static List<Vector2> BuildPolygonFromPath(Path3D path, float minPointSpacing)
   {
     var pts = path.Curve.GetBakedPoints(); // evenly-sampled 3D points
     var result = new List<Vector2>(pts.Length);
+    float spacing = Mathf.Max(0.01f, minPointSpacing);
 
     foreach (var p in pts)
-      result.Add(new Vector2(p.X, p.Z));
+    {
+      var point = new Vector2(p.X, p.Z);
+      if (result.Count == 0 || result[^1].DistanceTo(point) >= spacing)
+        result.Add(point);
+    }
 
     // Drop duplicate last point if the curve is closed
     if (result.Count > 1 && result[0].DistanceTo(result[^1]) < 0.05f)
       result.RemoveAt(result.Count - 1);
 
     return result;
+  }
+
+  private int GetSafeSubdivisionDepth(int baseTriangleCount)
+  {
+    // Guard against invalid values in the Inspector.
+    // Depth 0 can produce terrain with no interior detail points, so we enforce 1+.
+    int requestedDepth = Mathf.Max(1, SubdivisionDepth);
+    int triangleBudget = Mathf.Max(128, MaxTerrainTriangles);
+    int depth = requestedDepth;
+
+    // Each depth multiplies triangle count by 4, so keep reducing until we fit.
+    while (depth > 1)
+    {
+      int projectedTriangles = baseTriangleCount * (int)Mathf.Pow(4, depth);
+      if (projectedTriangles <= triangleBudget) break;
+      depth--;
+    }
+
+    // If even depth 1 is over budget, keep depth 1 anyway so generation is valid.
+    // This is still much cheaper than higher depths and avoids degenerate terrain.
+    int depthOneTriangles = baseTriangleCount * 4;
+    if (depth == 1 && depthOneTriangles > triangleBudget)
+    {
+      GD.Print($"IslandGenerator: depth 1 needs {depthOneTriangles} triangles, which exceeds MaxTerrainTriangles={triangleBudget}. Keeping depth 1 to avoid invalid terrain.");
+    }
+
+    if (depth < requestedDepth)
+      GD.Print($"IslandGenerator: SubdivisionDepth reduced from {requestedDepth} to {depth} (minimum is 1) to respect MaxTerrainTriangles={triangleBudget}.");
+
+    return depth;
   }
 
   private static Rect2 GetBounds(Vector2[] poly)
