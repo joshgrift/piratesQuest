@@ -87,7 +87,7 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
 ## ROADMAP
 ### 0.5.0 Alpha
 - [x] Names above the ships
-- [ ] Ship models aren't showing
+- [x] Ship models aren't showing
 - [ ] Vault didn't work
 - [ ] Something to stop people from coming off the map
 - [x] Dynamic Islands

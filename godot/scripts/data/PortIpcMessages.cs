@@ -23,12 +23,35 @@ public record PortStateDto
   public int ShipTier { get; init; }
   public ShipTierDto[] ShipTiers { get; init; } = [];
   public bool IsCreative { get; init; }
+  public PortCostsDto Costs { get; init; } = new();
 
   /// <summary>
   /// The player's vault info. Null when no vault has been built yet.
   /// IsHere is true when the vault is at this port (enables the full UI).
   /// </summary>
   public VaultStateDto Vault { get; init; }
+}
+
+/// <summary>
+/// Gameplay costs pushed from C# so the webview never hardcodes them.
+/// </summary>
+public record PortCostsDto
+{
+  public Dictionary<string, int> VaultBuild { get; init; } = new();
+  /// <summary>
+  /// Null when the next vault upgrade is not available (no vault or max level).
+  /// </summary>
+  public Dictionary<string, int> VaultUpgrade { get; init; }
+  public RepairCostDto Repair { get; init; } = new();
+}
+
+/// <summary>
+/// Resource cost required to repair 1 HP.
+/// </summary>
+public record RepairCostDto
+{
+  public int WoodPerHp { get; init; }
+  public int FishPerHp { get; init; }
 }
 
 /// <summary>

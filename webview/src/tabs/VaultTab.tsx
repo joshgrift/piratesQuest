@@ -2,14 +2,6 @@ import { useState, useCallback } from "react";
 import { sendIpc } from "../utils/ipc";
 import { iconUrl, inventoryIcon } from "../utils/helpers";
 import type { PortState } from "../types";
-
-// Vault upgrade costs: base * 3^(level-1)
-function getVaultUpgradeCost(level: number): Record<string, number> {
-  const m = Math.pow(3, level - 1);
-  return { Wood: 100 * m, Iron: 50 * m, Coin: 200 * m };
-}
-
-const VAULT_BUILD_COST: Record<string, number> = { Wood: 50, Iron: 25, Coin: 100 };
 const VAULT_ITEM_TYPES = ["Wood", "Iron", "Fish", "Tea", "CannonBall", "Trophy"];
 
 export function VaultTab({ state }: { state: PortState }) {
@@ -30,7 +22,8 @@ export function VaultTab({ state }: { state: PortState }) {
 
   // No vault yet — show build prompt
   if (!vault) {
-    const canAffordBuild = Object.entries(VAULT_BUILD_COST).every(
+    const buildCost = state.costs.vaultBuild;
+    const canAffordBuild = Object.entries(buildCost).every(
       ([type, amount]) => (state.inventory[type] ?? 0) >= amount
     );
     return (
@@ -43,7 +36,7 @@ export function VaultTab({ state }: { state: PortState }) {
           or withdraw. Items in the vault survive death!
         </div>
         <div className="vault-build-cost">
-          {Object.entries(VAULT_BUILD_COST).map(([type, amount]) => {
+          {Object.entries(buildCost).map(([type, amount]) => {
             const owned = state.inventory[type] ?? 0;
             return (
               <span
@@ -94,7 +87,8 @@ export function VaultTab({ state }: { state: PortState }) {
   const itemPct = vault.itemCapacity > 0 ? (vaultNonGold / vault.itemCapacity) * 100 : 0;
   const goldPct = vault.goldCapacity > 0 ? (vaultGold / vault.goldCapacity) * 100 : 0;
 
-  const upgradeCost = vault.level < 5 ? getVaultUpgradeCost(vault.level) : null;
+  // Upgrade cost is sent by C# so UI and gameplay rules cannot drift.
+  const upgradeCost = state.costs.vaultUpgrade;
   const canAffordUpgrade = upgradeCost
     ? Object.entries(upgradeCost).every(
         ([type, amount]) =>

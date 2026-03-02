@@ -73,6 +73,11 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
       { name: "Galleon", description: "A fearsome capital ship", componentSlots: 8, cost: { Wood: 400, Iron: 300, Fish: 150, Tea: 100, Coin: 5000 } },
     ],
     isCreative: false,
+    costs: {
+      vaultBuild: { Wood: 50, Iron: 25, Coin: 100 },
+      vaultUpgrade: null,
+      repair: { woodPerHp: 5, fishPerHp: 1 },
+    },
     vault: null,
     ...overrides,
   };

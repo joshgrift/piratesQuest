@@ -65,9 +65,18 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   // Build cost: what it takes to construct a level-1 vault
   public static readonly Dictionary<InventoryItemType, int> VaultBuildCost = new()
   {
-    { InventoryItemType.Wood, 100 },
-    { InventoryItemType.Iron, 200 },
-    { InventoryItemType.Coin, 1000 },
+    // Source of truth for vault build cost. The webview reads this from PortStateDto.
+    { InventoryItemType.Wood, 50 },
+    { InventoryItemType.Iron, 25 },
+    { InventoryItemType.Coin, 100 },
+  };
+
+  // Repair cost per 1 HP healed.
+  // Kept here so both gameplay logic and UI can share one source of truth.
+  public static readonly Dictionary<InventoryItemType, int> RepairCostPerHp = new()
+  {
+    { InventoryItemType.Wood, 5 },
+    { InventoryItemType.Fish, 1 },
   };
 
   /// <summary>
@@ -80,8 +89,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     return new Dictionary<InventoryItemType, int>
     {
       { InventoryItemType.Wood, 100 * multiplier },
-      { InventoryItemType.Iron, 200 * multiplier },
-      { InventoryItemType.Coin, 1000 * multiplier },
+      { InventoryItemType.Iron, 50 * multiplier },
+      { InventoryItemType.Coin, 200 * multiplier },
     };
   }
 
@@ -953,10 +962,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (VaultPortName == null || VaultLevel >= VaultMaxLevel)
       return false;
 
-    int multiplier = (int)Math.Pow(3, VaultLevel - 1);
-    int woodCost = 100 * multiplier;
-    int ironCost = 50 * multiplier;
-    int coinCost = 200 * multiplier;
+    // Use one shared source of truth for upgrade costs to avoid drift.
+    var upgradeCost = GetVaultUpgradeCost(VaultLevel);
+    int woodCost = upgradeCost[InventoryItemType.Wood];
+    int ironCost = upgradeCost[InventoryItemType.Iron];
+    int coinCost = upgradeCost[InventoryItemType.Coin];
 
     // Check that inventory + vault together can cover each cost
     if (_inventory.GetItemCount(InventoryItemType.Wood) + GetVaultAmount(InventoryItemType.Wood) < woodCost)

@@ -14,8 +14,22 @@ export interface PortState {
   shipTier: number;
   shipTiers: ShipTierData[];
   isCreative: boolean;
+  /** Gameplay costs sent from C# (single source of truth). */
+  costs: PortCosts;
   /** Null when the player hasn't built a vault yet. */
   vault: VaultState | null;
+}
+
+export interface PortCosts {
+  vaultBuild: Record<string, number>;
+  /** Null when no next upgrade is available (no vault or already max). */
+  vaultUpgrade: Record<string, number> | null;
+  repair: RepairCosts;
+}
+
+export interface RepairCosts {
+  woodPerHp: number;
+  fishPerHp: number;
 }
 
 /** The player's vault snapshot pushed from Godot. */

@@ -484,6 +484,24 @@ public partial class Hud : Control
       };
     }
 
+    // Convert C# enum-keyed costs into string-keyed costs for JSON payloads.
+    var vaultBuildCost = Player.VaultBuildCost.ToDictionary(
+      kvp => kvp.Key.ToString(),
+      kvp => kvp.Value
+    );
+
+    System.Collections.Generic.Dictionary<string, int> vaultUpgradeCost = null;
+    if (_player.VaultPortName != null && _player.VaultLevel < Player.VaultMaxLevel)
+    {
+      vaultUpgradeCost = Player.GetVaultUpgradeCost(_player.VaultLevel).ToDictionary(
+        kvp => kvp.Key.ToString(),
+        kvp => kvp.Value
+      );
+    }
+
+    int woodPerHp = Player.RepairCostPerHp.TryGetValue(InventoryItemType.Wood, out var w) ? w : 0;
+    int fishPerHp = Player.RepairCostPerHp.TryGetValue(InventoryItemType.Fish, out var f) ? f : 0;
+
     return new PortStateDto
     {
       PortName = _currentPortName ?? "",
@@ -504,6 +522,16 @@ public partial class Hud : Control
         .ToArray(),
       IsCreative = Configuration.IsCreative,
       Vault = vaultState,
+      Costs = new PortCostsDto
+      {
+        VaultBuild = vaultBuildCost,
+        VaultUpgrade = vaultUpgradeCost,
+        Repair = new RepairCostDto
+        {
+          WoodPerHp = woodPerHp,
+          FishPerHp = fishPerHp,
+        },
+      },
     };
   }
 
@@ -688,17 +716,17 @@ public partial class Hud : Control
     int woodAvailable = _player.GetInventoryCount(InventoryItemType.Wood);
     int fishAvailable = _player.GetInventoryCount(InventoryItemType.Fish);
 
-    const int WoodCostPerHealth = 5;
-    const int FishCostPerHealth = 1;
+    int woodCostPerHealth = Player.RepairCostPerHp[InventoryItemType.Wood];
+    int fishCostPerHealth = Player.RepairCostPerHp[InventoryItemType.Fish];
 
-    int maxHealFromWood = woodAvailable / WoodCostPerHealth;
-    int maxHealFromFish = fishAvailable / FishCostPerHealth;
+    int maxHealFromWood = woodAvailable / woodCostPerHealth;
+    int maxHealFromFish = fishAvailable / fishCostPerHealth;
     int healthToHeal = Math.Min(healthNeeded, Math.Min(maxHealFromWood, maxHealFromFish));
 
     if (healthToHeal <= 0) return;
 
-    int woodCost = healthToHeal * WoodCostPerHealth;
-    int fishCost = healthToHeal * FishCostPerHealth;
+    int woodCost = healthToHeal * woodCostPerHealth;
+    int fishCost = healthToHeal * fishCostPerHealth;
 
     _player.UpdateInventory(InventoryItemType.Wood, -woodCost);
     _player.UpdateInventory(InventoryItemType.Fish, -fishCost);

@@ -49,7 +49,10 @@ export function ShipyardTab({ state }: { state: PortState }) {
   const healthNeeded = state.maxHealth - state.health;
   const woodAvail = state.inventory["Wood"] ?? 0;
   const fishAvail = state.inventory["Fish"] ?? 0;
-  const maxHeal = Math.min(healthNeeded, Math.floor(woodAvail / 5), fishAvail);
+  // Pull repair costs from C# payload so UI never hardcodes gameplay values.
+  const woodPerHp = state.costs.repair.woodPerHp;
+  const fishPerHp = state.costs.repair.fishPerHp;
+  const maxHeal = Math.min(healthNeeded, Math.floor(woodAvail / woodPerHp), Math.floor(fishAvail / fishPerHp));
   const healthPct = state.maxHealth > 0 ? (state.health / state.maxHealth) * 100 : 0;
   const healthHue = Math.round((healthPct / 100) * 120);
 
@@ -62,14 +65,14 @@ export function ShipyardTab({ state }: { state: PortState }) {
   if (woodShop && fishShop && healthNeeded > 0) {
     for (let h = 1; h <= healthNeeded; h++) {
       const goldNeeded =
-        Math.max(0, h * 5 - woodAvail) * woodShop.buyPrice +
-        Math.max(0, h - fishAvail) * fishShop.buyPrice;
+        Math.max(0, h * woodPerHp - woodAvail) * woodShop.buyPrice +
+        Math.max(0, h * fishPerHp - fishAvail) * fishShop.buyPrice;
       if (goldNeeded > coinsAvail) break;
       maxBuyHeal = h;
     }
   }
-  const woodToBuy = Math.max(0, maxBuyHeal * 5 - woodAvail);
-  const fishToBuy = Math.max(0, maxBuyHeal - fishAvail);
+  const woodToBuy = Math.max(0, maxBuyHeal * woodPerHp - woodAvail);
+  const fishToBuy = Math.max(0, maxBuyHeal * fishPerHp - fishAvail);
   const buyHealGoldCost = woodShop && fishShop
     ? woodToBuy * woodShop.buyPrice + fishToBuy * fishShop.buyPrice
     : null;
@@ -107,11 +110,11 @@ export function ShipyardTab({ state }: { state: PortState }) {
                   Repair Hull
                 </button>
                 <div className="repair-costs">
-                  <span className={`cost-chip ${woodAvail < healthNeeded * 5 ? "chip-short" : "chip-wood"}`}>
-                    <img src={inventoryIcon("Wood")} alt="Wood" className="chip-icon" />{healthNeeded * 5}
+                  <span className={`cost-chip ${woodAvail < healthNeeded * woodPerHp ? "chip-short" : "chip-wood"}`}>
+                    <img src={inventoryIcon("Wood")} alt="Wood" className="chip-icon" />{healthNeeded * woodPerHp}
                   </span>
-                  <span className={`cost-chip ${fishAvail < healthNeeded ? "chip-short" : "chip-fish"}`}>
-                    <img src={inventoryIcon("Fish")} alt="Fish" className="chip-icon" />{healthNeeded}
+                  <span className={`cost-chip ${fishAvail < healthNeeded * fishPerHp ? "chip-short" : "chip-fish"}`}>
+                    <img src={inventoryIcon("Fish")} alt="Fish" className="chip-icon" />{healthNeeded * fishPerHp}
                   </span>
                   <span className="repair-hp">+{maxHeal} HP</span>
                 </div>
@@ -143,10 +146,10 @@ export function ShipyardTab({ state }: { state: PortState }) {
               )}
             </div>
             <div className="repair-inventory">
-              <span className={woodAvail < healthNeeded * 5 ? "resource-short" : ""}>
+              <span className={woodAvail < healthNeeded * woodPerHp ? "resource-short" : ""}>
                 <img src={inventoryIcon("Wood")} alt="Wood" className="chip-icon" />{woodAvail}
               </span>
-              <span className={fishAvail < healthNeeded ? "resource-short" : ""}>
+              <span className={fishAvail < healthNeeded * fishPerHp ? "resource-short" : ""}>
                 <img src={inventoryIcon("Fish")} alt="Fish" className="chip-icon" />{fishAvail}
               </span>
               {buyHealGoldCost !== null && (
