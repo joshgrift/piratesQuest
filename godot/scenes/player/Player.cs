@@ -152,6 +152,10 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   private const float NameTagShowDistance = 75.0f;  // Show when closer than this
   private const float NameTagHideDistance = 85.0f;  // Hide when farther than this (hysteresis)
   private const float NameTagHeight = 12.0f;
+  // Tracks which ship tier visuals/colliders we've already applied.
+  // ShipTier itself is replicated over the network, so we need to react when
+  // that replicated value changes on remote clients.
+  private int _lastAppliedShipTier = -1;
 
   public override void _Ready()
   {
@@ -196,6 +200,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     // Apply ship tier visuals (collision + mesh) for the starting tier
     ApplyShipTier();
+    _lastAppliedShipTier = ShipTier;
 
     if (Configuration.RandomSpawnEnabled)
       RandomSpawn(100, 100);
@@ -275,6 +280,10 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   public override void _Process(double delta)
   {
+    // MultiplayerSynchronizer updates ShipTier, but that value change alone
+    // doesn't automatically run ApplyShipTier(). This keeps remote ships in sync.
+    SyncShipTierIfNeeded();
+
     if (_nameLabel == null) return;
 
     _nameLabel.Text = Nickname ?? "";
@@ -878,6 +887,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     ShipTier = nextTier;
     ApplyShipTier();
+    _lastAppliedShipTier = ShipTier;
     UpdatePlayerStats();
     GD.Print($"{Name}: Upgraded ship to tier {ShipTier} ({tierData.Name})");
     return true;
@@ -1233,6 +1243,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     // Restore ship tier (persists through death)
     ShipTier = Math.Clamp(dto.ShipTier, 0, GameData.ShipTiers.Length - 1);
     ApplyShipTier();
+    _lastAppliedShipTier = ShipTier;
     UpdatePlayerStats();
 
     // Restore vault state
@@ -1262,6 +1273,19 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       EmitSignal(SignalName.HealthUpdate, Health);
       GlobalPosition = new Vector3(dto.Position[0], dto.Position[1], dto.Position[2]);
     }
+  }
+
+  /// <summary>
+  /// Applies ship mesh/collision changes if ShipTier changed via replication.
+  /// </summary>
+  private void SyncShipTierIfNeeded()
+  {
+    if (_lastAppliedShipTier == ShipTier)
+      return;
+
+    ApplyShipTier();
+    _lastAppliedShipTier = ShipTier;
+    UpdatePlayerStats();
   }
 
   private static string DecodeUserIdFromJwt(string jwt)
