@@ -39,7 +39,7 @@ adjustment_contrast = 1.15
 adjustment_saturation = 1.25
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_0xm2m"]
-size = Vector3(2000, 1, 2000)
+size = Vector3(1000, 1, 1000)
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_water"]
 noise = ExtResource("water_noise")
@@ -57,7 +57,7 @@ shader_parameter/normal_strength = 0.8
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_water"]
 material = SubResource("ShaderMaterial_water")
-size = Vector2(2000, 2000)
+size = Vector2(1000, 1000)
 subdivide_width = 500
 subdivide_depth = 500
 
@@ -68,7 +68,7 @@ disable_receive_shadows = true
 
 [sub_resource type="BoxMesh" id="BoxMesh_mric1"]
 material = SubResource("StandardMaterial3D_gcg6u")
-size = Vector3(2000, 1, 2000)
+size = Vector3(1000, 1, 1000)
 
 [sub_resource type="Resource" id="Resource_a0nu5"]
 script = ExtResource("10_10igl")
