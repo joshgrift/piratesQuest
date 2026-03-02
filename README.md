@@ -86,11 +86,11 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
 
 ## ROADMAP
 ### 0.5.0 Alpha
-- [ ] Names above the ships
+- [x] Names above the ships
 - [ ] Ship models aren't showing
 - [ ] Vault didn't work
 - [ ] Something to stop people from coming off the map
-- [ ] Dynamic Islands
+- [x] Dynamic Islands
 - [x] Romance Scarlett
 - [ ] Local Build uses local server and UI
 - [ ] Release & main vs version UI problems
@@ -102,7 +102,7 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
 - [ ] Website should actually ping servers instead of pinging API
 - [ ] Discord bot to notify folks when folks are online
 - [ ] Discord link on website (invite only somehow)
-- [ ] Check game version when joining server
+- [x] Check game version when joining server
 
 ### 0.6.0 Alpha
 - [ ] Quests

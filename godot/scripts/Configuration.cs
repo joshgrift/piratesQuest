@@ -11,6 +11,9 @@ public record ServerListingInfo
 
 partial class Configuration : Node
 {
+  private const string LocalApiBaseUrl = "http://localhost:5236";
+  private const string ProductionApiBaseUrl = "https://pirates.quest";
+
   // Godot's per-user, writable save file. On each OS this maps to a safe local app-data folder.
   private const string LocalConfigPath = "user://settings.cfg";
   private const string AuthSection = "auth";
@@ -28,9 +31,9 @@ partial class Configuration : Node
   public static int StartingCoin { get; } = 100;
   public static bool IsCreative { get; private set; } = false;
   public static int DefaultPort { get; } = 7777;
-  // Override with --api-url <url> to point at a remote API (e.g. http://localhost:5236).
-  public static string ApiBaseUrl { get; private set; } = "https://pirates.quest";
-  //public static string ApiBaseUrl { get; private set; } = "http://localhost:5236";
+  // Override with --api-url <url>.
+  // Local/editor/debug builds default to localhost; non-local builds default to production.
+  public static string ApiBaseUrl { get; private set; } = GetDefaultApiBaseUrl();
 
   public static int ServerId { get; private set; }
   public static string ServerApiKey { get; private set; }
@@ -40,6 +43,15 @@ partial class Configuration : Node
   public static bool DisableSaveUser { get; private set; }
   // Defaults to {ApiBaseUrl}/fragments/webview/. Override with --webview-url <url>.
   public static string WebViewUrl { get; private set; } = $"{ApiBaseUrl}/fragments/webview/";
+
+  private static string GetDefaultApiBaseUrl()
+  {
+    // "editor" is true when running from Godot editor.
+    // IsDebugBuild is true for local debug runs/exports.
+    // Release exports will fall back to production.
+    bool isLocalRuntime = OS.HasFeature("editor") || OS.IsDebugBuild();
+    return isLocalRuntime ? LocalApiBaseUrl : ProductionApiBaseUrl;
+  }
 
   public override void _Ready()
   {

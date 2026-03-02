@@ -193,9 +193,9 @@ public partial class Play : Node3D
   }
 
   // Sent by each client after entering Play scene.
-  // Server validates uniqueness and either spawns player or rejects join.
+  // Server validates version + username and either spawns player or rejects join.
   [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
-  private void RegisterUsername(string username)
+  private void RegisterUsername(string username, string clientVersion)
   {
     if (!Multiplayer.IsServer())
     {
@@ -204,10 +204,22 @@ public partial class Play : Node3D
 
     var peerId = Multiplayer.GetRemoteSenderId();
     var normalizedUsername = (username ?? string.Empty).Trim();
+    var normalizedClientVersion = NormalizeVersion(clientVersion);
+    var normalizedServerVersion = NormalizeVersion(Configuration.GetVersion());
 
     if (string.IsNullOrWhiteSpace(normalizedUsername))
     {
       RejectPeer(peerId, "Username is required.");
+      return;
+    }
+
+    // Version gate: only allow clients that match the server build.
+    // This prevents protocol/state mismatches between different releases.
+    if (!string.Equals(normalizedClientVersion, normalizedServerVersion, StringComparison.Ordinal))
+    {
+      var readableClientVersion = DisplayVersionForError(normalizedClientVersion);
+      var readableServerVersion = DisplayVersionForError(normalizedServerVersion);
+      RejectPeer(peerId, $"Version mismatch. Server is {readableServerVersion}, but your client is {readableClientVersion}. Please update and try again.");
       return;
     }
 
@@ -262,7 +274,21 @@ public partial class Play : Node3D
   {
     var identity = GetNode<Identity>("/root/Identity");
     var username = identity.PlayerName.Trim();
-    RpcId(1, MethodName.RegisterUsername, username);
+    var clientVersion = Configuration.GetVersion();
+
+    // Send username + version in one handshake RPC so the server can validate
+    // before spawning this player.
+    RpcId(1, MethodName.RegisterUsername, username, clientVersion);
+  }
+
+  private static string NormalizeVersion(string version)
+  {
+    return (version ?? string.Empty).Trim();
+  }
+
+  private static string DisplayVersionForError(string version)
+  {
+    return string.IsNullOrWhiteSpace(version) ? "unknown" : version;
   }
 
   private void SetSpawnedPlayerNickname(long peerId, string username)
