@@ -146,6 +146,13 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   // This prevents us from starting the sound over and over every frame
   private bool _isCreakingPlaying = false;
 
+  // Name tag shown above remote players when nearby
+  private Label3D _nameLabel;
+  private Player _localPlayer;  // Cached reference — distance measured ship-to-ship, not camera-to-ship
+  private const float NameTagShowDistance = 75.0f;  // Show when closer than this
+  private const float NameTagHideDistance = 85.0f;  // Hide when farther than this (hysteresis)
+  private const float NameTagHeight = 12.0f;
+
   public override void _Ready()
   {
     Health = MaxHealth;
@@ -203,6 +210,25 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       AutoHealTimer.Timeout += OnAutoHealTimeout;
       AutoHealTimer.Start();
     }
+
+    // Create a name label above remote players — hidden until they're nearby
+    if (!IsMultiplayerAuthority())
+    {
+      _nameLabel = new Label3D
+      {
+        Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+        PixelSize = 0.04f,
+        FontSize = 28,
+        OutlineSize = 6,
+        Modulate = new Color(1, 1, 1, 1),
+        OutlineModulate = new Color(0, 0, 0, 1),
+        NoDepthTest = false,
+        Font = GD.Load<FontFile>("res://art/fonts/Texturina/static/Texturina_14pt-Bold.ttf"),
+        Position = Vector3.Up * NameTagHeight,
+        Visible = false
+      };
+      AddChild(_nameLabel);
+    }
   }
 
   private void RandomSpawn(int startXRange, int startYRange)
@@ -245,6 +271,30 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
         FireCannons(false); // false = fire from right side
       }
     }
+  }
+
+  public override void _Process(double delta)
+  {
+    if (_nameLabel == null) return;
+
+    _nameLabel.Text = Nickname ?? "";
+
+    // Lazy-find the local player once; measure ship-to-ship so camera pivot doesn't affect distance
+    if (_localPlayer == null)
+    {
+      var parent = GetParent();
+      if (parent != null)
+        foreach (var child in parent.GetChildren())
+          if (child is Player p && p.IsMultiplayerAuthority()) { _localPlayer = p; break; }
+    }
+    if (_localPlayer == null) return;
+
+    float dist = GlobalPosition.DistanceTo(_localPlayer.GlobalPosition);
+    bool hasName = !string.IsNullOrEmpty(Nickname);
+    if (dist < NameTagShowDistance && hasName)
+      _nameLabel.Visible = true;
+    else if (dist > NameTagHideDistance || !hasName)
+      _nameLabel.Visible = false;
   }
 
   /// <summary>
