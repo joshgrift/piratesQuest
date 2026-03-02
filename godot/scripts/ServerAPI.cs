@@ -78,4 +78,72 @@ public static class ServerAPI
       return (null, true);
     }
   }
+
+  /// <summary>
+  /// Reports a player presence event (join/leave) to the backend API.
+  /// The API may forward this to Discord if configured.
+  /// </summary>
+  public static async Task<bool> NotifyPlayerPresenceAsync(int serverId, string username, bool isOnline)
+  {
+    try
+    {
+      var url = $"{Configuration.ApiBaseUrl}/api/server/{serverId}/presence";
+      var payloadJson = Json.Stringify(new Godot.Collections.Dictionary
+      {
+        { "username", username },
+        { "isOnline", isOnline }
+      });
+
+      var request = new HttpRequestMessage(HttpMethod.Post, url)
+      {
+        Content = new StringContent(payloadJson, Encoding.UTF8, "application/json")
+      };
+      request.Headers.Add("X-Server-Key", Configuration.ServerApiKey);
+
+      using var response = await HttpClient.SendAsync(request);
+      if (!response.IsSuccessStatusCode)
+      {
+        GD.PrintErr($"Failed to send presence event for {username}: HTTP {(int)response.StatusCode}");
+        return false;
+      }
+
+      var status = isOnline ? "joined" : "left";
+      GD.Print($"Presence event sent: {username} {status}");
+      return true;
+    }
+    catch (Exception ex)
+    {
+      GD.PrintErr($"Exception sending presence event for {username}: {ex.Message}");
+      return false;
+    }
+  }
+
+  /// <summary>
+  /// Sends a lightweight heartbeat from the dedicated server to the backend API.
+  /// The API stores LastSeenUtc for server health/status reporting.
+  /// </summary>
+  public static async Task<bool> SendHeartbeatAsync(int serverId)
+  {
+    try
+    {
+      var url = $"{Configuration.ApiBaseUrl}/api/server/{serverId}/heartbeat";
+      var request = new HttpRequestMessage(HttpMethod.Post, url);
+      request.Headers.Add("X-Server-Key", Configuration.ServerApiKey);
+
+      using var response = await HttpClient.SendAsync(request);
+      if (!response.IsSuccessStatusCode)
+      {
+        GD.PrintErr($"Failed to send heartbeat: HTTP {(int)response.StatusCode}");
+        return false;
+      }
+
+      GD.Print($"Heartbeat sent for server {serverId}");
+      return true;
+    }
+    catch (Exception ex)
+    {
+      GD.PrintErr($"Exception sending heartbeat: {ex.Message}");
+      return false;
+    }
+  }
 }

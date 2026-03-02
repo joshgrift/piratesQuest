@@ -7,6 +7,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using PiratesQuest.Server.Data;
 using PiratesQuest.Server.Models;
+using PiratesQuest.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,7 @@ var connectionString = NormalizeConnectionString(rawConnStr);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
+builder.Services.AddHttpClient<DiscordNotifier>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured");
@@ -244,6 +246,49 @@ app.MapPut("/api/server/{id}/state/{user}", async (int id, string user, HttpCont
 }).AddEndpointFilter(ServerAuthFilter);
 
 // ---------------------------------------------------------------------------
+// POST /api/server/{id}/presence  [server auth]
+// Dedicated game server reports player join/leave events.
+// ---------------------------------------------------------------------------
+app.MapPost("/api/server/{id}/presence", async (
+    int id,
+    PresenceEventRequest request,
+    AppDbContext db,
+    DiscordNotifier discordNotifier) =>
+{
+    var username = (request.Username ?? string.Empty).Trim();
+    if (string.IsNullOrWhiteSpace(username))
+        return Results.BadRequest(new { error = "Username is required" });
+
+    var server = await db.GameServers.FindAsync(id);
+    if (server is null)
+        return Results.NotFound(new { error = "Server not found" });
+
+    // Presence events only happen when the game server is online,
+    // so we also treat them as heartbeat activity.
+    server.LastSeenUtc = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+
+    await discordNotifier.NotifyPlayerPresenceAsync(server.Name, username, request.IsOnline);
+    return Results.Ok();
+}).AddEndpointFilter(ServerAuthFilter);
+
+// ---------------------------------------------------------------------------
+// POST /api/server/{id}/heartbeat  [server auth]
+// Dedicated game server periodically checks in so the API can expose health.
+// ---------------------------------------------------------------------------
+app.MapPost("/api/server/{id}/heartbeat", async (int id, AppDbContext db) =>
+{
+    var server = await db.GameServers.FindAsync(id);
+    if (server is null)
+        return Results.NotFound(new { error = "Server not found" });
+
+    server.LastSeenUtc = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { server.Id, server.Name, server.LastSeenUtc });
+}).AddEndpointFilter(ServerAuthFilter);
+
+// ---------------------------------------------------------------------------
 // GET /fragments/{spaId}/{**path}  [public]
 // SPA fallback: if the path matches an actual file on disk, serve it with
 // the correct MIME type. Otherwise return index.html for client-side routing.
@@ -275,11 +320,20 @@ app.MapGet("/fragments/{spaId}/{**path}", (string spaId, string? path) =>
 app.MapGet("/api/status", async (AppDbContext db) =>
 {
     var version = await db.Meta.FirstOrDefaultAsync(m => m.Key == "version");
+    var servers = await db.GameServers
+        .OrderBy(s => s.Name)
+        .Select(s => new
+        {
+            s.Name,
+            s.LastSeenUtc
+        })
+        .ToListAsync();
 
     return Results.Ok(new
     {
         version = version?.Value ?? "unknown",
-        updatedAt = version?.UpdatedAt
+        updatedAt = version?.UpdatedAt,
+        servers
     });
 });
 
@@ -347,7 +401,7 @@ app.MapPut("/api/management/server", async (ServerRequest request, AppDbContext 
 app.MapGet("/api/management/servers", async (AppDbContext db) =>
 {
     var servers = await db.GameServers
-        .Select(s => new { s.Id, s.Name, s.Address, s.Port, s.IsActive, s.CreatedAt })
+        .Select(s => new { s.Id, s.Name, s.Address, s.Port, s.IsActive, s.LastSeenUtc, s.CreatedAt })
         .ToListAsync();
 
     return Results.Ok(servers);
@@ -427,3 +481,4 @@ record LoginRequest(string Username, string Password);
 record ServerRequest(string Name, string Address, int Port);
 record VersionRequest(string Version);
 record RoleRequest(string Role);
+record PresenceEventRequest(string Username, bool IsOnline);

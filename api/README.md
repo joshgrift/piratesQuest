@@ -20,6 +20,8 @@ Set these values in `appsettings.json` (or `appsettings.Development.json` for lo
 | `ConnectionStrings:Default` | PostgreSQL connection string |
 | `Jwt:Key` | HMAC-SHA256 signing key for JWTs (min 32 bytes) |
 | `ServerApiKey` | Shared secret that game servers use to call state endpoints |
+| `DiscordBot:Token` | Optional Discord bot token for join/leave notifications |
+| `DiscordBot:ChannelId` | Optional Discord channel ID to post notifications into |
 
 ## Auth
 
@@ -44,6 +46,7 @@ Game servers authenticate by sending the shared secret in the `X-Server-Key` hea
 | `GET` | `/api/servers` | JWT | List active game servers |
 | `GET` | `/api/server/{id}/state/{user}` | Server key | Get a player's saved game state |
 | `PUT` | `/api/server/{id}/state/{user}` | Server key | Save a player's game state (opaque JSON) |
+| `POST` | `/api/server/{id}/presence` | Server key | Report a player join/leave event |
 | `GET` | `/fragments/{spaId}` | Public | Serve a SPA from `fragments/{spaId}/` |
 | `GET` | `/` | Public | Landing page |
 

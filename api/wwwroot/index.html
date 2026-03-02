@@ -620,12 +620,39 @@
         }
 
         .server-status {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
+            display: block;
             margin-bottom: 1.5rem;
             font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .server-status-title {
+            margin-bottom: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .server-status-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 0.45rem;
+            justify-items: center;
+        }
+
+        .server-status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            color: var(--text-muted);
+        }
+
+        .server-status-name {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .server-status-time {
             color: var(--text-muted);
         }
 
@@ -1011,8 +1038,8 @@
     </div>
 
     <div class="server-status">
-        <span class="status-dot" id="status-dot"></span>
-        <span id="status-text">Checking server&hellip;</span>
+        <div class="server-status-title" id="status-text">Checking servers&hellip;</div>
+        <ul class="server-status-list" id="server-status-list"></ul>
     </div>
 </footer>
 
@@ -1020,8 +1047,76 @@
     (async function fetchStatus() {
         const badge = document.getElementById('version-badge');
         const dlVersion = document.getElementById('download-version');
-        const dot = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
+        const statusList = document.getElementById('server-status-list');
+
+        function renderServerStatuses(servers) {
+            statusList.innerHTML = '';
+
+            if (!Array.isArray(servers) || servers.length === 0) {
+                const empty = document.createElement('li');
+                empty.className = 'server-status-item';
+                empty.textContent = 'No servers listed';
+                statusList.appendChild(empty);
+                return;
+            }
+
+            const offlineThresholdMs = 90 * 1000;
+            const now = Date.now();
+
+            function formatLastSeenLocal(date) {
+                const diffMs = now - date.getTime();
+                const diffMinutes = Math.floor(diffMs / 60000);
+
+                if (diffMinutes < 1) {
+                    return 'seen just now';
+                }
+                if (diffMinutes < 60) {
+                    return 'seen ' + diffMinutes + 'm ago';
+                }
+
+                const diffHours = Math.floor(diffMinutes / 60);
+                if (diffHours < 24) {
+                    return 'seen ' + diffHours + 'h ago';
+                }
+
+                return 'seen ' + date.toLocaleString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                });
+            }
+
+            servers.forEach((server) => {
+                const row = document.createElement('li');
+                row.className = 'server-status-item';
+
+                const dot = document.createElement('span');
+                dot.className = 'status-dot';
+
+                const lastSeenUtc = server && server.lastSeenUtc ? new Date(server.lastSeenUtc) : null;
+                const isOnline = lastSeenUtc && (now - lastSeenUtc.getTime()) <= offlineThresholdMs;
+                dot.classList.add(isOnline ? 'online' : 'offline');
+
+                const name = document.createElement('span');
+                name.className = 'server-status-name';
+                name.textContent = server && server.name ? server.name : 'Unnamed server';
+
+                const separator = document.createElement('span');
+                separator.textContent = '·';
+
+                const time = document.createElement('span');
+                time.className = 'server-status-time';
+                time.textContent = lastSeenUtc ? formatLastSeenLocal(lastSeenUtc) : 'never seen';
+
+                row.appendChild(dot);
+                row.appendChild(name);
+                row.appendChild(separator);
+                row.appendChild(time);
+                statusList.appendChild(row);
+            });
+        }
 
         try {
             const res = await fetch('/api/status');
@@ -1038,8 +1133,8 @@
             document.getElementById('download-macos').href = macosUrl;
             document.getElementById('download-windows').href = winUrl;
 
-            dot.classList.add('online');
-            statusText.textContent = 'Server online \u00B7 Alpha ' + alphaNum;
+            statusText.textContent = 'Server status';
+            renderServerStatuses(data.servers);
 
             if (data.updatedAt) {
                 const date = new Date(data.updatedAt);
@@ -1048,8 +1143,8 @@
             }
         } catch {
             badge.textContent = 'Alpha';
-            dot.classList.add('offline');
-            statusText.textContent = 'Server offline';
+            statusText.textContent = 'Server status unavailable';
+            renderServerStatuses([]);
         }
     })();
 

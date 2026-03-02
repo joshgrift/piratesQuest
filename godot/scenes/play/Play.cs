@@ -8,6 +8,9 @@ using System.Collections.Generic;
 
 public partial class Play : Node3D
 {
+  // 30 seconds keeps API traffic low while still giving regular "server is alive" updates.
+  private const double HeartbeatIntervalSeconds = 60.0;
+
   [Export] private MultiplayerSpawner _playerSpawner;
   [Export] private MultiplayerSpawner _projectileSpawner;
   [Export] private MultiplayerSpawner _deadPlayerSpawner;
@@ -19,6 +22,7 @@ public partial class Play : Node3D
   private PackedScene _cannonBallScene = GD.Load<PackedScene>("res://scenes/cannon_ball/cannon_ball.tscn");
   private PackedScene _deadPlayerScene = GD.Load<PackedScene>("res://scenes/dead_player/dead_player.tscn");
   private readonly Dictionary<long, string> _peerUsernames = new();
+  private Timer _heartbeatTimer;
 
   public override void _Ready()
   {
@@ -42,6 +46,8 @@ public partial class Play : Node3D
       AddChild(autoSaveTimer);
       GD.Print("Auto-save timer started (every 30s)");
 
+      StartServerHeartbeatIfNeeded();
+
       // Activate free camera in server mode
       if (Configuration.IsDesignatedServerMode() && _freeCam != null)
       {
@@ -62,7 +68,14 @@ public partial class Play : Node3D
   private void OnPeerDisconnected(long peerId)
   {
     GD.Print($"Peer {peerId} disconnected, cleaning up their player");
+    // Keep the username before removing it so we can report an offline event.
+    var hadUsername = _peerUsernames.TryGetValue(peerId, out var username);
     _peerUsernames.Remove(peerId);
+
+    if (hadUsername && !string.IsNullOrWhiteSpace(username))
+    {
+      NotifyPresence(username, false);
+    }
 
     var playerNode = GetNodeOrNull<Player>($"SpawnPoint/player_{peerId}");
     if (playerNode != null)
@@ -89,6 +102,36 @@ public partial class Play : Node3D
     }
 
     await ServerAPI.SavePlayerStateAsync(Configuration.ServerId, player.UserId, json);
+  }
+
+  /// <summary>
+  /// Dedicated server only: send regular heartbeats to API so /api/status can show last seen UTC.
+  /// </summary>
+  private void StartServerHeartbeatIfNeeded()
+  {
+    // Local host/listen-server sessions don't have server API credentials.
+    // Only dedicated server mode should send API heartbeats.
+    if (!Configuration.IsDesignatedServerMode())
+    {
+      return;
+    }
+
+    _heartbeatTimer = new Timer
+    {
+      WaitTime = HeartbeatIntervalSeconds,
+      Autostart = true
+    };
+    _heartbeatTimer.Timeout += OnHeartbeatTimerTimeout;
+    AddChild(_heartbeatTimer);
+
+    // Send an immediate heartbeat on startup so the API reflects "up" quickly.
+    OnHeartbeatTimerTimeout();
+    GD.Print($"Heartbeat timer started (every {HeartbeatIntervalSeconds:0.#}s)");
+  }
+
+  private void OnHeartbeatTimerTimeout()
+  {
+    _ = ServerAPI.SendHeartbeatAsync(Configuration.ServerId);
   }
 
   private void OnAutoSave()
@@ -230,6 +273,7 @@ public partial class Play : Node3D
     {
       var oldPeerId = existingPeerId.Value;
       GD.Print($"Username '{normalizedUsername}' is already connected on peer {oldPeerId}. Replacing with peer {peerId}.");
+      NotifyPresence(normalizedUsername, false);
 
       // Remove the old username mapping now so the new peer can be registered immediately.
       // OnPeerDisconnected will run shortly after and clean up the old player node.
@@ -246,6 +290,15 @@ public partial class Play : Node3D
     _peerUsernames[peerId] = normalizedUsername;
     SpawnPlayer(peerId);
     SetSpawnedPlayerNickname(peerId, normalizedUsername);
+    NotifyPresence(normalizedUsername, true);
+  }
+
+  /// <summary>
+  /// Fire-and-forget wrapper so network notifications never block gameplay.
+  /// </summary>
+  private void NotifyPresence(string username, bool isOnline)
+  {
+    _ = ServerAPI.NotifyPlayerPresenceAsync(Configuration.ServerId, username, isOnline);
   }
 
   /// <summary>
@@ -414,6 +467,11 @@ public partial class Play : Node3D
     {
       audioManager.StopLoop("ocean");
       GD.Print("Background audio stopped");
+    }
+
+    if (_heartbeatTimer != null)
+    {
+      _heartbeatTimer.Timeout -= OnHeartbeatTimerTimeout;
     }
   }
 }
