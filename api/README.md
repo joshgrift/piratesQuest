@@ -66,3 +66,48 @@ Game servers authenticate by sending the shared secret in the `X-Server-Key` hea
 ## Fragments
 
 Drop a pre-built SPA into `fragments/{name}/` with an `index.html` entry point. It will be served at `/fragments/{name}`. Static assets (JS, CSS) in the same directory are served automatically.
+
+## Testing (Containerized DB)
+
+The API test suite uses a **real PostgreSQL test container** (not your local dev DB).
+
+- Test project: `tests/Api.IntegrationTests/`
+- Framework: `xUnit`
+- App host: `Microsoft.AspNetCore.Mvc.Testing` (`WebApplicationFactory`)
+- Database container: `Testcontainers.PostgreSql`
+- Assertions: `FluentAssertions`
+- DB cleanup between tests: `Respawn`
+- Coverage collector: `coverlet.collector`
+
+### Prerequisites
+
+- Docker must be running (Testcontainers starts `postgres:16-alpine` automatically).
+- .NET SDK 9 installed.
+
+### Run tests
+
+From repo root:
+
+```bash
+dotnet test api/tests/Api.IntegrationTests/Api.IntegrationTests.csproj
+```
+
+From `api/` folder:
+
+```bash
+dotnet test tests/Api.IntegrationTests/Api.IntegrationTests.csproj
+```
+
+### Run tests with coverage
+
+```bash
+dotnet test api/tests/Api.IntegrationTests/Api.IntegrationTests.csproj --collect:\"XPlat Code Coverage\"
+```
+
+### What is covered
+
+- Auth: signup, login, JWT-protected endpoints.
+- Server runtime: heartbeat, online/offline status mapping, presence auth checks.
+- Player state API: put/get state, missing server/state paths, server-key auth checks.
+- Admin management: role enforcement, server create/delete, role promotion flow.
+- Status/version: default status payload, server ordering, version update flow.

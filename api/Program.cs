@@ -588,3 +588,6 @@ record VersionRequest(string Version);
 record RoleRequest(string Role);
 record PresenceEventRequest(string Username, bool IsOnline);
 record HeartbeatRequest(int PlayerCount, int PlayerMax, string ServerVersion);
+
+// Exposed for integration testing with WebApplicationFactory<Program>.
+public partial class Program { }
