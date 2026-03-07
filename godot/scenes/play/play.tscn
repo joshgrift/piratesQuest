@@ -228,7 +228,6 @@ MaxTerrainTriangles = 1500
 [node name="Island2" parent="Terrain/Islands" instance=ExtResource("6_q6imw")]
 transform = Transform3D(0.06815458, 0, 0.99767476, 0, 1, 0, -0.99767476, 0, 0.06815458, -47.338165, -2.0922003, 153.97104)
 NoiseScale = 0.3
-SubdivisionDepth = 4
 MaxTerrainTriangles = 1500
 
 [node name="Island3" parent="Terrain/Islands" instance=ExtResource("11_qysfa")]
@@ -602,7 +601,7 @@ ResourceType = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 312.1313, 0.9999962, 99.66588)
 
 [node name="CollectionPoint4" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 234.42058, 0.99998474, 42.4566)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 234.00935, 0.99998474, 35.94434)
 
 [node name="CollectionPoint3" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -69.83989, 1, 202.40106)

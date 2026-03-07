@@ -104,7 +104,7 @@ public partial class Menu : Node2D
     }
 
     _webView = control;
-    _webView.Set("url", Configuration.MenuWebViewUrl);
+    _webView.Set("url", BuildMenuUrlWithCacheBuster());
     _webView.Set("full_window_size", false);
     _webView.Set("transparent", false);
     _webView.Set("devtools", true);
@@ -118,6 +118,23 @@ public partial class Menu : Node2D
     _webView.Connect("ipc_message", new Callable(this, MethodName.OnIpcMessage));
     GetTree().Root.SizeChanged += OnWindowResized;
     CallDeferred(MethodName.SyncWebViewSize);
+  }
+
+  private string BuildMenuUrlWithCacheBuster()
+  {
+    var menuUrl = Configuration.MenuWebViewUrl;
+    var separator = menuUrl.Contains("?") ? "&" : "?";
+
+    // Always include game version so new releases pull fresh menu assets.
+    menuUrl = $"{menuUrl}{separator}v={Uri.EscapeDataString(Configuration.GetVersion())}";
+
+    // In editor/debug, add a per-launch cache buster for rapid UI iteration.
+    if (OS.HasFeature("editor") || OS.IsDebugBuild())
+    {
+      menuUrl = $"{menuUrl}&cb={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+    }
+
+    return menuUrl;
   }
 
   private void OnWindowResized()

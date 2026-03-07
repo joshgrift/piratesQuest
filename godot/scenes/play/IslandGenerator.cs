@@ -60,6 +60,15 @@ public partial class IslandGenerator : Node3D
   /// Higher values simplify the polygon before triangulation.
   /// </summary>
   [Export(PropertyHint.Range, "0.1,10.0,0.1")] public float PathPointSpacing = 1.5f;
+  /// <summary>
+  /// How far inward (world units) to inset the island collision boundary from the path.
+  /// This creates a forgiving "wall" before the detailed shoreline mesh.
+  /// </summary>
+  [Export(PropertyHint.Range, "0.0,10.0,0.1")] public float CollisionInset = 2.0f;
+  /// <summary>
+  /// Vertical height (meters) of the extruded boundary collision prism.
+  /// </summary>
+  [Export(PropertyHint.Range, "1.0,50.0,0.5")] public float CollisionDepth = 20.0f;
 
   [ExportGroup("Trees")]
   /// <summary>Target number of palm trees to scatter across the island.</summary>
@@ -103,6 +112,7 @@ public partial class IslandGenerator : Node3D
   private const string PathNodeName = "IslandPath";
   private const string TerrainNodeName = "Terrain";
   private const string CollisionNodeName = "TerrainCollision";
+  private const string BoundaryCollisionShapeName = "IslandBoundaryShape";
   private const string TreesNodeName = "Trees";
 
   private const string PalmStraightPath = "res://art/kenny_pirate/palm-detailed-straight.glb";
@@ -214,19 +224,45 @@ public partial class IslandGenerator : Node3D
     mi.Owner = GetTree().EditedSceneRoot;
 
     // ── 8. Collision ────────────────────────────────────────────────────────
-    var collShape = new CollisionShape3D { Name = "TerrainShape", Shape = mesh.CreateTrimeshShape() };
-
+    // Keep the generated terrain mesh collision (useful for non-ship interactions),
+    // then add a simpler inset polygon wall so ships hit a clean island boundary.
     var body = new StaticBody3D
     {
       Name = CollisionNodeName,
       CollisionLayer = 4, // Layer 3 = Terrain (bit 3 → value 4)
       CollisionMask = 7   // Layers 1-3
     };
-    body.AddChild(collShape);
-    collShape.Owner = GetTree().EditedSceneRoot;
-
     AddChild(body);
     body.Owner = GetTree().EditedSceneRoot;
+
+    var terrainCollShape = new CollisionShape3D
+    {
+      Name = "TerrainShape",
+      Shape = mesh.CreateTrimeshShape()
+    };
+    body.AddChild(terrainCollShape);
+    terrainCollShape.Owner = GetTree().EditedSceneRoot;
+
+    var insetPolygon = BuildInsetCollisionPolygon(poly, CollisionInset);
+    if (insetPolygon.Length >= 3)
+    {
+      // CollisionPolygon3D is defined in XY and extruded along local Z.
+      // Rotate +90° around X so the polygon sits in XZ and extrudes vertically.
+      var boundaryShape = new CollisionPolygon3D
+      {
+        Name = BoundaryCollisionShapeName,
+        Polygon = insetPolygon,
+        Depth = Mathf.Max(1f, CollisionDepth),
+        RotationDegrees = new Vector3(90f, 0f, 0f)
+      };
+
+      body.AddChild(boundaryShape);
+      boundaryShape.Owner = GetTree().EditedSceneRoot;
+    }
+    else
+    {
+      GD.PrintErr("IslandGenerator: Could not build inset collision polygon; falling back to terrain trimesh collision only.");
+    }
 
     // ── 9. Trees ────────────────────────────────────────────────────────────
     PlaceTrees(poly, refDist, noise);
@@ -449,5 +485,58 @@ public partial class IslandGenerator : Node3D
       maxZ = Mathf.Max(maxZ, p.Y);
     }
     return new Rect2(minX, minZ, maxX - minX, maxZ - minZ);
+  }
+
+  /// <summary>
+  /// Builds an inset polygon for a simple collision boundary.
+  /// Uses Godot's polygon offset utility so concave islands are handled better
+  /// than naive centroid-scaling.
+  /// </summary>
+  private static Vector2[] BuildInsetCollisionPolygon(Vector2[] sourcePolygon, float insetDistance)
+  {
+    var basePoly = sourcePolygon;
+    float inset = Mathf.Max(0f, insetDistance);
+
+    // No inset requested: use the original polygon.
+    if (inset <= 0.001f)
+      return basePoly;
+
+    // Negative delta = inset (shrink) in Geometry2D.
+    var insetCandidates = Geometry2D.OffsetPolygon(basePoly, -inset);
+    if (insetCandidates.Count == 0)
+      return basePoly;
+
+    // Pick the largest result polygon so tiny fragments don't become the collider.
+    int bestIndex = 0;
+    float bestArea = 0f;
+    for (int i = 0; i < insetCandidates.Count; i++)
+    {
+      var candidate = insetCandidates[i];
+      float area = Mathf.Abs(GetPolygonArea(candidate));
+      if (area > bestArea)
+      {
+        bestArea = area;
+        bestIndex = i;
+      }
+    }
+
+    return insetCandidates[bestIndex];
+  }
+
+  /// <summary>
+  /// Shoelace area (signed) for a 2D polygon.
+  /// </summary>
+  private static float GetPolygonArea(Vector2[] poly)
+  {
+    if (poly == null || poly.Length < 3) return 0f;
+
+    float sum = 0f;
+    for (int i = 0; i < poly.Length; i++)
+    {
+      var a = poly[i];
+      var b = poly[(i + 1) % poly.Length];
+      sum += (a.X * b.Y) - (b.X * a.Y);
+    }
+    return sum * 0.5f;
   }
 }
