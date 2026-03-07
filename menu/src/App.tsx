@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { sendIpc } from "./utils/ipc";
-import type { GithubRelease, MenuServer, MenuState } from "./types";
+import type { ApiStatusResponse, GithubRelease, MenuServer, MenuState } from "./types";
 
 const RELEASES_URL = "https://api.github.com/repos/joshgrift/piratesQuest/releases?per_page=6";
 const DISCORD_INVITE_URL = "https://discord.gg/R9Fz54UNud";
+const WEBSITE_URL = "https://pirates.quest";
 
 const EMPTY_STATE: MenuState = {
   apiBaseUrl: "",
@@ -74,6 +75,57 @@ function serverKey(server: MenuServer): string {
   return `${server.ipAddress}:${server.port}`;
 }
 
+function normalizeVersion(value: string): { numbers: number[]; isPrerelease: boolean } | null {
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed || trimmed === "unknown") {
+    return null;
+  }
+
+  const withoutPrefix = trimmed.startsWith("v") ? trimmed.slice(1) : trimmed;
+  const [mainPart = "", prereleasePart] = withoutPrefix.split("-", 2);
+  const numberParts = mainPart
+    .split(".")
+    .map((part) => Number.parseInt(part, 10))
+    .filter((part) => Number.isFinite(part));
+
+  if (numberParts.length === 0) {
+    return null;
+  }
+
+  return {
+    numbers: numberParts,
+    isPrerelease: !!prereleasePart,
+  };
+}
+
+function compareVersions(a: string, b: string): number {
+  const left = normalizeVersion(a);
+  const right = normalizeVersion(b);
+
+  if (!left || !right) {
+    return 0;
+  }
+
+  const max = Math.max(left.numbers.length, right.numbers.length);
+  for (let index = 0; index < max; index += 1) {
+    const leftNumber = left.numbers[index] ?? 0;
+    const rightNumber = right.numbers[index] ?? 0;
+    if (leftNumber > rightNumber) {
+      return 1;
+    }
+    if (leftNumber < rightNumber) {
+      return -1;
+    }
+  }
+
+  if (left.isPrerelease !== right.isPrerelease) {
+    // Stable beats prerelease when numeric parts are the same.
+    return left.isPrerelease ? -1 : 1;
+  }
+
+  return 0;
+}
+
 export default function App() {
   const [menuState, setMenuState] = useState<MenuState>(EMPTY_STATE);
 
@@ -89,6 +141,7 @@ export default function App() {
   const [releases, setReleases] = useState<GithubRelease[]>([]);
   const [isLoadingReleases, setIsLoadingReleases] = useState(true);
   const [releaseError, setReleaseError] = useState("");
+  const [latestStatusVersion, setLatestStatusVersion] = useState("");
 
   useEffect(() => {
     // Godot pushes state snapshots through this callback.
@@ -151,10 +204,43 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadLatestStatusVersion() {
+      if (!menuState.apiBaseUrl.trim()) {
+        return;
+      }
+
+      try {
+        const statusUrl = new URL("/api/status", menuState.apiBaseUrl).toString();
+        const response = await fetch(statusUrl);
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as ApiStatusResponse;
+        if (!cancelled) {
+          setLatestStatusVersion(payload.version?.trim() ?? "");
+        }
+      } catch {
+        // Silent fallback: menu should still be usable if status check fails.
+      }
+    }
+
+    loadLatestStatusVersion();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [menuState.apiBaseUrl]);
+
   const canSubmitAuth = username.trim().length > 0 && password.length > 0 && !menuState.isAuthenticating;
   const statusClass = menuState.statusTone === "error" ? "status status-error" : "status status-info";
 
   const visibleReleases = useMemo(() => releases.slice(0, 5), [releases]);
+  const hasUpdateAvailable =
+    compareVersions(latestStatusVersion, menuState.version) > 0;
 
   function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -221,6 +307,18 @@ export default function App() {
           <header className="hero">
             <h1>PiratesQuest</h1>
             <p className="hero-version">Version {menuState.version || "unknown"}</p>
+            {hasUpdateAvailable && (
+              <div className="update-callout" role="status" aria-live="polite">
+                <span>Update available: {latestStatusVersion}</span>
+                <button
+                  className="ghost-action update-callout-link"
+                  onClick={() => sendIpc({ action: "open_url", url: WEBSITE_URL })}
+                  type="button"
+                >
+                  Update on pirates.quest
+                </button>
+              </div>
+            )}
           </header>
 
           {!menuState.isAuthenticated && (

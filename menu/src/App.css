@@ -115,6 +115,25 @@ body {
   text-transform: uppercase;
 }
 
+.update-callout {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(212, 167, 72, 0.7);
+  border-radius: 10px;
+  background: rgba(212, 167, 72, 0.18);
+  color: #ffe3a9;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.update-callout-link {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
 .tagline {
   margin: 2px 4px 0;
   color: #f2d9ab;

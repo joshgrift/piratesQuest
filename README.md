@@ -23,6 +23,8 @@ PiratesQuest uses three pieces:
 
 Starts the backend (Docker DB + API), a game server, and a client. Use `--server` to skip the client. Default API URL is `http://localhost:5236`.
 
+This runs everything, use this whenever in doubt. AI agents should never use the run command, as it's quite intensive.
+
 ### Run client in editor
 - Open `godot/project.godot` in Godot 4
 - Press Play
@@ -37,9 +39,10 @@ All scripts are in the repo root and run from there.
 | Script | Description |
 |--------|-------------|
 | `build-game.sh` | Builds menu + local port UI, then exports the Godot project to macOS and Windows builds zipped into `dist/<version>/`. |
-| `run.sh` | Runs a local dev session. Builds menu + local port UI, starts the backend, a game server, and a client side-by-side. Supports `--server` (server only), `--prod` (use production API at pirates.quest), `--user`, and `--password` flags. |
+| `run.sh` | Runs a local dev session. Builds menu + admin + local port UI, starts the backend, a game server, and a client side-by-side. Supports `--server` (server only), `--prod` (use production API at pirates.quest), `--user`, and `--password` flags. |
 | `publish-backend.sh` | Builds the menu webview + API into a Docker image (`piratesquest-api`). Pass an optional tag argument (default `latest`). |
 | `manage.sh` | Admin CLI for the REST API. Manage users, game servers, roles, and game version. Requires `PQ_API_URL` and either `PQ_TOKEN` or a login. |
+| `admin/` | React/TypeScript admin panel that replaces most `manage.sh` usage. Build output is `api/wwwroot/admin/` and is served by the API at `/admin/`. |
 
 ## Releasing
 - Update Version in Project Settings
@@ -89,6 +92,16 @@ npm run build
 ```
 
 The build output goes to `../api/fragments/menu/`, which the API serves as static files.
+
+### Building the admin UI
+
+```bash
+cd admin
+npm install
+npm run build
+```
+
+The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`.
 
 ## Third Party
 - [GoDot](https://godotengine.org/)

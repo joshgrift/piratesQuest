@@ -6,3 +6,5 @@ dist/
 godot/webview/
 node_modules/
 **/node_modules/
+**/*.tsbuildinfo
+api/wwwroot/admin/

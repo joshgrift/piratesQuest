@@ -40,6 +40,10 @@ echo -e "${YELLOW}=== Building Menu WebView ===${RESET}"
 npm --prefix menu install
 npm --prefix menu run build || exit 1
 
+echo -e "${YELLOW}=== Building Admin Panel ===${RESET}"
+npm --prefix admin install
+npm --prefix admin run build || exit 1
+
 echo -e "${YELLOW}=== Building Local Port WebView ===${RESET}"
 npm --prefix webview install
 npm --prefix webview run build || exit 1

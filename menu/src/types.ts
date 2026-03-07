@@ -47,6 +47,12 @@ export interface GithubRelease {
   prerelease: boolean;
 }
 
+// Public API status payload used by the menu to compare client version vs latest.
+export interface ApiStatusResponse {
+  version: string;
+  updatedAt?: string | null;
+}
+
 declare global {
   interface Window {
     ipc?: { postMessage: (json: string) => void };
