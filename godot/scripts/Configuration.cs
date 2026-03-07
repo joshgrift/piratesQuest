@@ -13,6 +13,7 @@ partial class Configuration : Node
 {
   private const string LocalApiBaseUrl = "http://localhost:5236";
   private const string ProductionApiBaseUrl = "https://pirates.quest";
+  private const string DefaultDiscordInviteUrl = "https://discord.gg/piratesquest";
 
   // Godot's per-user, writable save file. On each OS this maps to a safe local app-data folder.
   private const string LocalConfigPath = "user://settings.cfg";
@@ -43,6 +44,10 @@ partial class Configuration : Node
   public static bool DisableSaveUser { get; private set; }
   // Defaults to {ApiBaseUrl}/fragments/webview/. Override with --webview-url <url>.
   public static string WebViewUrl { get; private set; } = $"{ApiBaseUrl}/fragments/webview/";
+  // Defaults to {ApiBaseUrl}/fragments/menu/. Override with --menu-url <url>.
+  public static string MenuWebViewUrl { get; private set; } = $"{ApiBaseUrl}/fragments/menu/";
+  // Main menu button target.
+  public static string DiscordInviteUrl { get; private set; } = DefaultDiscordInviteUrl;
 
   private static string GetDefaultApiBaseUrl()
   {
@@ -110,6 +115,7 @@ partial class Configuration : Node
   private static void ParseClientArgs()
   {
     bool hasExplicitWebViewUrl = false;
+    bool hasExplicitMenuWebViewUrl = false;
 
     var args = OS.GetCmdlineArgs();
     for (int i = 0; i < args.Length; i++)
@@ -129,6 +135,10 @@ partial class Configuration : Node
           WebViewUrl = args[i + 1];
           hasExplicitWebViewUrl = true;
           break;
+        case "--menu-url" when i + 1 < args.Length:
+          MenuWebViewUrl = args[i + 1];
+          hasExplicitMenuWebViewUrl = true;
+          break;
         case "--api-url" when i + 1 < args.Length:
           ApiBaseUrl = args[i + 1].TrimEnd('/');
           break;
@@ -144,6 +154,10 @@ partial class Configuration : Node
     if (!hasExplicitWebViewUrl)
     {
       WebViewUrl = $"{ApiBaseUrl}/fragments/webview/";
+    }
+    if (!hasExplicitMenuWebViewUrl)
+    {
+      MenuWebViewUrl = $"{ApiBaseUrl}/fragments/menu/";
     }
   }
 

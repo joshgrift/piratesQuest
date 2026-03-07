@@ -1,0 +1,464 @@
+@font-face {
+  font-family: "New Rocker";
+  src: url("./assets/NewRocker-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Texturina";
+  src: url("./assets/Texturina-VariableFont_opsz,wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --bg-night: #0d1b2a;
+  --bg-mid: #1b2d4a;
+  --ink: #f3e7d1;
+  --muted: #b8a88f;
+  --gold-1: #d4a748;
+  --gold-2: #b8860b;
+  --gold-3: #8b6914;
+  --error: #f97d7d;
+  --info: #8cd0ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: "Texturina", Georgia, serif;
+  color: var(--ink);
+  overflow: hidden;
+}
+
+.menu-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+  background:
+    linear-gradient(145deg, rgba(13, 27, 42, 0.92), rgba(27, 45, 74, 0.7)),
+    url("./assets/banner.png") center / cover no-repeat;
+}
+
+.menu-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(212, 167, 72, 0.22), transparent 35%),
+    radial-gradient(circle at 80% 85%, rgba(140, 80, 26, 0.28), transparent 40%);
+  pointer-events: none;
+}
+
+.hud-top-left {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  z-index: 2;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.menu-shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1.35fr 0.85fr;
+  gap: 24px;
+  width: 100%;
+  height: 100%;
+  padding: 78px 60px 52px;
+}
+
+.menu-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.hero {
+  padding: 18px 10px 22px;
+  min-height: 180px;
+  display: grid;
+  align-content: end;
+}
+
+.hero h1 {
+  margin: 0;
+  font-family: "New Rocker", cursive;
+  font-size: clamp(72px, 8.2vw, 132px);
+  line-height: 0.84;
+  letter-spacing: 0.01em;
+  color: var(--gold-1);
+  text-shadow: 0 8px 28px rgba(0, 0, 0, 0.7);
+}
+
+.tagline {
+  margin: 2px 4px 0;
+  color: #f2d9ab;
+  font-size: clamp(15px, 1.3vw, 19px);
+  opacity: 0.92;
+}
+
+.panel {
+  border: 1px solid rgba(212, 167, 72, 0.35);
+  border-radius: 14px;
+  background: rgba(7, 15, 24, 0.65);
+  backdrop-filter: blur(3px);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.28);
+}
+
+.status {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.status-info {
+  background: rgba(140, 208, 255, 0.13);
+  border: 1px solid rgba(140, 208, 255, 0.4);
+  color: var(--info);
+}
+
+.status-error {
+  background: rgba(249, 125, 125, 0.12);
+  border: 1px solid rgba(249, 125, 125, 0.42);
+  color: var(--error);
+}
+
+.auth-panel,
+.server-panel,
+.custom-panel,
+.menu-side {
+  padding: 20px;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tab-btn {
+  font-family: "New Rocker", cursive;
+  font-size: 18px;
+  color: #7f90af;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(212, 167, 72, 0.2);
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.tab-btn:hover,
+.tab-btn.active {
+  color: #ffd477;
+  border-color: rgba(212, 167, 72, 0.8);
+  background: rgba(212, 167, 72, 0.18);
+}
+
+.auth-form,
+.custom-join-form {
+  display: grid;
+  gap: 10px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(212, 167, 72, 0.35);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 16px;
+}
+
+input:focus {
+  outline: 2px solid rgba(212, 167, 72, 0.45);
+  border-color: rgba(212, 167, 72, 0.8);
+}
+
+.confirm-btn,
+.discord-btn {
+  border: 1px solid var(--gold-1);
+  border-radius: 9px;
+  background: linear-gradient(180deg, var(--gold-2) 0%, var(--gold-3) 100%);
+  color: #fff6df;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-family: "New Rocker", cursive;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.confirm-btn:hover,
+.discord-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+.confirm-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+  transform: none;
+  filter: none;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 6px 4px 8px;
+}
+
+h2 {
+  margin: 0;
+  font-family: "New Rocker", cursive;
+  font-size: 27px;
+  color: var(--gold-1);
+}
+
+.server-list,
+.release-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.server-row,
+.release-card {
+  width: 100%;
+  border: 1px solid rgba(212, 167, 72, 0.35);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.server-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+}
+
+.server-row:hover,
+.release-card:hover {
+  border-color: rgba(212, 167, 72, 0.82);
+  background: rgba(212, 167, 72, 0.12);
+}
+
+.server-name {
+  font-family: "Texturina", Georgia, serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f6deaf;
+}
+
+.join-chip {
+  color: #fff6de;
+  font-family: "New Rocker", cursive;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #d4a748;
+  background: linear-gradient(180deg, #d4a748 0%, #8b6914 100%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.release-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+}
+
+.release-name {
+  margin: 0;
+  font-family: "New Rocker", cursive;
+  font-size: clamp(32px, 2.6vw, 44px);
+  line-height: 0.9;
+  color: #ffd988;
+}
+
+.release-date {
+  color: #94a9c6;
+  font-size: 13px;
+}
+
+.release-card p {
+  margin: 0;
+  color: #cfb88f;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.release-fallback {
+  margin: 0;
+  color: #cfb88f;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.release-markdown {
+  color: #cfb88f;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.release-markdown :is(h1, h2, h3, h4, h5, h6) {
+  margin: 0.35em 0 0.2em;
+  color: #f2d9ab;
+  font-size: 1em;
+}
+
+.release-markdown p {
+  margin: 0.25em 0;
+}
+
+.release-markdown ul,
+.release-markdown ol {
+  margin: 0.25em 0;
+  padding-left: 1.2em;
+}
+
+.release-markdown li {
+  margin: 0.12em 0;
+}
+
+.release-markdown a {
+  color: #8cd0ff;
+}
+
+.ghost-btn,
+.ghost-action {
+  border: 1px solid rgba(212, 167, 72, 0.5);
+  border-radius: 999px;
+  background: rgba(8, 15, 24, 0.6);
+  color: #f0d39a;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ghost-btn {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.ghost-action {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.arrow-toggle {
+  border: 1px solid rgba(212, 167, 72, 0.75);
+  border-radius: 8px;
+  background: rgba(212, 167, 72, 0.12);
+  color: #ffe5af;
+  width: 34px;
+  height: 30px;
+  font-family: "New Rocker", cursive;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.arrow-toggle:hover {
+  background: rgba(212, 167, 72, 0.24);
+}
+
+.ghost-btn:hover,
+.ghost-action:hover {
+  background: rgba(212, 167, 72, 0.12);
+}
+
+.discord-btn {
+  width: 100%;
+}
+
+.discord-btn-compact {
+  width: auto;
+  min-width: 88px;
+  padding: 6px 11px;
+  font-size: 14px;
+}
+
+.menu-side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.release-list {
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.empty-text {
+  margin: 0;
+  color: #a8b6d0;
+}
+
+.api-line {
+  margin: 10px 0 0;
+  color: #8093b4;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.server-title {
+  font-size: 44px;
+  line-height: 0.9;
+}
+
+@media (max-width: 1150px) {
+  .menu-shell {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+    padding: 96px 26px 28px;
+  }
+
+  .menu-side {
+    min-height: 260px;
+  }
+
+  .hero h1 {
+    font-size: clamp(56px, 15vw, 102px);
+  }
+
+  .tagline {
+    font-size: clamp(16px, 4vw, 22px);
+  }
+}

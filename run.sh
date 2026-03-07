@@ -2,7 +2,7 @@
 
 dotnet build godot || exit 1
 
-# Kill any processes occupying ports we need (webview:5173, API:5236, DB:5433)
+# Kill any processes occupying ports we need (webview:5173, API:5236, game:7777)
 for PORT in 5173 5236 7777; do
   EXISTING_PID=$(lsof -ti tcp:$PORT)
   if [[ -n "$EXISTING_PID" ]]; then
@@ -15,6 +15,7 @@ done
 SERVER_ID="${SERVER_ID:-1}"
 SERVER_API_KEY="${SERVER_API_KEY:-dev-server-api-key}"
 WEBVIEW_URL="http://localhost:5173/fragments/webview/"
+MENU_URL="http://localhost:5236/fragments/menu/"
 PROD_API_URL=""
 
 # Parse CLI arguments
@@ -25,6 +26,7 @@ while [[ $# -gt 0 ]]; do
     --user)        CLIENT_USER="$2"; shift 2 ;;
     --password)    CLIENT_PASS="$2"; shift 2 ;;
     --webview-url) WEBVIEW_URL="$2"; shift 2 ;;
+    --menu-url)    MENU_URL="$2"; shift 2 ;;
     --prod)        PROD_API_URL="https://pirates.quest"; shift ;;
     *)             shift ;;
   esac
@@ -37,10 +39,15 @@ RED='\033[0;31m'
 YELLOW='\033[0;33m'
 RESET='\033[0m'
 
+echo -e "${YELLOW}=== Building Menu WebView ===${RESET}"
+npm --prefix menu install
+npm --prefix menu run build || exit 1
+
 if [[ -n "${PROD_API_URL}" ]]; then
   echo -e "${BLUE}=== Using production API: ${PROD_API_URL} ===${RESET}"
   # In production the webview is served from the same host as the API.
   WEBVIEW_URL="${PROD_API_URL}/fragments/webview/"
+  MENU_URL="${PROD_API_URL}/fragments/menu/"
   GODOT_API_ARGS="--api-url ${PROD_API_URL}"
 else
   echo -e "${YELLOW}=== Starting WebView Dev Server ===${RESET}"
@@ -72,7 +79,7 @@ PID1=$!
 if [[ "${SERVER_ONLY}" == "false" ]]; then
   sleep 0.5
 
-  CLIENT_ARGS="--webview-url ${WEBVIEW_URL} --creative ${GODOT_API_ARGS}"
+  CLIENT_ARGS="--webview-url ${WEBVIEW_URL} --menu-url ${MENU_URL} --creative ${GODOT_API_ARGS}"
   if [[ -n "${CLIENT_USER}" && -n "${CLIENT_PASS}" ]]; then
     CLIENT_ARGS="${CLIENT_ARGS} --user ${CLIENT_USER} --password ${CLIENT_PASS} --disableSaveUser"
   fi

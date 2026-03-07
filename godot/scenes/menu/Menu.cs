@@ -1,27 +1,30 @@
 using Godot;
-using System;
-using System.Threading.Tasks;
 using PiratesQuest;
+using PiratesQuest.Data;
+using System;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 public partial class Menu : Node2D
 {
-  [Export] public Control MainMenuContainer;
-  [Export] public Control LoginContainer;
-  [Export] public LineEdit UsernameEdit;
-  [Export] public LineEdit PasswordEdit;
-  [Export] public Button LoginButton;
-  [Export] public Button SignupButton;
-  [Export] public Label LoginStatusLabel;
+  // We serialize menu state using camelCase so TypeScript receives idiomatic keys.
+  private static readonly JsonSerializerOptions JsonOptions = new()
+  {
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+  };
 
-  [Export] public Container MultiplayerControls;
-  [Export] public Container ServerListingsContainer;
-  [Export] public Container PlayerIdentityContainer;
-  [Export] public Label StatusLabel;
-  [Export] public Button MuteButton;
-  [Export] public Button LogoutButton;
+  private Node _webView;
+  private CanvasLayer _webViewLayer;
+  private bool _webViewCreated;
+  private bool _webViewReady;
 
-  private PackedScene _listingScene = GD.Load<PackedScene>("res://scenes/menu/scenes/server_listing.tscn");
-  private bool _isAuthenticating = false;
+  private bool _isAuthenticating;
+  private bool _isAuthenticated;
+  private string _username = string.Empty;
+  private string _statusMessage = string.Empty;
+  private string _statusTone = "info";
+  private ServerListingInfo[] _servers = Array.Empty<ServerListingInfo>();
 
   public override void _Ready()
   {
@@ -29,174 +32,245 @@ public partial class Menu : Node2D
     {
       GD.Print($"Starting server on port {Configuration.DefaultPort} due to --server flag");
       CallDeferred(MethodName.StartServer);
-    }
-    else
-    {
-      SetupMenuUI();
-      SetupLoginUI();
-    }
-  }
-
-  private void SetupLoginUI()
-  {
-    SetMainMenuVisible(false);
-    LoginContainer.Visible = true;
-
-    var loginGateState = Configuration.ResolveLoginGateState();
-    UsernameEdit.Text = loginGateState.Username;
-    LoginStatusLabel.Text = $"API: {Configuration.ApiBaseUrl}";
-
-    LoginButton.Pressed += () => _ = AttemptAuth("login");
-    SignupButton.Pressed += () => _ = AttemptAuth("signup");
-    PasswordEdit.TextSubmitted += (_submittedText) =>
-    {
-      _ = AttemptAuth("login");
-    };
-
-    if (!string.IsNullOrWhiteSpace(Configuration.CmdUser) && !string.IsNullOrWhiteSpace(Configuration.CmdPassword))
-    {
-      UsernameEdit.Text = Configuration.CmdUser;
-      PasswordEdit.Text = Configuration.CmdPassword;
-      _ = AttemptAuth("login");
       return;
     }
 
-    if (loginGateState.ShouldAutoLogin)
+    EnsureWebViewCreated();
+    InitializeMenuState();
+  }
+
+  private void InitializeMenuState()
+  {
+    _username = Configuration.GetUsername();
+    _statusMessage = $"API: {Configuration.ApiBaseUrl}";
+    _statusTone = "info";
+
+    var gateState = Configuration.ResolveLoginGateState();
+    if (!string.IsNullOrWhiteSpace(gateState.Username))
+    {
+      _username = gateState.Username;
+    }
+
+    if (!string.IsNullOrWhiteSpace(gateState.StatusMessage))
+    {
+      _statusMessage = gateState.StatusMessage;
+      _statusTone = "info";
+    }
+
+    // CLI auth (used by run.sh --user/--password) should auto-login immediately.
+    if (!string.IsNullOrWhiteSpace(Configuration.CmdUser) && !string.IsNullOrWhiteSpace(Configuration.CmdPassword))
+    {
+      _username = Configuration.CmdUser.Trim();
+      _ = AttemptAuth("login", _username, Configuration.CmdPassword);
+      return;
+    }
+
+    // If we already have a saved token, skip the login form.
+    if (gateState.ShouldAutoLogin)
     {
       CompleteLogin();
       return;
     }
 
-    if (!string.IsNullOrWhiteSpace(loginGateState.StatusMessage))
-    {
-      LoginStatusLabel.Text = loginGateState.StatusMessage;
-      LoginStatusLabel.AddThemeColorOverride("font_color", Colors.White);
-    }
-
-    UsernameEdit.GrabFocus();
+    PushMenuState();
   }
 
-  private void SetupMenuUI()
+  // ── WebView setup ────────────────────────────────────────────────
+
+  private void EnsureWebViewCreated()
   {
-    // Player name comes from authenticated username, so this field is display-only.
-    var playerNameEdit = PlayerIdentityContainer.GetNode<LineEdit>("PlayerNameEdit");
-    playerNameEdit.Editable = false;
+    if (_webViewCreated) return;
+    _webViewCreated = true;
 
-    // Custom join
-    var joinButton = MultiplayerControls.GetNodeOrNull<Button>("JoinButton");
-    joinButton.ButtonDown += () =>
+    if (!ClassDB.ClassExists("WebView"))
     {
-      var ipBox = MultiplayerControls.GetNodeOrNull<LineEdit>("ServerIP");
-      var ip = ipBox.Text.Trim();
-      JoinServer(ip, Configuration.DefaultPort);
-    };
-
-    // Version Label
-    var versionLabel = GetNodeOrNull<Label>("CanvasLayer/VersionLabel");
-    if (versionLabel != null)
-    {
-      versionLabel.Text = Configuration.GetVersion();
+      GD.PrintErr("Menu: WebView (godot_wry) plugin not available.");
+      return;
     }
 
-    // Mute Button - toggles background sounds (ocean waves) on/off
-    // Other sounds like cannon fire still play - only ambient loops are affected
-    var muteButton = MuteButton;
-    var audioManager = GetNode<AudioManager>("/root/AudioManager");
-
-    // Set initial button state to match current mute status
-    // This ensures the button shows the correct state if we return to menu
-    muteButton.ButtonPressed = audioManager.IsBackgroundMuted();
-    muteButton.Text = audioManager.IsBackgroundMuted() ? "Unmute Sea" : "Mute Sea";
-
-    // Toggled signal fires when a toggle button changes state
-    // The 'toggled' parameter tells us if the button is now pressed (true) or not (false)
-    muteButton.Toggled += (toggled) =>
+    var scene = GD.Load<PackedScene>("res://scenes/play/scenes/webview_node.tscn");
+    if (scene == null)
     {
-      audioManager.SetBackgroundMuted(toggled);
-      // Update button text to show what will happen when clicked
-      muteButton.Text = toggled ? "Unmute Sea" : "Mute Sea";
-    };
+      GD.PrintErr("Menu: Failed to load webview scene.");
+      return;
+    }
 
-    // Clear saved token and return to the login gate.
-    LogoutButton.Pressed += PerformLogout;
+    var instance = scene.Instantiate();
+    if (instance is not Control control)
+    {
+      instance.QueueFree();
+      GD.PrintErr("Menu: Webview scene root is not Control.");
+      return;
+    }
+
+    _webView = control;
+    _webView.Set("url", Configuration.MenuWebViewUrl);
+    _webView.Set("full_window_size", false);
+    _webView.Set("transparent", false);
+    _webView.Set("devtools", true);
+    _webView.Set("forward_input_events", true);
+    _webView.Set("focused_when_created", true);
+
+    _webViewLayer = new CanvasLayer();
+    AddChild(_webViewLayer);
+    _webViewLayer.AddChild(_webView);
+
+    _webView.Connect("ipc_message", new Callable(this, MethodName.OnIpcMessage));
+    GetTree().Root.SizeChanged += OnWindowResized;
+    CallDeferred(MethodName.SyncWebViewSize);
   }
 
-  private async Task AttemptAuth(string mode)
+  private void OnWindowResized()
+  {
+    CallDeferred(MethodName.SyncWebViewSize);
+  }
+
+  private void SyncWebViewSize()
+  {
+    if (_webView is not Control wv) return;
+
+    // Same mixed-DPI correction used by port webview.
+    var viewportSize = GetTree().Root.Size;
+
+    float maxScale = 1f;
+    for (int i = 0; i < DisplayServer.GetScreenCount(); i++)
+    {
+      maxScale = Math.Max(maxScale, DisplayServer.ScreenGetScale(i));
+    }
+
+    float currentScale = DisplayServer.ScreenGetScale(DisplayServer.WindowGetCurrentScreen());
+    float correction = currentScale / maxScale;
+
+    wv.Position = Vector2.Zero;
+    wv.Size = new Vector2(viewportSize.X * correction, viewportSize.Y * correction);
+  }
+
+  // ── IPC handling ──────────────────────────────────────────────────
+
+  private void OnIpcMessage(string messageJson)
+  {
+    MenuIpcMessage message;
+    try
+    {
+      message = JsonSerializer.Deserialize<MenuIpcMessage>(messageJson, JsonOptions);
+    }
+    catch (Exception ex)
+    {
+      GD.PrintErr($"Menu: Failed to parse IPC message: {ex.Message}");
+      return;
+    }
+
+    switch (message)
+    {
+      case MenuReadyMessage:
+        _webViewReady = true;
+        PushMenuState();
+        break;
+
+      case MenuLoginMessage login:
+        _ = AttemptAuth("login", login.Username, login.Password);
+        break;
+
+      case MenuSignupMessage signup:
+        _ = AttemptAuth("signup", signup.Username, signup.Password);
+        break;
+
+      case MenuLogoutMessage:
+        PerformLogout();
+        break;
+
+      case MenuRefreshServersMessage:
+        _ = LoadServerListingsAsync();
+        break;
+
+      case MenuJoinServerMessage join:
+        JoinServer(join.IpAddress, join.Port);
+        break;
+
+      case MenuSetBackgroundMutedMessage mute:
+        SetBackgroundMuted(mute.Muted);
+        break;
+
+      case MenuOpenUrlMessage openUrl:
+        OpenExternalUrl(openUrl.Url);
+        break;
+    }
+  }
+
+  // ── Auth & state ─────────────────────────────────────────────────
+
+  private async Task AttemptAuth(string mode, string username, string password)
   {
     if (_isAuthenticating)
     {
       return;
     }
 
-    var username = UsernameEdit.Text.Trim();
-    var password = PasswordEdit.Text;
+    username = username?.Trim() ?? string.Empty;
+    password ??= string.Empty;
+
     if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
     {
-      LoginStatusLabel.Text = "Please enter username and password.";
-      LoginStatusLabel.AddThemeColorOverride("font_color", Colors.Red);
+      SetError("Please enter username and password.");
       return;
     }
 
     _isAuthenticating = true;
-    LoginButton.Disabled = true;
-    SignupButton.Disabled = true;
-    LoginStatusLabel.Text = mode == "signup" ? "Signing up..." : "Logging in...";
-    LoginStatusLabel.AddThemeColorOverride("font_color", Colors.White);
+    _statusMessage = mode == "signup" ? "Signing up..." : "Logging in...";
+    _statusTone = "info";
+    PushMenuState();
 
     var authResult = mode == "signup"
       ? await API.SignupAsync(username, password)
       : await API.LoginAsync(username, password);
 
     _isAuthenticating = false;
-    LoginButton.Disabled = false;
-    SignupButton.Disabled = false;
 
     if (!authResult.Success)
     {
-      LoginStatusLabel.Text = authResult.ErrorMessage;
-      LoginStatusLabel.AddThemeColorOverride("font_color", Colors.Red);
+      SetError(authResult.ErrorMessage);
       return;
     }
 
-    var saveError = Configuration.SaveUserToken(authResult.Token);
-    if (saveError != Error.Ok)
+    var saveTokenError = Configuration.SaveUserToken(authResult.Token);
+    if (saveTokenError != Error.Ok)
     {
-      LoginStatusLabel.Text = $"Failed to save token: {saveError}";
-      LoginStatusLabel.AddThemeColorOverride("font_color", Colors.Red);
+      SetError($"Failed to save token: {saveTokenError}");
       return;
     }
 
     var saveUsernameError = Configuration.SaveUsername(username);
     if (saveUsernameError != Error.Ok)
     {
-      LoginStatusLabel.Text = $"Failed to save username: {saveUsernameError}";
-      LoginStatusLabel.AddThemeColorOverride("font_color", Colors.Red);
+      SetError($"Failed to save username: {saveUsernameError}");
       return;
     }
 
+    _username = username;
     CompleteLogin();
   }
 
   private void CompleteLogin()
   {
-    ApplyUsernameToIdentity(Configuration.GetUsername());
-    LoginContainer.Visible = false;
-    SetMainMenuVisible(true);
-    UsernameEdit.ReleaseFocus();
-    PasswordEdit.ReleaseFocus();
+    _isAuthenticated = true;
 
-    var pendingMenuError = Configuration.ConsumePendingMenuError();
-    if (string.IsNullOrWhiteSpace(pendingMenuError))
+    if (string.IsNullOrWhiteSpace(_username))
     {
-      DisplayStatus("Authenticated.");
+      _username = Configuration.GetUsername().Trim();
     }
 
-    _ = LoadServerListingsAsync(pendingMenuError);
-  }
+    ApplyUsernameToIdentity(_username);
 
-  private void SetMainMenuVisible(bool isVisible)
-  {
-    MainMenuContainer.Visible = isVisible;
+    var pendingMenuError = Configuration.ConsumePendingMenuError();
+    if (!string.IsNullOrWhiteSpace(pendingMenuError))
+    {
+      SetError(pendingMenuError);
+      _ = LoadServerListingsAsync();
+      return;
+    }
+
+    SetStatus("Authenticated.");
+    _ = LoadServerListingsAsync();
   }
 
   private void PerformLogout()
@@ -204,112 +278,90 @@ public partial class Menu : Node2D
     var clearError = Configuration.ClearUserToken();
     if (clearError != Error.Ok)
     {
-      DisplayError($"Failed to clear token: {clearError}");
+      SetError($"Failed to clear token: {clearError}");
       return;
     }
 
-    UsernameEdit.Text = string.Empty;
-    PasswordEdit.Text = string.Empty;
+    _isAuthenticated = false;
+    _isAuthenticating = false;
+    _servers = Array.Empty<ServerListingInfo>();
+    _username = string.Empty;
+
     ApplyUsernameToIdentity(string.Empty);
-    LoginStatusLabel.Text = "Logged out. Please log in.";
-    LoginStatusLabel.AddThemeColorOverride("font_color", Colors.White);
-    LoginContainer.Visible = true;
-    SetMainMenuVisible(false);
-    UsernameEdit.GrabFocus();
+    SetStatus("Logged out. Please log in.");
   }
 
   private void ApplyUsernameToIdentity(string username)
   {
-    var safeUsername = username?.Trim() ?? string.Empty;
     var identity = GetNode<Identity>("/root/Identity");
-    identity.PlayerName = safeUsername;
-
-    var playerNameEdit = PlayerIdentityContainer.GetNode<LineEdit>("PlayerNameEdit");
-    playerNameEdit.Text = safeUsername;
+    identity.PlayerName = username?.Trim() ?? string.Empty;
   }
 
-  private async Task LoadServerListingsAsync(string postLoadError = "")
+  // ── Server list & join ───────────────────────────────────────────
+
+  private async Task LoadServerListingsAsync()
   {
-    // Remove existing rows so re-login doesn't duplicate listing entries.
-    foreach (Node child in ServerListingsContainer.GetChildren())
+    if (!_isAuthenticated)
     {
-      child.QueueFree();
+      PushMenuState();
+      return;
     }
 
-    DisplayStatus("Loading servers...");
+    SetStatus("Loading servers...");
+
     var result = await API.GetServerListingsAsync();
     if (!result.Success)
     {
       if (result.IsUnauthorized)
       {
         PerformLogout();
-        LoginStatusLabel.Text = result.ErrorMessage;
-        LoginStatusLabel.AddThemeColorOverride("font_color", Colors.Red);
+        SetError(result.ErrorMessage);
         return;
       }
 
-      DisplayError(result.ErrorMessage);
+      SetError(result.ErrorMessage);
       return;
     }
 
-    foreach (var server in result.Servers)
-    {
-      AddServerListing(server);
-    }
+    _servers = result.Servers;
 
-    if (result.Servers.Length == 0)
+    if (_servers.Length == 0)
     {
-      DisplayStatus("No servers available right now.");
+      SetStatus("No servers available right now.");
     }
     else
     {
-      DisplayStatus("Servers loaded.");
+      SetStatus("Servers loaded.");
     }
-
-    if (!string.IsNullOrWhiteSpace(postLoadError))
-    {
-      DisplayError(postLoadError);
-    }
-  }
-
-  private void AddServerListing(ServerListingInfo serverListing)
-  {
-    var listingInstance = _listingScene.Instantiate<ServerListing>();
-    listingInstance.ServerName = serverListing.ServerName;
-    listingInstance.IpAddress = serverListing.IpAddress;
-    listingInstance.Port = serverListing.Port;
-    listingInstance.PlayerCount = "x";
-    listingInstance.PlayerMax = "8";
-
-    ServerListingsContainer.AddChild(listingInstance);
-
-    listingInstance.JoinServer += (ip, port) =>
-    {
-      JoinServer(ip, port);
-    };
   }
 
   private void JoinServer(string ipAddress, int port)
   {
-    DisplayStatus($"Joining server...");
+    var ip = ipAddress?.Trim() ?? string.Empty;
+    if (string.IsNullOrWhiteSpace(ip))
+    {
+      SetError("Please enter a server address.");
+      return;
+    }
+
+    SetStatus("Joining server...");
+
     var networkManager = GetNode<NetworkManager>("/root/NetworkManager");
 
     Multiplayer.ConnectedToServer += OnClientConnectedToServer;
     Multiplayer.ConnectionFailed += OnClientConnectionFailed;
-    var error = networkManager.CreateClient(ipAddress, port);
 
+    var error = networkManager.CreateClient(ip, port);
     if (error != Error.Ok)
     {
       Multiplayer.ConnectedToServer -= OnClientConnectedToServer;
       Multiplayer.ConnectionFailed -= OnClientConnectionFailed;
-
-      DisplayError($"Failed to start connection: {error}");
+      SetError($"Failed to start connection: {error}");
     }
   }
 
   private void OnClientConnectedToServer()
   {
-    GD.Print("Client connected successfully, changing scene...");
     Multiplayer.ConnectedToServer -= OnClientConnectedToServer;
     Multiplayer.ConnectionFailed -= OnClientConnectionFailed;
     GetTree().ChangeSceneToFile("res://scenes/play/play.tscn");
@@ -317,32 +369,83 @@ public partial class Menu : Node2D
 
   private void OnClientConnectionFailed()
   {
-    DisplayError("Failed to connect to sever");
     Multiplayer.ConnectedToServer -= OnClientConnectedToServer;
     Multiplayer.ConnectionFailed -= OnClientConnectionFailed;
+    SetError("Failed to connect to server.");
   }
 
-  private void DisplayError(string errorMessage)
-  {
-    StatusLabel.Text = errorMessage;
-    StatusLabel.AddThemeColorOverride("font_color", Colors.Red);
-    GD.PrintErr(errorMessage);
+  // ── Utility ──────────────────────────────────────────────────────
 
-    var timer = GetTree().CreateTimer(3.0);
-    timer.Timeout += () =>
+  private void SetBackgroundMuted(bool muted)
+  {
+    var audioManager = GetNode<AudioManager>("/root/AudioManager");
+    audioManager.SetBackgroundMuted(muted);
+    PushMenuState();
+  }
+
+  private void OpenExternalUrl(string url)
+  {
+    var trimmed = url?.Trim() ?? string.Empty;
+    if (!Uri.TryCreate(trimmed, UriKind.Absolute, out var uri))
     {
-      if (StatusLabel != null)
-      {
-        StatusLabel.Text = "";
-      }
-    };
+      SetError("Invalid URL.");
+      return;
+    }
+
+    if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+    {
+      SetError("Only http/https links are allowed.");
+      return;
+    }
+
+    OS.ShellOpen(trimmed);
   }
 
-  private void DisplayStatus(string statusMessage)
+  private void SetStatus(string message)
   {
-    GD.Print(statusMessage);
-    StatusLabel.Text = statusMessage;
-    StatusLabel.AddThemeColorOverride("font_color", Colors.White);
+    _statusMessage = message;
+    _statusTone = "info";
+    PushMenuState();
+  }
+
+  private void SetError(string message)
+  {
+    _statusMessage = message;
+    _statusTone = "error";
+    GD.PrintErr(message);
+    PushMenuState();
+  }
+
+  private void PushMenuState()
+  {
+    if (!_webViewReady || _webView == null)
+    {
+      return;
+    }
+
+    var audioManager = GetNode<AudioManager>("/root/AudioManager");
+
+    var state = new MenuStateDto
+    {
+      ApiBaseUrl = Configuration.ApiBaseUrl,
+      Version = Configuration.GetVersion(),
+      Username = _username,
+      IsAuthenticated = _isAuthenticated,
+      StatusMessage = _statusMessage,
+      StatusTone = _statusTone,
+      IsAuthenticating = _isAuthenticating,
+      IsBackgroundMuted = audioManager.IsBackgroundMuted(),
+      Servers = _servers.Select(server => new MenuServerListingDto
+      {
+        ServerName = server.ServerName,
+        IpAddress = server.IpAddress,
+        Port = server.Port,
+      }).ToArray(),
+      DiscordInviteUrl = Configuration.DiscordInviteUrl,
+    };
+
+    var json = JsonSerializer.Serialize(state, JsonOptions);
+    _webView.Call("eval", $"window.updateMenuState && window.updateMenuState({json})");
   }
 
   private void StartServer()

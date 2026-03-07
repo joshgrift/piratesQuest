@@ -6,6 +6,7 @@ PiratesQuest uses three pieces:
 - `Game` (`godot/`): the player client and also the dedicated multiplayer server.
 - `API` (`api/`): login/signup and server list.
 - `WebView` (`webview/`): React/TypeScript port UI, served as a native browser overlay via godot_wry.
+- `Menu` (`menu/`): React/TypeScript main menu UI, served as a native browser overlay via godot_wry.
 - `Database` (via Docker): stores users and API data.
 
 ## Running
@@ -30,7 +31,7 @@ All scripts are in the repo root and run from there.
 | Script | Description |
 |--------|-------------|
 | `build-game.sh` | Exports the Godot project to macOS and Windows builds, zipped into `dist/<version>/`. |
-| `run.sh` | Runs a local dev session. Starts the backend, a game server, and a client side-by-side. Supports `--server` (server only), `--prod` (use production API at pirates.quest), `--user`, and `--password` flags. |
+| `run.sh` | Runs a local dev session. Builds menu + port fragments, starts the backend, a game server, and a client side-by-side. Supports `--server` (server only), `--prod` (use production API at pirates.quest), `--user`, and `--password` flags. |
 | `publish-backend.sh` | Builds the webview + API into a Docker image (`piratesquest-api`). Pass an optional tag argument (default `latest`). |
 | `manage.sh` | Admin CLI for the REST API. Manage users, game servers, roles, and game version. Requires `PQ_API_URL` and either `PQ_TOKEN` or a login. |
 
@@ -72,6 +73,16 @@ npm run build
 ```
 
 The build output goes to `api/fragments/webview/`, which the API serves as static files.
+
+### Building the menu UI
+
+```bash
+cd menu
+npm install
+npm run build
+```
+
+The build output goes to `../api/fragments/menu/`, which the API serves as static files.
 
 ## Third Party
 - [GoDot](https://godotengine.org/)
@@ -143,4 +154,3 @@ The build output goes to `api/fragments/webview/`, which the API serves as stati
 - [ ] Cracken
 - [ ] Curses
 - [ ] Change cannon angle
-
