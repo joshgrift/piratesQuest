@@ -477,6 +477,40 @@ app.MapGet("/api/management/servers", async (AppDbContext db) =>
 }).RequireAuthorization().AddEndpointFilter(AdminAuthFilter);
 
 // ---------------------------------------------------------------------------
+// PATCH /api/management/server/{id}/name  [admin]
+// ---------------------------------------------------------------------------
+app.MapPatch("/api/management/server/{id}/name", async (int id, RenameServerRequest request, AppDbContext db) =>
+{
+    var name = (request.Name ?? string.Empty).Trim();
+    if (string.IsNullOrWhiteSpace(name))
+        return Results.BadRequest(new { error = "Name is required" });
+
+    var server = await db.GameServers.FindAsync(id);
+    if (server is null)
+        return Results.NotFound(new { error = "Server not found" });
+
+    server.Name = name;
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { server.Id, server.Name, server.Description, server.Address, server.Port, server.IsActive });
+}).RequireAuthorization().AddEndpointFilter(AdminAuthFilter);
+
+// ---------------------------------------------------------------------------
+// PATCH /api/management/server/{id}/description  [admin]
+// ---------------------------------------------------------------------------
+app.MapPatch("/api/management/server/{id}/description", async (int id, UpdateServerDescriptionRequest request, AppDbContext db) =>
+{
+    var server = await db.GameServers.FindAsync(id);
+    if (server is null)
+        return Results.NotFound(new { error = "Server not found" });
+
+    server.Description = (request.Description ?? string.Empty).Trim();
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { server.Id, server.Name, server.Description, server.Address, server.Port, server.IsActive });
+}).RequireAuthorization().AddEndpointFilter(AdminAuthFilter);
+
+// ---------------------------------------------------------------------------
 // PUT /api/management/user/{id}/role  [admin]
 // ---------------------------------------------------------------------------
 app.MapPut("/api/management/user/{id}/role", async (int id, RoleRequest request, AppDbContext db) =>
@@ -548,6 +582,8 @@ static async ValueTask<object?> AdminAuthFilter(
 
 record LoginRequest(string Username, string Password);
 record ServerRequest(string Name, string Address, int Port, string? Description);
+record RenameServerRequest(string Name);
+record UpdateServerDescriptionRequest(string Description);
 record VersionRequest(string Version);
 record RoleRequest(string Role);
 record PresenceEventRequest(string Username, bool IsOnline);

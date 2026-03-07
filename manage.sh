@@ -18,6 +18,9 @@ usage() {
     cat <<EOF
 Pirate's Quest — Server Management CLI
 
+Description:
+  Manage Pirate's Quest admin API actions from the terminal.
+
 Usage: ./manage.sh <command> [args]
 
 Commands:
@@ -25,6 +28,8 @@ Commands:
   users                          List all users
   servers                        List all servers (including inactive)
   add-server <name> <addr> <port>  Register a new game server
+  rename-server <id> <name>      Rename an existing game server
+  set-server-description <id> <description>  Update a server description
   rm-server <id>                 Delete a game server
   set-role <user-id> <role>      Set user role (Player, Mod, Admin)
   status                         Show current game version (public)
@@ -141,6 +146,24 @@ cmd_rm_server() {
         -H "Authorization: Bearer $TOKEN" | jq .
 }
 
+cmd_rename_server() {
+    local id="$1" name="$2"
+    get_token
+    api_call PATCH "/api/management/server/$id/name" \
+        -H "Authorization: Bearer $TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "{\"name\":\"$name\"}" | jq .
+}
+
+cmd_set_server_description() {
+    local id="$1" description="$2"
+    get_token
+    api_call PATCH "/api/management/server/$id/description" \
+        -H "Authorization: Bearer $TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "{\"description\":\"$description\"}" | jq .
+}
+
 cmd_set_role() {
     local id="$1" role="$2"
     get_token
@@ -190,6 +213,14 @@ case "$1" in
     rm-server)
         [[ $# -lt 2 ]] && { echo "Usage: ./manage.sh rm-server <id>"; exit 1; }
         cmd_rm_server "$2"
+        ;;
+    rename-server)
+        [[ $# -lt 3 ]] && { echo "Usage: ./manage.sh rename-server <id> <name>"; exit 1; }
+        cmd_rename_server "$2" "$3"
+        ;;
+    set-server-description)
+        [[ $# -lt 3 ]] && { echo "Usage: ./manage.sh set-server-description <id> <description>"; exit 1; }
+        cmd_set_server_description "$2" "$3"
         ;;
     set-role)
         [[ $# -lt 3 ]] && { echo "Usage: ./manage.sh set-role <user-id> <role>"; exit 1; }
