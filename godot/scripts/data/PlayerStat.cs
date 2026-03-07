@@ -15,6 +15,8 @@ public enum PlayerStat
   CollectionFish,
   CollectionWood,
   CollectionIron,
+  // Additive bonus where 0.005 == +0.5% sell revenue.
+  SellPriceBonus,
   ComponentCapacity,
 }
 

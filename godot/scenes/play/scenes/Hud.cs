@@ -464,7 +464,22 @@ public partial class Hud : Control
     foreach (var kvp in _player.Stats.GetAllStats())
       stats[kvp.Key.ToString()] = kvp.Value;
 
-    var tavernCharacters = TavernData.GetCharactersForPort(_currentPortName ?? "")
+    // Show tavern locals for this port first.
+    // Then append any currently hired crew that are from other ports,
+    // so hired crewmates are always visible/manageable in every tavern.
+    var tavernCharactersById = TavernData
+      .GetCharactersForPort(_currentPortName ?? "")
+      .ToDictionary(c => c.Id, c => c, StringComparer.Ordinal);
+
+    foreach (var hiredId in _player.HiredCrewCharacterIds)
+    {
+      if (tavernCharactersById.ContainsKey(hiredId)) continue;
+      var hiredCharacter = TavernData.GetCharacterById(hiredId);
+      if (hiredCharacter != null)
+        tavernCharactersById[hiredCharacter.Id] = hiredCharacter;
+    }
+
+    var tavernCharacters = tavernCharactersById.Values
       .Select(c => new TavernCharacterDto(
         c.Id,
         c.Name,
@@ -699,6 +714,10 @@ public partial class Hud : Control
   {
     if (_currentPortItems == null) return;
 
+    // Crew/components can add SellPriceBonus where 0.005 == +0.5% sale revenue.
+    // We clamp at zero so negative values can never produce negative gold.
+    float sellMultiplier = Math.Max(0.0f, 1.0f + _player.Stats.GetStat(PlayerStat.SellPriceBonus));
+
     foreach (var req in msg.Items)
     {
       if (!Enum.TryParse<InventoryItemType>(req.Type, out var type)) continue;
@@ -706,7 +725,7 @@ public partial class Hud : Control
       var shopItem = _currentPortItems.FirstOrDefault(si => si.ItemType == type);
       if (shopItem == null || shopItem.SellPrice <= 0) continue;
 
-      int totalRevenue = shopItem.SellPrice * req.Quantity;
+      int totalRevenue = (int)MathF.Round(shopItem.SellPrice * req.Quantity * sellMultiplier);
       bool ok = _player.UpdateInventory(type, -req.Quantity, totalRevenue);
       GD.Print(ok
         ? $"HUD: Sold {req.Quantity}x {req.Type} for {totalRevenue} coin"

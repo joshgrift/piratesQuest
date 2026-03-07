@@ -1551,57 +1551,91 @@ body {
 
 .tavern-roster {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
 }
 
-.tavern-character-btn {
+.tavern-character-tile {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(139, 105, 20, 0.25);
-  border-radius: 6px;
+  gap: 6px;
+  padding: 6px 4px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   color: #c8bda8;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition: all 0.2s ease;
+  position: relative;
 }
 
-.tavern-character-btn.active {
-  border-color: rgba(212, 167, 72, 0.5);
-  box-shadow: 0 0 12px rgba(212, 167, 72, 0.15);
+.tavern-character-tile.active {
+  transform: translateY(-1px);
 }
 
-.tavern-character-btn:hover {
-  background: rgba(212, 167, 72, 0.08);
+.tavern-character-tile:hover {
+  transform: translateY(-1px);
 }
 
-.tavern-character-main {
+.tavern-character-tile-main {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
-.tavern-character-name {
-  font-size: 13px;
-  color: #e0d5c0;
-  font-weight: 700;
+.tavern-character-tile-portrait {
+  flex-shrink: 0;
+  animation: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.tavern-character-role {
-  font-size: 11px;
-  color: #8b9ab5;
+.tavern-character-tile-portrait.dimmed {
+  filter: grayscale(1);
+  opacity: 0.35;
+}
+
+.tavern-character-tile.active .tavern-character-tile-portrait {
+  animation: tavernPortraitToChat 0.32s ease;
+}
+
+@keyframes tavernPortraitToChat {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  60% {
+    transform: translateY(12px) scale(1.04);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tavern-character-name {
+  font-size: 12px;
+  color: #e0d5c0;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.tavern-character-talking {
+  margin-top: 2px;
+  font-size: 10px;
+  color: #d4a748;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .tavern-badge {
   font-size: 10px;
   font-weight: 700;
   border-radius: 99px;
-  padding: 3px 8px;
+  padding: 2px 7px;
   white-space: nowrap;
+  position: absolute;
+  top: 6px;
+  right: 6px;
 }
 
 .tavern-badge.hired {
@@ -1610,20 +1644,23 @@ body {
   border: 1px solid rgba(107, 223, 107, 0.35);
 }
 
-.tavern-badge.hireable {
-  background: rgba(212, 167, 72, 0.15);
-  color: #d4a748;
-  border: 1px solid rgba(212, 167, 72, 0.35);
-}
-
-.tavern-badge.talk {
-  background: rgba(90, 106, 122, 0.2);
-  color: #8b9ab5;
-  border: 1px solid rgba(90, 106, 122, 0.35);
-}
-
 .tavern-stats-card {
   margin-top: 2px;
+}
+
+.tavern-chat-container {
+  animation: tavernChatEnter 0.25s ease;
+}
+
+@keyframes tavernChatEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .tavern-bonus-list {

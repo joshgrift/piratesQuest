@@ -25,11 +25,66 @@ public static class TavernData
   [
     new TavernCharacterData
     {
-      Id = "scarred-gunner",
-      Name = "Briggs",
-      Role = "Deck Gunner",
+      Id = "gideon-gearlock",
+      Name = "Gideon Gearlock",
+      Role = "Merchant Broker",
       PortName = "Saint Johns",
-      Portrait = "character6.png",
+      Portrait = "character8.png",
+      Hireable = true,
+      StatChanges =
+      [
+        new RecordPlayerStatChange
+        {
+          Stat = PlayerStat.SellPriceBonus,
+          Modifier = RecordPlayerStatChangeModifier.Additive,
+          Value = 0.005f,
+        },
+      ],
+    },
+    new TavernCharacterData
+    {
+      Id = "tommy-fuse",
+      Name = "Tommy Fuse",
+      Role = "Powder Runner",
+      PortName = "Saint Johns",
+      Portrait = "character7.png",
+      Hireable = true,
+      StatChanges =
+      [
+        new RecordPlayerStatChange
+        {
+          // AttackRange currently feeds projectile launch speed in the firing code.
+          Stat = PlayerStat.AttackRange,
+          Modifier = RecordPlayerStatChangeModifier.Additive,
+          Value = 3.0f,
+        },
+      ],
+    },
+    new TavernCharacterData
+    {
+      Id = "elder-bertram",
+      Name = "Elder Bertram",
+      Role = "Retired Shipwright",
+      PortName = "Saint Johns",
+      Portrait = "character17.png",
+      Hireable = true,
+      StatChanges =
+      [
+        new RecordPlayerStatChange
+        {
+          Stat = PlayerStat.ShipHullStrength,
+          Modifier = RecordPlayerStatChangeModifier.Additive,
+          Value = 12.0f,
+        },
+      ],
+    },
+    new TavernCharacterData
+    {
+      Id = "dorian-blackwake",
+      Name = "Dorian Blackwake",
+      Role = "Broken Cannoneer",
+      PortName = "Krakenfall",
+      Portrait = "character31.png",
       Hireable = true,
       StatChanges =
       [
@@ -37,53 +92,102 @@ public static class TavernData
         {
           Stat = PlayerStat.AttackDamage,
           Modifier = RecordPlayerStatChangeModifier.Additive,
-          Value = 6.0f,
+          Value = 5.0f,
         },
       ],
     },
     new TavernCharacterData
     {
-      Id = "quartermaster-mira",
-      Name = "Mira",
-      Role = "Quartermaster",
+      Id = "valora-rumwhisper",
+      Name = "Valora Rumwhisper",
+      Role = "Rumor Broker",
       PortName = "Krakenfall",
-      Portrait = "character13.png",
-      Hireable = true,
-      StatChanges =
-      [
-        new RecordPlayerStatChange
-        {
-          Stat = PlayerStat.ShipCapacity,
-          Modifier = RecordPlayerStatChangeModifier.Additive,
-          Value = 120.0f,
-        },
-        new RecordPlayerStatChange
-        {
-          Stat = PlayerStat.ShipTurnSpeed,
-          Modifier = RecordPlayerStatChangeModifier.Additive,
-          Value = 0.05f,
-        },
-      ],
-    },
-    new TavernCharacterData
-    {
-      Id = "dockside-poet",
-      Name = "Pip",
-      Role = "Dockside Poet",
-      PortName = "Haven",
-      Portrait = "character20.png",
+      Portrait = "character15.png",
       Hireable = false,
       StatChanges = [],
     },
     new TavernCharacterData
     {
-      Id = "lazy-lookout",
-      Name = "Old Ned",
-      Role = "Lookout",
-      PortName = "Haven",
-      Portrait = "character24.png",
+      Id = "harlan-bentbeam",
+      Name = "Harlan Bentbeam",
+      Role = "Master Woodworker",
+      PortName = "Krakenfall",
+      Portrait = "character28.png",
       Hireable = true,
+      StatChanges =
+      [
+        new RecordPlayerStatChange
+        {
+          Stat = PlayerStat.HealthRegen,
+          Modifier = RecordPlayerStatChangeModifier.Additive,
+          Value = 1.0f,
+        },
+      ],
+    },
+    new TavernCharacterData
+    {
+      Id = "governor-caspian",
+      Name = "Governor Caspian Vale",
+      Role = "Acting Governor",
+      PortName = "Haven",
+      Portrait = "character18.png",
+      Hireable = false,
       StatChanges = [],
+    },
+    new TavernCharacterData
+    {
+      Id = "merrick-ash",
+      Name = "Merrick Ash",
+      Role = "Lumberjack",
+      PortName = "Haven",
+      Portrait = "character25.png",
+      Hireable = true,
+      StatChanges =
+      [
+        new RecordPlayerStatChange
+        {
+          Stat = PlayerStat.CollectionWood,
+          Modifier = RecordPlayerStatChangeModifier.Additive,
+          Value = 0.15f,
+        },
+      ],
+    },
+    new TavernCharacterData
+    {
+      Id = "rafael-tide",
+      Name = "Rafael Tide",
+      Role = "Harpoon Charmer",
+      PortName = "Haven",
+      Portrait = "character3.png",
+      Hireable = true,
+      StatChanges =
+      [
+        new RecordPlayerStatChange
+        {
+          Stat = PlayerStat.CollectionFish,
+          Modifier = RecordPlayerStatChangeModifier.Additive,
+          Value = 0.15f,
+        },
+      ],
+    },
+    new TavernCharacterData
+    {
+      Id = "silas-quill",
+      Name = "Silas Quill",
+      Role = "Stone Sculptor",
+      PortName = "Haven",
+      Portrait = "character23.png",
+      Hireable = true,
+      StatChanges =
+      [
+        new RecordPlayerStatChange
+        {
+          // Stone nodes currently use the iron collection stat in gameplay code.
+          Stat = PlayerStat.CollectionIron,
+          Modifier = RecordPlayerStatChangeModifier.Additive,
+          Value = 0.15f,
+        },
+      ],
     },
   ];
 

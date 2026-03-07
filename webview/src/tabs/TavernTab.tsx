@@ -83,12 +83,89 @@ export function TavernTab({
     const root = tree.root;
     if (!root) return tree;
 
-    if (activeCharacter.hireable) {
-      if (hiredSet.has(activeCharacter.id)) {
-        root.responses.splice(1, 0, { label: "You're fired.", action: "fire" });
-      } else {
-        root.responses.splice(1, 0, { label: "Join my crew.", action: "hire" });
+    if (!tree.hire_offer) {
+      tree.hire_offer = {
+        text: "If we're to sail together, say the word plain.",
+        responses: [
+          { label: "Join my crew.", action: "hire" },
+          { label: "Not today.", next: "root" },
+        ],
+      };
+    }
+
+    if (!tree.not_hireable) {
+      tree.not_hireable = {
+        text: `${activeCharacter.name} shakes their head. "I stay ashore."`,
+        responses: [{ label: "Back", next: "root" }],
+      };
+    }
+
+    if (!tree.hire_success) {
+      tree.hire_success = {
+        text: "Aye. I'll be ready at the dock.",
+        responses: [{ label: "Back", next: "root" }],
+      };
+    }
+
+    if (!tree.hire_blocked) {
+      tree.hire_blocked = {
+        text: "No bunk left. Make room first.",
+        responses: [{ label: "Back", next: "root" }],
+      };
+    }
+
+    if (!tree.already_hired) {
+      tree.already_hired = {
+        text: "Already aboard, Captain.",
+        responses: [{ label: "Back", next: "root" }],
+      };
+    }
+
+    if (!tree.fire_success) {
+      tree.fire_success = {
+        text: "Understood. I'll step off at the pier.",
+        responses: [{ label: "Back", next: "root" }],
+      };
+    }
+
+    if (hiredSet.has(activeCharacter.id)) {
+      const bonusMap = toStatBonusMap(activeCharacter.statChanges);
+      const bonusEntries = Object.entries(bonusMap);
+      const bonusSummary = bonusEntries.length === 0
+        ? "No numeric bonus from this post, but morale and discipline stay solid."
+        : bonusEntries
+          .map(([stat, value]) => `${formatStatName(stat)} +${fmt(value)}`)
+          .join(", ");
+
+      if (!tree.onboard_report) {
+        tree.onboard_report = {
+          text: `${activeCharacter.name} gives a crisp nod. "${activeCharacter.role} post is steady, Captain. Crew knows their rhythm."`,
+          responses: [{ label: "Back", next: "root" }],
+        };
       }
+
+      if (!tree.onboard_numbers) {
+        tree.onboard_numbers = {
+          text: `Current contribution: ${bonusSummary}`,
+          responses: [{ label: "Back", next: "root" }],
+        };
+      }
+
+      if (!tree.onboard_need) {
+        tree.onboard_need = {
+          text: `"Keep us supplied and decisive, Captain. I'll handle the rest."`,
+          responses: [{ label: "Back", next: "root" }],
+        };
+      }
+
+      root.text = `${activeCharacter.name} straightens as you approach. "Aboard and ready, Captain."`;
+      root.responses = [
+        { label: "Any report from your station?", next: "onboard_report" },
+        { label: "How are our numbers?", next: "onboard_numbers" },
+        { label: "Need anything from me?", next: "onboard_need" },
+        { label: "Stand down (fire crew).", action: "fire" },
+        { label: "Back to tavern", next: "root" },
+      ];
     }
 
     return tree;
@@ -99,6 +176,12 @@ export function TavernTab({
   }
 
   const handleConversationAction = (actionId: string): string | void => {
+    if (actionId === "probe_hire") {
+      if (hiredSet.has(activeCharacter.id)) return "already_hired";
+      if (activeCharacter.hireable) return "hire_offer";
+      return "not_hireable";
+    }
+
     if (actionId === "hire") {
       const outcome = onHireCharacter(activeCharacter.id);
 
@@ -150,29 +233,33 @@ export function TavernTab({
           return (
             <button
               key={character.id}
-              className={`tavern-character-btn ${isActive ? "active" : ""}`}
+              className={`tavern-character-tile ${isActive ? "active" : ""}`}
               onClick={() => setActiveCharacterId(character.id)}
             >
-              <span className="tavern-character-main">
+              <img
+                className={`tavern-chat-portrait tavern-character-tile-portrait ${isActive ? "dimmed" : ""}`}
+                src={`${BASE}images/characters/${character.portrait}`}
+                alt={character.name}
+              />
+              <span className="tavern-character-tile-main">
                 <span className="tavern-character-name">{character.name}</span>
-                <span className="tavern-character-role">{character.role}</span>
+                {isActive && <span className="tavern-character-talking">Talking</span>}
               </span>
-              <span className={`tavern-badge ${isHired ? "hired" : character.hireable ? "hireable" : "talk"}`}>
-                {isHired ? "Hired" : character.hireable ? "Hire" : "Talk"}
-              </span>
+              {isHired && <span className="tavern-badge hired">Hired</span>}
             </button>
           );
         })}
       </div>
 
       <ConversationPanel
+        key={activeCharacter.id}
         tree={conversationTree}
         speakerName={activeCharacter.name}
         speakerPortraitSrc={`${BASE}images/characters/${activeCharacter.portrait}`}
         speakerPortraitAlt={activeCharacter.name}
         classNamePrefix="tavern-chat"
         initialNodeId="root"
-        instantNodeIds={["root"]}
+        instantNodeIds={Object.keys(conversationTree)}
         onAction={handleConversationAction}
       />
 

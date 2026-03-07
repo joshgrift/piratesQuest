@@ -15,7 +15,7 @@ public class PlayerStats
   public void ResetStats()
   {
     // Lower base max speed so sailing feels more deliberate and less twitchy.
-    Stats[PlayerStat.ShipMaxSpeed] = 7.0f;
+    Stats[PlayerStat.ShipMaxSpeed] = 10.0f;
     Stats[PlayerStat.ShipAcceleration] = 3.0f;
     // Lower turn speed so steering feels heavier and more intentional.
     Stats[PlayerStat.ShipTurnSpeed] = 0.35f;
@@ -27,6 +27,7 @@ public class PlayerStats
     Stats[PlayerStat.CollectionFish] = 1.0f;
     Stats[PlayerStat.CollectionWood] = 1.0f;
     Stats[PlayerStat.CollectionIron] = 1.0f;
+    Stats[PlayerStat.SellPriceBonus] = 0.0f;
     Stats[PlayerStat.ShipCapacity] = 1000.0f;
     Stats[PlayerStat.ComponentCapacity] = 4.0f;
   }

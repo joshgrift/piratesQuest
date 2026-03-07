@@ -330,6 +330,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     responses: [
       { label: "How many crew can I hire?", next: "tavern_slots" },
       { label: "Do all hires improve stats?", next: "tavern_stats" },
+      { label: "What kinds of crew bonuses exist?", next: "tavern_specialists" },
       { label: "Ask about something else", next: "root" },
     ],
   },
@@ -341,13 +342,38 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     ],
   },
   tavern_stats: {
-    text: "Some crew give hard stat boosts like cannon damage or cargo space. Others are just flavor and don't buff numbers at all.\n\nQuick quiz: yer berths are full and ye want a new gunner. What's the right move?",
+    text: "Hireable crew give stat boosts. Tavern regulars marked Talk are story folk and rumor traders, not deckhands.\n\nQuick quiz: yer berths are full and ye want a new gunner. What's the right move?",
     responses: [
       { label: "Fire one crew member, then hire the gunner", next: "tavern_quiz_right" },
       { label: "Swap instantly without firing", next: "tavern_quiz_wrong" },
       { label: "Keep everyone and hire anyway", next: "tavern_quiz_wrong" },
       { label: "Ask about something else", next: "root" },
     ],
+  },
+  tavern_specialists: {
+    text: "All sorts. Some boost cannon punch, some make cannonballs fly quicker, some toughen hulls, and some speed up fish, wood, or stone gatherin'. There's even a merchant who bumps sale prices a tiny bit each trade.",
+    responses: [
+      { label: "So crew can help trade too?", next: "tavern_trade_quiz" },
+      { label: "Back to tavern basics", next: "tavern" },
+      { label: "Ask about something else", next: "root" },
+    ],
+  },
+  tavern_trade_quiz: {
+    text: "Aye. Quick check, sailor: which bonus helps when ye sell cargo at market?",
+    responses: [
+      { label: "A sell-price bonus", next: "tavern_trade_right" },
+      { label: "Hull strength", next: "tavern_trade_wrong" },
+      { label: "Turn speed", next: "tavern_trade_wrong" },
+      { label: "Ask about something else", next: "root" },
+    ],
+  },
+  tavern_trade_right: {
+    text: "Sharp eyes. It's a small boost, but steady traders feel it over time.",
+    responses: [{ label: "What else can I learn?", next: "root" }],
+  },
+  tavern_trade_wrong: {
+    text: "Not that one, matey. Trade profit needs a sell-price bonus.",
+    responses: [{ label: "Got it. What else?", next: "root" }],
   },
   tavern_quiz_right: {
     text: "Sharp sailor. That's the rule: no direct swap. Crew discipline keeps yer choices deliberate.",
