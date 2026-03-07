@@ -5,11 +5,13 @@ import { makePortState } from "./fixtures";
 import type { PortState } from "../types";
 import type { Mock } from "vitest";
 
-type Tab = "market" | "shipyard" | "guide" | "creative";
+type Tab = "market" | "shipyard" | "tavern" | "vault" | "guide" | "creative";
 
 const TAB_LABELS: Record<Tab, string> = {
   market: "Market",
   shipyard: "Shipyard",
+  tavern: "Tavern",
+  vault: "Vault",
   guide: "Scarlett",
   creative: "Creative",
 };
@@ -37,7 +39,15 @@ export function renderApp(overridesOrOptions?: Partial<PortState> | RenderAppOpt
   let tab: Tab | undefined;
   let simulateGodot = false;
 
-  if (overridesOrOptions && "state" in overridesOrOptions) {
+  const isOptionsObject = !!overridesOrOptions
+    && typeof overridesOrOptions === "object"
+    && (
+      "state" in overridesOrOptions
+      || "tab" in overridesOrOptions
+      || "simulateGodot" in overridesOrOptions
+    );
+
+  if (isOptionsObject) {
     stateOverrides = overridesOrOptions.state;
     tab = overridesOrOptions.tab;
     simulateGodot = (overridesOrOptions as RenderAppOptions).simulateGodot ?? false;

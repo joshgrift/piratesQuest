@@ -18,6 +18,7 @@ export interface PortState {
   costs: PortCosts;
   /** Null when the player hasn't built a vault yet. */
   vault: VaultState | null;
+  tavern: TavernState;
 }
 
 export interface PortCosts {
@@ -41,6 +42,23 @@ export interface VaultState {
   isHere: boolean;
   itemCapacity: number;
   goldCapacity: number;
+}
+
+/** Tavern state for the currently docked port. */
+export interface TavernState {
+  crewSlots: number;
+  hiredCharacterIds: string[];
+  characters: TavernCharacter[];
+}
+
+export interface TavernCharacter {
+  id: string;
+  name: string;
+  role: string;
+  /** Filename in /images/characters/ */
+  portrait: string;
+  hireable: boolean;
+  statChanges: StatChange[];
 }
 
 /** A tradeable item at this port with buy and/or sell prices. */
@@ -93,6 +111,8 @@ export type IpcMessage =
   | { action: "unequip_component"; name: string }
   | { action: "heal" }
   | { action: "upgrade_ship" }
+  | { action: "hire_character"; characterId: string }
+  | { action: "fire_character"; characterId: string }
   | { action: "focus_parent" }
   | { action: "set_inventory"; items: { type: string; quantity: number }[] }
   | { action: "clear_components" }

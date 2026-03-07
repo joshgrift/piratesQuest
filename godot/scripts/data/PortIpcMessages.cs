@@ -24,6 +24,7 @@ public record PortStateDto
   public ShipTierDto[] ShipTiers { get; init; } = [];
   public bool IsCreative { get; init; }
   public PortCostsDto Costs { get; init; } = new();
+  public TavernStateDto Tavern { get; init; } = new();
 
   /// <summary>
   /// The player's vault info. Null when no vault has been built yet.
@@ -31,6 +32,28 @@ public record PortStateDto
   /// </summary>
   public VaultStateDto Vault { get; init; }
 }
+
+/// <summary>
+/// Tavern snapshot for the currently docked port.
+/// </summary>
+public record TavernStateDto
+{
+  /// <summary>How many crew can be hired with the current ship tier.</summary>
+  public int CrewSlots { get; init; }
+  /// <summary>Character ids currently hired by this player.</summary>
+  public string[] HiredCharacterIds { get; init; } = [];
+  /// <summary>Characters physically present at this port.</summary>
+  public TavernCharacterDto[] Characters { get; init; } = [];
+}
+
+public record TavernCharacterDto(
+  string Id,
+  string Name,
+  string Role,
+  string Portrait,
+  bool Hireable,
+  StatChangeDto[] StatChanges
+);
 
 /// <summary>
 /// Gameplay costs pushed from C# so the webview never hardcodes them.
@@ -113,6 +136,8 @@ public record StatChangeDto(string Stat, string Modifier, float Value);
 [JsonDerivedType(typeof(VaultDepositMessage), "vault_deposit")]
 [JsonDerivedType(typeof(VaultWithdrawMessage), "vault_withdraw")]
 [JsonDerivedType(typeof(UpgradeShipMessage), "upgrade_ship")]
+[JsonDerivedType(typeof(HireCharacterMessage), "hire_character")]
+[JsonDerivedType(typeof(FireCharacterMessage), "fire_character")]
 [JsonDerivedType(typeof(SetShipTierMessage), "set_ship_tier")]
 [JsonDerivedType(typeof(SetVaultMessage), "set_vault")]
 [JsonDerivedType(typeof(DeleteVaultMessage), "delete_vault")]
@@ -175,6 +200,18 @@ public record SetHealthMessage : IpcMessage
 
 /// <summary>Upgrade the ship to the next tier.</summary>
 public record UpgradeShipMessage : IpcMessage;
+
+/// <summary>Hire a tavern character currently at this port.</summary>
+public record HireCharacterMessage : IpcMessage
+{
+  public string CharacterId { get; init; } = "";
+}
+
+/// <summary>Fire a currently hired tavern character.</summary>
+public record FireCharacterMessage : IpcMessage
+{
+  public string CharacterId { get; init; } = "";
+}
 
 /// <summary>Build a new vault at the current port (one per player).</summary>
 public record BuildVaultMessage : IpcMessage;

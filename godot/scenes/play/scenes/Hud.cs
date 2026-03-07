@@ -464,6 +464,21 @@ public partial class Hud : Control
     foreach (var kvp in _player.Stats.GetAllStats())
       stats[kvp.Key.ToString()] = kvp.Value;
 
+    var tavernCharacters = TavernData.GetCharactersForPort(_currentPortName ?? "")
+      .Select(c => new TavernCharacterDto(
+        c.Id,
+        c.Name,
+        c.Role,
+        c.Portrait,
+        c.Hireable,
+        c.StatChanges.Select(sc => new StatChangeDto(
+          sc.Stat.ToString(),
+          sc.Modifier.ToString(),
+          sc.Value
+        )).ToArray()
+      ))
+      .ToArray();
+
     // Build vault snapshot (null if player hasn't built one yet)
     VaultStateDto vaultState = null;
     if (_player.VaultPortName != null)
@@ -531,6 +546,12 @@ public partial class Hud : Control
           WoodPerHp = woodPerHp,
           FishPerHp = fishPerHp,
         },
+      },
+      Tavern = new TavernStateDto
+      {
+        CrewSlots = _player.GetCrewSlotCapacity(),
+        HiredCharacterIds = _player.HiredCrewCharacterIds.ToArray(),
+        Characters = tavernCharacters,
       },
     };
   }
@@ -603,6 +624,12 @@ public partial class Hud : Control
         break;
       case UpgradeShipMessage:
         HandleUpgradeShip();
+        break;
+      case HireCharacterMessage hc:
+        HandleHireCharacter(hc);
+        break;
+      case FireCharacterMessage fc:
+        HandleFireCharacter(fc);
         break;
       case BuildVaultMessage:
         HandleBuildVault();
@@ -822,6 +849,23 @@ public partial class Hud : Control
     GD.Print(ok
       ? $"HUD: Upgraded ship to tier {_player.ShipTier}"
       : "HUD: Ship upgrade failed");
+  }
+
+  private void HandleHireCharacter(HireCharacterMessage msg)
+  {
+    if (_currentPortName == null) return;
+    bool ok = _player.HireCrew(msg.CharacterId, _currentPortName);
+    GD.Print(ok
+      ? $"HUD: Hired character '{msg.CharacterId}'"
+      : $"HUD: Hire failed for '{msg.CharacterId}'");
+  }
+
+  private void HandleFireCharacter(FireCharacterMessage msg)
+  {
+    bool ok = _player.FireCrew(msg.CharacterId);
+    GD.Print(ok
+      ? $"HUD: Fired character '{msg.CharacterId}'"
+      : $"HUD: Fire failed for '{msg.CharacterId}'");
   }
 
   // ── Vault handlers ────────────────────────────────────────────────

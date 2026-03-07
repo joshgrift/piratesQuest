@@ -79,6 +79,36 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
       repair: { woodPerHp: 5, fishPerHp: 1 },
     },
     vault: null,
+    tavern: {
+      crewSlots: 2,
+      hiredCharacterIds: [],
+      characters: [
+        {
+          id: "scarred-gunner",
+          name: "Briggs",
+          role: "Deck Gunner",
+          portrait: "character6.png",
+          hireable: true,
+          statChanges: [{ stat: "AttackDamage", modifier: "Additive", value: 6 }],
+        },
+        {
+          id: "quartermaster-mira",
+          name: "Mira",
+          role: "Quartermaster",
+          portrait: "character13.png",
+          hireable: true,
+          statChanges: [{ stat: "ShipCapacity", modifier: "Additive", value: 120 }],
+        },
+        {
+          id: "dockside-poet",
+          name: "Pip",
+          role: "Dockside Poet",
+          portrait: "character20.png",
+          hireable: false,
+          statChanges: [],
+        },
+      ],
+    },
     ...overrides,
   };
 }

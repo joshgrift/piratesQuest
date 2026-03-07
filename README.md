@@ -115,28 +115,6 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 
 
 ## ROADMAP
-### 0.5.0 Alpha
-- [x] Names above the ships
-- [x] Ship models aren't showing
-- [x] Vault didn't work
-- [x] Something to stop people from getting stuck off the map
-- [x] Dynamic Islands
-  - [x] Larger Map
-- [x] Romance Scarlett
-- [x] Local Build uses local server and UI
-- [x] Release & main vs version UI problems
-  - [x] Main menu & website are deployed, and port UI is packaged with game
-- [x] React main menu
-  - [x] Sign up is really annoying
-  - [x] Changelog on main menu
-  - [x] Version on main menu
-- [x] Website should actually ping servers instead of pinging API
-- [x] Discord bot to notify folks when folks are online
-- [x] Discord link in menu (invite only)
-- [x] Check game version when joining server
-- [x] Balanced movement speed
-- [x] Esc to return to menu
-
 ### 0.6.0 Alpha
 - [ ] Quests
 - [ ] Characters

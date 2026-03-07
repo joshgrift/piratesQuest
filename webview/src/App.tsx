@@ -8,8 +8,10 @@ import { ShipyardTab } from "./tabs/ShipyardTab";
 import { VaultTab } from "./tabs/VaultTab";
 import { GuideTab } from "./tabs/GuideTab";
 import { CreativeTab } from "./tabs/CreativeTab";
+import { TavernTab } from "./tabs/TavernTab";
 
-type Tab = "market" | "shipyard" | "vault" | "guide" | "creative";
+type Tab = "market" | "shipyard" | "tavern" | "vault" | "guide" | "creative";
+type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
 
 export default function App() {
   const [portState, setPortState] = useState<PortState | null>(null);
@@ -50,6 +52,29 @@ export default function App() {
 
   if (!portState && !isClosing) return null;
 
+  const handleHireCharacter = (characterId: string): HireOutcome => {
+    if (!portState) return "not_hireable";
+
+    const character = portState?.tavern.characters.find((c) => c.id === characterId);
+    if (!character?.hireable) return "not_hireable";
+
+    const alreadyHired = portState.tavern.hiredCharacterIds.includes(characterId);
+    if (alreadyHired) return "already_hired";
+
+    if (portState.tavern.hiredCharacterIds.length >= portState.tavern.crewSlots) {
+      return "slots_full";
+    }
+
+    sendIpc({ action: "hire_character", characterId });
+    return "hired";
+  };
+
+  const handleFireCharacter = (characterId: string) => {
+    if (!portState) return;
+    if (!portState?.tavern.hiredCharacterIds.includes(characterId)) return;
+    sendIpc({ action: "fire_character", characterId });
+  };
+
   const panelClass = [
     "port-panel",
     isOpen ? "open" : "",
@@ -84,6 +109,12 @@ export default function App() {
           Shipyard
         </button>
         <button
+          className={`tab-btn ${activeTab === "tavern" ? "active" : ""}`}
+          onClick={() => setActiveTab("tavern")}
+        >
+          Tavern
+        </button>
+        <button
           className={`tab-btn vault-tab-btn ${activeTab === "vault" ? "active" : ""}`}
           onClick={() => setActiveTab("vault")}
         >
@@ -111,6 +142,12 @@ export default function App() {
             <MarketTab state={portState} />
           ) : activeTab === "shipyard" ? (
             <ShipyardTab state={portState} />
+          ) : activeTab === "tavern" ? (
+            <TavernTab
+              state={portState}
+              onHireCharacter={handleHireCharacter}
+              onFireCharacter={handleFireCharacter}
+            />
           ) : activeTab === "vault" ? (
             <VaultTab state={portState} />
           ) : activeTab === "creative" && portState.isCreative ? (

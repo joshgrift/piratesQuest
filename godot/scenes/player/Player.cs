@@ -5,6 +5,7 @@ using Godot;
 using Godot.Collections;
 using PiratesQuest.Data;
 using System;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 
@@ -56,6 +57,10 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   public string VaultPortName { get; set; }
   public int VaultLevel { get; set; }
   public System.Collections.Generic.Dictionary<InventoryItemType, int> VaultItems { get; set; } = new();
+
+  // ── Tavern Crew ──────────────────────────────────────────────────
+  // Crew hires persist in player state and affect real gameplay stats.
+  public System.Collections.Generic.List<string> HiredCrewCharacterIds { get; set; } = [];
 
   // Capacities per vault level (index 0 = unused, 1-5 = levels)
   public static readonly int[] VaultItemCapacity = [0, 500, 1000, 2000, 4000, 6000];
@@ -743,6 +748,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (ShipTier >= 0 && ShipTier < GameData.ShipTiers.Length)
       Stats.Stats[PlayerStat.ComponentCapacity] = GameData.ShipTiers[ShipTier].ComponentSlots;
 
+    // If capacity was reduced (e.g. creative tier downgrade), trim hired crew.
+    TrimHiredCrewToCapacity();
+
     foreach (var ownedComponent in OwnedComponents)
     {
       if (ownedComponent.isEquipped)
@@ -753,6 +761,68 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
         }
       }
     }
+
+    // Apply hired crew stat bonuses on top of base stats and components.
+    foreach (var hiredId in HiredCrewCharacterIds)
+    {
+      var character = TavernData.GetCharacterById(hiredId);
+      if (character == null) continue;
+
+      foreach (var statChange in character.StatChanges)
+        Stats.ApplyStatChange(statChange);
+    }
+  }
+
+  public int GetCrewSlotCapacity()
+  {
+    int componentSlots = 4;
+    if (ShipTier >= 0 && ShipTier < GameData.ShipTiers.Length)
+      componentSlots = GameData.ShipTiers[ShipTier].ComponentSlots;
+
+    // Crew grows with ship size: 4/6/8 component slots => 2/3/4 crew slots.
+    return Math.Max(1, componentSlots / 2);
+  }
+
+  public bool HireCrew(string characterId, string currentPortName)
+  {
+    var character = TavernData.GetCharacterById(characterId);
+    if (character == null || !character.Hireable)
+      return false;
+
+    if (!string.Equals(character.PortName, currentPortName, StringComparison.OrdinalIgnoreCase))
+      return false;
+
+    if (HiredCrewCharacterIds.Contains(characterId))
+      return false;
+
+    if (HiredCrewCharacterIds.Count >= GetCrewSlotCapacity())
+      return false;
+
+    HiredCrewCharacterIds.Add(characterId);
+    UpdatePlayerStats();
+    GD.Print($"{Name}: Hired tavern crew '{characterId}'");
+    return true;
+  }
+
+  public bool FireCrew(string characterId)
+  {
+    bool removed = HiredCrewCharacterIds.Remove(characterId);
+    if (!removed)
+      return false;
+
+    UpdatePlayerStats();
+    GD.Print($"{Name}: Fired tavern crew '{characterId}'");
+    return true;
+  }
+
+  private void TrimHiredCrewToCapacity()
+  {
+    int capacity = GetCrewSlotCapacity();
+    if (HiredCrewCharacterIds.Count <= capacity) return;
+
+    int removeCount = HiredCrewCharacterIds.Count - capacity;
+    HiredCrewCharacterIds.RemoveRange(capacity, removeCount);
+    GD.Print($"{Name}: Trimmed {removeCount} hired crew due to capacity change");
   }
 
   public bool CanMakePurchase(Dictionary<InventoryItemType, int> cost)
@@ -1193,6 +1263,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       });
     }
 
+    dto.HiredCrewCharacterIds = HiredCrewCharacterIds.ToList();
+
     // Persist vault if the player has one
     if (VaultPortName != null)
     {
@@ -1249,6 +1321,17 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       }
     }
     UpdatePlayerStats();
+
+    // Restore hired crew ids and drop unknown ids safely.
+    HiredCrewCharacterIds.Clear();
+    var validCrewIds = TavernData.GetCharacterIdSet();
+    foreach (var id in dto.HiredCrewCharacterIds ?? [])
+    {
+      if (validCrewIds.Contains(id))
+        HiredCrewCharacterIds.Add(id);
+      else
+        GD.PrintErr($"{Name}: Unknown tavern character '{id}' in saved state, skipping");
+    }
 
     // Restore ship tier (persists through death)
     ShipTier = Math.Clamp(dto.ShipTier, 0, GameData.ShipTiers.Length - 1);

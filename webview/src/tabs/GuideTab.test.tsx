@@ -59,18 +59,21 @@ describe("GuideTab", () => {
       expect(screen.getByText("What are resources for?")).toBeInTheDocument();
       expect(screen.getByText("How do I collect resources?")).toBeInTheDocument();
       expect(screen.getByText("How do ship upgrades work?")).toBeInTheDocument();
+      expect(screen.getByText("How do I upgrade my ship class?")).toBeInTheDocument();
       expect(screen.getByText("What if I'm overburdened?")).toBeInTheDocument();
       expect(screen.getByText("How does the leaderboard work?")).toBeInTheDocument();
       expect(screen.getByText("What happens when I die?")).toBeInTheDocument();
       expect(screen.getByText("What can I do at ports?")).toBeInTheDocument();
+      expect(screen.getByText("How does tavern crew hiring work?")).toBeInTheDocument();
+      expect(screen.getByText("How does the vault work?")).toBeInTheDocument();
     });
 
     it("shows numbered badges on response buttons", () => {
       const { container } = renderGuide();
       const nums = container.querySelectorAll(".guide-response-num");
-      expect(nums).toHaveLength(12);
+      expect(nums).toHaveLength(14);
       expect(nums[0]!.textContent).toBe("1");
-      expect(nums[11]!.textContent).toBe("12");
+      expect(nums[13]!.textContent).toBe("14");
     });
   });
 

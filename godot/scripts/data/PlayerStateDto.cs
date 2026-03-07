@@ -10,6 +10,7 @@ public class PlayerStateDto
   public float[] Position { get; set; } = [0, 2, 0];
   public bool IsDead { get; set; }
   public int ShipTier { get; set; }
+  public List<string> HiredCrewCharacterIds { get; set; } = [];
 
   /// <summary>Null when the player hasn't built a vault yet.</summary>
   public VaultDto Vault { get; set; }

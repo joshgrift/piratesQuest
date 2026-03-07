@@ -1,13 +1,9 @@
+import type { ConversationNode } from "../components/ConversationPanel";
+
 // Scarlett's dialogue tree — the branching conversation data used by GuideTab.
 // Kept in a separate file so GuideTab only exports its React component
 // (required by react-refresh for hot module replacement).
-
-export interface DialogueNode {
-  text: string;
-  responses: { label: string; next: string }[];
-}
-
-export const GUIDE_DIALOGUE: Record<string, DialogueNode> = {
+export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
   root: {
     text: "Ahoy there, sailor! Pull up a chair. Name's Scarlett \u2014 been sailin' these waters longer than most. What would ye like to know?",
     responses: [
@@ -22,6 +18,7 @@ export const GUIDE_DIALOGUE: Record<string, DialogueNode> = {
       { label: "How does the leaderboard work?", next: "leaderboard" },
       { label: "What happens when I die?", next: "death" },
       { label: "What can I do at ports?", next: "ports" },
+      { label: "How does tavern crew hiring work?", next: "tavern" },
       { label: "How does the vault work?", next: "vault" },
       { label: "If I win a duel, can I win a smile too?", next: "flirt" },
     ],
@@ -323,8 +320,42 @@ export const GUIDE_DIALOGUE: Record<string, DialogueNode> = {
     ],
   },
   ports_features: {
-    text: "Plenty! The Market for buyin' and sellin' goods, the Shipyard for components and repairs, the Vault for storin' yer treasures, and me \u2014 yer humble guide! Each port has different prices, so it pays to explore.",
+    text: "Plenty! The Market for buyin' and sellin' goods, the Shipyard for components and repairs, the Tavern for talkin' and hirin' crew, the Vault for storin' yer treasures, and me \u2014 yer humble guide! Each port has different prices, so it pays to explore.",
     responses: [{ label: "Thanks! What else can I learn?", next: "root" }],
+  },
+
+  // ── Tavern Crew ──
+  tavern: {
+    text: "Aye, the Tavern's where ye build a proper crew. Talk to locals, hire the ones ye trust, and fire 'em when ye need room for someone new. Mind this: each character belongs to one specific port.",
+    responses: [
+      { label: "How many crew can I hire?", next: "tavern_slots" },
+      { label: "Do all hires improve stats?", next: "tavern_stats" },
+      { label: "Ask about something else", next: "root" },
+    ],
+  },
+  tavern_slots: {
+    text: "Each ship class has a fixed number of crew berths. Bigger ships fit more hands. If the berths are full, ye can't swap directly \u2014 fire first, then hire.",
+    responses: [
+      { label: "Got it. Do all hires boost stats?", next: "tavern_stats" },
+      { label: "Ask about something else", next: "root" },
+    ],
+  },
+  tavern_stats: {
+    text: "Some crew give hard stat boosts like cannon damage or cargo space. Others are just flavor and don't buff numbers at all.\n\nQuick quiz: yer berths are full and ye want a new gunner. What's the right move?",
+    responses: [
+      { label: "Fire one crew member, then hire the gunner", next: "tavern_quiz_right" },
+      { label: "Swap instantly without firing", next: "tavern_quiz_wrong" },
+      { label: "Keep everyone and hire anyway", next: "tavern_quiz_wrong" },
+      { label: "Ask about something else", next: "root" },
+    ],
+  },
+  tavern_quiz_right: {
+    text: "Sharp sailor. That's the rule: no direct swap. Crew discipline keeps yer choices deliberate.",
+    responses: [{ label: "What else can I learn?", next: "root" }],
+  },
+  tavern_quiz_wrong: {
+    text: "Nay, matey. Tavern crews don't swap in place. If slots are full, fire first, then hire.",
+    responses: [{ label: "Understood. What else?", next: "root" }],
   },
 
   // ── Vault ──

@@ -1349,7 +1349,8 @@ body {
 
 /* ── Guide Tab ────────────────────────────────────────────────────────── */
 
-.guide-container {
+.guide-container,
+.tavern-chat-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1357,14 +1358,16 @@ body {
   padding: 8px 0;
 }
 
-.guide-portrait-wrap {
+.guide-portrait-wrap,
+.tavern-chat-portrait-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
 }
 
-.guide-portrait {
+.guide-portrait,
+.tavern-chat-portrait {
   width: 100px;
   height: 100px;
   border-radius: 50%;
@@ -1384,14 +1387,16 @@ body {
   }
 }
 
-.guide-name {
+.guide-name,
+.tavern-chat-name {
   font-family: "New Rocker", cursive;
   font-size: 18px;
   color: #d4a748;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.guide-speech {
+.guide-speech,
+.tavern-chat-speech {
   width: 100%;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(139, 105, 20, 0.3);
@@ -1402,7 +1407,8 @@ body {
   position: relative;
 }
 
-.guide-speech::before {
+.guide-speech::before,
+.tavern-chat-speech::before {
   content: "";
   position: absolute;
   top: -8px;
@@ -1415,14 +1421,16 @@ body {
   border-bottom: 8px solid rgba(139, 105, 20, 0.3);
 }
 
-.guide-text {
+.guide-text,
+.tavern-chat-text {
   font-size: 14px;
   line-height: 1.6;
   color: #e0d5c0;
   white-space: pre-line;
 }
 
-.guide-cursor {
+.guide-cursor,
+.tavern-chat-cursor {
   color: #d4a748;
   animation: guideBlink 0.6s step-start infinite;
 }
@@ -1433,7 +1441,8 @@ body {
   }
 }
 
-.guide-skip-hint {
+.guide-skip-hint,
+.tavern-chat-skip-hint {
   text-align: center;
   font-size: 10px;
   color: #5a6a7a;
@@ -1441,14 +1450,16 @@ body {
   font-style: italic;
 }
 
-.guide-responses {
+.guide-responses,
+.tavern-chat-responses {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.guide-response-btn {
+.guide-response-btn,
+.tavern-chat-response-btn {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1478,14 +1489,16 @@ body {
   }
 }
 
-.guide-response-btn:hover {
+.guide-response-btn:hover,
+.tavern-chat-response-btn:hover {
   background: rgba(212, 167, 72, 0.1);
   border-left-color: #d4a748;
   color: #e0d5c0;
   transform: translateX(4px);
 }
 
-.guide-response-num {
+.guide-response-num,
+.tavern-chat-response-num {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1497,6 +1510,138 @@ body {
   font-size: 11px;
   font-weight: 700;
   flex-shrink: 0;
+}
+
+.tavern-chat-response-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+
+/* ── Tavern Tab ───────────────────────────────────────────────────── */
+
+.tavern-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tavern-crew-card {
+  margin-bottom: 0;
+}
+
+.tavern-slots-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.tavern-slots-count {
+  font-size: 12px;
+  color: #d4a748;
+  font-weight: 700;
+}
+
+.tavern-crew-help {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #8b9ab5;
+}
+
+.tavern-roster {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tavern-character-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(139, 105, 20, 0.25);
+  border-radius: 6px;
+  color: #c8bda8;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.tavern-character-btn.active {
+  border-color: rgba(212, 167, 72, 0.5);
+  box-shadow: 0 0 12px rgba(212, 167, 72, 0.15);
+}
+
+.tavern-character-btn:hover {
+  background: rgba(212, 167, 72, 0.08);
+}
+
+.tavern-character-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tavern-character-name {
+  font-size: 13px;
+  color: #e0d5c0;
+  font-weight: 700;
+}
+
+.tavern-character-role {
+  font-size: 11px;
+  color: #8b9ab5;
+}
+
+.tavern-badge {
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+.tavern-badge.hired {
+  background: rgba(107, 223, 107, 0.15);
+  color: #8ff08f;
+  border: 1px solid rgba(107, 223, 107, 0.35);
+}
+
+.tavern-badge.hireable {
+  background: rgba(212, 167, 72, 0.15);
+  color: #d4a748;
+  border: 1px solid rgba(212, 167, 72, 0.35);
+}
+
+.tavern-badge.talk {
+  background: rgba(90, 106, 122, 0.2);
+  color: #8b9ab5;
+  border: 1px solid rgba(90, 106, 122, 0.35);
+}
+
+.tavern-stats-card {
+  margin-top: 2px;
+}
+
+.tavern-bonus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tavern-stats-sep {
+  margin: 10px 0;
+  border-top: 1px solid rgba(139, 105, 20, 0.25);
+}
+
+.tavern-stats-title {
+  font-size: 12px;
+  color: #8b9ab5;
+  margin-bottom: 6px;
+  font-weight: 700;
 }
 
 /* ── Ship Upgrade Card ─────────────────────────────────────────────── */
