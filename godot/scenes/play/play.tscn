@@ -39,7 +39,7 @@ adjustment_contrast = 1.15
 adjustment_saturation = 1.25
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_0xm2m"]
-size = Vector3(1000, 1, 1000)
+size = Vector3(2000, 1, 2000)
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_water"]
 noise = ExtResource("water_noise")
