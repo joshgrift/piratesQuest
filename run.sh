@@ -2,8 +2,8 @@
 
 dotnet build godot || exit 1
 
-# Kill any processes occupying ports we need (webview:5173, API:5236, game:7777)
-for PORT in 5173 5236 7777; do
+# Kill any processes occupying ports we need (API:5236, game:7777)
+for PORT in 5236 7777; do
   EXISTING_PID=$(lsof -ti tcp:$PORT)
   if [[ -n "$EXISTING_PID" ]]; then
     echo "Killing existing process on port $PORT (PID $EXISTING_PID)..."
@@ -14,8 +14,7 @@ done
 # Local development defaults.
 SERVER_ID="${SERVER_ID:-1}"
 SERVER_API_KEY="${SERVER_API_KEY:-dev-server-api-key}"
-WEBVIEW_URL="http://localhost:5173/fragments/webview/"
-MENU_URL="http://localhost:5236/fragments/menu/"
+API_URL="http://localhost:5236"
 PROD_API_URL=""
 
 # Parse CLI arguments
@@ -25,8 +24,6 @@ while [[ $# -gt 0 ]]; do
     --server)      SERVER_ONLY=true; shift ;;
     --user)        CLIENT_USER="$2"; shift 2 ;;
     --password)    CLIENT_PASS="$2"; shift 2 ;;
-    --webview-url) WEBVIEW_URL="$2"; shift 2 ;;
-    --menu-url)    MENU_URL="$2"; shift 2 ;;
     --prod)        PROD_API_URL="https://pirates.quest"; shift ;;
     *)             shift ;;
   esac
@@ -43,19 +40,16 @@ echo -e "${YELLOW}=== Building Menu WebView ===${RESET}"
 npm --prefix menu install
 npm --prefix menu run build || exit 1
 
+echo -e "${YELLOW}=== Building Local Port WebView ===${RESET}"
+npm --prefix webview install
+npm --prefix webview run build || exit 1
+
 if [[ -n "${PROD_API_URL}" ]]; then
   echo -e "${BLUE}=== Using production API: ${PROD_API_URL} ===${RESET}"
-  # In production the webview is served from the same host as the API.
-  WEBVIEW_URL="${PROD_API_URL}/fragments/webview/"
-  MENU_URL="${PROD_API_URL}/fragments/menu/"
+  # Both API + menu come from production host.
+  API_URL="${PROD_API_URL}"
   GODOT_API_ARGS="--api-url ${PROD_API_URL}"
 else
-  echo -e "${YELLOW}=== Starting WebView Dev Server ===${RESET}"
-  npm --prefix webview install
-  npm --prefix webview run build || exit 1
-  npm --prefix webview run dev 2>&1 | sed "s/^/$(echo -e ${YELLOW})[WebView ]$(echo -e ${RESET}) /" &
-  PID_WEBVIEW=$!
-
   echo -e "${BLUE}=== Starting Backend ===${RESET}"
   if ! docker info >/dev/null 2>&1; then
     echo -e "${RED}Error: Docker is not running. Please start Docker Desktop and try again.${RESET}"
@@ -70,14 +64,7 @@ else
   GODOT_API_ARGS=""
 fi
 
-# Force menu webview to bypass HTTP cache each run.
-MENU_CACHE_BUSTER=$(date +%s)
-if [[ "$MENU_URL" == *"?"* ]]; then
-  MENU_URL="${MENU_URL}&cb=${MENU_CACHE_BUSTER}"
-else
-  MENU_URL="${MENU_URL}?cb=${MENU_CACHE_BUSTER}"
-fi
-echo -e "${YELLOW}Menu URL: ${MENU_URL}${RESET}"
+echo -e "${YELLOW}API URL: ${API_URL}${RESET}"
 
 sleep 1
 
@@ -88,7 +75,7 @@ PID1=$!
 if [[ "${SERVER_ONLY}" == "false" ]]; then
   sleep 0.5
 
-  CLIENT_ARGS="--webview-url ${WEBVIEW_URL} --menu-url ${MENU_URL} --creative ${GODOT_API_ARGS}"
+  CLIENT_ARGS="--creative ${GODOT_API_ARGS}"
   if [[ -n "${CLIENT_USER}" && -n "${CLIENT_PASS}" ]]; then
     CLIENT_ARGS="${CLIENT_ARGS} --user ${CLIENT_USER} --password ${CLIENT_PASS} --disableSaveUser"
   fi
@@ -102,5 +89,5 @@ else
   wait $PID1
 fi
 
-kill $PID_API $PID_WEBVIEW 2>/dev/null || true
+kill $PID_API 2>/dev/null || true
 echo "=== Terminated ==="

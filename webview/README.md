@@ -20,7 +20,7 @@ npm install
 npm run build
 ```
 
-Build output goes to `../api/fragments/webview/`, which the API server serves as static files. The webview loads from `{ApiBaseUrl}/fragments/webview/`.
+Build output goes to `../godot/webview/`. Godot loads it locally from `res://webview/index.html` by default.
 
 ## Development
 
@@ -28,4 +28,4 @@ Build output goes to `../api/fragments/webview/`, which the API server serves as
 npm run dev
 ```
 
-This starts a Vite dev server with hot reload. To test with the game, temporarily change the webview URL in `Hud.cs` to point at the dev server (e.g. `http://localhost:5173/fragments/webview/`).
+This starts a Vite dev server with hot reload for browser-only work. The in-game port UI is local-only and always loads from `res://webview/index.html`.

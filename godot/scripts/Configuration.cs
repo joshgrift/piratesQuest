@@ -18,6 +18,7 @@ partial class Configuration : Node
 {
   private const string LocalApiBaseUrl = "http://localhost:5236";
   private const string ProductionApiBaseUrl = "https://pirates.quest";
+  private const string LocalPortWebViewUrl = "res://webview/index.html";
 
   // Godot's per-user, writable save file. On each OS this maps to a safe local app-data folder.
   private const string LocalConfigPath = "user://settings.cfg";
@@ -46,9 +47,9 @@ partial class Configuration : Node
   public static string CmdUser { get; private set; }
   public static string CmdPassword { get; private set; }
   public static bool DisableSaveUser { get; private set; }
-  // Defaults to {ApiBaseUrl}/fragments/webview/. Override with --webview-url <url>.
-  public static string WebViewUrl { get; private set; } = $"{ApiBaseUrl}/fragments/webview/";
-  // Defaults to {ApiBaseUrl}/fragments/menu/. Override with --menu-url <url>.
+  // Port UI is packaged with the game and always loaded locally.
+  public static string WebViewUrl { get; private set; } = LocalPortWebViewUrl;
+  // Menu UI is always served from the configured API host.
   public static string MenuWebViewUrl { get; private set; } = $"{ApiBaseUrl}/fragments/menu/";
 
   private static string GetDefaultApiBaseUrl()
@@ -116,9 +117,6 @@ partial class Configuration : Node
 
   private static void ParseClientArgs()
   {
-    bool hasExplicitWebViewUrl = false;
-    bool hasExplicitMenuWebViewUrl = false;
-
     var args = OS.GetCmdlineArgs();
     for (int i = 0; i < args.Length; i++)
     {
@@ -133,14 +131,6 @@ partial class Configuration : Node
         case "--disableSaveUser":
           DisableSaveUser = true;
           break;
-        case "--webview-url" when i + 1 < args.Length:
-          WebViewUrl = args[i + 1];
-          hasExplicitWebViewUrl = true;
-          break;
-        case "--menu-url" when i + 1 < args.Length:
-          MenuWebViewUrl = args[i + 1];
-          hasExplicitMenuWebViewUrl = true;
-          break;
         case "--api-url" when i + 1 < args.Length:
           ApiBaseUrl = args[i + 1].TrimEnd('/');
           break;
@@ -150,17 +140,10 @@ partial class Configuration : Node
       }
     }
 
-    // When --api-url is provided without an explicit --webview-url,
-    // recalculate the webview URL from the new API base.
-    // In production the webview is served from the same host as the API.
-    if (!hasExplicitWebViewUrl)
-    {
-      WebViewUrl = $"{ApiBaseUrl}/fragments/webview/";
-    }
-    if (!hasExplicitMenuWebViewUrl)
-    {
-      MenuWebViewUrl = $"{ApiBaseUrl}/fragments/menu/";
-    }
+    // Port webview is always local.
+    WebViewUrl = LocalPortWebViewUrl;
+    // Menu webview is always hosted by API.
+    MenuWebViewUrl = $"{ApiBaseUrl}/fragments/menu/";
   }
 
   public override void _Process(double delta)

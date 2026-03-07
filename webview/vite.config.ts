@@ -4,9 +4,10 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/fragments/webview/',
+  // Relative asset paths let index.html work from a local res:// URL in Godot.
+  base: './',
   build: {
-    outDir: '../api/fragments/webview',
+    outDir: '../godot/webview',
     emptyOutDir: true,
   },
   test: {

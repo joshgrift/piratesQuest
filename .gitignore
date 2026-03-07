@@ -3,5 +3,6 @@
 /android/
 .DS_Store
 dist/
+godot/webview/
 node_modules/
 **/node_modules/

@@ -2,6 +2,10 @@
 
 echo "Building and exporting project..."
 
+echo "==== Building Port WebView (local Godot files) ===="
+npm --prefix webview install
+npm --prefix webview run build
+
 # Extract version from project.godot
 VERSION=$(grep 'config/version=' godot/project.godot | sed 's/config\/version="\(.*\)"/\1/')
 
