@@ -102,18 +102,20 @@ The build output goes to `../api/fragments/menu/`, which the API serves as stati
 - [x] Vault didn't work
 - [ ] Something to stop people from coming off the map
 - [x] Dynamic Islands
+  - [x] Larger Map
 - [x] Romance Scarlett
 - [x] Local Build uses local server and UI
 - [ ] Release & main vs version UI problems
   - [ ] Main menu & website are deployed, but maybe port UI is packaged with game instead? 
-- [ ] React main menu
-  - [ ] Sign up is really annoying
-  - [ ] Changelog on main menu
-  - [ ] Version on main menu
+- [x] React main menu
+  - [x] Sign up is really annoying
+  - [x] Changelog on main menu
+  - [x] Version on main menu
 - [ ] Website should actually ping servers instead of pinging API
 - [x] Discord bot to notify folks when folks are online
 - [ ] Discord link on website (invite only somehow)
 - [x] Check game version when joining server
+- [x] Slowed speed down
 
 ### 0.6.0 Alpha
 - [ ] Quests
@@ -128,6 +130,7 @@ The build output goes to `../api/fragments/menu/`, which the API serves as stati
 - [ ] Game freezes on first explosion animation
 - [ ] Jitter when hitting a rock! 
 - [ ] EU Servers
+- [ ] Stop users from going off map
 
 ### Suggestions
 - [ ] Close port menu early
@@ -154,3 +157,9 @@ The build output goes to `../api/fragments/menu/`, which the API serves as stati
 - [ ] Cracken
 - [ ] Curses
 - [ ] Change cannon angle
+- [ ] environmental hazards
+  - Randomly spawn and can move around on the map, e.g., hurricane or tornado or shark attack - damaging ship while in its radius or temporarily destroying/exhausting a harvest spot
+- [ ] Harvesting nodes have a limited harvest quantity and regen timer.
+  - This helps balance the best harvesting spots, encourages diversifying where you harvest, and encourages return logins to get the resources you need.
+- [ ] add weather/wind mechanic with variably wind speeds
+   - [ ] affecting sailing speed based on corresponding wind and ship direction,
