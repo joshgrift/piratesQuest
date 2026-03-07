@@ -221,12 +221,21 @@ transform = Transform3D(-0.94672793, 0, 0.32203448, 0, 1, 0, -0.32203448, 0, -0.
 
 [node name="Island" parent="Terrain/Islands" instance=ExtResource("9_mric1")]
 transform = Transform3D(-0.28627384, 0, -0.95814794, 0, 1, 0, 0.95814794, 0, -0.28627384, 283.109, -3.5, 22.98)
+NoiseScale = 0.3
+SubdivisionDepth = 4
+MaxTerrainTriangles = 1500
 
 [node name="Island2" parent="Terrain/Islands" instance=ExtResource("6_q6imw")]
 transform = Transform3D(0.06815458, 0, 0.99767476, 0, 1, 0, -0.99767476, 0, 0.06815458, -47.338165, -2.0922003, 153.97104)
+NoiseScale = 0.3
+SubdivisionDepth = 4
+MaxTerrainTriangles = 1500
 
 [node name="Island3" parent="Terrain/Islands" instance=ExtResource("11_qysfa")]
 transform = Transform3D(-0.72976863, 0, -0.6836942, 0, 1, 0, 0.6836942, 0, -0.72976863, 74.02051, -3, -78.59404)
+NoiseScale = 0.3
+SubdivisionDepth = 4
+MaxTerrainTriangles = 1500
 
 [node name="Terrain" type="Node3D" parent="Terrain"]
 
@@ -625,3 +634,4 @@ spawn_path = NodePath("../DeadPlayers")
 
 [node name="Island" parent="." instance=ExtResource("13_gcg6u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 112.73312, -2.8584723, -12.521217)
+MaxTerrainTriangles = 1500
