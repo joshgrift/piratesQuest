@@ -36,7 +36,7 @@ partial class Configuration : Node
   public static bool RandomSpawnEnabled { get; } = true;
   public static int StartingCoin { get; } = 100;
   public static bool IsCreative { get; private set; } = false;
-  public static int DefaultPort { get; } = 7777;
+  public static int DefaultPort { get; private set; } = 7777;
   // Override with --api-url <url>.
   // Local/editor/debug builds default to localhost; non-local builds default to production.
   public static string ApiBaseUrl { get; private set; } = GetDefaultApiBaseUrl();
@@ -106,6 +106,14 @@ partial class Configuration : Node
           break;
         case "--api-url":
           ApiBaseUrl = args[i + 1].TrimEnd('/');
+          break;
+        case "--port":
+          if (!int.TryParse(args[i + 1], out int port) || port < 1 || port > 65535)
+          {
+            throw new InvalidOperationException("Dedicated server --port must be an integer between 1 and 65535.");
+          }
+
+          DefaultPort = port;
           break;
       }
     }

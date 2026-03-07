@@ -28,24 +28,24 @@ fi
 mkdir -p "$VERSION_DIR"
 
 echo "==== Building macOS Client ===="
-/Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --headless --export-debug "macOS" "$VERSION_DIR/piratesquest.app"
+/Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --headless --export-release "macOS" "$VERSION_DIR/piratesquest.app"
 # Create zip from the app
 cd "$VERSION_DIR" && zip -r "piratesquest-macos.zip" "piratesquest.app" && cd ../..
 
 echo "==== Building macOS Server ===="
-/Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --headless --export-debug "macOS-server" "$VERSION_DIR/piratesquest-server.app"
+/Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --headless --export-release "macOS-server" "$VERSION_DIR/piratesquest-server.app"
 # Create zip from the app
 cd "$VERSION_DIR" && zip -r "piratesquest-server-macos.zip" "piratesquest-server.app" && cd ../..
 
 echo "==== Building Windows Client (x64) ===="
 mkdir -p "$VERSION_DIR/piratesquest-windows-x64"
-/Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --headless --export-debug "Windows Desktop" "$VERSION_DIR/piratesquest-windows-x64/piratesquest.exe"
+/Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --headless --export-release "Windows Desktop" "$VERSION_DIR/piratesquest-windows-x64/piratesquest.exe"
 # Create zip from the windows folder
 cd "$VERSION_DIR" && zip -r "piratesquest-windows-x64.zip" "piratesquest-windows-x64" && cd ../..
 
 echo "==== Building Linux Server (x64) ===="
 mkdir -p "$VERSION_DIR/piratesquest-server-linux-x64"
-/Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --headless --export-debug "Linux-server" "$VERSION_DIR/piratesquest-server-linux-x64/piratesquest-server"
+/Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --headless --export-release "Linux-server" "$VERSION_DIR/piratesquest-server-linux-x64/piratesquest-server"
 # Create zip from the linux server folder
 cd "$VERSION_DIR" && zip -r "piratesquest-server-linux-x64.zip" "piratesquest-server-linux-x64" && cd ../..
 

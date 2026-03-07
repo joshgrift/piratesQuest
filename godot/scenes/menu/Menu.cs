@@ -472,7 +472,15 @@ public partial class Menu : Node2D
   private void StartServer()
   {
     var networkManager = GetNode<NetworkManager>("/root/NetworkManager");
-    networkManager.CreateServer(Configuration.DefaultPort);
+    var error = networkManager.CreateServer(Configuration.DefaultPort);
+    if (error != Error.Ok)
+    {
+      GD.PrintErr($"Server startup failed on port {Configuration.DefaultPort}: {error}");
+      // In dedicated-server mode, fail fast so deployment tooling sees the error.
+      GetTree().Quit(1);
+      return;
+    }
+
     GetTree().ChangeSceneToFile("res://scenes/play/play.tscn");
   }
 }
