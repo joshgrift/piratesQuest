@@ -111,7 +111,7 @@ The build output goes to `../api/fragments/menu/`, which the API serves as stati
   - [x] Larger Map
 - [x] Romance Scarlett
 - [x] Local Build uses local server and UI
-- [ ] Release & main vs version UI problems
+- [x] Release & main vs version UI problems
   - [x] Main menu & website are deployed, and port UI is packaged with game
 - [x] React main menu
   - [x] Sign up is really annoying
