@@ -29,8 +29,13 @@ public static class API
   private sealed class ServerResponse
   {
     public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public int Port { get; set; }
+    public string Status { get; set; } = "offline";
+    public int PlayerCount { get; set; }
+    public int PlayerMax { get; set; } = 8;
+    public string ServerVersion { get; set; } = "unknown";
   }
 
   public static Task<(bool Success, string Token, string ErrorMessage)> LoginAsync(string username, string password)
@@ -79,8 +84,13 @@ public static class API
         servers[i] = new ServerListingInfo
         {
           ServerName = rawServers[i].Name,
+          Description = rawServers[i].Description,
           IpAddress = rawServers[i].Address,
-          Port = rawServers[i].Port
+          Port = rawServers[i].Port,
+          Status = string.IsNullOrWhiteSpace(rawServers[i].Status) ? "offline" : rawServers[i].Status,
+          PlayerCount = rawServers[i].PlayerCount,
+          PlayerMax = rawServers[i].PlayerMax > 0 ? rawServers[i].PlayerMax : 8,
+          ServerVersion = string.IsNullOrWhiteSpace(rawServers[i].ServerVersion) ? "unknown" : rawServers[i].ServerVersion,
         };
       }
 

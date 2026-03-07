@@ -119,6 +119,9 @@ app.UseAuthorization();
 var serverApiKey = builder.Configuration["ServerApiKey"]
     ?? throw new InvalidOperationException("ServerApiKey is not configured");
 
+// Server is considered online if heartbeat (or presence) was seen recently.
+const int serverOnlineWindowSeconds = 150;
+
 string CreateUserToken(User user)
 {
     var claims = new[]
@@ -188,10 +191,43 @@ app.MapPost("/api/login", async (LoginRequest request, AppDbContext db) =>
 // ---------------------------------------------------------------------------
 app.MapGet("/api/servers", async (AppDbContext db) =>
 {
-    var servers = await db.GameServers
+    var nowUtc = DateTime.UtcNow;
+
+    var dbServers = await db.GameServers
         .Where(s => s.IsActive)
-        .Select(s => new { s.Id, s.Name, s.Address, s.Port })
+        .Select(s => new
+        {
+            s.Id,
+            s.Name,
+            s.Description,
+            s.Address,
+            s.Port,
+            s.LastSeenUtc,
+            s.PlayerCount,
+            s.PlayerMax,
+            s.ServerVersion
+        })
         .ToListAsync();
+
+    var servers = dbServers.Select(server =>
+    {
+        var isOnline = server.LastSeenUtc.HasValue
+            && (nowUtc - server.LastSeenUtc.Value).TotalSeconds <= serverOnlineWindowSeconds;
+
+        return new
+        {
+            server.Id,
+            server.Name,
+            server.Description,
+            server.Address,
+            server.Port,
+            status = isOnline ? "online" : "offline",
+            server.PlayerCount,
+            server.PlayerMax,
+            server.ServerVersion,
+            server.LastSeenUtc
+        };
+    });
 
     return Results.Ok(servers);
 }).RequireAuthorization();
@@ -276,16 +312,35 @@ app.MapPost("/api/server/{id}/presence", async (
 // POST /api/server/{id}/heartbeat  [server auth]
 // Dedicated game server periodically checks in so the API can expose health.
 // ---------------------------------------------------------------------------
-app.MapPost("/api/server/{id}/heartbeat", async (int id, AppDbContext db) =>
+app.MapPost("/api/server/{id}/heartbeat", async (int id, HeartbeatRequest request, AppDbContext db) =>
 {
     var server = await db.GameServers.FindAsync(id);
     if (server is null)
         return Results.NotFound(new { error = "Server not found" });
 
+    var playerMax = request.PlayerMax > 0 ? request.PlayerMax : 8;
+    var playerCount = request.PlayerCount >= 0 ? request.PlayerCount : 0;
+    var normalizedPlayerCount = Math.Clamp(playerCount, 0, playerMax);
+    var serverVersion = (request.ServerVersion ?? string.Empty).Trim();
+    if (string.IsNullOrWhiteSpace(serverVersion))
+        serverVersion = "unknown";
+
     server.LastSeenUtc = DateTime.UtcNow;
+    server.PlayerCount = normalizedPlayerCount;
+    server.PlayerMax = playerMax;
+    server.ServerVersion = serverVersion;
     await db.SaveChangesAsync();
 
-    return Results.Ok(new { server.Id, server.Name, server.LastSeenUtc });
+    return Results.Ok(new
+    {
+        server.Id,
+        server.Name,
+        server.LastSeenUtc,
+        status = "online",
+        playerCount = normalizedPlayerCount,
+        playerMax,
+        serverVersion
+    });
 }).AddEndpointFilter(ServerAuthFilter);
 
 // ---------------------------------------------------------------------------
@@ -385,6 +440,7 @@ app.MapPut("/api/management/server", async (ServerRequest request, AppDbContext 
     var server = new GameServer
     {
         Name = request.Name,
+        Description = (request.Description ?? string.Empty).Trim(),
         Address = request.Address,
         Port = request.Port,
         IsActive = true
@@ -392,7 +448,7 @@ app.MapPut("/api/management/server", async (ServerRequest request, AppDbContext 
     db.GameServers.Add(server);
     await db.SaveChangesAsync();
 
-    return Results.Ok(new { server.Id, server.Name, server.Address, server.Port, server.IsActive });
+    return Results.Ok(new { server.Id, server.Name, server.Description, server.Address, server.Port, server.IsActive });
 }).RequireAuthorization().AddEndpointFilter(AdminAuthFilter);
 
 // ---------------------------------------------------------------------------
@@ -401,7 +457,20 @@ app.MapPut("/api/management/server", async (ServerRequest request, AppDbContext 
 app.MapGet("/api/management/servers", async (AppDbContext db) =>
 {
     var servers = await db.GameServers
-        .Select(s => new { s.Id, s.Name, s.Address, s.Port, s.IsActive, s.LastSeenUtc, s.CreatedAt })
+        .Select(s => new
+        {
+            s.Id,
+            s.Name,
+            s.Description,
+            s.Address,
+            s.Port,
+            s.IsActive,
+            s.PlayerCount,
+            s.PlayerMax,
+            s.ServerVersion,
+            s.LastSeenUtc,
+            s.CreatedAt
+        })
         .ToListAsync();
 
     return Results.Ok(servers);
@@ -478,7 +547,8 @@ static async ValueTask<object?> AdminAuthFilter(
 }
 
 record LoginRequest(string Username, string Password);
-record ServerRequest(string Name, string Address, int Port);
+record ServerRequest(string Name, string Address, int Port, string? Description);
 record VersionRequest(string Version);
 record RoleRequest(string Role);
 record PresenceEventRequest(string Username, bool IsOnline);
+record HeartbeatRequest(int PlayerCount, int PlayerMax, string ServerVersion);

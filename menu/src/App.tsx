@@ -4,6 +4,7 @@ import { sendIpc } from "./utils/ipc";
 import type { GithubRelease, MenuServer, MenuState } from "./types";
 
 const RELEASES_URL = "https://api.github.com/repos/joshgrift/piratesQuest/releases?per_page=6";
+const DISCORD_INVITE_URL = "https://discord.gg/R9Fz54UNud";
 
 const EMPTY_STATE: MenuState = {
   apiBaseUrl: "",
@@ -15,7 +16,6 @@ const EMPTY_STATE: MenuState = {
   isAuthenticating: false,
   isBackgroundMuted: false,
   servers: [],
-  discordInviteUrl: "https://discord.gg/piratesquest",
 };
 
 function formatReleaseDate(value: string): string {
@@ -41,9 +41,37 @@ function releaseBodyFallback(body: string): string {
 }
 
 function serverLabel(server: MenuServer): string {
-  const name = server.serverName?.trim() || "Unnamed Server";
-  const population = `${server.playerCount}/${server.playerMax}`;
-  return `${name} (${population})`;
+  return server.serverName?.trim() || "Unnamed Server";
+}
+
+function serverStatusLabel(status: string): string {
+  const normalizedStatus = (status || "unknown").toLowerCase();
+  if (normalizedStatus === "online") {
+    return "Online";
+  }
+
+  if (normalizedStatus === "offline") {
+    return "Offline";
+  }
+
+  return "Unknown";
+}
+
+function serverStatusClass(status: string): string {
+  const normalizedStatus = (status || "unknown").toLowerCase();
+  if (normalizedStatus === "online") {
+    return "online";
+  }
+
+  if (normalizedStatus === "offline") {
+    return "offline";
+  }
+
+  return "unknown";
+}
+
+function serverKey(server: MenuServer): string {
+  return `${server.ipAddress}:${server.port}`;
 }
 
 export default function App() {
@@ -126,7 +154,6 @@ export default function App() {
   const canSubmitAuth = username.trim().length > 0 && password.length > 0 && !menuState.isAuthenticating;
   const statusClass = menuState.statusTone === "error" ? "status status-error" : "status status-info";
 
-  const discordUrl = menuState.discordInviteUrl?.trim() || "https://discord.gg/piratesquest";
   const visibleReleases = useMemo(() => releases.slice(0, 5), [releases]);
 
   function submitAuth(event: FormEvent<HTMLFormElement>) {
@@ -167,7 +194,11 @@ export default function App() {
       <div className="menu-overlay" />
 
       <div className="hud-top-left">
-        <button className="discord-btn discord-btn-compact" onClick={() => sendIpc({ action: "open_url", url: discordUrl })} type="button">
+        <button
+          className="discord-btn discord-btn-compact"
+          onClick={() => sendIpc({ action: "open_url", url: DISCORD_INVITE_URL })}
+          type="button"
+        >
           Discord
         </button>
         <button
@@ -189,6 +220,7 @@ export default function App() {
         <section className="menu-main">
           <header className="hero">
             <h1>PiratesQuest</h1>
+            <p className="hero-version">Version {menuState.version || "unknown"}</p>
           </header>
 
           {!menuState.isAuthenticated && (
@@ -262,11 +294,29 @@ export default function App() {
                 ) : (
                   <ul className="server-list">
                     {menuState.servers.map((server) => (
-                      <li key={`${server.ipAddress}:${server.port}`}>
-                        <button className="server-row" onClick={() => joinServer(server)} type="button">
-                          <span className="server-name">{serverLabel(server)}</span>
-                          <span className="join-chip">join</span>
-                        </button>
+                      <li key={serverKey(server)}>
+                        <article className="server-card">
+                          <div className="server-card-head">
+                            <div className="server-details">
+                              <span className="server-name">{serverLabel(server)}</span>
+                              <span className="server-meta">
+                                <span className={`server-pill server-pill-${serverStatusClass(server.status)}`}>
+                                  {serverStatusLabel(server.status)}
+                                </span>
+                                <span className="server-pill">{server.playerCount}/{server.playerMax} crew</span>
+                                <span className="server-pill">v{server.serverVersion || "unknown"}</span>
+                              </span>
+                            </div>
+
+                            <button className="join-chip" onClick={() => joinServer(server)} type="button">
+                              Join
+                            </button>
+                          </div>
+                          <p className="server-description">{server.description?.trim() || "No captain notes yet for this server."}</p>
+                          <div className="server-card-foot">
+                            <span className="server-address">{server.ipAddress}:{server.port}</span>
+                          </div>
+                        </article>
                       </li>
                     ))}
                   </ul>

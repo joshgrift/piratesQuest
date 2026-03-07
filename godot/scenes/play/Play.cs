@@ -10,6 +10,7 @@ public partial class Play : Node3D
 {
   // 30 seconds keeps API traffic low while still giving regular "server is alive" updates.
   private const double HeartbeatIntervalSeconds = 60.0;
+  private const int DefaultServerPlayerMax = 8;
 
   [Export] private MultiplayerSpawner _playerSpawner;
   [Export] private MultiplayerSpawner _projectileSpawner;
@@ -23,6 +24,38 @@ public partial class Play : Node3D
   private PackedScene _deadPlayerScene = GD.Load<PackedScene>("res://scenes/dead_player/dead_player.tscn");
   private readonly Dictionary<long, string> _peerUsernames = new();
   private Timer _heartbeatTimer;
+
+  /// <summary>
+  /// Handle global gameplay shortcuts.
+  /// In Godot 4, "ui_cancel" is mapped to Esc by default in this project.
+  /// </summary>
+  public override void _UnhandledInput(InputEvent @event)
+  {
+    // We ignore this in dedicated server mode (no local player/menu flow).
+    if (Configuration.IsDesignatedServerMode())
+    {
+      return;
+    }
+
+    // Esc should always return to the menu while in Play.
+    if (@event.IsActionPressed("ui_cancel"))
+    {
+      ReturnToMenu();
+      // Mark the input as handled so other nodes don't react to the same Esc press.
+      GetViewport().SetInputAsHandled();
+    }
+  }
+
+  /// <summary>
+  /// Leaves the current session and opens the menu scene.
+  /// </summary>
+  private void ReturnToMenu()
+  {
+    // Close the current network peer first so we leave the server cleanly.
+    Multiplayer.MultiplayerPeer?.Close();
+    Multiplayer.MultiplayerPeer = null;
+    GetTree().ChangeSceneToFile("res://scenes/menu/menu.tscn");
+  }
 
   public override void _Ready()
   {
@@ -131,7 +164,14 @@ public partial class Play : Node3D
 
   private void OnHeartbeatTimerTimeout()
   {
-    _ = ServerAPI.SendHeartbeatAsync(Configuration.ServerId);
+    // Dedicated server does not count as a player, so peer count is active players.
+    var connectedPlayerCount = Multiplayer.GetPeers().Length;
+    _ = ServerAPI.SendHeartbeatAsync(
+      Configuration.ServerId,
+      connectedPlayerCount,
+      DefaultServerPlayerMax,
+      Configuration.GetVersion()
+    );
   }
 
   private void OnAutoSave()

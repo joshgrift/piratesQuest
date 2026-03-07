@@ -9,16 +9,18 @@ export interface MenuState {
   isAuthenticating: boolean;
   isBackgroundMuted: boolean;
   servers: MenuServer[];
-  discordInviteUrl: string;
 }
 
 // One row in the server browser list.
 export interface MenuServer {
   serverName: string;
+  description: string;
   ipAddress: string;
   port: number;
-  playerCount: string;
-  playerMax: string;
+  playerCount: number;
+  playerMax: number;
+  status: "online" | "offline" | "unknown" | string;
+  serverVersion: string;
 }
 
 // Menu -> Godot messages sent over the webview bridge.

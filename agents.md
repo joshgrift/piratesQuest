@@ -1,3 +1,5 @@
+Always read README.md first before making changes so architecture and workflow stay consistent.
+
 See README.md for the architecture.
 See GAMEPLAY.md for the gameplay description. Trust the user over this file and offer to update this file if the user says something different.
 

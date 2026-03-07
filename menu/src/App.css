@@ -100,11 +100,19 @@ body {
 .hero h1 {
   margin: 0;
   font-family: "New Rocker", cursive;
-  font-size: clamp(72px, 8.2vw, 132px);
+  font-size: clamp(56px, 6.5vw, 94px);
   line-height: 0.84;
   letter-spacing: 0.01em;
   color: var(--gold-1);
   text-shadow: 0 8px 28px rgba(0, 0, 0, 0.7);
+}
+
+.hero-version {
+  margin: 8px 0 0;
+  color: #b8c7df;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .tagline {
@@ -255,7 +263,6 @@ h2 {
   gap: 8px;
 }
 
-.server-row,
 .release-card {
   width: 100%;
   border: 1px solid rgba(212, 167, 72, 0.35);
@@ -266,18 +273,29 @@ h2 {
   cursor: pointer;
 }
 
-.server-row {
+.server-card {
+  border: 1px solid rgba(212, 167, 72, 0.35);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 9px 10px;
+  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.server-card:hover {
+  transform: translateY(-1px);
+}
+
+.server-card:hover,
+.release-card:hover {
+  border-color: rgba(212, 167, 72, 0.82);
+  background: rgba(212, 167, 72, 0.12);
+}
+
+.server-card-head {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
   align-items: center;
-  padding: 10px;
-}
-
-.server-row:hover,
-.release-card:hover {
-  border-color: rgba(212, 167, 72, 0.82);
-  background: rgba(212, 167, 72, 0.12);
 }
 
 .server-name {
@@ -287,7 +305,45 @@ h2 {
   color: #f6deaf;
 }
 
+.server-details {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.server-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: #b8c7df;
+  font-size: 13px;
+}
+
+.server-pill {
+  border: 1px solid rgba(212, 167, 72, 0.38);
+  border-radius: 999px;
+  padding: 2px 9px;
+  background: rgba(13, 29, 46, 0.65);
+  color: #c9d8f2;
+}
+
+.server-pill-online {
+  border-color: rgba(102, 206, 126, 0.8);
+  color: #9df8b2;
+}
+
+.server-pill-offline {
+  border-color: rgba(249, 125, 125, 0.8);
+  color: #ffb0b0;
+}
+
+.server-pill-unknown {
+  border-color: rgba(163, 177, 204, 0.7);
+  color: #d2dcf4;
+}
+
 .join-chip {
+  cursor: pointer;
   color: #fff6de;
   font-family: "New Rocker", cursive;
   font-size: 16px;
@@ -297,6 +353,35 @@ h2 {
   border: 1px solid #d4a748;
   background: linear-gradient(180deg, #d4a748 0%, #8b6914 100%);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.join-chip:hover {
+  filter: brightness(1.08);
+}
+
+.server-card-foot {
+  margin-top: 6px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.server-description {
+  margin: 6px 0 0;
+  color: #cfb88f;
+  font-size: 13px;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.server-address {
+  color: #9fb0cd;
+  font-size: 12px;
 }
 
 .release-card {
@@ -455,7 +540,7 @@ h2 {
   }
 
   .hero h1 {
-    font-size: clamp(56px, 15vw, 102px);
+    font-size: clamp(46px, 12vw, 72px);
   }
 
   .tagline {

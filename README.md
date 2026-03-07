@@ -9,6 +9,12 @@ PiratesQuest uses three pieces:
 - `Menu` (`menu/`): React/TypeScript main menu UI, served as a native browser overlay via godot_wry.
 - `Database` (via Docker): stores users and API data.
 
+### API Stateless Server Runtime Data
+- The API is stateless across instances/restarts.
+- Dedicated servers send heartbeat data to `POST /api/server/{id}/heartbeat`.
+- Heartbeat persists `playerCount`, `playerMax`, `serverVersion`, and `lastSeenUtc` on each `GameServer` row.
+- `GET /api/servers` reads those DB fields and returns status (`online`/`offline`) plus runtime info for the menu server browser.
+
 ## Running
 
 ```bash
@@ -100,7 +106,7 @@ The build output goes to `../api/fragments/menu/`, which the API serves as stati
 - [x] Names above the ships
 - [x] Ship models aren't showing
 - [x] Vault didn't work
-- [ ] Something to stop people from coming off the map
+- [ ] Something to stop people from going off the map
 - [x] Dynamic Islands
   - [x] Larger Map
 - [x] Romance Scarlett
@@ -111,11 +117,12 @@ The build output goes to `../api/fragments/menu/`, which the API serves as stati
   - [x] Sign up is really annoying
   - [x] Changelog on main menu
   - [x] Version on main menu
-- [ ] Website should actually ping servers instead of pinging API
+- [x] Website should actually ping servers instead of pinging API
 - [x] Discord bot to notify folks when folks are online
-- [ ] Discord link on website (invite only somehow)
+- [x] Discord link in menu (invite only)
 - [x] Check game version when joining server
-- [x] Slowed speed down
+- [x] Balanced movement speed
+- [x] Esc to return to menu
 
 ### 0.6.0 Alpha
 - [ ] Quests

@@ -2,6 +2,18 @@
 
 REST API and static content server for Pirate's Quest. Manages player authentication, game server listings, persistent game state, and serves SPA fragments that can be loaded inside the game client.
 
+## Stateless Runtime Model
+
+This API is designed to be stateless at the process level:
+
+- Dedicated servers heartbeat into `POST /api/server/{id}/heartbeat`.
+- Heartbeat writes runtime fields to the `GameServers` table:
+  - `LastSeenUtc`
+  - `PlayerCount`
+  - `PlayerMax`
+  - `ServerVersion`
+- `GET /api/servers` reads from DB only (no in-memory cache), so results survive API restarts and scale across multiple API instances.
+
 ## Running
 
 ```bash
@@ -47,6 +59,7 @@ Game servers authenticate by sending the shared secret in the `X-Server-Key` hea
 | `GET` | `/api/server/{id}/state/{user}` | Server key | Get a player's saved game state |
 | `PUT` | `/api/server/{id}/state/{user}` | Server key | Save a player's game state (opaque JSON) |
 | `POST` | `/api/server/{id}/presence` | Server key | Report a player join/leave event |
+| `POST` | `/api/server/{id}/heartbeat` | Server key | Persist server runtime info and liveness |
 | `GET` | `/fragments/{spaId}` | Public | Serve a SPA from `fragments/{spaId}/` |
 | `GET` | `/` | Public | Landing page |
 

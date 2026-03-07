@@ -19,7 +19,6 @@ public record MenuStateDto
   public bool IsAuthenticating { get; init; }
   public bool IsBackgroundMuted { get; init; }
   public MenuServerListingDto[] Servers { get; init; } = [];
-  public string DiscordInviteUrl { get; init; } = "";
 }
 
 /// <summary>
@@ -28,10 +27,13 @@ public record MenuStateDto
 public record MenuServerListingDto
 {
   public string ServerName { get; init; } = "";
+  public string Description { get; init; } = "";
   public string IpAddress { get; init; } = "";
   public int Port { get; init; }
-  public string PlayerCount { get; init; } = "x";
-  public string PlayerMax { get; init; } = "8";
+  public int PlayerCount { get; init; }
+  public int PlayerMax { get; init; } = 8;
+  public string Status { get; init; } = "offline";
+  public string ServerVersion { get; init; } = "unknown";
 }
 
 // ── Menu WebView -> Godot IPC messages ─────────────────────────────

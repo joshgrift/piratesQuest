@@ -5,15 +5,19 @@ using Godot;
 public record ServerListingInfo
 {
   public string ServerName;
+  public string Description = "";
   public string IpAddress;
   public int Port;
+  public int PlayerCount;
+  public int PlayerMax = 8;
+  public string Status = "offline";
+  public string ServerVersion = "unknown";
 }
 
 partial class Configuration : Node
 {
   private const string LocalApiBaseUrl = "http://localhost:5236";
   private const string ProductionApiBaseUrl = "https://pirates.quest";
-  private const string DefaultDiscordInviteUrl = "https://discord.gg/piratesquest";
 
   // Godot's per-user, writable save file. On each OS this maps to a safe local app-data folder.
   private const string LocalConfigPath = "user://settings.cfg";
@@ -46,8 +50,6 @@ partial class Configuration : Node
   public static string WebViewUrl { get; private set; } = $"{ApiBaseUrl}/fragments/webview/";
   // Defaults to {ApiBaseUrl}/fragments/menu/. Override with --menu-url <url>.
   public static string MenuWebViewUrl { get; private set; } = $"{ApiBaseUrl}/fragments/menu/";
-  // Main menu button target.
-  public static string DiscordInviteUrl { get; private set; } = DefaultDiscordInviteUrl;
 
   private static string GetDefaultApiBaseUrl()
   {

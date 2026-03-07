@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Godot;
 
@@ -122,12 +123,31 @@ public static class ServerAPI
   /// Sends a lightweight heartbeat from the dedicated server to the backend API.
   /// The API stores LastSeenUtc for server health/status reporting.
   /// </summary>
-  public static async Task<bool> SendHeartbeatAsync(int serverId)
+  public static async Task<bool> SendHeartbeatAsync(int serverId, int playerCount, int playerMax, string serverVersion)
   {
     try
     {
       var url = $"{Configuration.ApiBaseUrl}/api/server/{serverId}/heartbeat";
-      var request = new HttpRequestMessage(HttpMethod.Post, url);
+      var normalizedPlayerMax = Math.Max(1, playerMax);
+      var normalizedPlayerCount = Math.Clamp(playerCount, 0, normalizedPlayerMax);
+      var normalizedVersion = (serverVersion ?? string.Empty).Trim();
+      if (string.IsNullOrWhiteSpace(normalizedVersion))
+      {
+        normalizedVersion = "unknown";
+      }
+
+      var payload = new
+      {
+        playerCount = normalizedPlayerCount,
+        playerMax = normalizedPlayerMax,
+        serverVersion = normalizedVersion
+      };
+
+      var payloadJson = JsonSerializer.Serialize(payload);
+      var request = new HttpRequestMessage(HttpMethod.Post, url)
+      {
+        Content = new StringContent(payloadJson, Encoding.UTF8, "application/json")
+      };
       request.Headers.Add("X-Server-Key", Configuration.ServerApiKey);
 
       using var response = await HttpClient.SendAsync(request);

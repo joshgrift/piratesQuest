@@ -438,10 +438,14 @@ public partial class Menu : Node2D
       Servers = _servers.Select(server => new MenuServerListingDto
       {
         ServerName = server.ServerName,
+        Description = server.Description,
         IpAddress = server.IpAddress,
         Port = server.Port,
+        PlayerCount = server.PlayerCount,
+        PlayerMax = server.PlayerMax,
+        Status = server.Status,
+        ServerVersion = server.ServerVersion,
       }).ToArray(),
-      DiscordInviteUrl = Configuration.DiscordInviteUrl,
     };
 
     var json = JsonSerializer.Serialize(state, JsonOptions);

@@ -70,6 +70,15 @@ else
   GODOT_API_ARGS=""
 fi
 
+# Force menu webview to bypass HTTP cache each run.
+MENU_CACHE_BUSTER=$(date +%s)
+if [[ "$MENU_URL" == *"?"* ]]; then
+  MENU_URL="${MENU_URL}&cb=${MENU_CACHE_BUSTER}"
+else
+  MENU_URL="${MENU_URL}?cb=${MENU_CACHE_BUSTER}"
+fi
+echo -e "${YELLOW}Menu URL: ${MENU_URL}${RESET}"
+
 sleep 1
 
 echo -e "${RED}=== Starting Server ===${RESET}"
