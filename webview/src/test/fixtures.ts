@@ -54,6 +54,7 @@ export function makeOwnedComponent(
 
 export function makePortState(overrides?: Partial<PortState>): PortState {
   return {
+    isInPort: true,
     portName: "Tortuga",
     itemsForSale: [
       makeShopItem(),
@@ -109,6 +110,11 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
         },
       ],
     },
+    leaderboard: [
+      { nickname: "Captain Flint", trophies: 42, isLocal: false },
+      { nickname: "You", trophies: 18, isLocal: true },
+      { nickname: "Blackbeard", trophies: 9, isLocal: false },
+    ],
     ...overrides,
   };
 }

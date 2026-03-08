@@ -15,6 +15,7 @@ public partial class Hud : Control
   [Export] public Tree LeaderboardTree;
 
   [Export] public VBoxContainer StatusListContainer;
+  [Export] public BaseButton WebViewToggleButton;
 
   private Player _player;
   private int _retryCount = 0;
@@ -24,19 +25,29 @@ public partial class Hud : Control
 
   private System.Collections.Generic.Dictionary<InventoryItemType, (int accumulatedChange, SceneTreeTimer timer)> _pendingChanges = new();
 
-  // ── WebView (port-only panel, right 1/3 of screen) ──────────────
+  // ── WebView (shared ship + port panel, right 1/3 of screen) ─────
   private Node _webView;
   private bool _webViewCreated;
   // CanvasLayer bypasses the canvas_items stretch transform so
   // get_screen_position() returns raw physical pixel values —
   // exactly what godot_wry's PhysicalPosition expects.
   private CanvasLayer _webViewLayer;
+  // Dedicated layer for the WebView toggle so it always stays visible.
+  private CanvasLayer _webViewToggleLayer;
   // True once the React app has sent the "ready" IPC message
   private bool _webViewReady;
-  // If the player docks before the webview is ready, we queue the open
+  // If we request open before the page is ready, queue the open.
   private bool _pendingOpen;
-  // True while the port UI is visible on screen
-  private bool _portOpen;
+  // True while the webview overlay is visible on screen.
+  private bool _webViewOpen;
+  // True while docked at a port.
+  private bool _isInPort;
+  // Player preference for showing the webview while at sea.
+  private bool _webViewEnabledByPlayer;
+  // Snapshot of the at-sea preference before auto-opening on dock.
+  private bool _webViewEnabledBeforeDock;
+  // Guards delayed close animation callbacks against stale timers.
+  private int _closeAnimationToken;
   // Currently docked port data (null when not in port)
   private ShopItemData[] _currentPortItems;
   private string _currentPortName;
@@ -67,16 +78,25 @@ public partial class Hud : Control
 
     CallDeferred(MethodName.FindLocalPlayer);
 
-    var emptyStylebox = new StyleBoxEmpty();
-    LeaderboardTree.AddThemeStyleboxOverride("panel", emptyStylebox);
-    LeaderboardTree.AddThemeStyleboxOverride("bg", emptyStylebox);
-    LeaderboardTree.AddThemeConstantOverride("draw_relationship_lines", 0);
-    LeaderboardTree.AddThemeConstantOverride("draw_guides", 0);
-    LeaderboardTree.AddThemeConstantOverride("v_separation", 0);
-    LeaderboardTree.MouseFilter = Control.MouseFilterEnum.Ignore;
-    LeaderboardTree.HideRoot = true;
+    // Leaderboard moved to WebView. Keep the old HUD tree hidden.
+    var leaderboardContainer = LeaderboardTree?.GetParent<Control>();
+    if (leaderboardContainer != null)
+      leaderboardContainer.Visible = false;
+    if (LeaderboardTree != null)
+      LeaderboardTree.Visible = false;
 
-    UpdateLeaderboard();
+    EnsureWebViewToggleCreated();
+    UpdateWebViewToggleButtonText();
+    CallDeferred(MethodName.SyncWebViewToggleButtonPosition);
+  }
+
+  public override void _UnhandledInput(InputEvent @event)
+  {
+    if (@event.IsActionPressed("toggle_webview"))
+    {
+      ToggleWebView();
+      GetViewport().SetInputAsHandled();
+    }
   }
 
   // ── Port Dock / Depart ───────────────────────────────────────────
@@ -85,6 +105,7 @@ public partial class Hud : Control
   {
     if (_player == null || player.Name != _player.Name) return;
     GD.Print($"Player {player.Name} entered port {port.PortName}");
+    _isInPort = true;
 
     var payloadDict = (Dictionary)payload;
     _currentPortName = (string)payloadDict["PortName"];
@@ -94,37 +115,28 @@ public partial class Hud : Control
     for (int i = 0; i < godotArray.Count; i++)
       _currentPortItems[i] = (ShopItemData)godotArray[i];
 
-    EnsureWebViewCreated();
-
-    if (_webViewReady)
-    {
-      ShowWebView();
-      PushPortState("openPort");
-    }
-    else
-    {
-      _pendingOpen = true;
-    }
+    // Entering port auto-opens once, but we restore the previous at-sea
+    // preference when departing.
+    _webViewEnabledBeforeDock = _webViewEnabledByPlayer;
+    OpenWebView();
   }
 
   private void OnPlayerDepartedPort(Port port, Player player)
   {
     if (_player == null || player.Name != _player.Name) return;
     GD.Print($"Player {player.Name} departed port");
+    _isInPort = false;
 
     _currentPortItems = null;
     _currentPortName = null;
     _pendingOpen = false;
 
-    if (_webView != null)
-    {
-      // Return keyboard focus to the game window
-      _webView.Call("focus_parent");
-
-      _webView.Call("eval", "window.closePort && window.closePort()");
-      // Wait for the CSS slide-out animation (400ms) then hide the overlay
-      GetTree().CreateTimer(0.45f).Timeout += () => { if (_currentPortName == null) HideWebView(); };
-    }
+    // Restore the player's previous at-sea preference.
+    _webViewEnabledByPlayer = _webViewEnabledBeforeDock;
+    if (_webViewEnabledByPlayer)
+      OpenWebView();
+    else
+      CloseWebView(animate: true);
   }
 
   // ── Find Local Player ────────────────────────────────────────────
@@ -165,6 +177,7 @@ public partial class Hud : Control
       _player.HealthUpdate += (newHealth) =>
       {
         HealthLabel.Text = $"{newHealth}";
+        PushWebViewStateIfVisible();
       };
 
       GD.Print($"HUD connected to Player{myPeerId}");
@@ -187,42 +200,6 @@ public partial class Hud : Control
     var peer = Multiplayer.MultiplayerPeer;
     if (peer == null) return false;
     return peer.GetConnectionStatus() == MultiplayerPeer.ConnectionStatus.Connected;
-  }
-
-  // ── Leaderboard ──────────────────────────────────────────────────
-
-  private void UpdateLeaderboard()
-  {
-    LeaderboardTree.Clear();
-    LeaderboardTree.Columns = 2;
-    LeaderboardTree.SetColumnCustomMinimumWidth(0, 32);
-    LeaderboardTree.SetColumnCustomMinimumWidth(1, 100);
-
-    var rootItem = LeaderboardTree.CreateItem();
-
-    var players = PlayersContainer.GetChildren().OfType<Player>()
-      .OrderByDescending(p => p.GetInventoryCount(InventoryItemType.Trophy));
-
-    string localPlayerNickname = _player?.Nickname;
-
-    foreach (var leaderboardPlayer in players)
-    {
-      if (leaderboardPlayer.Nickname == "" || leaderboardPlayer.Nickname == null)
-        continue;
-      var item = LeaderboardTree.CreateItem(rootItem);
-      item.SetText(0, leaderboardPlayer.TrophyCount.ToString());
-      item.SetIcon(0, Icons.GetInventoryIcon(InventoryItemType.Trophy));
-      item.SetText(1, leaderboardPlayer.Nickname);
-
-      if (leaderboardPlayer.Nickname == localPlayerNickname)
-      {
-        Color greenTint = new Color(0.4f, 0.9f, 0.4f);
-        item.SetCustomColor(0, greenTint);
-        item.SetCustomColor(1, greenTint);
-      }
-    }
-
-    GetTree().CreateTimer(5.0f).Timeout += UpdateLeaderboard;
   }
 
   // ── HUD Inventory Display ────────────────────────────────────────
@@ -257,9 +234,8 @@ public partial class Hud : Control
 
   private void OnInventoryChanged(InventoryItemType itemType, int newAmount, int change)
   {
-    // Push updated state to port webview when docked
-    if (_currentPortItems != null)
-      PushPortState("updateState");
+    // Keep the webview state fresh while visible (port or sea).
+    PushWebViewStateIfVisible();
 
     if (_player.isLimitedByCapacity)
       StatusListContainer.GetNode<Control>("Heavy").Visible = true;
@@ -319,7 +295,7 @@ public partial class Hud : Control
     };
   }
 
-  // ── WebView (port-only right panel) ──────────────────────────────
+  // ── WebView (shared ship + port right panel) ─────────────────────
 
   private void EnsureWebViewCreated()
   {
@@ -367,9 +343,95 @@ public partial class Hud : Control
     GD.Print("HUD: WebView created off-screen (preloading)");
   }
 
+  private void EnsureWebViewToggleCreated()
+  {
+    // If scene wiring gave us a button, hide it and replace with a runtime
+    // toggle on its own canvas layer to avoid render/theme surprises.
+    if (WebViewToggleButton is Control sceneButton)
+    {
+      // Hard-remove the scene button so only the runtime toggle can exist.
+      if (sceneButton.Name != "WebViewToggleRuntimeButton")
+        sceneButton.QueueFree();
+    }
+
+    if (WebViewToggleButton != null && WebViewToggleButton.IsInsideTree() && WebViewToggleButton.Name == "WebViewToggleRuntimeButton")
+      return;
+
+    _webViewToggleLayer = new CanvasLayer
+    {
+      Layer = 100,
+    };
+    AddChild(_webViewToggleLayer);
+
+    var runtimeButton = new Button
+    {
+      Name = "WebViewToggleRuntimeButton",
+      CustomMinimumSize = new Vector2(52, 52),
+      Size = new Vector2(52, 52),
+      MouseFilter = Control.MouseFilterEnum.Stop,
+      Text = "",
+      TooltipText = "",
+    };
+
+    var icon = GD.Load<Texture2D>("res://art/webviewIcon.png");
+    runtimeButton.Icon = icon;
+    runtimeButton.IconAlignment = HorizontalAlignment.Center;
+    runtimeButton.ExpandIcon = true;
+    runtimeButton.Flat = false;
+
+    // Keep a visible backing plate so the icon is always readable.
+    var normal = new StyleBoxFlat
+    {
+      BgColor = new Color(0.12f, 0.18f, 0.28f, 0.86f),
+      CornerRadiusTopLeft = 10,
+      CornerRadiusTopRight = 10,
+      CornerRadiusBottomLeft = 10,
+      CornerRadiusBottomRight = 10,
+      BorderColor = new Color(0.82f, 0.66f, 0.28f, 0.9f),
+      BorderWidthTop = 1,
+      BorderWidthBottom = 1,
+      BorderWidthLeft = 1,
+      BorderWidthRight = 1,
+    };
+    var hover = new StyleBoxFlat
+    {
+      BgColor = new Color(0.18f, 0.28f, 0.42f, 0.92f),
+      CornerRadiusTopLeft = 10,
+      CornerRadiusTopRight = 10,
+      CornerRadiusBottomLeft = 10,
+      CornerRadiusBottomRight = 10,
+      BorderColor = new Color(0.95f, 0.78f, 0.34f, 1f),
+      BorderWidthTop = 1,
+      BorderWidthBottom = 1,
+      BorderWidthLeft = 1,
+      BorderWidthRight = 1,
+    };
+    var pressed = new StyleBoxFlat
+    {
+      BgColor = new Color(0.09f, 0.14f, 0.22f, 0.96f),
+      CornerRadiusTopLeft = 10,
+      CornerRadiusTopRight = 10,
+      CornerRadiusBottomLeft = 10,
+      CornerRadiusBottomRight = 10,
+      BorderColor = new Color(0.95f, 0.78f, 0.34f, 1f),
+      BorderWidthTop = 1,
+      BorderWidthBottom = 1,
+      BorderWidthLeft = 1,
+      BorderWidthRight = 1,
+    };
+    runtimeButton.AddThemeStyleboxOverride("normal", normal);
+    runtimeButton.AddThemeStyleboxOverride("hover", hover);
+    runtimeButton.AddThemeStyleboxOverride("pressed", pressed);
+    runtimeButton.Pressed += OnWebViewTogglePressed;
+
+    _webViewToggleLayer.AddChild(runtimeButton);
+    WebViewToggleButton = runtimeButton;
+  }
+
   private void OnWindowResized()
   {
     CallDeferred(MethodName.SyncWebViewSize);
+    CallDeferred(MethodName.SyncWebViewToggleButtonPosition);
   }
 
   /// <summary>
@@ -405,7 +467,7 @@ public partial class Hud : Control
 
     wv.Size = new Vector2(w / 3f, h);
 
-    if (_portOpen)
+    if (_webViewOpen)
       wv.Position = new Vector2(w * 2f / 3f, 0);
     else
       wv.Position = new Vector2(99999, 0);
@@ -416,8 +478,9 @@ public partial class Hud : Control
   /// </summary>
   private void ShowWebView()
   {
-    _portOpen = true;
+    _webViewOpen = true;
     CallDeferred(MethodName.SyncWebViewSize);
+    CallDeferred(MethodName.SyncWebViewToggleButtonPosition);
 
     // Keep keyboard focus on Godot so movement key-up events
     // are never missed. The webview only needs mouse clicks.
@@ -430,8 +493,95 @@ public partial class Hud : Control
   /// </summary>
   private void HideWebView()
   {
-    _portOpen = false;
+    _webViewOpen = false;
     CallDeferred(MethodName.SyncWebViewSize);
+    CallDeferred(MethodName.SyncWebViewToggleButtonPosition);
+  }
+
+  private void OpenWebView()
+  {
+    EnsureWebViewCreated();
+    if (_webView == null) return;
+
+    _closeAnimationToken++;
+
+    if (_webViewReady)
+    {
+      ShowWebView();
+      PushPortState("openPort");
+    }
+    else
+    {
+      _pendingOpen = true;
+    }
+
+    UpdateWebViewToggleButtonText();
+  }
+
+  private void CloseWebView(bool animate)
+  {
+    _pendingOpen = false;
+    if (_webView == null) return;
+
+    if (!_webViewOpen)
+    {
+      UpdateWebViewToggleButtonText();
+      return;
+    }
+
+    var closeToken = ++_closeAnimationToken;
+
+    // Return keyboard focus to gameplay before closing.
+    _webView.Call("focus_parent");
+
+    if (animate && _webViewReady)
+    {
+      _webView.Call("eval", "window.closePort && window.closePort()");
+      GetTree().CreateTimer(0.45f).Timeout += () =>
+      {
+        if (closeToken != _closeAnimationToken) return;
+        HideWebView();
+        UpdateWebViewToggleButtonText();
+      };
+      return;
+    }
+
+    HideWebView();
+    UpdateWebViewToggleButtonText();
+  }
+
+  private void ToggleWebView()
+  {
+    if (_isInPort)
+    {
+      if (_webViewOpen) CloseWebView(animate: true);
+      else OpenWebView();
+      return;
+    }
+
+    _webViewEnabledByPlayer = !_webViewEnabledByPlayer;
+    if (_webViewEnabledByPlayer) OpenWebView();
+    else CloseWebView(animate: true);
+  }
+
+  private void OnWebViewTogglePressed()
+  {
+    ToggleWebView();
+  }
+
+  private void UpdateWebViewToggleButtonText()
+  {
+    if (WebViewToggleButton == null) return;
+    WebViewToggleButton.TooltipText = "";
+  }
+
+  private void SyncWebViewToggleButtonPosition()
+  {
+    if (WebViewToggleButton is not Control button) return;
+    button.Size = new Vector2(52, 52);
+    // Hard-position for reliability: always visible in the top-left corner.
+    // This avoids any chance of the native WebView overlay covering it.
+    button.Position = new Vector2(20, 20);
   }
 
   // ── Build & push full port state to webview ──────────────────────
@@ -463,6 +613,8 @@ public partial class Hud : Control
     var stats = new System.Collections.Generic.Dictionary<string, float>();
     foreach (var kvp in _player.Stats.GetAllStats())
       stats[kvp.Key.ToString()] = kvp.Value;
+
+    var leaderboardEntries = BuildLeaderboardEntries();
 
     // Show tavern locals for this port first.
     // Then append any currently hired crew that are from other ports,
@@ -534,6 +686,7 @@ public partial class Hud : Control
 
     return new PortStateDto
     {
+      IsInPort = _isInPort,
       PortName = _currentPortName ?? "",
       ItemsForSale = shopItems,
       Inventory = inventory,
@@ -568,7 +721,25 @@ public partial class Hud : Control
         HiredCharacterIds = _player.HiredCrewCharacterIds.ToArray(),
         Characters = tavernCharacters,
       },
+      Leaderboard = leaderboardEntries,
     };
+  }
+
+  private LeaderboardEntryDto[] BuildLeaderboardEntries()
+  {
+    if (PlayersContainer == null) return [];
+
+    string localPlayerNickname = _player?.Nickname ?? "";
+    return PlayersContainer.GetChildren().OfType<Player>()
+      .Where(p => !string.IsNullOrWhiteSpace(p.Nickname))
+      .OrderByDescending(p => p.GetInventoryCount(InventoryItemType.Trophy))
+      .Take(50)
+      .Select(p => new LeaderboardEntryDto(
+        p.Nickname,
+        p.GetInventoryCount(InventoryItemType.Trophy),
+        p.Nickname == localPlayerNickname
+      ))
+      .ToArray();
   }
 
   /// <summary>
@@ -583,6 +754,12 @@ public partial class Hud : Control
     var json = JsonSerializer.Serialize(dto, _jsonOpts);
     _webView.Call("eval",
       $"window.{windowFunction} && window.{windowFunction}({json})");
+  }
+
+  private void PushWebViewStateIfVisible()
+  {
+    if (_webView == null || _player == null || !_webViewReady || !_webViewOpen) return;
+    PushPortState("updateState");
   }
 
   // ── Receive typed IPC messages from React ────────────────────────
@@ -672,9 +849,8 @@ public partial class Hud : Control
         break;
     }
 
-    // After every action, push refreshed state to the webview
-    if (_currentPortItems != null)
-      PushPortState("updateState");
+    // After every action, push refreshed state if the webview is visible.
+    PushWebViewStateIfVisible();
   }
 
   private void HandleWebViewReady()
@@ -682,12 +858,11 @@ public partial class Hud : Control
     GD.Print("HUD: WebView ready");
     _webViewReady = true;
 
-    // If the player docked before the page finished loading, open now
-    if (_pendingOpen && _currentPortItems != null)
+    // If an open was requested before the page finished loading, open now.
+    if (_pendingOpen)
     {
       _pendingOpen = false;
-      ShowWebView();
-      PushPortState("openPort");
+      OpenWebView();
     }
   }
 
@@ -735,6 +910,7 @@ public partial class Hud : Control
 
   private void HandlePurchaseComponent(PurchaseComponentMessage msg)
   {
+    if (!_isInPort) return;
     var component = GameData.Components.FirstOrDefault(c => c.name == msg.Name);
     if (component == null) return;
     _player.PurchaseComponent(component);
@@ -742,6 +918,7 @@ public partial class Hud : Control
 
   private void HandleEquipComponent(EquipComponentMessage msg)
   {
+    if (!_isInPort) return;
     var component = GameData.Components.FirstOrDefault(c => c.name == msg.Name);
     if (component == null) return;
     _player.EquipComponent(component);
@@ -749,6 +926,7 @@ public partial class Hud : Control
 
   private void HandleUnequipComponent(UnequipComponentMessage msg)
   {
+    if (!_isInPort) return;
     var component = GameData.Components.FirstOrDefault(c => c.name == msg.Name);
     if (component == null) return;
     _player.UnEquipComponent(component);
@@ -756,6 +934,7 @@ public partial class Hud : Control
 
   private void HandleHeal()
   {
+    if (!_isInPort) return;
     int healthNeeded = _player.MaxHealth - _player.Health;
     if (healthNeeded <= 0) return;
 
@@ -864,6 +1043,7 @@ public partial class Hud : Control
 
   private void HandleUpgradeShip()
   {
+    if (!_isInPort) return;
     bool ok = _player.UpgradeShip();
     GD.Print(ok
       ? $"HUD: Upgraded ship to tier {_player.ShipTier}"

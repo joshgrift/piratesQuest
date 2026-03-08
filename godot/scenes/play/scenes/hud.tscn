@@ -6,8 +6,9 @@
 [ext_resource type="FontFile" uid="uid://crnruiruiuxiq" path="res://art/fonts/Texturina/static/Texturina_14pt-Bold.ttf" id="3_wm7av"]
 [ext_resource type="Texture2D" uid="uid://prtjo4w4ri2s" path="res://art/status/cannon_ready.png" id="4_wm7av"]
 [ext_resource type="Texture2D" uid="uid://4o6lddvxx6vi" path="res://art/status/health.png" id="5_yo1xf"]
+[ext_resource type="Texture2D" uid="uid://c33wk5llc4oxo" path="res://art/webviewIcon.png" id="6_6rj1d"]
 
-[node name="HUD" type="Control" node_paths=PackedStringArray("InventoryList", "HealthLabel", "LeaderboardTree", "StatusListContainer")]
+[node name="HUD" type="Control" node_paths=PackedStringArray("InventoryList", "HealthLabel", "LeaderboardTree", "StatusListContainer", "WebViewToggleButton")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -20,6 +21,7 @@ InventoryList = NodePath("Inventory Container/InventoryTree")
 HealthLabel = NodePath("Status Container/VBoxContainer/HBoxContainer/HealthLabel")
 LeaderboardTree = NodePath("LeaderboardContainer/Leaderboard")
 StatusListContainer = NodePath("Status Container/VBoxContainer/StatusList")
+WebViewToggleButton = NodePath("WebViewToggleButton")
 
 [node name="Inventory Container" type="MarginContainer" parent="."]
 layout_mode = 0
@@ -87,6 +89,7 @@ theme_type_variation = &"HUD_Header"
 text = "100"
 
 [node name="LeaderboardContainer" type="MarginContainer" parent="."]
+visible = false
 custom_minimum_size = Vector2(200, 300)
 layout_mode = 1
 anchors_preset = 4
@@ -99,3 +102,17 @@ grow_vertical = 2
 
 [node name="Leaderboard" type="Tree" parent="LeaderboardContainer"]
 layout_mode = 2
+
+[node name="WebViewToggleButton" type="Button" parent="."]
+top_level = true
+z_index = 100
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
+offset_left = 1212.0
+offset_top = 24.0
+offset_right = 1258.0
+offset_bottom = 70.0
+tooltip_text = "Show WebView [X]"
+icon = ExtResource("6_6rj1d")
+flat = true
+icon_alignment = 1

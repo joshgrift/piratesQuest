@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import type { PortState } from "./types";
 import { sendIpc } from "./utils/ipc";
@@ -9,15 +9,22 @@ import { VaultTab } from "./tabs/VaultTab";
 import { GuideTab } from "./tabs/GuideTab";
 import { CreativeTab } from "./tabs/CreativeTab";
 import { TavernTab } from "./tabs/TavernTab";
+import { ShipCrewTab } from "./tabs/ShipCrewTab";
+import { LeaderboardTab } from "./tabs/LeaderboardTab";
 
-type Tab = "market" | "shipyard" | "tavern" | "vault" | "guide" | "creative";
+type ShipTab = "guide" | "leaderboard" | "ship_crew" | "ship_status";
+type PortTab = "market" | "shipyard" | "tavern" | "vault" | "creative";
+type Section = "ship" | "port";
 type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
 
 export default function App() {
   const [portState, setPortState] = useState<PortState | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("guide");
+  const [activeSection, setActiveSection] = useState<Section>("ship");
+  const [activeShipTab, setActiveShipTab] = useState<ShipTab>("guide");
+  const [activePortTab, setActivePortTab] = useState<PortTab>("market");
+  const prevIsInPortRef = useRef<boolean | null>(null);
 
   useEffect(() => {
     window.openPort = (data: PortState) => {
@@ -32,7 +39,8 @@ export default function App() {
       setTimeout(() => {
         setPortState(null);
         setIsClosing(false);
-        setActiveTab("guide");
+        setActiveSection("ship");
+        setActiveShipTab("guide");
       }, 400);
     };
 
@@ -49,6 +57,23 @@ export default function App() {
     window.addEventListener("focus", returnFocus);
     return () => window.removeEventListener("focus", returnFocus);
   }, []);
+
+  useEffect(() => {
+    const isInPort = !!portState?.isInPort;
+    const prevIsInPort = prevIsInPortRef.current;
+    prevIsInPortRef.current = isInPort;
+
+    // Auto-open Port section only on sea -> port transition.
+    if (isInPort && prevIsInPort !== true) {
+      setActiveSection("port");
+      return;
+    }
+
+    // If we leave port while viewing port-only pages, switch back to ship.
+    if (!isInPort && activeSection === "port") {
+      setActiveSection("ship");
+    }
+  }, [portState?.isInPort, activeSection]);
 
   if (!portState && !isClosing) return null;
 
@@ -85,8 +110,35 @@ export default function App() {
 
   return (
     <div className={panelClass}>
+      <div className="section-bar">
+        <button
+          className={`section-btn ${activeSection === "ship" ? "active" : ""}`}
+          onClick={() => setActiveSection("ship")}
+        >
+          Ship
+        </button>
+        <button
+          className={`section-btn ${activeSection === "port" ? "active" : ""}`}
+          onClick={() => setActiveSection("port")}
+          disabled={!portState?.isInPort}
+          title={!portState?.isInPort ? "Port section is only available while docked." : undefined}
+        >
+          Port
+        </button>
+      </div>
+
       <div className="port-header">
-        <div className="port-name">{portState?.portName ?? ""}</div>
+        <div className="view-context-title">
+          {activeSection === "ship" ? "Ship Panel" : "Port Panel"}
+        </div>
+        <div className="port-name">
+          {activeSection === "ship"
+            ? "Ship Operations"
+            : (portState?.portName ?? "Port")}
+        </div>
+        <div className={`location-badge ${portState?.isInPort ? "in-port" : "at-sea"}`}>
+          {portState?.isInPort ? "In Port" : "At Sea"}
+        </div>
         {portState && (
           <div className="port-coins">
             <img src={inventoryIcon("Coin")} alt="coins" />
@@ -96,64 +148,114 @@ export default function App() {
       </div>
 
       <div className="tab-bar">
-        <button
-          className={`tab-btn ${activeTab === "market" ? "active" : ""}`}
-          onClick={() => setActiveTab("market")}
-        >
-          Market
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "shipyard" ? "active" : ""}`}
-          onClick={() => setActiveTab("shipyard")}
-        >
-          Shipyard
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "tavern" ? "active" : ""}`}
-          onClick={() => setActiveTab("tavern")}
-        >
-          Tavern
-        </button>
-        <button
-          className={`tab-btn vault-tab-btn ${activeTab === "vault" ? "active" : ""}`}
-          onClick={() => setActiveTab("vault")}
-        >
-          Vault
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "guide" ? "active" : ""}`}
-          onClick={() => setActiveTab("guide")}
-        >
-          Scarlett
-        </button>
-        {portState?.isCreative && (
-          <button
-            className={`tab-btn creative-tab-btn ${activeTab === "creative" ? "active" : ""}`}
-            onClick={() => setActiveTab("creative")}
-          >
-            Creative
-          </button>
+        {activeSection === "ship" ? (
+          <>
+            <button
+              className={`tab-btn ${activeShipTab === "guide" ? "active" : ""}`}
+              onClick={() => setActiveShipTab("guide")}
+            >
+              Scarlett
+            </button>
+            <button
+              className={`tab-btn ${activeShipTab === "leaderboard" ? "active" : ""}`}
+              onClick={() => setActiveShipTab("leaderboard")}
+            >
+              Leaderboard
+            </button>
+            <button
+              className={`tab-btn ${activeShipTab === "ship_crew" ? "active" : ""}`}
+              onClick={() => setActiveShipTab("ship_crew")}
+            >
+              Crew
+            </button>
+            <button
+              className={`tab-btn ${activeShipTab === "ship_status" ? "active" : ""}`}
+              onClick={() => setActiveShipTab("ship_status")}
+            >
+              Ship Status
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              className={`tab-btn ${activePortTab === "market" ? "active" : ""}`}
+              onClick={() => setActivePortTab("market")}
+            >
+              Market
+            </button>
+            <button
+              className={`tab-btn ${activePortTab === "shipyard" ? "active" : ""}`}
+              onClick={() => setActivePortTab("shipyard")}
+            >
+              Shipyard
+            </button>
+            <button
+              className={`tab-btn ${activePortTab === "tavern" ? "active" : ""}`}
+              onClick={() => setActivePortTab("tavern")}
+            >
+              Tavern
+            </button>
+            <button
+              className={`tab-btn vault-tab-btn ${activePortTab === "vault" ? "active" : ""}`}
+              onClick={() => setActivePortTab("vault")}
+            >
+              Vault
+            </button>
+            {portState?.isCreative && portState?.isInPort && (
+              <button
+                className={`tab-btn creative-tab-btn ${activePortTab === "creative" ? "active" : ""}`}
+                onClick={() => setActivePortTab("creative")}
+              >
+                Creative
+              </button>
+            )}
+          </>
         )}
       </div>
 
       {portState && (
         <div className="tab-content">
-          {activeTab === "market" ? (
+          {activeSection === "ship" ? (
+            activeShipTab === "guide" ? (
+              <GuideTab />
+            ) : activeShipTab === "leaderboard" ? (
+              <LeaderboardTab entries={portState.leaderboard} />
+            ) : activeShipTab === "ship_status" ? (
+              <ShipyardTab
+                state={portState}
+                isInPort={portState.isInPort}
+                showForSale={false}
+                showShipUpgrade={false}
+              />
+            ) : activeShipTab === "ship_crew" ? (
+              <ShipCrewTab state={portState} />
+            ) : (
+              <LeaderboardTab entries={portState.leaderboard} />
+            )
+          ) : activePortTab === "market" ? (
             <MarketTab state={portState} />
-          ) : activeTab === "shipyard" ? (
-            <ShipyardTab state={portState} />
-          ) : activeTab === "tavern" ? (
-            <TavernTab
-              state={portState}
-              onHireCharacter={handleHireCharacter}
-              onFireCharacter={handleFireCharacter}
-            />
-          ) : activeTab === "vault" ? (
-            <VaultTab state={portState} />
-          ) : activeTab === "creative" && portState.isCreative ? (
+          ) : activePortTab === "shipyard" ? (
+            <ShipyardTab state={portState} isInPort={portState.isInPort} />
+          ) : activePortTab === "tavern" ? (
+            portState.isInPort ? (
+              <TavernTab
+                state={portState}
+                onHireCharacter={handleHireCharacter}
+                onFireCharacter={handleFireCharacter}
+              />
+            ) : (
+              <div className="empty-state">Dock at a port to access tavern services.</div>
+            )
+          ) : activePortTab === "vault" ? (
+            portState.isInPort ? (
+              <VaultTab state={portState} />
+            ) : (
+              <div className="empty-state">Dock at a port to access the vault.</div>
+            )
+          ) : activePortTab === "creative" && portState.isCreative && portState.isInPort ? (
             <CreativeTab state={portState} />
           ) : (
-            <GuideTab />
+            <div className="empty-state">Port services are unavailable while at sea.</div>
           )}
         </div>
       )}

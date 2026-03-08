@@ -4,9 +4,20 @@ import { ComponentCard } from "../components/ComponentCard";
 import { ShipUpgradeCard } from "../components/ShipUpgradeCard";
 import type { PortState, ComponentData } from "../types";
 
-export function ShipyardTab({ state }: { state: PortState }) {
+export function ShipyardTab({
+  state,
+  isInPort = true,
+  showForSale = true,
+  showShipUpgrade = true,
+}: {
+  state: PortState;
+  isInPort?: boolean;
+  showForSale?: boolean;
+  showShipUpgrade?: boolean;
+}) {
   const equippedCount = state.ownedComponents.filter((c) => c.isEquipped).length;
   const canEquipMore = equippedCount < state.componentCapacity;
+  const lockReason = "Port required: dock before changing loadout or buying upgrades.";
 
   const countBy = (ocs: { name: string }[]) => {
     const m = new Map<string, number>();
@@ -104,8 +115,9 @@ export function ShipyardTab({ state }: { state: PortState }) {
               <div className="repair-row">
                 <button
                   className="repair-btn"
-                  disabled={maxHeal <= 0}
+                  disabled={!isInPort || maxHeal <= 0}
                   onClick={() => sendIpc({ action: "heal" })}
+                  title={!isInPort ? "Port required: repair hull while docked." : undefined}
                 >
                   Repair Hull
                 </button>
@@ -123,7 +135,7 @@ export function ShipyardTab({ state }: { state: PortState }) {
                 <div className="repair-row">
                   <button
                     className="repair-btn repair-btn-gold"
-                    disabled={maxBuyHeal <= 0}
+                    disabled={!isInPort || maxBuyHeal <= 0}
                     onClick={async () => {
                       const items: { type: string; quantity: number }[] = [];
                       if (woodToBuy > 0) items.push({ type: "Wood", quantity: woodToBuy });
@@ -133,6 +145,7 @@ export function ShipyardTab({ state }: { state: PortState }) {
                       }
                       sendIpc({ action: "heal" });
                     }}
+                    title={!isInPort ? "Port required: buy and repair while docked." : undefined}
                   >
                     Buy & Repair
                   </button>
@@ -163,13 +176,14 @@ export function ShipyardTab({ state }: { state: PortState }) {
       </div>
 
       {/* Ship Upgrade */}
-      {state.shipTiers && state.shipTiers.length > 0 && (
+      {showShipUpgrade && state.shipTiers && state.shipTiers.length > 0 && (
         <>
           <div className="section-title">Ship Class</div>
           <ShipUpgradeCard
             currentTier={state.shipTier ?? 0}
             tiers={state.shipTiers}
             inventory={state.inventory}
+            canUpgrade={isInPort}
           />
         </>
       )}
@@ -226,11 +240,13 @@ export function ShipyardTab({ state }: { state: PortState }) {
             key={data.name}
             component={data}
             count={count}
-            actionLabel="Unequip"
-            actionClass="unequip"
-            onAction={() =>
-              sendIpc({ action: "unequip_component", name: data.name })
-            }
+              actionLabel="Unequip"
+              actionClass="unequip"
+              disableAllActions={!isInPort}
+              lockReason={lockReason}
+              onAction={() =>
+                sendIpc({ action: "unequip_component", name: data.name })
+              }
             inventory={state.inventory}
             stats={state.stats}
           />
@@ -250,6 +266,8 @@ export function ShipyardTab({ state }: { state: PortState }) {
               actionLabel="Equip"
               actionClass="equip"
               disabled={!canEquipMore}
+              disableAllActions={!isInPort}
+              lockReason={lockReason}
               onAction={() =>
                 sendIpc({ action: "equip_component", name: data.name })
               }
@@ -261,7 +279,7 @@ export function ShipyardTab({ state }: { state: PortState }) {
       )}
 
       {/* Components for sale */}
-      {forSale.length > 0 && (
+      {showForSale && forSale.length > 0 && (
         <>
           <div className="section-sep" />
           <div className="section-title">Available Components</div>
@@ -272,6 +290,8 @@ export function ShipyardTab({ state }: { state: PortState }) {
               actionLabel="Buy"
               actionClass="buy"
               disabled={!canAfford(comp.cost)}
+              disableAllActions={!isInPort}
+              lockReason={lockReason}
               showCost
               onAction={() =>
                 sendIpc({ action: "purchase_component", name: comp.name })
@@ -282,6 +302,15 @@ export function ShipyardTab({ state }: { state: PortState }) {
             />
           ))}
         </>
+      )}
+
+      {!isInPort && (
+        <div className="card port-locked-card">
+          <div className="section-title">Port Services Locked</div>
+          <div className="empty-state">
+            You are at sea. Dock to repair, buy, equip, unequip, or upgrade your ship class.
+          </div>
+        </div>
       )}
     </>
   );

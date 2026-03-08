@@ -59,6 +59,15 @@ body {
   flex-shrink: 0;
 }
 
+.view-context-title {
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8b9ab5;
+  margin-bottom: 4px;
+}
+
 .port-name {
   font-family: "New Rocker", cursive;
   font-size: 26px;
@@ -91,6 +100,43 @@ body {
   border-bottom: 2px solid rgba(139, 105, 20, 0.3);
 }
 
+.section-bar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid rgba(139, 105, 20, 0.28);
+}
+
+.section-btn {
+  flex: 1;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(139, 105, 20, 0.35);
+  border-radius: 8px;
+  color: #8b9ab5;
+  font-family: "New Rocker", cursive;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.section-btn:hover:not(:disabled) {
+  color: #d4a748;
+  border-color: #d4a748;
+  background: rgba(212, 167, 72, 0.08);
+}
+
+.section-btn.active {
+  color: #d4a748;
+  border-color: #d4a748;
+  background: rgba(212, 167, 72, 0.12);
+}
+
+.section-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .tab-btn {
   flex: 1;
   padding: 10px 0;
@@ -113,6 +159,29 @@ body {
   color: #d4a748;
   background: rgba(212, 167, 72, 0.1);
   border-bottom-color: #d4a748;
+}
+
+.location-badge {
+  margin: 6px auto 0;
+  width: fit-content;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.location-badge.in-port {
+  color: #6bdf6b;
+  border: 1px solid rgba(107, 223, 107, 0.35);
+  background: rgba(107, 223, 107, 0.1);
+}
+
+.location-badge.at-sea {
+  color: #6eb4ff;
+  border: 1px solid rgba(110, 180, 255, 0.35);
+  background: rgba(110, 180, 255, 0.1);
 }
 
 /* ── Tab Content ──────────────────────────────────────────────────── */
@@ -498,6 +567,86 @@ body {
   gap: 6px;
   align-self: center;
   flex-shrink: 0;
+  min-width: 140px;
+}
+
+.port-locked-hint {
+  color: #8b9ab5;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.port-locked-card {
+  margin-top: 12px;
+}
+
+.ship-crew-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ship-crew-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ship-crew-name {
+  color: #e0d5c0;
+  font-weight: 700;
+}
+
+.ship-crew-role {
+  color: #8b9ab5;
+  text-align: right;
+  font-size: 12px;
+}
+
+.leaderboard-card {
+  padding: 8px;
+}
+
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 54px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(139, 105, 20, 0.2);
+}
+
+.leaderboard-row.local {
+  border-color: rgba(107, 223, 107, 0.4);
+  background: rgba(107, 223, 107, 0.08);
+}
+
+.leaderboard-rank {
+  font-family: "New Rocker", cursive;
+  color: #d4a748;
+  font-size: 15px;
+}
+
+.leaderboard-name {
+  color: #e0d5c0;
+  font-weight: 700;
+}
+
+.leaderboard-score {
+  color: #8b9ab5;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .component-action-btn {

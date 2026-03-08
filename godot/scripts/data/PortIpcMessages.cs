@@ -11,6 +11,8 @@ using System.Text.Json.Serialization;
 /// </summary>
 public record PortStateDto
 {
+  /// <summary>True when the player is currently docked at a port.</summary>
+  public bool IsInPort { get; init; }
   public string PortName { get; init; } = "";
   public ShopItemDto[] ItemsForSale { get; init; } = [];
   public Dictionary<string, int> Inventory { get; init; } = new();
@@ -25,6 +27,7 @@ public record PortStateDto
   public bool IsCreative { get; init; }
   public PortCostsDto Costs { get; init; } = new();
   public TavernStateDto Tavern { get; init; } = new();
+  public LeaderboardEntryDto[] Leaderboard { get; init; } = [];
 
   /// <summary>
   /// The player's vault info. Null when no vault has been built yet.
@@ -32,6 +35,12 @@ public record PortStateDto
   /// </summary>
   public VaultStateDto Vault { get; init; }
 }
+
+public record LeaderboardEntryDto(
+  string Nickname,
+  int Trophies,
+  bool IsLocal
+);
 
 /// <summary>
 /// Tavern snapshot for the currently docked port.

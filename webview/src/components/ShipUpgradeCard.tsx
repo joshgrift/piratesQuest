@@ -8,10 +8,12 @@ export function ShipUpgradeCard({
   currentTier,
   tiers,
   inventory,
+  canUpgrade = true,
 }: {
   currentTier: number;
   tiers: ShipTierData[];
   inventory: Record<string, number>;
+  canUpgrade?: boolean;
 }) {
   const currentData = tiers[currentTier];
   const nextTier = currentTier + 1;
@@ -42,8 +44,9 @@ export function ShipUpgradeCard({
           nextTier={nextTier}
           nextData={nextData}
           currentSlots={currentData?.componentSlots ?? 4}
-          canAfford={canAffordUpgrade}
+          canAfford={canAffordUpgrade && canUpgrade}
           inventory={inventory}
+          canUpgrade={canUpgrade}
         />
       )}
     </div>
@@ -58,12 +61,14 @@ function ShipUpgradeNextTier({
   currentSlots,
   canAfford,
   inventory,
+  canUpgrade,
 }: {
   nextTier: number;
   nextData: ShipTierData;
   currentSlots: number;
   canAfford: boolean;
   inventory: Record<string, number>;
+  canUpgrade: boolean;
 }) {
   return (
     <div className="ship-upgrade-next">
@@ -107,6 +112,9 @@ function ShipUpgradeNextTier({
       >
         Upgrade to {nextData.name}
       </button>
+      {!canUpgrade && (
+        <div className="port-locked-hint">Port required: upgrade ship class while docked.</div>
+      )}
     </div>
   );
 }

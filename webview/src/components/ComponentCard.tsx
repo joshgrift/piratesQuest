@@ -10,6 +10,8 @@ export interface ComponentCardProps {
   actionLabel: string;
   actionClass: "buy" | "equip" | "unequip";
   disabled?: boolean;
+  disableAllActions?: boolean;
+  lockReason?: string;
   showCost?: boolean;
   onAction: () => void;
   inventory: Record<string, number>;
@@ -25,6 +27,8 @@ export function ComponentCard({
   actionLabel,
   actionClass,
   disabled,
+  disableAllActions,
+  lockReason,
   showCost,
   onAction,
   inventory,
@@ -114,25 +118,28 @@ export function ComponentCard({
       <div className="component-actions">
         <button
           className={`component-action-btn ${actionClass}`}
-          disabled={disabled}
+          disabled={disabled || disableAllActions}
           onClick={onAction}
+          title={disabled || disableAllActions ? lockReason : undefined}
         >
           {actionLabel}
         </button>
         {buyAndBuildInfo && (
           <button
             className="component-action-btn buy-and-build"
-            disabled={!buyAndBuildInfo.affordable}
+            disabled={disableAllActions || !buyAndBuildInfo.affordable}
             onClick={async () => {
               if (buyAndBuildInfo.needed.length > 0) {
                 await sendIpcAndWait({ action: "buy_items", items: buyAndBuildInfo.needed });
               }
               sendIpc({ action: "purchase_component", name: component.name });
             }}
+            title={disableAllActions ? lockReason : undefined}
           >
             Buy All & Build
           </button>
         )}
+        {disableAllActions && lockReason && <div className="port-locked-hint">{lockReason}</div>}
       </div>
     </div>
   );

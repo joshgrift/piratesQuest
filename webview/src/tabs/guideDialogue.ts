@@ -5,7 +5,7 @@ import type { ConversationNode } from "../components/ConversationPanel";
 // (required by react-refresh for hot module replacement).
 export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
   root: {
-    text: "Ahoy there, sailor! Pull up a chair. Name's Scarlett \u2014 been sailin' these waters longer than most. What would ye like to know?",
+    text: "Ahoy there, captain! Scarlett here \u2014 yer first mate. Been sailin' these waters longer than most. What do ye want to go over?",
     responses: [
       { label: "How do I sail my ship?", next: "sailing" },
       { label: "How does trading work?", next: "trading" },
@@ -17,6 +17,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
       { label: "What if I'm overburdened?", next: "overburdened" },
       { label: "How does the leaderboard work?", next: "leaderboard" },
       { label: "What happens when I die?", next: "death" },
+      { label: "How do Ship and Port sections work?", next: "webview_sections" },
       { label: "What can I do at ports?", next: "ports" },
       { label: "How does tavern crew hiring work?", next: "tavern" },
       { label: "How does the vault work?", next: "vault" },
@@ -26,7 +27,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
 
   // ── Flirting ──
   flirt: {
-    text: "Well now, look at ye comin' in hot. Bold eyes, bold mouth. I can work with that. Keep talkin', sailor.",
+    text: "Well now, look at ye comin' in hot. Bold eyes, bold mouth. I can work with that. Keep talkin', captain.",
     responses: [
       { label: "Your smile could calm a storm, Scarlett.", next: "flirt_smooth" },
       { label: "I'd sail through cannon fire just to hear ye laugh.", next: "flirt_confident" },
@@ -59,19 +60,17 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     ],
   },
   flirt_comeback: {
-    text: "Fiercest comeback? Easy: if I steal yer heart, ye still owe docking fees. Sweet lines don't pay port taxes, pretty sailor.",
+    text: "Fiercest comeback? Easy: if I steal yer heart, ye still owe docking fees. Sweet lines don't pay port taxes, pretty captain.",
     responses: [
       { label: "Take the coin and the heart. Now test me.", next: "flirt_test" },
       { label: "I'll be back with better lines and better loot.", next: "root" },
     ],
   },
   flirt_test: {
-    text: "Alright, hotshot. Let's see if that swagger comes with brains.\n\nBefore a risky run, what's the smart move?",
+    text: "Alright, hotshot. Before a risky run, keep it tight: stash valuables in the vault, load cannonballs, and sail prepared.",
     responses: [
-      { label: "I'd stash valuables in the vault, load cannonballs, then sail out to impress ye.", next: "flirt_end_cute" },
-      { label: "I'd blow all my gold on one shiny upgrade and pray ye're into chaos.", next: "flirt_end_sassy" },
-      { label: "I'd sail overburdened and trust my pretty face to save me.", next: "flirt_end_sassy" },
-      { label: "I'll charm ye later, after I handle business.", next: "root" },
+      { label: "Smart plan. Keep talking, Scarlett.", next: "flirt_end_cute" },
+      { label: "I'll handle business first, then come back.", next: "root" },
     ],
   },
   flirt_end_cute: {
@@ -89,18 +88,16 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
 
   // ── Sailing ──
   sailing: {
-    text: "Sailin' is simple, love. W moves ye forward, S slows ye down, and A/D turns the ship. She's got momentum though \u2014 plan yer turns early or you'll be kissin' the shoreline!",
+    text: "Sailin' is simple, captain. W moves ye forward, S slows ye down, and A/D turns the ship. She's got momentum though \u2014 plan yer turns early or you'll be kissin' the shoreline!",
     responses: [
       { label: "Any sailing tips?", next: "sailing_tips" },
       { label: "Ask about something else", next: "root" },
     ],
   },
   sailing_tips: {
-    text: "Here's a free one: a loaded ship handles worse. The heavier yer cargo, the slower ye turn. You'll see a 'Heavy' warning when near capacity.\n\nQuick quiz \u2014 when yer ship is heavy with cargo, what happens?",
+    text: "Here's a free one: a loaded ship handles worse. The heavier yer cargo, the slower ye turn. You'll see a 'Heavy' warning when near capacity.",
     responses: [
-      { label: "It turns slower", next: "sailing_right" },
-      { label: "It goes faster", next: "sailing_wrong" },
-      { label: "Nothing changes", next: "sailing_wrong" },
+      { label: "Got it. Heavy ships turn slower.", next: "sailing_right" },
       { label: "Ask about something else", next: "root" },
     ],
   },
@@ -109,29 +106,27 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     responses: [{ label: "What else can I learn?", next: "root" }],
   },
   sailing_wrong: {
-    text: "Not quite, love! A heavy ship turns slower and handles worse. Ye'll see the 'Heavy' icon on screen when near capacity. Sell off some goods or choose yer route carefully!",
+    text: "Not quite, captain! A heavy ship turns slower and handles worse. Ye'll see the 'Heavy' icon on screen when near capacity. Sell off some goods or choose yer route carefully!",
     responses: [{ label: "Good to know! What else?", next: "root" }],
   },
 
   // ── Trading ──
   trading: {
-    text: "Now ye're speakin' my language! Each port has different prices for goods. The secret? Buy cheap at one port, sail across the map, and sell dear at another. Supply and demand, sailor!",
+    text: "Now ye're speakin' my language! Each port has different prices for goods. The secret? Buy cheap at one port, sail across the map, and sell dear at another. Supply and demand, captain!",
     responses: [
       { label: "How do I buy and sell?", next: "trading_how" },
       { label: "Ask about something else", next: "root" },
     ],
   },
   trading_how: {
-    text: "When ye dock, check the Market tab \u2014 right here! Switch between 'Buy Goods' and 'Sell Goods' at the top, set yer quantities, and confirm. Simple as breathin'!\n\nNow tell me \u2014 to make the most gold, what should ye do?",
+    text: "When ye dock, check the Market tab \u2014 right here! Switch between 'Buy Goods' and 'Sell Goods' at the top, set yer quantities, and confirm. Simple as breathin'!\n\nFor best gold, buy low at one port and sell high at another.",
     responses: [
-      { label: "Buy low at one port, sell high at another", next: "trading_right" },
-      { label: "Sell everything at the first port", next: "trading_wrong" },
-      { label: "Only collect, never buy", next: "trading_wrong" },
+      { label: "Makes sense. Keep going.", next: "trading_right" },
       { label: "Ask about something else", next: "root" },
     ],
   },
   trading_right: {
-    text: "Ha! Ye'll be a merchant prince in no time! Every port has different prices \u2014 compare before ye sell. Gold is king, sailor. It buys components and puts ye on the leaderboard!",
+    text: "Ha! Ye'll be a merchant prince in no time! Every port has different prices \u2014 compare before ye sell. Gold is king, captain. It buys components and puts ye on the leaderboard!",
     responses: [{ label: "What else can I learn?", next: "root" }],
   },
   trading_wrong: {
@@ -156,16 +151,14 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     ],
   },
   combat_tips: {
-    text: "Always keep cannonballs stocked! Nothin' worse than an empty cannon in a fight. And remember \u2014 ports are safe zones. If things go south, run for shore!\n\nPop quiz, sailor! Which key fires yer LEFT cannons?",
+    text: "Always keep cannonballs stocked! Nothin' worse than an empty cannon in a fight. And remember \u2014 ports are safe zones. If things go south, run for shore!\n\nAnd lock this in: Q fires port-side (left), E fires starboard (right).",
     responses: [
-      { label: "Q", next: "combat_right" },
-      { label: "E", next: "combat_wrong" },
-      { label: "Space", next: "combat_wrong" },
+      { label: "Got it. Q left, E right.", next: "combat_right" },
       { label: "Ask about something else", next: "root" },
     ],
   },
   combat_right: {
-    text: "That's it! Q for port, E for starboard. A true sailor always knows their port from their starboard. Now get out there and give 'em hell!",
+    text: "That's it! Q for port, E for starboard. A true captain always knows their port from their starboard. Now get out there and give 'em hell!",
     responses: [{ label: "What else should I know?", next: "root" }],
   },
   combat_wrong: {
@@ -189,7 +182,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     ],
   },
   collecting_upgrades: {
-    text: "Aye! There are ship components that boost yer collection rates by 50% \u2014 Advanced Fish Nets, Reinforced Lumber Tools, and Enhanced Mining Tools. Buy 'em in the Shipyard tab and equip 'em before ye head out.\n\nAlso, the Expanded Cargo Hold gives ye more room to carry what ye gather. A smart sailor upgrades before they harvest!",
+    text: "Aye! There are ship components that boost yer collection rates by 50% \u2014 Advanced Fish Nets, Reinforced Lumber Tools, and Enhanced Mining Tools. Buy 'em in the Shipyard tab and equip 'em before ye head out.\n\nAlso, the Expanded Cargo Hold gives ye more room to carry what ye gather. A smart captain upgrades before they harvest!",
     responses: [{ label: "Good to know! What else?", next: "root" }],
   },
 
@@ -202,11 +195,9 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     ],
   },
   resources_list: {
-    text: "Six things ye need to know:\n\n\u2022 Wood \u2014 repairs, crafting, trading\n\u2022 Iron \u2014 components, trading\n\u2022 Fish \u2014 repairs, trading\n\u2022 Tea \u2014 valuable trade good\n\u2022 Gold \u2014 the universal currency\n\u2022 Cannonballs \u2014 don't leave port without 'em!\n\nNow, what do ye need to repair yer ship?",
+    text: "Six things ye need to know:\n\n\u2022 Wood \u2014 repairs, crafting, trading\n\u2022 Iron \u2014 components, trading\n\u2022 Fish \u2014 repairs, trading\n\u2022 Tea \u2014 valuable trade good\n\u2022 Gold \u2014 the universal currency\n\u2022 Cannonballs \u2014 don't leave port without 'em!\n\nFor repairs, ye need Wood and Fish.",
     responses: [
-      { label: "Wood and Fish", next: "resources_right" },
-      { label: "Just Gold", next: "resources_wrong" },
-      { label: "Iron and Tea", next: "resources_wrong" },
+      { label: "Got it. Wood and Fish for repairs.", next: "resources_right" },
       { label: "Ask about something else", next: "root" },
     ],
   },
@@ -228,20 +219,19 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     ],
   },
   upgrades_equip: {
-    text: "Head to the Shipyard tab when docked. Components for sale are at the bottom \u2014 buy one, then equip it from yer owned list. Ye've got limited slots, so choose wisely!\n\nImportant question \u2014 what happens to yer components when ye die?",
+    text: "Head to the Shipyard tab when docked. Components for sale are at the bottom \u2014 buy one, then equip it from yer owned list. Ye've got limited slots, so choose wisely!\n\nCritical reminder: when ye die, ALL equipped components are lost.",
     responses: [
-      { label: "They're all lost", next: "upgrades_right" },
-      { label: "They stay equipped", next: "upgrades_wrong" },
-      { label: "Half are lost", next: "upgrades_wrong" },
+      { label: "Understood. That's risky.", next: "upgrades_right" },
+      { label: "What about ship class upgrades?", next: "ship_tiers" },
       { label: "Ask about something else", next: "root" },
     ],
   },
   upgrades_right: {
-    text: "Aye... the harsh truth of the sea. Every equipped component is gone when ye sink. Smart sailors only invest heavy when they can defend themselves!",
+    text: "Aye... the harsh truth of the sea. Every equipped component is gone when ye sink. Smart captains only invest heavy when they can defend themselves!",
     responses: [{ label: "That's rough! What else?", next: "root" }],
   },
   upgrades_wrong: {
-    text: "I wish, love! When ye die, ALL equipped components are lost forever. It's a cruel sea \u2014 only load up on upgrades when ye've got the firepower to keep 'em!",
+    text: "I wish, captain! When ye die, ALL equipped components are lost forever. It's a cruel sea \u2014 only load up on upgrades when ye've got the firepower to keep 'em!",
     responses: [
       { label: "What about upgrading my ship class?", next: "ship_tiers" },
       { label: "I'll be careful! What else?", next: "root" },
@@ -271,7 +261,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
 
   // ── Overburdened ──
   overburdened: {
-    text: "When yer hold is stuffed near capacity, yer ship gets heavy. You'll see a 'Heavy' warning on screen \u2014 that means you're overburdened, sailor!",
+    text: "When yer hold is stuffed near capacity, yer ship gets heavy. You'll see a 'Heavy' warning on screen \u2014 that means you're overburdened, captain!",
     responses: [
       { label: "What happens when I'm heavy?", next: "overburdened_effects" },
       { label: "Ask about something else", next: "root" },
@@ -284,7 +274,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
 
   // ── Leaderboard ──
   leaderboard: {
-    text: "See that list on the left side of yer screen? That's the leaderboard! It ranks every sailor on the server by their Trophy count.",
+    text: "See that list on the left side of yer screen? That's the leaderboard! It ranks every captain on the server by their Trophy count.",
     responses: [
       { label: "How do I get trophies?", next: "leaderboard_trophies" },
       { label: "Ask about something else", next: "root" },
@@ -312,6 +302,38 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
   },
 
   // ── Ports ──
+  webview_sections: {
+    text: "New trick, captain: this ship panel sails with ye now. The Ship section is always there for stats, crew, health, and me, yer first mate. The Port section only wakes up when ye dock.",
+    responses: [
+      { label: "What can I manage while at sea?", next: "webview_ship" },
+      { label: "What stays port-only?", next: "webview_port_only" },
+      { label: "Ask about something else", next: "root" },
+    ],
+  },
+  webview_ship: {
+    text: "At sea ye can read ship stats, check current crew, and watch crew impact. Ye can also inspect components. Keepin' tabs on the ship mid-voyage wins fights before cannons speak.",
+    responses: [
+      { label: "So what can't I do at sea?", next: "webview_port_only" },
+      { label: "Ask about something else", next: "root" },
+    ],
+  },
+  webview_port_only: {
+    text: "Out on open water, ye can inspect the loadout, but swaps and purchases wait for port.",
+    responses: [
+      { label: "Got it. Dock first for changes.", next: "webview_port_right" },
+      { label: "Ask about something else", next: "root" },
+    ],
+  },
+  webview_port_right: {
+    text: "Sharp as a boarding axe. Component swaps, purchases, repairs, and most services are port business. Dock up, handle the books, then sail mean.",
+    responses: [{ label: "What else can I learn?", next: "root" }],
+  },
+  webview_port_wrong: {
+    text: "Not this tide, matey. At sea ye can inspect the loadout, but changes wait for port. Keeps captains plannin' ahead instead of fiddlin' mid-battle.",
+    responses: [{ label: "Got it. What else?", next: "root" }],
+  },
+
+  // ── Ports ──
   ports: {
     text: "Ports are yer safe haven! When docked, ye can't take damage. Perfect for catchin' yer breath after a rough fight or a long sail.",
     responses: [
@@ -320,7 +342,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     ],
   },
   ports_features: {
-    text: "Plenty! The Market for buyin' and sellin' goods, the Shipyard for components and repairs, the Tavern for talkin' and hirin' crew, the Vault for storin' yer treasures, and me \u2014 yer humble guide! Each port has different prices, so it pays to explore.",
+    text: "Plenty! The Market for buyin' and sellin' goods, the Shipyard for components and repairs, the Tavern for talkin' and hirin' crew, the Vault for storin' yer treasures, and me \u2014 yer first mate! Each port has different prices, so it pays to explore.",
     responses: [{ label: "Thanks! What else can I learn?", next: "root" }],
   },
 
@@ -342,11 +364,9 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     ],
   },
   tavern_stats: {
-    text: "Hireable crew give stat boosts. Tavern regulars marked Talk are story folk and rumor traders, not deckhands.\n\nQuick quiz: yer berths are full and ye want a new gunner. What's the right move?",
+    text: "Hireable crew give stat boosts. Tavern regulars marked Talk are story folk and rumor traders, not deckhands.\n\nIf yer berths are full and ye want a new gunner, fire one first, then hire.",
     responses: [
-      { label: "Fire one crew member, then hire the gunner", next: "tavern_quiz_right" },
-      { label: "Swap instantly without firing", next: "tavern_quiz_wrong" },
-      { label: "Keep everyone and hire anyway", next: "tavern_quiz_wrong" },
+      { label: "Got it. Fire first, then hire.", next: "tavern_quiz_right" },
       { label: "Ask about something else", next: "root" },
     ],
   },
@@ -359,11 +379,9 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     ],
   },
   tavern_trade_quiz: {
-    text: "Aye. Quick check, sailor: which bonus helps when ye sell cargo at market?",
+    text: "Aye. If ye trade often, look for a sell-price bonus. That's the one that boosts market profit.",
     responses: [
-      { label: "A sell-price bonus", next: "tavern_trade_right" },
-      { label: "Hull strength", next: "tavern_trade_wrong" },
-      { label: "Turn speed", next: "tavern_trade_wrong" },
+      { label: "Perfect. I'll prioritize that bonus.", next: "tavern_trade_right" },
       { label: "Ask about something else", next: "root" },
     ],
   },
@@ -376,7 +394,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     responses: [{ label: "Got it. What else?", next: "root" }],
   },
   tavern_quiz_right: {
-    text: "Sharp sailor. That's the rule: no direct swap. Crew discipline keeps yer choices deliberate.",
+    text: "Sharp captain. That's the rule: no direct swap. Crew discipline keeps yer choices deliberate.",
     responses: [{ label: "What else can I learn?", next: "root" }],
   },
   tavern_quiz_wrong: {
@@ -402,11 +420,9 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     ],
   },
   vault_store: {
-    text: "Anything ye'd hate to lose! Wood, Iron, Fish, Tea, Cannonballs, Trophies, and of course \u2014 Gold. Items in yer vault survive death, so it's the safest place for yer valuables.\n\nQuick quiz \u2014 what happens to items in yer vault when ye die?",
+    text: "Anything ye'd hate to lose! Wood, Iron, Fish, Tea, Cannonballs, Trophies, and of course \u2014 Gold. Items in yer vault survive death, so it's the safest place for yer valuables.",
     responses: [
-      { label: "They're safe!", next: "vault_store_right" },
-      { label: "I lose half of them", next: "vault_store_wrong" },
-      { label: "They're all gone", next: "vault_store_wrong" },
+      { label: "Good. Vault items stay safe on death.", next: "vault_store_right" },
       { label: "Ask about something else", next: "root" },
     ],
   },
@@ -415,7 +431,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     responses: [{ label: "What else can I learn?", next: "root" }],
   },
   vault_store_wrong: {
-    text: "Nay, yer vault is completely safe! That's the whole point, love. Everything ye deposit stays there no matter what happens to ye out on the water. It's the one thing death can't take!",
+    text: "Nay, yer vault is completely safe! That's the whole point, captain. Everything ye deposit stays there no matter what happens to ye out on the water. It's the one thing death can't take!",
     responses: [{ label: "That's a relief! What else?", next: "root" }],
   },
   vault_upgrade: {

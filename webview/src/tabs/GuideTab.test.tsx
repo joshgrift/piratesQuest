@@ -2,9 +2,9 @@ import { describe, it, expect, vi } from "vitest";
 import { screen, act, fireEvent } from "@testing-library/react";
 import { renderApp } from "../test/helpers";
 
-// The Guide tab is the default tab, so renderApp() lands here automatically.
+// Guide now lives in the Ship section, so tests navigate there explicitly.
 function renderGuide() {
-  return renderApp();
+  return renderApp({ tab: "guide" });
 }
 
 // Navigate to a node and skip the typewriter animation by clicking the
@@ -71,9 +71,9 @@ describe("GuideTab", () => {
     it("shows numbered badges on response buttons", () => {
       const { container } = renderGuide();
       const nums = container.querySelectorAll(".guide-response-num");
-      expect(nums).toHaveLength(14);
+      expect(nums).toHaveLength(15);
       expect(nums[0]!.textContent).toBe("1");
-      expect(nums[13]!.textContent).toBe("14");
+      expect(nums[14]!.textContent).toBe("15");
     });
   });
 

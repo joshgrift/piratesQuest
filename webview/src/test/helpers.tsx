@@ -5,21 +5,24 @@ import { makePortState } from "./fixtures";
 import type { PortState } from "../types";
 import type { Mock } from "vitest";
 
-type Tab = "market" | "shipyard" | "tavern" | "vault" | "guide" | "creative";
+type Tab = "guide" | "leaderboard" | "ship_crew" | "ship_status" | "market" | "shipyard" | "tavern" | "vault" | "creative";
 
 const TAB_LABELS: Record<Tab, string> = {
+  ship_status: "Ship Status",
+  ship_crew: "Crew",
+  guide: "Scarlett",
+  leaderboard: "Leaderboard",
   market: "Market",
   shipyard: "Shipyard",
   tavern: "Tavern",
   vault: "Vault",
-  guide: "Scarlett",
   creative: "Creative",
 };
 
 interface RenderAppOptions {
   /** Override any PortState fields. */
   state?: Partial<PortState>;
-  /** Which tab to activate after opening. Defaults to "guide" (the App default). */
+  /** Which tab to activate after opening. Defaults to "guide". */
   tab?: Tab;
   /**
    * When true, the IPC mock simulates Godot by calling window.updateState
@@ -77,7 +80,18 @@ export function renderApp(overridesOrOptions?: Partial<PortState> | RenderAppOpt
     });
   }
 
-  if (tab && tab !== "guide") {
+  if (tab) {
+    if (["market", "shipyard", "tavern", "vault", "creative"].includes(tab)) {
+      const sectionButton = screen.getByRole("button", { name: "Port" });
+      act(() => {
+        sectionButton.click();
+      });
+    } else {
+      const sectionButton = screen.getByRole("button", { name: "Ship" });
+      act(() => {
+        sectionButton.click();
+      });
+    }
     const tabButton = screen.getByRole("button", { name: TAB_LABELS[tab] });
     act(() => {
       tabButton.click();

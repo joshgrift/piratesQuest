@@ -2,6 +2,7 @@
 
 /** Full port state sent when opening or updating the port UI. */
 export interface PortState {
+  isInPort: boolean;
   portName: string;
   itemsForSale: ShopItem[];
   inventory: Record<string, number>;
@@ -19,6 +20,13 @@ export interface PortState {
   /** Null when the player hasn't built a vault yet. */
   vault: VaultState | null;
   tavern: TavernState;
+  leaderboard: LeaderboardEntry[];
+}
+
+export interface LeaderboardEntry {
+  nickname: string;
+  trophies: number;
+  isLocal: boolean;
 }
 
 export interface PortCosts {
