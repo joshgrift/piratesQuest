@@ -27,16 +27,6 @@ export function CharacterConversationOverlay({
   return (
     <div className="character-chat-overlay" role="dialog" aria-modal="true" aria-label={`${speakerName} conversation`}>
       <div className="character-chat-overlay-inner">
-        <div className="character-chat-overlay-header">
-          <button
-            type="button"
-            className="character-chat-overlay-close-btn"
-            onClick={onClose}
-          >
-            End Conversation
-          </button>
-        </div>
-
         <ConversationThreadPanel
           key={speakerName}
           tree={tree}
@@ -45,6 +35,7 @@ export function CharacterConversationOverlay({
           initialNodeId="root"
           instantNodeIds={instantNodeIds}
           onAction={onAction}
+          onGoodbye={onClose}
         />
       </div>
     </div>

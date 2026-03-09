@@ -2854,31 +2854,6 @@ img {
   overflow-x: hidden;
 }
 
-.character-chat-overlay-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.character-chat-overlay-close-btn {
-  border: 1px solid rgba(236, 192, 114, 0.3);
-  border-radius: 999px;
-  padding: 5px 10px;
-  background: rgba(8, 17, 27, 0.38);
-  color: rgba(242, 213, 157, 0.88);
-  font-family: "Texturina", serif;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  backdrop-filter: blur(1px);
-}
-
-.character-chat-overlay-close-btn:hover {
-  background: rgba(18, 31, 46, 0.55);
-}
-
 .conversation-thread-shell {
   padding: 0;
 }

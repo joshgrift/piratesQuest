@@ -9,9 +9,11 @@ interface ConversationThreadPanelProps {
   instantNodeIds?: string[];
   typingSpeedMs?: number;
   onAction?: (actionId: string) => string | void;
+  onGoodbye: () => void;
 }
 
 type ThreadRole = "npc" | "player";
+const RETURN_TO_TOPICS_ACTION = "__return_to_topics";
 
 interface ThreadMessage {
   id: number;
@@ -37,11 +39,13 @@ export function ConversationThreadPanel({
   instantNodeIds = [],
   typingSpeedMs = 16,
   onAction,
+  onGoodbye,
 }: ConversationThreadPanelProps) {
   const [nodeId, setNodeId] = useState(initialNodeId);
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const nextMessageIdRef = useRef(1);
   const logRef = useRef<HTMLDivElement | null>(null);
+  const shouldAutoScrollRef = useRef(true);
 
   const currentNode = tree[nodeId] ?? tree[initialNodeId] ?? null;
   const lastMessage = messages[messages.length - 1];
@@ -71,6 +75,7 @@ export function ConversationThreadPanel({
     const startNode = tree[initialNodeId] ?? null;
     setNodeId(initialNodeId);
     nextMessageIdRef.current = 1;
+    shouldAutoScrollRef.current = true;
 
     if (!startNode) {
       setMessages([]);
@@ -117,8 +122,17 @@ export function ConversationThreadPanel({
   // Keep the latest message in view as text streams in.
   useEffect(() => {
     if (!logRef.current) return;
+    if (!shouldAutoScrollRef.current) return;
     logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [messages, isTyping]);
+
+  const onLogScroll = () => {
+    if (!logRef.current) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = logRef.current;
+    const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+    shouldAutoScrollRef.current = distanceFromBottom < 48;
+  };
 
   const skipTyping = () => {
     if (!isTyping) return;
@@ -151,11 +165,24 @@ export function ConversationThreadPanel({
     if (response.disabled) return;
     if (!currentNode) return;
 
-    const id = nextMessageIdRef.current;
-    nextMessageIdRef.current += 1;
-    setMessages((prev) => [...prev, asCompleteMessage(id, "player", response.label)]);
+    const shouldStoreInHistory = response.action !== RETURN_TO_TOPICS_ACTION;
+    if (shouldStoreInHistory) {
+      const id = nextMessageIdRef.current;
+      nextMessageIdRef.current += 1;
+      setMessages((prev) => [...prev, asCompleteMessage(id, "player", response.label)]);
+    }
 
     let nextId = response.next;
+
+    if (response.action === "__goodbye") {
+      onGoodbye();
+      return;
+    }
+
+    if (response.action === RETURN_TO_TOPICS_ACTION) {
+      setNodeId(initialNodeId);
+      return;
+    }
 
     if (response.action && onAction) {
       const redirect = onAction(response.action);
@@ -163,6 +190,55 @@ export function ConversationThreadPanel({
     }
 
     if (nextId) navigateToNode(nextId);
+  };
+
+  const getDisplayedResponses = (responses: ConversationResponse[]): ConversationResponse[] => {
+    // Remove hard back-navigation choices to keep the thread conversational.
+    const conversational = responses.filter((response) => {
+      const label = response.label.trim().toLowerCase();
+      const looksLikeBack = label.includes("back");
+      const looksLikeTavernReturn = label.includes("tavern");
+      const loopsToRoot = response.next === "root";
+
+      return !(looksLikeBack || looksLikeTavernReturn || loopsToRoot);
+    });
+
+    const hasReturnToTopics = conversational.some((response) => response.next === initialNodeId);
+    const withTopicReturn = [...conversational];
+
+    // After any branch response, always provide a way to continue the conversation.
+    if (nodeId !== initialNodeId && !hasReturnToTopics) {
+      withTopicReturn.push({
+        label: "Ask another question.",
+        action: RETURN_TO_TOPICS_ACTION,
+      });
+    }
+
+    // Keep space for a persistent "Goodbye" option at the bottom.
+    const trimmed = withTopicReturn.slice(0, 3);
+    const firstAction = withTopicReturn.find((response) => !!response.action);
+
+    // If we trimmed away the only action option (hire/fire/etc), swap it back in.
+    if (
+      firstAction
+      && !trimmed.some(
+        (response) =>
+          response.label === firstAction.label
+          && response.next === firstAction.next
+          && response.action === firstAction.action,
+      )
+      && trimmed.length > 0
+    ) {
+      trimmed[trimmed.length - 1] = firstAction;
+    }
+
+    return [
+      ...trimmed,
+      {
+        label: "Goodbye.",
+        action: "__goodbye",
+      },
+    ];
   };
 
   const renderedMessages = useMemo(
@@ -188,6 +264,7 @@ export function ConversationThreadPanel({
         className="conversation-thread-log"
         ref={logRef}
         onClick={skipTyping}
+        onScroll={onLogScroll}
       >
         {renderedMessages.map((message) => {
           const isNpc = message.role === "npc";
@@ -226,7 +303,7 @@ export function ConversationThreadPanel({
           </button>
         ) : (
           <div className="conversation-thread-options">
-            {(currentNode?.responses ?? []).map((response, i) => (
+            {getDisplayedResponses(currentNode?.responses ?? []).map((response, i) => (
               <button
                 key={`${nodeId}-${i}`}
                 type="button"
