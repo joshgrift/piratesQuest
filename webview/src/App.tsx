@@ -21,25 +21,14 @@ const INVENTORY_ORDER = ["Coin", "Wood", "Fish", "Iron", "Tea", "CannonBall", "T
 export default function App() {
   const [portState, setPortState] = useState<PortState | null>(null);
   const [isPanelVisible, setIsPanelVisible] = useState(true);
-  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [activeSection, setActiveSection] = useState<Section>("ship");
   const [activeShipTab, setActiveShipTab] = useState<ShipTab>("guide");
   const [activePortTab, setActivePortTab] = useState<PortTab>("market");
   const prevIsInPortRef = useRef<boolean | null>(null);
 
   useEffect(() => {
-    const syncWindowSize = () => {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-    syncWindowSize();
-    window.addEventListener("resize", syncWindowSize);
-
     window.openPort = (data: PortState) => {
       setPortState(data);
-      syncWindowSize();
     };
 
     window.closePort = () => {
@@ -51,12 +40,9 @@ export default function App() {
 
     window.updateState = (data: PortState) => {
       setPortState(data);
-      syncWindowSize();
     };
 
     sendIpc({ action: "ready" });
-
-    return () => window.removeEventListener("resize", syncWindowSize);
   }, []);
 
   useEffect(() => {
@@ -101,7 +87,7 @@ export default function App() {
 
   const panelClass = [
     "port-panel",
-    isPanelVisible ? "open" : "",
+    isPanelVisible ? "open" : "hidden",
   ]
     .filter(Boolean)
     .join(" ");
@@ -112,10 +98,6 @@ export default function App() {
 
   return (
     <>
-      <div className="left-debug-size">
-        {windowSize.width} x {windowSize.height}
-      </div>
-
       <div className="left-inventory-panel">
         <div className="left-hud-title">Inventory</div>
         {portState ? (
