@@ -543,7 +543,7 @@ img {
   background: transparent;
   border: none;
   color: #dce9f7;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -599,7 +599,8 @@ img {
 }
 
 .ship-status-icon-pill.ready,
-.ship-status-icon-pill.stable {
+.ship-status-icon-pill.stable,
+.ship-status-icon-pill.safe {
   color: #61da84;
   border-color: rgba(97, 218, 132, 0.5);
   background: rgba(97, 218, 132, 0.14);
@@ -610,6 +611,12 @@ img {
   color: #ff7d66;
   border-color: rgba(255, 125, 102, 0.55);
   background: rgba(255, 125, 102, 0.16);
+}
+
+.ship-status-icon-pill.unsafe {
+  color: #f6a34f;
+  border-color: rgba(246, 163, 79, 0.62);
+  background: rgba(246, 163, 79, 0.18);
 }
 
 .ship-status-cooldown-track {

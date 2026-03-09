@@ -5,6 +5,9 @@ import { BASE, inventoryIcon } from "../utils/helpers";
 const INVENTORY_CHIPS = ["Wood", "Iron", "Fish", "Tea", "Trophy"] as const;
 const STATUS_ANVIL_ICON = `${BASE}icons/flat/anvil.svg`;
 const STATUS_CANNON_ICON = `${BASE}icons/flat/cannon-shot.svg`;
+const STATUS_FLAG_ICON = `${BASE}icons/flat/pirate-flag.svg`;
+type HoverTip = "ring" | "cannon" | "burden" | "safety" | null;
+type ActiveHoverTip = Exclude<HoverTip, null>;
 
 function clampPct(value: number): number {
   return Math.max(0, Math.min(100, value));
@@ -74,7 +77,8 @@ export function ShipStatusWidget({
   state: PortState | null;
   panelOpen: boolean;
 }) {
-  const [hoverTip, setHoverTip] = useState<"ring" | "cannon" | "burden" | null>(null);
+  const [hoverTip, setHoverTip] = useState<HoverTip>(null);
+  const [lockedTip, setLockedTip] = useState<HoverTip>(null);
 
   if (!state) return null;
 
@@ -87,8 +91,25 @@ export function ShipStatusWidget({
 
   const cannonballs = state.inventory.CannonBall ?? 0;
   const gold = state.inventory.Coin ?? 0;
+  const isSafeZone = state.isInPort;
   const cooldownRemaining = Math.max(0, state.cannonCooldownRemaining ?? 0);
   const isCooling = !state.cannonReady && cooldownRemaining > 0;
+  const visibleTip = lockedTip ?? hoverTip;
+
+  function handleTipEnter(tip: ActiveHoverTip) {
+    if (lockedTip) return;
+    setHoverTip(tip);
+  }
+
+  function handleTipLeave() {
+    if (lockedTip) return;
+    setHoverTip(null);
+  }
+
+  function handleTipToggle(tip: ActiveHoverTip) {
+    setLockedTip((current) => (current === tip ? null : tip));
+    setHoverTip(null);
+  }
 
   const componentUsed = state.ownedComponents.filter((item) => item.isEquipped).length;
   const componentTotal = Math.max(1, state.componentCapacity);
@@ -110,19 +131,21 @@ export function ShipStatusWidget({
       data-testid="ship-status-widget"
       aria-label="Ship status widget"
     >
-      {hoverTip && (
+      {visibleTip && (
         <div className="ship-status-hover-tooltip" role="tooltip" aria-live="polite">
           <div className="ship-status-hover-bar">
             <div className="ship-status-hover-title">
-              {hoverTip === "ring"
+              {visibleTip === "ring"
                 ? "Captain's Readout"
-                : hoverTip === "cannon"
+                : visibleTip === "cannon"
                   ? "Cannons"
+                  : visibleTip === "safety"
+                    ? "Safety"
                   : "Cargo Burden"}
             </div>
           </div>
           <div className="ship-status-hover-body">
-            {hoverTip === "ring" ? (
+            {visibleTip === "ring" ? (
               <>
                 <section className="ship-status-hover-section">
                   <div className="ship-status-hover-section-title">Vitals</div>
@@ -168,6 +191,10 @@ export function ShipStatusWidget({
                     <span className="ship-status-hover-label">Cargo Burden</span>
                     <strong>{state.isOverburdened ? "Burdened (handling reduced)" : "Full Speed"}</strong>
                   </div>
+                  <div className="ship-status-hover-row">
+                    <span className="ship-status-hover-label">Zone Safety</span>
+                    <strong>{isSafeZone ? "Safe Zone (Port)" : "Not Safe (At Sea)"}</strong>
+                  </div>
                 </section>
 
                 <section className="ship-status-hover-section">
@@ -183,7 +210,7 @@ export function ShipStatusWidget({
                   </div>
                 </section>
               </>
-            ) : hoverTip === "cannon" ? (
+            ) : visibleTip === "cannon" ? (
               <section className="ship-status-hover-section">
                 <div className="ship-status-hover-section-title">Combat Detail</div>
                 <div className="ship-status-hover-row">
@@ -193,6 +220,18 @@ export function ShipStatusWidget({
                 <div className="ship-status-hover-row">
                   <span className="ship-status-hover-label">Cannonballs</span>
                   <strong>{cannonballs}</strong>
+                </div>
+              </section>
+            ) : visibleTip === "safety" ? (
+              <section className="ship-status-hover-section">
+                <div className="ship-status-hover-section-title">Sailing Safety</div>
+                <div className="ship-status-hover-row">
+                  <span className="ship-status-hover-label">Zone</span>
+                  <strong>{isSafeZone ? "Safe Zone" : "Open Water"}</strong>
+                </div>
+                <div className="ship-status-hover-row">
+                  <span className="ship-status-hover-label">Status</span>
+                  <strong>{isSafeZone ? "Safe" : "Not Safe"}</strong>
                 </div>
               </section>
             ) : (
@@ -251,8 +290,10 @@ export function ShipStatusWidget({
                   type="button"
                   className="ship-status-ring-hover-target"
                   aria-label="Show ship indicator details"
-                  onMouseEnter={() => setHoverTip("ring")}
-                  onMouseLeave={() => setHoverTip(null)}
+                  aria-pressed={lockedTip === "ring"}
+                  onMouseEnter={() => handleTipEnter("ring")}
+                  onMouseLeave={handleTipLeave}
+                  onClick={() => handleTipToggle("ring")}
                 />
               </div>
               <div className="ship-status-hull-text">
@@ -274,8 +315,9 @@ export function ShipStatusWidget({
                     className={`ship-status-icon-pill ${isCooling ? "loading" : "ready"}`}
                     data-testid="ship-status-cannon-state"
                     aria-label={isCooling ? `Loading ${cooldownRemaining.toFixed(1)} seconds` : "Ready"}
-                    onMouseEnter={() => setHoverTip("cannon")}
-                    onMouseLeave={() => setHoverTip(null)}
+                    onMouseEnter={() => handleTipEnter("cannon")}
+                    onMouseLeave={handleTipLeave}
+                    onClick={() => handleTipToggle("cannon")}
                   >
                     <img src={STATUS_CANNON_ICON} alt="" />
                   </div>
@@ -283,10 +325,21 @@ export function ShipStatusWidget({
                     className={`ship-status-icon-pill ${state.isOverburdened ? "over" : "stable"}`}
                     data-testid="ship-status-overburdened"
                     aria-label={state.isOverburdened ? "Burdened" : "Full Speed"}
-                    onMouseEnter={() => setHoverTip("burden")}
-                    onMouseLeave={() => setHoverTip(null)}
+                    onMouseEnter={() => handleTipEnter("burden")}
+                    onMouseLeave={handleTipLeave}
+                    onClick={() => handleTipToggle("burden")}
                   >
                     <img src={STATUS_ANVIL_ICON} alt="" />
+                  </div>
+                  <div
+                    className={`ship-status-icon-pill ${isSafeZone ? "safe" : "unsafe"}`}
+                    data-testid="ship-status-safe-zone"
+                    aria-label={isSafeZone ? "Safe Zone" : "Not Safe"}
+                    onMouseEnter={() => handleTipEnter("safety")}
+                    onMouseLeave={handleTipLeave}
+                    onClick={() => handleTipToggle("safety")}
+                  >
+                    <img src={STATUS_FLAG_ICON} alt="" />
                   </div>
                 </div>
               </div>
