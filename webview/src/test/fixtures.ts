@@ -55,6 +55,7 @@ export function makeOwnedComponent(
 export function makePortState(overrides?: Partial<PortState>): PortState {
   return {
     isInPort: true,
+    playerName: "Captain You",
     portName: "Tortuga",
     itemsForSale: [
       makeShopItem(),
@@ -66,6 +67,9 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
     stats: { Speed: 5, Acceleration: 3, ShipCapacity: 1000 },
     health: 80,
     maxHealth: 100,
+    cannonReady: true,
+    cannonCooldownRemaining: 0,
+    isOverburdened: false,
     componentCapacity: 4,
     shipTier: 0,
     shipTiers: [

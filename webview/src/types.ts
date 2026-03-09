@@ -3,6 +3,7 @@
 /** Full port state sent when opening or updating the port UI. */
 export interface PortState {
   isInPort: boolean;
+  playerName: string;
   portName: string;
   itemsForSale: ShopItem[];
   inventory: Record<string, number>;
@@ -11,6 +12,9 @@ export interface PortState {
   stats: Record<string, number>;
   health: number;
   maxHealth: number;
+  cannonReady: boolean;
+  cannonCooldownRemaining: number;
+  isOverburdened: boolean;
   componentCapacity: number;
   shipTier: number;
   shipTiers: ShipTierData[];

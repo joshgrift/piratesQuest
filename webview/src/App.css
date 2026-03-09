@@ -26,6 +26,7 @@
   --panel-width: 33.333%;
   --mode-rail-width: 46px;
   --mode-rail-gap: 4px;
+  --status-widget-gap: 12px;
 }
 
 body {
@@ -196,88 +197,501 @@ img {
   opacity: 0.45;
 }
 
-.left-inventory-panel,
-.left-health-panel {
+/* ── Ship Status Widget ───────────────────────────────────────────── */
+
+.ship-status-widget {
   position: fixed;
-  left: 12px;
+  left: var(--status-widget-gap);
+  bottom: var(--status-widget-gap);
+  width: fit-content;
+  max-width: calc(100vw - (var(--status-widget-gap) * 2));
   pointer-events: auto;
-  width: 220px;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(139, 105, 20, 0.5);
-  background: rgba(13, 27, 42, 0.86);
-  color: #e0d5c0;
-  z-index: 900;
+  color: #f4e6cb;
+  border-radius: 64px;
+  border: 1px solid rgba(232, 186, 104, 0.56);
+  background:
+    linear-gradient(125deg, rgba(37, 25, 15, 0.95), rgba(22, 34, 46, 0.96)),
+    radial-gradient(circle at 100% 0%, rgba(240, 203, 120, 0.18), transparent 52%);
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(247, 220, 151, 0.12);
+  z-index: 950;
+  transition: right 0.22s ease;
+  overflow: visible;
+  animation: ship-status-appear 0.25s ease;
 }
 
-.left-inventory-panel {
-  top: 12px;
+.ship-status-widget.panel-open {
+  left: var(--status-widget-gap);
 }
 
-.left-health-panel {
-  bottom: 12px;
+.ship-status-widget::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 36px rgba(195, 155, 76, 0.16);
 }
 
-.left-hud-title {
+.ship-status-map-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0.17;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 22% 24%, rgba(110, 178, 213, 0.32), transparent 30%),
+    radial-gradient(circle at 76% 67%, rgba(186, 140, 71, 0.34), transparent 34%),
+    linear-gradient(115deg, transparent 40%, rgba(255, 233, 180, 0.13) 50%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent 0 10px, rgba(221, 183, 111, 0.09) 10px 11px);
+}
+
+.ship-status-header {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(231, 187, 103, 0.35);
+  background: linear-gradient(90deg, rgba(31, 44, 56, 0.55), rgba(81, 52, 31, 0.55));
+}
+
+.ship-status-label {
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #b7c4d1;
+}
+
+.ship-status-player {
+  margin-top: 1px;
   font-family: "New Rocker", cursive;
-  color: #d4a748;
-  font-size: 16px;
-  margin-bottom: 8px;
+  font-size: 22px;
+  line-height: 1;
+  color: #ffd58f;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
 }
 
-.left-hud-empty {
-  color: #8b9ab5;
+.ship-status-tier {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(8, 20, 31, 0.46);
+  border: 1px solid rgba(231, 187, 103, 0.34);
+}
+
+.ship-status-tier span {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #bac8d5;
+}
+
+.ship-status-tier strong {
+  font-size: 12px;
+  color: #ffe5af;
+}
+
+.ship-status-grid {
+  position: relative;
+  display: grid;
+  gap: 9px;
+  padding: 4px 32px 4px 4px;
+  grid-template-columns: auto auto;
+}
+
+.ship-status-card {
+  position: relative;
+  padding: 4px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+}
+
+.ship-status-cargo {
+  align-self: end;
+}
+
+.ship-status-card-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+  color: #f9d9a0;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ship-status-card-title svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.ship-status-hull-gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.ship-status-hull-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ship-status-ring-wrap {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  display: grid;
+  place-items: center;
+}
+
+.ship-status-hover-tooltip {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 9px);
+  transform: none;
+  min-width: 300px;
+  max-width: 360px;
+  z-index: 30;
+  border-radius: 10px;
+  border: 1px solid rgba(231, 187, 103, 0.36);
+  color: #f2e2c0;
+  background:
+    linear-gradient(150deg, rgba(16, 30, 43, 0.96), rgba(41, 28, 18, 0.96)),
+    radial-gradient(circle at 20% 20%, rgba(111, 180, 218, 0.16), transparent 45%),
+    repeating-linear-gradient(45deg, transparent 0 10px, rgba(239, 199, 120, 0.06) 10px 11px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(193, 156, 82, 0.08);
+}
+
+.ship-status-hover-bar {
+  padding: 8px 10px 6px;
+  border-bottom: 1px solid rgba(231, 187, 103, 0.28);
+  background: linear-gradient(90deg, rgba(21, 40, 56, 0.8), rgba(65, 41, 22, 0.8));
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.ship-status-hover-title {
+  font-family: "New Rocker", cursive;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  color: #ffdba0;
+  margin: 0;
+}
+
+.ship-status-hover-body {
+  padding: 9px 10px 10px;
+  display: grid;
+  gap: 7px;
+}
+
+.ship-status-hover-section {
+  border: 1px solid rgba(231, 187, 103, 0.18);
+  border-radius: 8px;
+  background: rgba(9, 22, 34, 0.34);
+  padding: 6px 7px;
+}
+
+.ship-status-hover-section-title {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d8c391;
+  margin-bottom: 4px;
+}
+
+.ship-status-hover-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 9px;
+  align-items: baseline;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+
+.ship-status-hover-row strong {
+  color: #f0f7ff;
+  font-size: 14px;
+}
+
+.ship-status-hover-label {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #b8c9d8;
+}
+
+.ship-status-hover-block {
+  margin-top: 7px;
+}
+
+.ship-status-hover-tooltip .ship-status-pips {
+  margin-top: 4px;
+}
+
+.ship-status-hover-inventory {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.ship-status-hover-item {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(231, 187, 103, 0.24);
+  background: rgba(10, 22, 33, 0.52);
+  color: #d9e6f4;
+  font-size: 11px;
+}
+
+.ship-status-hover-item img {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+}
+
+.ship-status-hover-item strong {
+  color: #f7fbff;
   font-size: 12px;
 }
 
-.left-inventory-list {
+.ship-status-ring {
+  width: 104px;
+  height: 104px;
+  transform: rotate(-90deg);
+}
+
+.ship-status-ring .ring-track {
+  fill: none;
+  stroke: rgba(72, 87, 101, 0.58);
+  stroke-width: 6.5;
+}
+
+.ship-status-ring .ring-fill {
+  fill: none;
+  stroke-width: 6.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.25s ease, stroke 0.25s ease;
+}
+
+.ship-status-ring .cargo-ring-track {
+  fill: none;
+  stroke: rgba(72, 107, 128, 0.44);
+  stroke-width: 5.5;
+}
+
+.ship-status-ring .cargo-ring-fill {
+  fill: none;
+  stroke: #65c4d9;
+  stroke-width: 5.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.25s ease;
+}
+
+.ship-status-hull-level {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: "New Rocker", serif;
+  font-size: 2.5rem;
+  line-height: 1;
+  color: #9eb8d4;
+  opacity: 0.2;
+  pointer-events: none;
+  user-select: none;
+  text-shadow: 0 0 12px rgba(6, 20, 31, 0.65);
+}
+
+.ship-status-hull-text {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fef2d6;
+}
+
+.ship-status-resource-row {
+  display: flex;
+  align-items: center;
   gap: 6px;
 }
 
-.left-inventory-row {
-  display: grid;
-  grid-template-columns: 18px 1fr auto;
+.ship-status-resource-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  color: #dce9f7;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ship-status-resource-pill img {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+}
+
+.ship-status-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 2px;
+}
+
+.ship-status-widget.danger .ship-status-hull-text {
+  animation: ship-status-pulse 1.15s ease-in-out infinite;
+}
+
+.ship-status-cannon-row {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
-  padding: 4px 0;
-  border-bottom: 1px solid rgba(139, 105, 20, 0.2);
 }
 
-.left-inventory-row:last-child {
-  border-bottom: none;
+.ship-status-icon-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 27px;
+  height: 27px;
+  border-radius: 999px;
+  border: 1px solid transparent;
 }
 
-.left-inventory-row img {
+.ship-status-icon-pill img {
   width: 16px;
   height: 16px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(100%);
 }
 
-.left-inventory-row strong {
-  color: #d4a748;
+.ship-status-ring-hover-target {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
 
-.left-health-bar {
-  width: 100%;
-  height: 14px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(139, 105, 20, 0.25);
+.ship-status-icon-pill.ready,
+.ship-status-icon-pill.stable {
+  color: #61da84;
+  border-color: rgba(97, 218, 132, 0.5);
+  background: rgba(97, 218, 132, 0.14);
 }
 
-.left-health-fill {
-  height: 100%;
-  transition: width 0.25s ease, background-color 0.25s ease;
+.ship-status-icon-pill.loading,
+.ship-status-icon-pill.over {
+  color: #ff7d66;
+  border-color: rgba(255, 125, 102, 0.55);
+  background: rgba(255, 125, 102, 0.16);
 }
 
-.left-health-text {
+.ship-status-cooldown-track {
   margin-top: 8px;
-  text-align: right;
-  color: #d4a748;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(11, 21, 31, 0.7);
+  overflow: hidden;
+}
+
+.ship-status-cooldown-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #d79d4a, #f5cb7f);
+  transition: width 0.2s ease;
+}
+
+.ship-status-inventory-chips {
+  display: grid;
+  gap: 6px;
+  margin-top: 3px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  justify-items: center;
+}
+
+.ship-status-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 6px;
+  width: 100%;
+  border-radius: 9px;
+  background: rgba(11, 21, 31, 0.55);
+  border: 1px solid rgba(232, 186, 104, 0.15);
+  font-size: 16px;
   font-weight: 700;
+  text-align: center;
+}
+
+.ship-status-chip img {
+  width: 18px;
+  height: 18px;
+}
+
+.ship-status-pips {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ship-status-pip {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 186, 104, 0.35);
+  background: rgba(13, 24, 33, 0.8);
+}
+
+.ship-status-pip.filled {
+  background: linear-gradient(145deg, #f8d391, #cc9753);
+  border-color: rgba(252, 219, 162, 0.68);
+  box-shadow: 0 0 8px rgba(225, 178, 96, 0.45);
+}
+
+@keyframes ship-status-appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ship-status-pulse {
+  0%, 100% {
+    color: #ffd7c2;
+  }
+  50% {
+    color: #ff8a78;
+  }
 }
 
 /* ── Header ───────────────────────────────────────────────────────── */
@@ -402,9 +816,9 @@ img {
 /* ── Cards ─────────────────────────────────────────────────────────── */
 
 .card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(139, 105, 20, 0.25);
-  border-radius: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   padding: 12px;
   margin-bottom: 12px;
 }

@@ -1001,6 +1001,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     return new HudStateDto
     {
       IsInPort = false,
+      PlayerName = Nickname ?? "",
       PortName = "",
       ItemsForSale = [],
       Inventory = ExportInventoryForHud(),
@@ -1009,6 +1010,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       Stats = stats,
       Health = Health,
       MaxHealth = MaxHealth,
+      CannonReady = _firedTimerCountdown <= 0 && GetInventoryCount(InventoryItemType.CannonBall) > 0,
+      CannonCooldownRemaining = Mathf.Max(0.0f, (float)_firedTimerCountdown),
+      IsOverburdened = isLimitedByCapacity,
       ComponentCapacity = (int)Stats.GetStat(PlayerStat.ComponentCapacity),
       ShipTier = ShipTier,
       ShipTiers = shipTiers,

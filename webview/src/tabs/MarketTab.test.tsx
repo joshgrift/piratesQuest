@@ -8,6 +8,11 @@ function renderMarket(overrides?: { state?: Partial<import("../types").PortState
   return renderApp({ state: overrides?.state, tab: "market" });
 }
 
+function getShopItem(itemType: string): HTMLElement {
+  const nameNode = screen.getByText(itemType, { selector: ".shop-item-name" });
+  return nameNode.closest(".shop-item") as HTMLElement;
+}
+
 describe("MarketTab", () => {
   // ── Mode toggle ──────────────────────────────────────────────────
 
@@ -104,7 +109,7 @@ describe("MarketTab", () => {
       });
       await user.click(screen.getByRole("button", { name: "+" }));
       // qty should now be 1
-      const shopItem = screen.getByText("Wood").closest(".shop-item") as HTMLElement;
+      const shopItem = getShopItem("Wood");
       expect(within(shopItem).getByText("1")).toBeInTheDocument();
     });
 
@@ -157,7 +162,7 @@ describe("MarketTab", () => {
         },
       });
       await user.click(screen.getByRole("button", { name: "+5" }));
-      const shopItem = screen.getByText("Wood").closest(".shop-item") as HTMLElement;
+      const shopItem = getShopItem("Wood");
       const qtyValue = within(shopItem).getByText("5", { selector: ".qty-value" });
       expect(qtyValue).toBeInTheDocument();
     });
@@ -183,7 +188,7 @@ describe("MarketTab", () => {
       await user.click(screen.getByRole("button", { name: "+5" }));
       await user.click(screen.getByRole("button", { name: "×" }));
       // The qty-value element should show 0
-      const shopItem = screen.getByText("Wood").closest(".shop-item") as HTMLElement;
+      const shopItem = getShopItem("Wood");
       expect(within(shopItem).getByText("0")).toBeInTheDocument();
     });
   });
@@ -344,7 +349,7 @@ describe("MarketTab", () => {
       await user.click(screen.getByRole("button", { name: "Purchase" }));
 
       // After confirm, qty should be back to 0
-      const shopItem = screen.getByText("Wood").closest(".shop-item") as HTMLElement;
+      const shopItem = getShopItem("Wood");
       expect(within(shopItem).getByText("0")).toBeInTheDocument();
     });
 

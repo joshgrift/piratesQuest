@@ -20,8 +20,8 @@ describe("ShipyardTab", () => {
 
   describe("health bar", () => {
     it("shows current and max health", () => {
-      renderShipyard({ state: { health: 60, maxHealth: 100 } });
-      expect(screen.getByText("60 / 100")).toBeInTheDocument();
+      const { container } = renderShipyard({ state: { health: 60, maxHealth: 100 } });
+      expect(container.querySelector(".health-text")?.textContent).toContain("60 / 100");
     });
 
     it("renders the health bar at the correct percentage width", () => {

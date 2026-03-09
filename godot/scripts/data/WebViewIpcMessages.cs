@@ -13,6 +13,7 @@ public record HudStateDto
 {
   /// <summary>True when the player is currently docked at a port.</summary>
   public bool IsInPort { get; init; }
+  public string PlayerName { get; init; } = "";
   public string PortName { get; init; } = "";
   public ShopItemDto[] ItemsForSale { get; init; } = [];
   public Dictionary<string, int> Inventory { get; init; } = new();
@@ -21,6 +22,9 @@ public record HudStateDto
   public Dictionary<string, float> Stats { get; init; } = new();
   public int Health { get; init; }
   public int MaxHealth { get; init; }
+  public bool CannonReady { get; init; }
+  public float CannonCooldownRemaining { get; init; }
+  public bool IsOverburdened { get; init; }
   public int ComponentCapacity { get; init; }
   public int ShipTier { get; init; }
   public ShipTierDto[] ShipTiers { get; init; } = [];

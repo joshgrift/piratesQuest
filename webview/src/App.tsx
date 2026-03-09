@@ -3,7 +3,7 @@ import "./App.css";
 import type { PortState } from "./types";
 import { sendIpc } from "./utils/ipc";
 import { useInputCapture } from "./hooks/useInputCapture";
-import { BASE, inventoryIcon } from "./utils/helpers";
+import { BASE } from "./utils/helpers";
 import { MarketTab } from "./tabs/MarketTab";
 import { ShipyardTab } from "./tabs/ShipyardTab";
 import { VaultTab } from "./tabs/VaultTab";
@@ -12,12 +12,12 @@ import { CreativeTab } from "./tabs/CreativeTab";
 import { TavernTab } from "./tabs/TavernTab";
 import { ShipCrewTab } from "./tabs/ShipCrewTab";
 import { LeaderboardTab } from "./tabs/LeaderboardTab";
+import { ShipStatusWidget } from "./components/ShipStatusWidget";
 
 type ShipTab = "guide" | "ship_crew" | "ship_status";
 type PortTab = "market" | "shipyard" | "tavern" | "vault" | "creative";
 type PanelMode = "ship" | "port" | "leaderboard";
 type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
-const INVENTORY_ORDER = ["Coin", "Wood", "Fish", "Iron", "Tea", "CannonBall", "Trophy"] as const;
 const SHIP_ICON = `${BASE}icons/flat/ship-wheel.svg`;
 const PORT_ICON = `${BASE}icons/flat/anchor.svg`;
 const LEADERBOARD_ICON = `${BASE}icons/flat/pirate-hat.svg`;
@@ -114,10 +114,6 @@ export default function App() {
 
   const panelClass = ["port-panel", activePanelMode === null ? "hidden" : ""].filter(Boolean).join(" ");
   const isInPort = !!portState?.isInPort;
-  const healthPct = portState && portState.maxHealth > 0
-    ? Math.max(0, Math.min(100, (portState.health / portState.maxHealth) * 100))
-    : 0;
-  const healthHue = Math.round((healthPct / 100) * 120);
   const panelTitle = activePanelMode === "port"
     ? (portState?.portName ?? "Port")
     : activePanelMode === "leaderboard"
@@ -131,44 +127,7 @@ export default function App() {
 
   return (
     <>
-      <div className="left-inventory-panel">
-        <div className="left-hud-title">Inventory</div>
-        {portState ? (
-          <div className="left-inventory-list">
-            {INVENTORY_ORDER.map((itemType) => (
-              <div key={itemType} className="left-inventory-row">
-                <img src={inventoryIcon(itemType)} alt={itemType} />
-                <span>{itemType === "Coin" ? "Gold" : itemType}</span>
-                <strong>{portState.inventory[itemType] ?? 0}</strong>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="left-hud-empty">Waiting for ship data...</div>
-        )}
-      </div>
-
-      <div className="left-health-panel">
-        <div className="left-hud-title">Hull Health</div>
-        {portState ? (
-          <>
-            <div className="left-health-bar">
-              <div
-                className="left-health-fill"
-                style={{
-                  width: `${healthPct}%`,
-                  backgroundColor: `hsl(${healthHue}, 75%, 42%)`,
-                }}
-              />
-            </div>
-            <div className="left-health-text">
-              {portState.health} / {portState.maxHealth}
-            </div>
-          </>
-        ) : (
-          <div className="left-hud-empty">Waiting for ship data...</div>
-        )}
-      </div>
+      <ShipStatusWidget state={portState} panelOpen={activePanelMode !== null} />
 
       <div className={`mode-rail ${activePanelMode === null ? "collapsed" : ""}`} role="tablist" aria-label="Panel mode">
         <button
