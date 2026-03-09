@@ -16,46 +16,47 @@ type ShipTab = "guide" | "leaderboard" | "ship_crew" | "ship_status";
 type PortTab = "market" | "shipyard" | "tavern" | "vault" | "creative";
 type Section = "ship" | "port";
 type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
+const INVENTORY_ORDER = ["Coin", "Wood", "Fish", "Iron", "Tea", "CannonBall", "Trophy"] as const;
 
 export default function App() {
   const [portState, setPortState] = useState<PortState | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
+  const [isPanelVisible, setIsPanelVisible] = useState(true);
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [activeSection, setActiveSection] = useState<Section>("ship");
   const [activeShipTab, setActiveShipTab] = useState<ShipTab>("guide");
   const [activePortTab, setActivePortTab] = useState<PortTab>("market");
   const prevIsInPortRef = useRef<boolean | null>(null);
 
   useEffect(() => {
+    const syncWindowSize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+    syncWindowSize();
+    window.addEventListener("resize", syncWindowSize);
+
     window.openPort = (data: PortState) => {
       setPortState(data);
-      setIsClosing(false);
-      requestAnimationFrame(() => setIsOpen(true));
+      syncWindowSize();
     };
 
     window.closePort = () => {
-      setIsClosing(true);
-      setIsOpen(false);
-      setTimeout(() => {
-        setPortState(null);
-        setIsClosing(false);
-        setActiveSection("ship");
-        setActiveShipTab("guide");
-      }, 400);
+      // Keep the panel visible at all times. On close, just return
+      // to ship defaults while preserving the latest state snapshot.
+      setActiveSection("ship");
+      setActiveShipTab("guide");
     };
 
     window.updateState = (data: PortState) => {
       setPortState(data);
+      syncWindowSize();
     };
 
     sendIpc({ action: "ready" });
 
-    // When the user clicks the webview, the OS gives it keyboard focus.
-    // We immediately ask Godot to reclaim focus so movement key events
-    // always reach the game and never get "stuck".
-    const returnFocus = () => sendIpc({ action: "focus_parent" });
-    window.addEventListener("focus", returnFocus);
-    return () => window.removeEventListener("focus", returnFocus);
+    return () => window.removeEventListener("resize", syncWindowSize);
   }, []);
 
   useEffect(() => {
@@ -74,8 +75,6 @@ export default function App() {
       setActiveSection("ship");
     }
   }, [portState?.isInPort, activeSection]);
-
-  if (!portState && !isClosing) return null;
 
   const handleHireCharacter = (characterId: string): HireOutcome => {
     if (!portState) return "not_hireable";
@@ -102,15 +101,71 @@ export default function App() {
 
   const panelClass = [
     "port-panel",
-    isOpen ? "open" : "",
-    isClosing ? "closing" : "",
+    isPanelVisible ? "open" : "",
   ]
     .filter(Boolean)
     .join(" ");
+  const healthPct = portState && portState.maxHealth > 0
+    ? Math.max(0, Math.min(100, (portState.health / portState.maxHealth) * 100))
+    : 0;
+  const healthHue = Math.round((healthPct / 100) * 120);
 
   return (
-    <div className={panelClass}>
-      <div className="section-bar">
+    <>
+      <div className="left-debug-size">
+        {windowSize.width} x {windowSize.height}
+      </div>
+
+      <div className="left-inventory-panel">
+        <div className="left-hud-title">Inventory</div>
+        {portState ? (
+          <div className="left-inventory-list">
+            {INVENTORY_ORDER.map((itemType) => (
+              <div key={itemType} className="left-inventory-row">
+                <img src={inventoryIcon(itemType)} alt={itemType} />
+                <span>{itemType === "Coin" ? "Gold" : itemType}</span>
+                <strong>{portState.inventory[itemType] ?? 0}</strong>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="left-hud-empty">Waiting for ship data...</div>
+        )}
+      </div>
+
+      <div className="left-health-panel">
+        <div className="left-hud-title">Hull Health</div>
+        {portState ? (
+          <>
+            <div className="left-health-bar">
+              <div
+                className="left-health-fill"
+                style={{
+                  width: `${healthPct}%`,
+                  backgroundColor: `hsl(${healthHue}, 75%, 42%)`,
+                }}
+              />
+            </div>
+            <div className="left-health-text">
+              {portState.health} / {portState.maxHealth}
+            </div>
+          </>
+        ) : (
+          <div className="left-hud-empty">Waiting for ship data...</div>
+        )}
+      </div>
+
+      <button
+        className={`panel-toggle ${isPanelVisible ? "" : "panel-hidden"}`.trim()}
+        onClick={() => setIsPanelVisible((prev) => !prev)}
+        type="button"
+        aria-label={isPanelVisible ? "Hide port panel" : "Show port panel"}
+      >
+        {isPanelVisible ? "Hide" : "Show"}
+      </button>
+
+      <div className={panelClass}>
+        <div className="section-bar">
         <button
           className={`section-btn ${activeSection === "ship" ? "active" : ""}`}
           onClick={() => setActiveSection("ship")}
@@ -125,9 +180,9 @@ export default function App() {
         >
           Port
         </button>
-      </div>
+        </div>
 
-      <div className="port-header">
+        <div className="port-header">
         <div className="view-context-title">
           {activeSection === "ship" ? "Ship Panel" : "Port Panel"}
         </div>
@@ -145,9 +200,9 @@ export default function App() {
             {portState.inventory["Coin"] ?? 0} Gold
           </div>
         )}
-      </div>
+        </div>
 
-      <div className="tab-bar">
+        <div className="tab-bar">
         {activeSection === "ship" ? (
           <>
             <button
@@ -211,10 +266,10 @@ export default function App() {
             )}
           </>
         )}
-      </div>
+        </div>
 
-      {portState && (
-        <div className="tab-content">
+        {portState && (
+          <div className="tab-content">
           {activeSection === "ship" ? (
             activeShipTab === "guide" ? (
               <GuideTab />
@@ -257,8 +312,14 @@ export default function App() {
           ) : (
             <div className="empty-state">Port services are unavailable while at sea.</div>
           )}
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+        {!portState && (
+          <div className="tab-content">
+            <div className="empty-state">Waiting for ship data from Godot...</div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

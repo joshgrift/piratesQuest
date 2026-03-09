@@ -18,7 +18,7 @@ partial class Configuration : Node
 {
   private const string LocalApiBaseUrl = "http://localhost:5236";
   private const string ProductionApiBaseUrl = "https://pirates.quest";
-  private const string LocalPortWebViewUrl = "res://webview/index.html";
+  private const string LocalPortWebViewUrl = "res://webview/index.html"; // TODO, this is currently not used
 
   // Godot's per-user, writable save file. On each OS this maps to a safe local app-data folder.
   private const string LocalConfigPath = "user://settings.cfg";

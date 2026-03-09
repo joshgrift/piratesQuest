@@ -5,7 +5,7 @@ PiratesQuest uses three pieces:
 
 - `Game` (`godot/`): the player client and also the dedicated multiplayer server.
 - `API` (`api/`): login/signup and server list.
-- `WebView` (`webview/`): React/TypeScript port UI, built into `godot/webview/` and loaded locally by godot_wry.
+- `WebView` (`webview/`): React/TypeScript HUD, built into `godot/webview/` and loaded locally by godot_wry.
 - `Menu` (`menu/`): React/TypeScript main menu UI, served as a native browser overlay via godot_wry.
 - `Database` (via Docker): stores users and API data.
 

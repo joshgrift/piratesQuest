@@ -17,7 +17,7 @@ public partial class Play : Node3D
   [Export] private MultiplayerSpawner _deadPlayerSpawner;
   [Export] private Node3D playerContainer;
   [Export] private FreeCam _freeCam;
-  [Export] private Hud hud;
+  [Export] private Hud _hud;
 
   private PackedScene _playerScene = GD.Load<PackedScene>("res://scenes/player/player.tscn");
   private PackedScene _cannonBallScene = GD.Load<PackedScene>("res://scenes/cannon_ball/cannon_ball.tscn");
@@ -240,6 +240,8 @@ public partial class Play : Node3D
     var sync = player.GetNodeOrNull<MultiplayerSynchronizer>("MultiplayerSynchronizer");
     sync?.SetMultiplayerAuthority(peerId);
 
+    CallDeferred(MethodName.ConnectHud, player);
+
     return player;
   }
 
@@ -273,6 +275,11 @@ public partial class Play : Node3D
   {
     _playerSpawner.Spawn(peerId);
     GD.Print($"Requested spawn for peer {peerId}");
+  }
+
+  private void ConnectHud(Player player)
+  {
+    _hud.SetPlayer(player);
   }
 
   // Sent by each client after entering Play scene.

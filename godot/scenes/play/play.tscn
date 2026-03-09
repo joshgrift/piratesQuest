@@ -160,18 +160,25 @@ ItemType = 2
 SellPrice = 0
 metadata/_custom_type_script = "uid://b81r8qngpan6y"
 
-[node name="Play" type="Node3D" node_paths=PackedStringArray("_playerSpawner", "_projectileSpawner", "_deadPlayerSpawner", "_freeCam", "hud")]
+[node name="Play" type="Node3D" node_paths=PackedStringArray("_playerSpawner", "_projectileSpawner", "_deadPlayerSpawner", "playerContainer", "_freeCam", "_hud")]
 script = ExtResource("1_j5m8q")
 _playerSpawner = NodePath("SpawnPoint/MultiplayerSpawner")
 _projectileSpawner = NodePath("Projectiles/ProjectileSpawner")
 _deadPlayerSpawner = NodePath("DeadPlayerSpawner")
+playerContainer = NodePath("SpawnPoint")
 _freeCam = NodePath("ServerFreeCam")
-hud = NodePath("HUD/HUD")
+_hud = NodePath("HUD/HUD")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
-[node name="HUD" parent="HUD" node_paths=PackedStringArray("PlayersContainer") instance=ExtResource("3_4dfl3")]
-PlayersContainer = NodePath("../../SpawnPoint")
+[node name="HUD" parent="HUD" instance=ExtResource("3_4dfl3")]
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 1
+grow_vertical = 1
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_1eoep")
