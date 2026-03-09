@@ -1,4 +1,9 @@
 #!/bin/bash
+set -euo pipefail
+
+# Exit immediately if any command fails (-e),
+# treat unset variables as errors (-u),
+# and fail pipelines when any command fails (pipefail).
 
 echo "Building and exporting project..."
 
@@ -32,11 +37,6 @@ echo "==== Building macOS Client ===="
 # Create zip from the app
 cd "$VERSION_DIR" && zip -r "piratesquest-macos.zip" "piratesquest.app" && cd ../..
 
-echo "==== Building macOS Server ===="
-/Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --headless --export-release "macOS-server" "$VERSION_DIR/piratesquest-server.app"
-# Create zip from the app
-cd "$VERSION_DIR" && zip -r "piratesquest-server-macos.zip" "piratesquest-server.app" && cd ../..
-
 echo "==== Building Windows Client (x64) ===="
 mkdir -p "$VERSION_DIR/piratesquest-windows-x64"
 /Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --headless --export-release "Windows Desktop" "$VERSION_DIR/piratesquest-windows-x64/piratesquest.exe"
@@ -56,8 +56,6 @@ echo ""
 echo "Build complete! Files are in: $VERSION_DIR"
 echo "  - piratesquest.app (macOS client app)"
 echo "  - piratesquest-macos.zip (macOS client zip)"
-echo "  - piratesquest-server.app (macOS server app)"
-echo "  - piratesquest-server-macos.zip (macOS server zip)"
 echo "  - piratesquest-windows-x64/ (Windows x64 client folder)"
 echo "  - piratesquest-windows-x64.zip (Windows x64 client zip)"
 echo "  - piratesquest-server-linux-x64/ (Linux x64 server folder)"
