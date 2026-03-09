@@ -7,12 +7,18 @@ set -euo pipefail
 
 echo "Building and exporting project..."
 
-echo "==== Building Port WebView (local Godot files) ===="
-npm --prefix webview install
-npm --prefix webview run build
-
 # Extract version from project.godot
 VERSION=$(grep 'config/version=' godot/project.godot | sed 's/config\/version="\(.*\)"/\1/')
+
+echo "==== Building Port WebView ===="
+npm --prefix webview install
+npm --prefix webview run build -- --base="/fragments/webview/$VERSION/"
+
+WEBVIEW_TARGET_DIR="api/fragments/webview/$VERSION"
+echo "==== Publishing Port WebView to $WEBVIEW_TARGET_DIR ===="
+rm -rf "$WEBVIEW_TARGET_DIR"
+mkdir -p "$WEBVIEW_TARGET_DIR"
+cp -R webview/dist/. "$WEBVIEW_TARGET_DIR/"
 
 # Create version directory (use absolute path so Godot resolves it correctly with --path flag)
 VERSION_DIR="$(pwd)/dist/$VERSION"
@@ -37,13 +43,13 @@ echo "==== Building macOS Client ===="
 # Create zip from the app
 cd "$VERSION_DIR" && zip -r "piratesquest-macos.zip" "piratesquest.app" && cd ../..
 
-echo "==== Building Windows Client (x64) ===="
+echo "==== Building Windows Client x64 ===="
 mkdir -p "$VERSION_DIR/piratesquest-windows-x64"
 /Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --headless --export-release "Windows Desktop" "$VERSION_DIR/piratesquest-windows-x64/piratesquest.exe"
 # Create zip from the windows folder
 cd "$VERSION_DIR" && zip -r "piratesquest-windows-x64.zip" "piratesquest-windows-x64" && cd ../..
 
-echo "==== Building Linux Server (x64) ===="
+echo "==== Building Linux Server x64 ===="
 mkdir -p "$VERSION_DIR/piratesquest-server-linux-x64"
 /Applications/Godot_mono.app/Contents/MacOS/Godot --path godot --headless --export-release "Linux-server" "$VERSION_DIR/piratesquest-server-linux-x64/piratesquest-server"
 # Create zip from the linux server folder

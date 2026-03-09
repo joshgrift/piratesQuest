@@ -15,7 +15,7 @@ script = ExtResource("1_svvuq")
 _webView = NodePath("WebView")
 
 [node name="WebView" type="WebView" parent="."]
-url = "res://webview/index.html"
+url = ""
 transparent = true
 clipboard = false
 forward_input_events = true

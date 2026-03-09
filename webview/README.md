@@ -11,7 +11,7 @@ The app runs inside a native OS webview ([godot_wry](https://github.com/doceazed
 
 All types are defined in:
 - TypeScript: `src/types.ts`
-- C#: `godot/scripts/data/PortIpcMessages.cs`
+- C#: `godot/scripts/data/WebViewIpcMessages.cs`
 
 ## Building
 
@@ -20,7 +20,8 @@ npm install
 npm run build
 ```
 
-Build output goes to `../godot/webview/`. Godot loads it locally from `res://webview/index.html` by default.
+Build output goes to `./dist/`.
+For release packaging, `build-game.sh` publishes this app to `../api/fragments/webview/<version>/`.
 
 ## Development
 
@@ -28,4 +29,5 @@ Build output goes to `../godot/webview/`. Godot loads it locally from `res://web
 npm run dev
 ```
 
-This starts a Vite dev server with hot reload for browser-only work. The in-game port UI is local-only and always loads from `res://webview/index.html`.
+This starts a Vite dev server with hot reload at `http://localhost:5173/`.
+During local runs, Godot loads the port UI from this Vite URL.

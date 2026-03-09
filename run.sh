@@ -44,16 +44,18 @@ echo -e "${YELLOW}=== Building Admin Panel ===${RESET}"
 npm --prefix admin install
 npm --prefix admin run build || exit 1
 
-echo -e "${YELLOW}=== Building Local Port WebView ===${RESET}"
-npm --prefix webview install
-npm --prefix webview run build || exit 1
-
 if [[ -n "${PROD_API_URL}" ]]; then
   echo -e "${BLUE}=== Using production API: ${PROD_API_URL} ===${RESET}"
   # Both API + menu come from production host.
   API_URL="${PROD_API_URL}"
+  GODOT_WEBVIEW_ARGS=""
   GODOT_API_ARGS="--api-url ${PROD_API_URL}"
 else
+  echo -e "${YELLOW}=== Starting Port WebView (Vite) ===${RESET}"
+  npm --prefix webview install
+  npm --prefix webview run dev -- --host localhost --port 5173 2>&1 | sed "s/^/$(echo -e ${YELLOW})[WebView ]$(echo -e ${RESET}) /" &
+  PID_WEBVIEW=$!
+
   echo -e "${BLUE}=== Starting Backend ===${RESET}"
   if ! docker info >/dev/null 2>&1; then
     echo -e "${RED}Error: Docker is not running. Please start Docker Desktop and try again.${RESET}"
@@ -65,6 +67,7 @@ else
   fi
   dotnet run --project api 2>&1 | sed "s/^/$(echo -e ${BLUE})[API     ]$(echo -e ${RESET}) /" &
   PID_API=$!
+  GODOT_WEBVIEW_ARGS="--webview-url http://localhost:5173/"
   GODOT_API_ARGS=""
 fi
 
@@ -79,7 +82,7 @@ PID1=$!
 if [[ "${SERVER_ONLY}" == "false" ]]; then
   sleep 0.5
 
-  CLIENT_ARGS="--creative ${GODOT_API_ARGS}"
+  CLIENT_ARGS="--creative ${GODOT_API_ARGS} ${GODOT_WEBVIEW_ARGS}"
   if [[ -n "${CLIENT_USER}" && -n "${CLIENT_PASS}" ]]; then
     CLIENT_ARGS="${CLIENT_ARGS} --user ${CLIENT_USER} --password ${CLIENT_PASS} --disableSaveUser"
   fi
@@ -94,4 +97,5 @@ else
 fi
 
 kill $PID_API 2>/dev/null || true
+kill $PID_WEBVIEW 2>/dev/null || true
 echo "=== Terminated ==="

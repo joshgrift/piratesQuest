@@ -5,7 +5,7 @@ PiratesQuest uses three pieces:
 
 - `Game` (`godot/`): the player client and also the dedicated multiplayer server.
 - `API` (`api/`): login/signup and server list.
-- `WebView` (`webview/`): React/TypeScript HUD, built into `godot/webview/` and loaded locally by godot_wry.
+- `WebView` (`webview/`): React/TypeScript HUD. Local dev runs from Vite (`http://localhost:5173`), release builds are published to API fragments at `/fragments/webview/<version>/`.
 - `Menu` (`menu/`): React/TypeScript main menu UI, served as a native browser overlay via godot_wry.
 - `Database` (via Docker): stores users and API data.
 
@@ -38,8 +38,8 @@ All scripts are in the repo root and run from there.
 
 | Script | Description |
 |--------|-------------|
-| `build-game.sh` | Builds menu + local port UI, then exports the Godot project to macOS and Windows builds zipped into `dist/<version>/`. |
-| `run.sh` | Runs a local dev session. Builds menu + admin + local port UI, starts the backend, a game server, and a client side-by-side. Supports `--server` (server only), `--prod` (use production API at pirates.quest), `--user`, and `--password` flags. |
+| `build-game.sh` | Builds the port UI and publishes it to `api/fragments/webview/<version>/`, then exports macOS, Windows, and Linux server builds zipped into `dist/<version>/`. Supports `--skip-notarization` (or `--no-notarize`) to skip macOS notarization (and codesign) for that run. |
+| `run.sh` | Runs a local dev session. Builds menu + admin, starts the port UI Vite dev server (`localhost:5173`), backend, a game server, and a client side-by-side. Supports `--server` (server only), `--prod` (use production API at pirates.quest), `--user`, and `--password` flags. |
 | `publish-backend.sh` | Builds the menu webview + API into a Docker image (`piratesquest-api`). Pass an optional tag argument (default `latest`). |
 | `manage.sh` | Admin CLI for the REST API. Manage users, game servers, roles, and game version. Requires `PQ_API_URL` and either `PQ_TOKEN` or a login. |
 | `admin/` | React/TypeScript admin panel that replaces most `manage.sh` usage. Build output is `api/wwwroot/admin/` and is served by the API at `/admin/`. |
@@ -59,6 +59,11 @@ All scripts are in the repo root and run from there.
 ## Port WebView
 
 The game uses a native browser panel ([godot_wry](https://github.com/doceazedo/godot_wry)) for the port UI. When the player docks at a port, a React/TypeScript app slides in on the right third of the screen, replacing the old Godot-based port menu. It handles buying/selling goods, purchasing and managing ship components, viewing stats, and repairing the hull.
+
+Runtime URL behavior:
+- Local debug/editor runs default to `http://localhost:5173/` (Vite dev server).
+- Hosted/prod runs use `${API_URL}/fragments/webview/<version>/`.
+- You can override manually with `--webview-url <url>`.
 
 **How it works:**
 - `Hud.cs` creates the WebView when the player first docks. It stays hidden until needed.
@@ -81,7 +86,7 @@ npm install
 npm run build
 ```
 
-The build output goes to `godot/webview/`. Godot loads it locally from `res://webview/index.html`.
+`build-game.sh` publishes the build output to `api/fragments/webview/<version>/`.
 
 ### Building the menu UI
 
@@ -187,6 +192,7 @@ Quest List:
 - [ ] Jitter when hitting a rock! 
 - [ ] EU Servers
 - [ ] Stop users from going off map
+- [ ] Serve HUD from Local package instead of from web
 
 ### Suggestions
 - [ ] Close port menu early

@@ -18,7 +18,7 @@ partial class Configuration : Node
 {
   private const string LocalApiBaseUrl = "http://localhost:5236";
   private const string ProductionApiBaseUrl = "https://pirates.quest";
-  private const string LocalPortWebViewUrl = "res://webview/index.html"; // TODO, this is currently not used
+  private const string LocalDevPortWebViewUrl = "http://localhost:5173/";
 
   // Godot's per-user, writable save file. On each OS this maps to a safe local app-data folder.
   private const string LocalConfigPath = "user://settings.cfg";
@@ -47,8 +47,8 @@ partial class Configuration : Node
   public static string CmdUser { get; private set; }
   public static string CmdPassword { get; private set; }
   public static bool DisableSaveUser { get; private set; }
-  // Port UI is packaged with the game and always loaded locally.
-  public static string WebViewUrl { get; private set; } = LocalPortWebViewUrl;
+  // Port UI URL can be overridden with --webview-url for local dev.
+  public static string WebViewUrl { get; private set; } = LocalDevPortWebViewUrl;
   // Menu UI is always served from the configured API host.
   public static string MenuWebViewUrl { get; private set; } = $"{ApiBaseUrl}/fragments/menu/";
 
@@ -59,6 +59,12 @@ partial class Configuration : Node
     // Release exports will fall back to production.
     bool isLocalRuntime = OS.HasFeature("editor") || OS.IsDebugBuild();
     return isLocalRuntime ? LocalApiBaseUrl : ProductionApiBaseUrl;
+  }
+
+  private static string BuildHostedPortWebViewUrl()
+  {
+    var version = GetVersion();
+    return $"{ApiBaseUrl}/fragments/webview/{version}/";
   }
 
   public override void _Ready()
@@ -126,6 +132,8 @@ partial class Configuration : Node
   private static void ParseClientArgs()
   {
     var args = OS.GetCmdlineArgs();
+    bool hasWebViewUrlOverride = false;
+    bool hasApiUrlOverride = false;
     for (int i = 0; i < args.Length; i++)
     {
       switch (args[i])
@@ -141,6 +149,11 @@ partial class Configuration : Node
           break;
         case "--api-url" when i + 1 < args.Length:
           ApiBaseUrl = args[i + 1].TrimEnd('/');
+          hasApiUrlOverride = true;
+          break;
+        case "--webview-url" when i + 1 < args.Length:
+          WebViewUrl = args[i + 1].Trim();
+          hasWebViewUrlOverride = true;
           break;
         case "--creative":
           IsCreative = true;
@@ -148,8 +161,15 @@ partial class Configuration : Node
       }
     }
 
-    // Port webview is always local.
-    WebViewUrl = LocalPortWebViewUrl;
+    if (!hasWebViewUrlOverride)
+    {
+      bool isLocalRuntime = OS.HasFeature("editor") || OS.IsDebugBuild();
+      // If API host is explicitly set, webview should follow that host.
+      WebViewUrl = hasApiUrlOverride || !isLocalRuntime
+        ? BuildHostedPortWebViewUrl()
+        : LocalDevPortWebViewUrl;
+    }
+
     // Menu webview is always hosted by API.
     MenuWebViewUrl = $"{ApiBaseUrl}/fragments/menu/";
   }
