@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import type { PortState } from "./types";
 import { sendIpc } from "./utils/ipc";
+import { useInputCapture } from "./hooks/useInputCapture";
 import { inventoryIcon } from "./utils/helpers";
 import { MarketTab } from "./tabs/MarketTab";
 import { ShipyardTab } from "./tabs/ShipyardTab";
@@ -19,6 +20,8 @@ type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
 const INVENTORY_ORDER = ["Coin", "Wood", "Fish", "Iron", "Tea", "CannonBall", "Trophy"] as const;
 
 export default function App() {
+  useInputCapture();
+
   const [portState, setPortState] = useState<PortState | null>(null);
   const [isPanelVisible, setIsPanelVisible] = useState(true);
   const [activeSection, setActiveSection] = useState<Section>("ship");

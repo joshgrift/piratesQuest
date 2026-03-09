@@ -6,10 +6,10 @@ using System.Text.Json.Serialization;
 // ── Godot → React (serialized and pushed via eval) ──────────────────
 
 /// <summary>
-/// Complete port state sent to the React UI when the player docks
-/// or after any transaction to keep the UI in sync.
+/// Complete HUD state sent to the React UI.
+/// Includes both at-sea and in-port data in one payload.
 /// </summary>
-public record PortStateDto
+public record HudStateDto
 {
   /// <summary>True when the player is currently docked at a port.</summary>
   public bool IsInPort { get; init; }
@@ -102,6 +102,16 @@ public record VaultStateDto
 
 public record ShopItemDto(string Type, int BuyPrice, int SellPrice);
 
+/// <summary>
+/// Export payload for port-specific HUD data.
+/// Kept separate so ports can grow HUD fields over time.
+/// </summary>
+public record HudPortSnapshotDto
+{
+  public string PortName { get; init; } = "";
+  public ShopItemDto[] ItemsForSale { get; init; } = [];
+}
+
 public record ShipTierDto(
   string Name,
   string Description,
@@ -150,6 +160,10 @@ public record StatChangeDto(string Stat, string Modifier, float Value);
 [JsonDerivedType(typeof(SetShipTierMessage), "set_ship_tier")]
 [JsonDerivedType(typeof(SetVaultMessage), "set_vault")]
 [JsonDerivedType(typeof(DeleteVaultMessage), "delete_vault")]
+[JsonDerivedType(typeof(InputKeyMessage), "input_key")]
+[JsonDerivedType(typeof(InputCameraRotateMessage), "input_camera_rotate")]
+[JsonDerivedType(typeof(InputCameraZoomMessage), "input_camera_zoom")]
+[JsonDerivedType(typeof(InputCameraPanMessage), "input_camera_pan")]
 public record IpcMessage;
 
 public record BuyItemsMessage : IpcMessage
@@ -260,3 +274,46 @@ public record DeleteVaultMessage : IpcMessage;
 /// An item type + quantity pair used in buy/sell messages.
 /// </summary>
 public record ItemQuantity(string Type, int Quantity);
+
+// ── Input forwarding (webview → Godot) ──────────────────────────────────────
+
+/// <summary>
+/// A key press or release forwarded from the webview.
+/// Key is the browser key name lowercased (e.g. "w", "a", "q").
+/// </summary>
+public record InputKeyMessage : IpcMessage
+{
+  public string Key { get; init; } = "";
+  public bool Pressed { get; init; }
+}
+
+/// <summary>
+/// Camera rotation delta from a mouse drag.
+/// DeltaX/DeltaY are raw movementX/Y pixels from the browser.
+/// Godot applies CameraPivot.MouseSensitivity to scale them.
+/// </summary>
+public record InputCameraRotateMessage : IpcMessage
+{
+  public float DeltaX { get; init; }
+  public float DeltaY { get; init; }
+}
+
+/// <summary>
+/// Camera zoom delta from a scroll wheel or trackpad pinch.
+/// Delta is pre-normalized to ~1.0 per scroll step (deltaY / 100).
+/// Godot applies CameraPivot.ZoomSpeed to scale it.
+/// </summary>
+public record InputCameraZoomMessage : IpcMessage
+{
+  public float Delta { get; init; }
+}
+
+/// <summary>
+/// Camera horizontal rotation from a trackpad two-finger horizontal swipe.
+/// DeltaX is raw wheel deltaX from the browser.
+/// Godot applies CameraPivot.TrackpadRotationSensitivity to scale it.
+/// </summary>
+public record InputCameraPanMessage : IpcMessage
+{
+  public float DeltaX { get; init; }
+}

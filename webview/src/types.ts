@@ -112,6 +112,11 @@ export interface OwnedComponent {
 /** Discriminated union of all messages the UI can send to Godot. */
 export type IpcMessage =
   | { action: "ready" }
+  // ── Input forwarding (webview → Godot) ──────────────────────────────────
+  | { action: "input_key"; key: string; pressed: boolean }
+  | { action: "input_camera_rotate"; deltaX: number; deltaY: number }
+  | { action: "input_camera_zoom"; delta: number }
+  | { action: "input_camera_pan"; deltaX: number }
   | { action: "buy_items"; items: { type: string; quantity: number }[] }
   | { action: "sell_items"; items: { type: string; quantity: number }[] }
   | { action: "purchase_component"; name: string }

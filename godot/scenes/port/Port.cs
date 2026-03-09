@@ -1,9 +1,11 @@
 namespace PiratesQuest;
 
 using PiratesQuest.Attributes;
+using PiratesQuest.Data;
 using Godot;
 using Godot.Collections;
 using System;
+using System.Linq;
 
 public partial class Port : Node3D, IIntractable
 {
@@ -58,6 +60,24 @@ public partial class Port : Node3D, IIntractable
     {
       { "PortName", PortName },
       { "ItemsForSale", ItemsForSale }
+    };
+  }
+
+  /// <summary>
+  /// Exports all port-owned HUD fields in one snapshot object.
+  /// </summary>
+  public HudPortSnapshotDto ExportHudSnapshot()
+  {
+    return new HudPortSnapshotDto
+    {
+      PortName = PortName ?? "",
+      ItemsForSale = (ItemsForSale ?? [])
+        .Select(item => new ShopItemDto(
+          item.ItemType.ToString(),
+          item.BuyPrice,
+          item.SellPrice
+        ))
+        .ToArray()
     };
   }
 }

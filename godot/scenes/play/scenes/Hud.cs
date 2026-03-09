@@ -251,49 +251,57 @@ public partial class Hud : Control
       case DeleteVaultMessage:
         HandleDeleteVault();
         break;
+      case InputKeyMessage ik:
+        _player.HandleInputKey(ik.Key, ik.Pressed);
+        return;
+      case InputCameraRotateMessage icr:
+        GetCameraPivot()?.HandleCameraRotate(icr.DeltaX, icr.DeltaY);
+        return;
+      case InputCameraZoomMessage icz:
+        GetCameraPivot()?.HandleCameraZoom(icz.Delta);
+        return;
+      case InputCameraPanMessage icp:
+        GetCameraPivot()?.HandleCameraPan(icp.DeltaX);
+        return;
       default:
         GD.PushError($"HUD: Unknown IPC message type");
         break;
     }
   }
 
-  private PortStateDto BuildHUDState()
+  private CameraPivot GetCameraPivot()
   {
-    var inventory = new System.Collections.Generic.Dictionary<string, int>();
-    foreach (InventoryItemType type in Enum.GetValues(typeof(InventoryItemType)))
-      inventory[type.ToString()] = _player.GetInventoryCount(type);
+    return _player?.GetNodeOrNull<CameraPivot>("CameraPivot");
+  }
 
-    ShopItemDto[] shopItems = [];
-    if (IsInPort())
+  private HudStateDto BuildHUDState()
+  {
+    var state = _player.ExportHudState();
+    if (!IsInPort())
+      return state with
+      {
+        IsInPort = false,
+        PortName = "",
+        ItemsForSale = [],
+      };
+
+    var portSnapshot = _currentPort.ExportHudSnapshot();
+    return state with
     {
-      shopItems = (_currentPort.ItemsForSale ?? [])
-      .Select(si => new ShopItemDto(si.ItemType.ToString(), si.BuyPrice, si.SellPrice))
-      .ToArray();
-    }
+      IsInPort = true,
+      PortName = portSnapshot.PortName,
+      ItemsForSale = portSnapshot.ItemsForSale,
+      Tavern = BuildTavernStateForPort(portSnapshot.PortName),
+      Vault = BuildVaultStateForPort(state.Vault, portSnapshot.PortName),
+    };
+  }
 
-    var components = GameData.Components
-        .Select(c => new ComponentDto(
-          c.name, c.description, c.icon,
-          c.cost.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
-          c.statChanges.Select(sc => new StatChangeDto(
-            sc.Stat.ToString(), sc.Modifier.ToString(), sc.Value
-          )).ToArray()
-        ))
-        .ToArray();
-
-    var ownedComponents = _player.OwnedComponents
-      .Select(oc => new OwnedComponentDto { Name = oc.Component.name, IsEquipped = oc.isEquipped })
-      .ToArray();
-
-    var stats = new System.Collections.Generic.Dictionary<string, float>();
-    foreach (var kvp in _player.Stats.GetAllStats())
-      stats[kvp.Key.ToString()] = kvp.Value;
-
-    // Show tavern locals for this port first.
-    // Then append any currently hired crew that are from other ports,
-    // so hired crewmates are always visible/manageable in every tavern.
+  private TavernStateDto BuildTavernStateForPort(string portName)
+  {
+    // Show tavern locals for this port first, then include hired crew from
+    // other ports so all active crew are always visible/manageable.
     var tavernCharactersById = TavernData
-      .GetCharactersForPort(_currentPort.PortName ?? "")
+      .GetCharactersForPort(portName ?? "")
       .ToDictionary(c => c.Id, c => c, StringComparer.Ordinal);
 
     foreach (var hiredId in _player.HiredCrewCharacterIds)
@@ -304,107 +312,48 @@ public partial class Hud : Control
         tavernCharactersById[hiredCharacter.Id] = hiredCharacter;
     }
 
-    var tavernCharacters = tavernCharactersById.Values
-      .Select(c => new TavernCharacterDto(
-        c.Id,
-        c.Name,
-        c.Role,
-        c.Portrait,
-        c.Hireable,
-        c.StatChanges.Select(sc => new StatChangeDto(
-          sc.Stat.ToString(),
-          sc.Modifier.ToString(),
-          sc.Value
-        )).ToArray()
-      ))
-      .ToArray();
-
-    // Build vault snapshot (null if player hasn't built one yet)
-    VaultStateDto vaultState = null;
-    if (_player.VaultPortName != null)
+    return new TavernStateDto
     {
-      bool isHere = _player.VaultPortName == (_currentPort.PortName ?? "");
-      var vaultItems = new System.Collections.Generic.Dictionary<string, int>();
-      foreach (var kvp in _player.VaultItems)
-        vaultItems[kvp.Key.ToString()] = kvp.Value;
-
-      vaultState = new VaultStateDto
-      {
-        PortName = _player.VaultPortName,
-        Level = _player.VaultLevel,
-        Items = vaultItems,
-        IsHere = isHere,
-        ItemCapacity = Player.VaultItemCapacity[_player.VaultLevel],
-        GoldCapacity = Player.VaultGoldCapacity[_player.VaultLevel],
-      };
-    }
-
-    // Convert C# enum-keyed costs into string-keyed costs for JSON payloads.
-    var vaultBuildCost = Player.VaultBuildCost.ToDictionary(
-      kvp => kvp.Key.ToString(),
-      kvp => kvp.Value
-    );
-
-    System.Collections.Generic.Dictionary<string, int> vaultUpgradeCost = null;
-    if (_player.VaultPortName != null && _player.VaultLevel < Player.VaultMaxLevel)
-    {
-      vaultUpgradeCost = Player.GetVaultUpgradeCost(_player.VaultLevel).ToDictionary(
-        kvp => kvp.Key.ToString(),
-        kvp => kvp.Value
-      );
-    }
-
-    int woodPerHp = Player.RepairCostPerHp.TryGetValue(InventoryItemType.Wood, out var w) ? w : 0;
-    int fishPerHp = Player.RepairCostPerHp.TryGetValue(InventoryItemType.Fish, out var f) ? f : 0;
-
-    return new PortStateDto
-    {
-      IsInPort = IsInPort(),
-      PortName = _currentPort.PortName ?? "",
-      ItemsForSale = shopItems,
-      Inventory = inventory,
-      Components = components,
-      OwnedComponents = ownedComponents,
-      Stats = stats,
-      Health = _player.Health,
-      MaxHealth = _player.MaxHealth,
-      ComponentCapacity = (int)_player.Stats.GetStat(PlayerStat.ComponentCapacity),
-      ShipTier = _player.ShipTier,
-      ShipTiers = GameData.ShipTiers
-        .Select(t => new ShipTierDto(
-          t.Name, t.Description, t.ComponentSlots,
-          t.Cost.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value)
+      CrewSlots = _player.GetCrewSlotCapacity(),
+      HiredCharacterIds = _player.HiredCrewCharacterIds.ToArray(),
+      Characters = tavernCharactersById.Values
+        .Select(c => new TavernCharacterDto(
+          c.Id,
+          c.Name,
+          c.Role,
+          c.Portrait,
+          c.Hireable,
+          c.StatChanges.Select(sc => new StatChangeDto(
+            sc.Stat.ToString(),
+            sc.Modifier.ToString(),
+            sc.Value
+          )).ToArray()
         ))
         .ToArray(),
-      IsCreative = Configuration.IsCreative,
-      Vault = vaultState,
-      Costs = new PortCostsDto
-      {
-        VaultBuild = vaultBuildCost,
-        VaultUpgrade = vaultUpgradeCost,
-        Repair = new RepairCostDto
-        {
-          WoodPerHp = woodPerHp,
-          FishPerHp = fishPerHp,
-        },
-      },
-      Tavern = new TavernStateDto
-      {
-        CrewSlots = _player.GetCrewSlotCapacity(),
-        HiredCharacterIds = _player.HiredCrewCharacterIds.ToArray(),
-        Characters = tavernCharacters,
-      },
-      Leaderboard = [],
+    };
+  }
+
+  private static VaultStateDto BuildVaultStateForPort(VaultStateDto baseVault, string currentPortName)
+  {
+    if (baseVault == null)
+      return null;
+
+    return baseVault with
+    {
+      IsHere = baseVault.PortName == (currentPortName ?? "")
     };
   }
 
   private void HandleBuyItems(BuyItemsMessage msg)
   {
+    if (!IsInPort()) return;
+    var shopItems = _currentPort.ExportHudSnapshot().ItemsForSale;
+
     foreach (var req in msg.Items)
     {
       if (!Enum.TryParse<InventoryItemType>(req.Type, out var type)) continue;
 
-      var shopItem = _currentPort.ItemsForSale.FirstOrDefault(si => si.ItemType == type);
+      var shopItem = shopItems.FirstOrDefault(si => si.Type == req.Type);
       if (shopItem == null || shopItem.BuyPrice <= 0) continue;
 
       int totalCost = shopItem.BuyPrice * req.Quantity;
@@ -417,6 +366,9 @@ public partial class Hud : Control
 
   private void HandleSellItems(SellItemsMessage msg)
   {
+    if (!IsInPort()) return;
+    var shopItems = _currentPort.ExportHudSnapshot().ItemsForSale;
+
     // Crew/components can add SellPriceBonus where 0.005 == +0.5% sale revenue.
     // We clamp at zero so negative values can never produce negative gold.
     float sellMultiplier = Math.Max(0.0f, 1.0f + _player.Stats.GetStat(PlayerStat.SellPriceBonus));
@@ -425,7 +377,7 @@ public partial class Hud : Control
     {
       if (!Enum.TryParse<InventoryItemType>(req.Type, out var type)) continue;
 
-      var shopItem = _currentPort.ItemsForSale.FirstOrDefault(si => si.ItemType == type);
+      var shopItem = shopItems.FirstOrDefault(si => si.Type == req.Type);
       if (shopItem == null || shopItem.SellPrice <= 0) continue;
 
       int totalRevenue = (int)MathF.Round(shopItem.SellPrice * req.Quantity * sellMultiplier);

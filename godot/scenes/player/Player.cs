@@ -33,6 +33,15 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   [Signal] public delegate void DeathEventHandler(string playerName);
   [Signal] public delegate void HealthUpdateEventHandler(int newHealth);
 
+  // Tracked key state for actions forwarded via WebView (Input.IsActionPressed doesn't
+  // update when events arrive via parse_input_event, so we track state in _Input instead).
+  private bool _actionMoveForward;
+  private bool _actionMoveBack;
+  private bool _actionMoveLeft;
+  private bool _actionMoveRight;
+  private bool _actionFireLeft;
+  private bool _actionFireRight;
+
   // Ship recoil/rocking effect when firing
   private float _recoilRoll = 0.0f;
   private const float RecoilRollAmount = 0.40f; // Radians, tweak for more/less rocking
@@ -70,7 +79,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   // Build cost: what it takes to construct a level-1 vault
   public static readonly Dictionary<InventoryItemType, int> VaultBuildCost = new()
   {
-    // Source of truth for vault build cost. The webview reads this from PortStateDto.
+    // Source of truth for vault build cost. The webview reads this from HudStateDto.
     { InventoryItemType.Wood, 50 },
     { InventoryItemType.Iron, 25 },
     { InventoryItemType.Coin, 100 },
@@ -280,12 +289,12 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       }
 
       // Check for left cannon fire (Q key)
-      if (Input.IsActionPressed("fire_left") && _firedTimerCountdown <= 0)
+      if (_actionFireLeft && _firedTimerCountdown <= 0)
       {
         FireCannons(true); // true = fire from left side
       }
       // Check for right cannon fire (E key)
-      else if (Input.IsActionPressed("fire_right") && _firedTimerCountdown <= 0)
+      else if (_actionFireRight && _firedTimerCountdown <= 0)
       {
         FireCannons(false); // false = fire from right side
       }
@@ -318,6 +327,24 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       _nameLabel.Visible = true;
     else if (dist > NameTagHideDistance || !hasName)
       _nameLabel.Visible = false;
+  }
+
+  /// <summary>
+  /// Called by Hud when a key event arrives via the webview IPC pipeline.
+  /// Key is the browser key name lowercased (e.g. "w", "a", "q").
+  /// </summary>
+  public void HandleInputKey(string key, bool pressed)
+  {
+    if (!IsMultiplayerAuthority()) return;
+    switch (key)
+    {
+      case "w": _actionMoveForward = pressed; break;
+      case "s": _actionMoveBack    = pressed; break;
+      case "a": _actionMoveLeft    = pressed; break;
+      case "d": _actionMoveRight   = pressed; break;
+      case "q": _actionFireLeft    = pressed; break;
+      case "e": _actionFireRight   = pressed; break;
+    }
   }
 
   /// <summary>
@@ -415,22 +442,22 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     // Get input for forward/backward movement
     float forwardInput = 0.0f;
-    if (Input.IsActionPressed("move_forward"))
+    if (_actionMoveForward)
     {
       forwardInput = 1.0f;
     }
-    if (Input.IsActionPressed("move_back"))
+    if (_actionMoveBack)
     {
       forwardInput = -1.0f;
     }
 
     // Get input for turning (left/right)
     float turnInput = 0.0f;
-    if (Input.IsActionPressed("move_right"))
+    if (_actionMoveRight)
     {
       turnInput = 1.0f;
     }
-    if (Input.IsActionPressed("move_left"))
+    if (_actionMoveLeft)
     {
       turnInput = -1.0f;
     }
@@ -939,6 +966,167 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   public Dictionary<InventoryItemType, int> GetInventory()
   {
     return _inventory.GetAll();
+  }
+
+  /// <summary>
+  /// Builds one complete HUD DTO snapshot for the webview.
+  /// This exports player-owned data only (no port context).
+  /// Port-aware composition happens in Hud.cs.
+  /// </summary>
+  public HudStateDto ExportHudState()
+  {
+    var stats = new System.Collections.Generic.Dictionary<string, float>();
+    foreach (var kvp in Stats.GetAllStats())
+      stats[kvp.Key.ToString()] = kvp.Value;
+
+    var shipTiers = GameData.ShipTiers
+      .Select(t => new ShipTierDto(
+        t.Name,
+        t.Description,
+        t.ComponentSlots,
+        t.Cost.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value)
+      ))
+      .ToArray();
+
+    return new HudStateDto
+    {
+      IsInPort = false,
+      PortName = "",
+      ItemsForSale = [],
+      Inventory = ExportInventoryForHud(),
+      Components = ExportComponentsForHud(),
+      OwnedComponents = ExportOwnedComponentsForHud(),
+      Stats = stats,
+      Health = Health,
+      MaxHealth = MaxHealth,
+      ComponentCapacity = (int)Stats.GetStat(PlayerStat.ComponentCapacity),
+      ShipTier = ShipTier,
+      ShipTiers = shipTiers,
+      IsCreative = Configuration.IsCreative,
+      Costs = ExportCostsForHud(),
+      Tavern = ExportTavernForHud(),
+      Vault = ExportVaultForHud(),
+      Leaderboard = [],
+    };
+  }
+
+  private System.Collections.Generic.Dictionary<string, int> ExportInventoryForHud()
+  {
+    var inventory = new System.Collections.Generic.Dictionary<string, int>();
+    foreach (InventoryItemType type in Enum.GetValues(typeof(InventoryItemType)))
+      inventory[type.ToString()] = GetInventoryCount(type);
+    return inventory;
+  }
+
+  private ComponentDto[] ExportComponentsForHud()
+  {
+    return GameData.Components
+      .Select(c => new ComponentDto(
+        c.name,
+        c.description,
+        c.icon,
+        c.cost.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value),
+        c.statChanges.Select(sc => new StatChangeDto(
+          sc.Stat.ToString(),
+          sc.Modifier.ToString(),
+          sc.Value
+        )).ToArray()
+      ))
+      .ToArray();
+  }
+
+  private OwnedComponentDto[] ExportOwnedComponentsForHud()
+  {
+    return OwnedComponents
+      .Select(oc => new OwnedComponentDto
+      {
+        Name = oc.Component.name,
+        IsEquipped = oc.isEquipped
+      })
+      .ToArray();
+  }
+
+  private PortCostsDto ExportCostsForHud()
+  {
+    var vaultBuildCost = VaultBuildCost.ToDictionary(
+      kvp => kvp.Key.ToString(),
+      kvp => kvp.Value
+    );
+
+    System.Collections.Generic.Dictionary<string, int> vaultUpgradeCost = null;
+    if (VaultPortName != null && VaultLevel < VaultMaxLevel)
+    {
+      vaultUpgradeCost = GetVaultUpgradeCost(VaultLevel).ToDictionary(
+        kvp => kvp.Key.ToString(),
+        kvp => kvp.Value
+      );
+    }
+
+    int woodPerHp = RepairCostPerHp.TryGetValue(InventoryItemType.Wood, out var wood) ? wood : 0;
+    int fishPerHp = RepairCostPerHp.TryGetValue(InventoryItemType.Fish, out var fish) ? fish : 0;
+
+    return new PortCostsDto
+    {
+      VaultBuild = vaultBuildCost,
+      VaultUpgrade = vaultUpgradeCost,
+      Repair = new RepairCostDto
+      {
+        WoodPerHp = woodPerHp,
+        FishPerHp = fishPerHp,
+      },
+    };
+  }
+
+  private TavernStateDto ExportTavernForHud()
+  {
+    // Player export stays port-agnostic: include only currently hired crew.
+    var tavernCharacters = new System.Collections.Generic.List<TavernCharacterDto>();
+    foreach (var hiredId in HiredCrewCharacterIds)
+    {
+      var hiredCharacter = TavernData.GetCharacterById(hiredId);
+      if (hiredCharacter != null)
+      {
+        tavernCharacters.Add(new TavernCharacterDto(
+          hiredCharacter.Id,
+          hiredCharacter.Name,
+          hiredCharacter.Role,
+          hiredCharacter.Portrait,
+          hiredCharacter.Hireable,
+          hiredCharacter.StatChanges.Select(sc => new StatChangeDto(
+            sc.Stat.ToString(),
+            sc.Modifier.ToString(),
+            sc.Value
+          )).ToArray()
+        ));
+      }
+    }
+
+    return new TavernStateDto
+    {
+      CrewSlots = GetCrewSlotCapacity(),
+      HiredCharacterIds = HiredCrewCharacterIds.ToArray(),
+      Characters = tavernCharacters.ToArray(),
+    };
+  }
+
+  private VaultStateDto ExportVaultForHud()
+  {
+    if (VaultPortName == null)
+      return null;
+
+    var vaultItems = new System.Collections.Generic.Dictionary<string, int>();
+    foreach (var kvp in VaultItems)
+      vaultItems[kvp.Key.ToString()] = kvp.Value;
+
+    return new VaultStateDto
+    {
+      PortName = VaultPortName,
+      Level = VaultLevel,
+      Items = vaultItems,
+      IsHere = false,
+      ItemCapacity = VaultItemCapacity[VaultLevel],
+      GoldCapacity = VaultGoldCapacity[VaultLevel],
+    };
   }
 
   // ── Ship Tier Operations ────────────────────────────────────────
