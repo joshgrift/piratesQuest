@@ -51,7 +51,6 @@ body,
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  cursor: url("/hand_point.png"), auto;
 }
 
 img {
