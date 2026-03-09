@@ -2,10 +2,22 @@ import { useState, useCallback } from "react";
 import { sendIpc } from "../utils/ipc";
 import { inventoryIcon } from "../utils/helpers";
 import type { PortState } from "../types";
+import { TavernTab } from "./TavernTab";
 
 type TradeMode = "buy" | "sell";
 
-export function MarketTab({ state }: { state: PortState }) {
+interface MarketTabProps {
+  state: PortState;
+  onOpenConversation: (characterId: string) => void;
+  activeConversationCharacterId?: string | null;
+}
+
+export function MarketTab({
+  state,
+  onOpenConversation,
+  activeConversationCharacterId,
+}: MarketTabProps) {
+  const coins = state.inventory["Coin"] ?? 0;
   const [mode, setMode] = useState<TradeMode>("buy");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [flashConfirm, setFlashConfirm] = useState(false);
@@ -73,6 +85,19 @@ export function MarketTab({ state }: { state: PortState }) {
 
   return (
     <>
+      {state.isInPort && (
+        <section className="market-people-section" aria-label="People in port">
+          <h3 className="market-people-title">People in Port</h3>
+          <TavernTab
+            state={state}
+            onOpenConversation={onOpenConversation}
+            activeConversationCharacterId={activeConversationCharacterId}
+          />
+        </section>
+      )}
+
+      <div className="market-gold-header">{coins} Gold</div>
+
       <div className="mode-toggle">
         <button
           className={`mode-btn ${mode === "buy" ? "active" : ""}`}

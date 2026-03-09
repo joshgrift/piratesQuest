@@ -5,7 +5,7 @@ import { makePortState } from "./fixtures";
 import type { PortState } from "../types";
 import type { Mock } from "vitest";
 
-type Tab = "guide" | "leaderboard" | "ship_crew" | "ship_status" | "market" | "shipyard" | "tavern" | "vault" | "creative";
+type Tab = "guide" | "leaderboard" | "ship_crew" | "ship_status" | "market" | "shipyard" | "vault" | "creative";
 
 const TAB_LABELS: Record<Tab, string> = {
   ship_status: "Ship Status",
@@ -14,7 +14,6 @@ const TAB_LABELS: Record<Tab, string> = {
   leaderboard: "Leaderboard",
   market: "Market",
   shipyard: "Shipyard",
-  tavern: "Tavern",
   vault: "Vault",
   creative: "Creative",
 };
@@ -83,23 +82,29 @@ export function renderApp(overridesOrOptions?: Partial<PortState> | RenderAppOpt
   if (tab) {
     if (tab === "leaderboard") {
       const modeButton = screen.getByRole("tab", { name: "Leaderboard mode" });
-      act(() => {
-        modeButton.click();
-      });
-    } else if (["market", "shipyard", "tavern", "vault", "creative"].includes(tab)) {
+      if (modeButton.getAttribute("aria-selected") !== "true") {
+        act(() => {
+          modeButton.click();
+        });
+      }
+    } else if (["market", "shipyard", "vault", "creative"].includes(tab)) {
       const modeButton = screen.getByRole("tab", { name: "Port mode" });
-      act(() => {
-        modeButton.click();
-      });
+      if (modeButton.getAttribute("aria-selected") !== "true") {
+        act(() => {
+          modeButton.click();
+        });
+      }
       const tabButton = screen.getByRole("button", { name: TAB_LABELS[tab] });
       act(() => {
         tabButton.click();
       });
     } else {
       const modeButton = screen.getByRole("tab", { name: "Ship mode" });
-      act(() => {
-        modeButton.click();
-      });
+      if (modeButton.getAttribute("aria-selected") !== "true") {
+        act(() => {
+          modeButton.click();
+        });
+      }
       const tabButton = screen.getByRole("button", { name: TAB_LABELS[tab] });
       act(() => {
         tabButton.click();

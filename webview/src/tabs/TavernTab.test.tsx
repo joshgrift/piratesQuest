@@ -5,8 +5,9 @@ import { getIpcMessages } from "../test/helpers";
 
 describe("TavernTab", () => {
   it("sends hire IPC when hiring a character", async () => {
-    const { ipcSpy } = renderApp({ tab: "tavern" });
+    const { ipcSpy } = renderApp({ tab: "market" });
 
+    fireEvent.click(screen.getByRole("button", { name: /Gideon Gearlock/ }));
     fireEvent.click(screen.getByRole("button", { name: /Talk about ship work\./ }));
     fireEvent.click(await screen.findByRole("button", { name: /What would ye do on my deck\?/ }));
     fireEvent.click(await screen.findByRole("button", { name: /Ask him plain to sign aboard\./ }));
@@ -21,7 +22,7 @@ describe("TavernTab", () => {
 
   it("blocks hire IPC when crew slots are already full", async () => {
     const { ipcSpy } = renderApp({
-      tab: "tavern",
+      tab: "market",
       state: {
         crew: {
           crewSlots: 2,
@@ -70,14 +71,14 @@ describe("TavernTab", () => {
   });
 
   it("hides hireability status in the roster until conversation", () => {
-    renderApp({ tab: "tavern" });
+    renderApp({ tab: "market" });
 
     expect(screen.queryByText("Talk")).not.toBeInTheDocument();
     expect(screen.queryByText("Hire")).not.toBeInTheDocument();
   });
 
   it("reveals non-hireable result only after talking", async () => {
-    renderApp({ tab: "tavern" });
+    renderApp({ tab: "market" });
 
     fireEvent.click(screen.getByRole("button", { name: /Valora Rumwhisper/ }));
     fireEvent.click(screen.getByRole("button", { name: /Talk about ship work\./ }));

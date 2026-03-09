@@ -1,4 +1,5 @@
-import { ConversationPanel, type ConversationTree } from "./ConversationPanel";
+import type { ConversationTree } from "./ConversationPanel";
+import { ConversationThreadPanel } from "./ConversationThreadPanel";
 
 interface CharacterConversationOverlayProps {
   isOpen: boolean;
@@ -39,13 +40,12 @@ export function CharacterConversationOverlay({
           </button>
         </div>
 
-        <ConversationPanel
+        <ConversationThreadPanel
           key={`${speakerName}-${title}`}
           tree={tree}
           speakerName={speakerName}
           speakerPortraitSrc={speakerPortraitSrc}
           speakerPortraitAlt={speakerPortraitAlt}
-          classNamePrefix="tavern-chat"
           initialNodeId="root"
           instantNodeIds={instantNodeIds}
           onAction={onAction}

@@ -9,14 +9,14 @@ import { ShipyardTab } from "./tabs/ShipyardTab";
 import { VaultTab } from "./tabs/VaultTab";
 import { GuideTab } from "./tabs/GuideTab";
 import { CreativeTab } from "./tabs/CreativeTab";
-import { TavernTab, buildTavernConversationTree } from "./tabs/TavernTab";
+import { buildTavernConversationTree } from "./tabs/TavernTab";
 import { ShipCrewTab, buildCrewConversationTree } from "./tabs/ShipCrewTab";
 import { LeaderboardTab } from "./tabs/LeaderboardTab";
 import { ShipStatusWidget } from "./components/ShipStatusWidget";
 import { CharacterConversationOverlay } from "./components/CharacterConversationOverlay";
 
 type ShipTab = "guide" | "ship_crew" | "ship_status";
-type PortTab = "market" | "shipyard" | "tavern" | "vault" | "creative";
+type PortTab = "market" | "shipyard" | "vault" | "creative";
 type PanelMode = "ship" | "port" | "leaderboard";
 type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
 type ConversationSource = "tavern" | "crew";
@@ -319,12 +319,6 @@ export default function App() {
                   Shipyard
                 </button>
                 <button
-                  className={`tab-btn ${activePortTab === "tavern" ? "active" : ""}`}
-                  onClick={() => setActivePortTab("tavern")}
-                >
-                  Tavern
-                </button>
-                <button
                   className={`tab-btn vault-tab-btn ${activePortTab === "vault" ? "active" : ""}`}
                   onClick={() => setActivePortTab("vault")}
                 >
@@ -367,19 +361,13 @@ export default function App() {
             ) : activePanelMode === "leaderboard" ? (
               <LeaderboardTab entries={portState.leaderboard} />
             ) : activePortTab === "market" ? (
-              <MarketTab state={portState} />
+              <MarketTab
+                state={portState}
+                onOpenConversation={(characterId) => openConversation("tavern", characterId)}
+                activeConversationCharacterId={activeConversation?.source === "tavern" ? activeConversation.characterId : null}
+              />
             ) : activePortTab === "shipyard" ? (
               <ShipyardTab state={portState} isInPort={portState.isInPort} />
-            ) : activePortTab === "tavern" ? (
-              portState.isInPort ? (
-                <TavernTab
-                  state={portState}
-                  onOpenConversation={(characterId) => openConversation("tavern", characterId)}
-                  activeConversationCharacterId={activeConversation?.source === "tavern" ? activeConversation.characterId : null}
-                />
-              ) : (
-                <div className="empty-state">Dock at a port to access tavern services.</div>
-              )
             ) : activePortTab === "vault" ? (
               portState.isInPort ? (
                 <VaultTab state={portState} />
