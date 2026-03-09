@@ -251,21 +251,21 @@ export function ConversationThreadPanel({
 
   return (
     <div className="conversation-thread-shell">
-      <div className="conversation-thread-chat-intro">
-        <img
-          className="conversation-thread-chat-intro-portrait"
-          src={speakerPortraitSrc}
-          alt={speakerPortraitAlt}
-        />
-        <div className="conversation-thread-chat-intro-name">{speakerPortraitAlt}</div>
-      </div>
-
       <div
         className="conversation-thread-log"
         ref={logRef}
         onClick={skipTyping}
         onScroll={onLogScroll}
       >
+        <div className="conversation-thread-chat-intro">
+          <img
+            className="conversation-thread-chat-intro-portrait"
+            src={speakerPortraitSrc}
+            alt={speakerPortraitAlt}
+          />
+          <div className="conversation-thread-chat-intro-name">{speakerPortraitAlt}</div>
+        </div>
+
         {renderedMessages.map((message) => {
           const isNpc = message.role === "npc";
           const isCurrentTyping = isNpc && message.visibleChars < message.text.length;

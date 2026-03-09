@@ -2827,9 +2827,10 @@ img {
   inset: 0;
   display: flex;
   justify-content: center;
-  align-items: flex-end;
-  padding: 0 0 14px;
+  align-items: center;
+  padding: 10px 0;
   pointer-events: none;
+  touch-action: none;
   z-index: 1200;
 }
 
@@ -2845,17 +2846,26 @@ img {
 
 .character-chat-overlay-inner {
   width: min(980px, 86vw);
-  max-height: min(80vh, 840px);
+  height: min(92vh, 980px);
+  max-height: min(92vh, 980px);
   pointer-events: auto;
   max-height: inherit;
   position: relative;
   padding: 8px 8px 10px;
   overflow-y: auto;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
 }
 
 .conversation-thread-shell {
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
 
 .conversation-thread-chat-intro {
@@ -2887,12 +2897,17 @@ img {
 
 .conversation-thread-log {
   padding: 4px 8px;
-  max-height: min(48vh, 460px);
+  flex: 1;
+  min-height: 0;
+  max-height: none;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(223, 181, 99, 0.7) transparent;
 }
@@ -2964,6 +2979,9 @@ img {
 
 .conversation-thread-controls {
   margin-top: 12px;
+  min-height: 116px;
+  display: flex;
+  align-items: flex-start;
 }
 
 .conversation-thread-skip-btn {
@@ -2984,6 +3002,9 @@ img {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  width: 100%;
+  min-height: 104px;
+  align-content: start;
 }
 
 .conversation-thread-option-btn {
@@ -3031,16 +3052,22 @@ img {
 
   .conversation-thread-options {
     grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .conversation-thread-controls {
+    min-height: 0;
   }
 }
 
 @media (max-height: 870px) {
   .character-chat-overlay {
-    padding-bottom: 10px;
+    padding: 8px 0;
   }
 
   .character-chat-overlay-inner {
-    max-height: min(84vh, 700px);
+    height: min(95vh, 760px);
+    max-height: min(95vh, 760px);
   }
 }
 

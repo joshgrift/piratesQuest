@@ -57,5 +57,10 @@ export const INPUT_CONFIG = {
     ".mode-rail",
     ".left-inventory-panel",
     ".left-health-panel",
+    ".character-chat-overlay",
+    ".character-chat-overlay-inner",
+    ".conversation-thread-shell",
+    ".conversation-thread-log",
+    ".conversation-thread-controls",
   ],
 } as const;

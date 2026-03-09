@@ -22,7 +22,7 @@ export function buildTavernConversationTree(character: TavernCharacter): Convers
   if (!tree.root) {
     return {
       root: {
-        text: `${character.name} sizes ye up in silence.`,
+        text: `Name's ${character.name}. Say what you need, Captain.`,
         responses: [{ label: "Leave", next: "root" }],
       },
     };
@@ -40,14 +40,14 @@ export function buildTavernConversationTree(character: TavernCharacter): Convers
 
   if (!tree.not_hireable) {
     tree.not_hireable = {
-      text: `${character.name} shakes their head. \"I stay ashore.\"`,
+      text: "No, Captain. I stay ashore.",
       responses: [{ label: "Back", next: "root" }],
     };
   }
 
   if (!tree.hire_success) {
     tree.hire_success = {
-      text: "Aye. I'll be ready at the dock.",
+      text: "Yes. I'll be ready at the dock.",
       responses: [{ label: "Back", next: "root" }],
     };
   }

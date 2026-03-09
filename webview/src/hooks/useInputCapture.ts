@@ -92,7 +92,14 @@ export function useInputCapture() {
     // ── Scroll wheel / trackpad ──────────────────────────────────────────────
 
     function handleWheel(e: WheelEvent) {
-      if (isOverUI(e.target)) return;
+      if (isOverUI(e.target)) {
+        // Keep chat/list scrolling native, but block browser pinch-zoom and
+        // horizontal two-finger navigation while the pointer is over UI.
+        if (e.ctrlKey || e.deltaX !== 0) {
+          e.preventDefault();
+        }
+        return;
+      }
       e.preventDefault();
 
       if (e.ctrlKey) {

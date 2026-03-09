@@ -27,28 +27,28 @@ export function buildCrewConversationTree(character: TavernCharacter): Conversat
 
   return {
     root: {
-      text: `${character.name} tips their hat. \"${character.role} on duty, Captain. What d'ye need?\"`,
+      text: `${character.role} on duty, Captain. What do you need?`,
       responses: [
         { label: "Give me your status report.", next: "status" },
-        { label: "What do ye add to the ship?", next: "impact" },
+        { label: "What do you add to the ship?", next: "impact" },
         { label: "Any advice for this voyage?", next: "advice" },
         { label: "Stand down at next port.", action: "fire" },
       ],
     },
     status: {
-      text: "\"Crew is steady and watch is sharp. We keep this hull ready for trouble.\"",
+      text: "Crew is steady and watch is sharp. We keep this hull ready for trouble.",
       responses: [{ label: "Back", next: "root" }],
     },
     impact: {
-      text: `\"Current contribution: ${bonusText}\"`,
+      text: `Current contribution: ${bonusText}`,
       responses: [{ label: "Back", next: "root" }],
     },
     advice: {
-      text: "\"Keep cargo under control, keep powder dry, and never sail blind into a broadside lane.\"",
+      text: "Keep cargo under control, keep powder dry, and never sail blind into a broadside lane.",
       responses: [{ label: "Back", next: "root" }],
     },
     fire_success: {
-      text: "\"Understood, Captain. I'll leave the ship when we dock.\"",
+      text: "Understood, Captain. I'll leave the ship when we dock.",
       responses: [{ label: "Back", next: "root" }],
     },
   };

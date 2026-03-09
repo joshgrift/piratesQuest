@@ -6,16 +6,16 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     root: {
       text: "Gideon Gearlock. Merchant ledgers, long memory, and a nose for underpriced cargo.",
       responses: [
-        { label: "What markets do ye watch?", next: "markets" },
+        { label: "What markets do you watch?", next: "markets" },
         { label: "Any advice for a trader-captain?", next: "advice" },
-        { label: "Talk about ship work.", next: "work_open" },
+        { label: "Are you for hire aboard my ship?", next: "work_open" },
         { label: "Back to tavern", next: "root" },
       ],
     },
     markets: {
       text: "Saint Johns pays clean coin for food after storms. Krakenfall pays hardest for iron when gunsmith orders spike.",
       responses: [
-        { label: "How do ye read that so fast?", next: "methods" },
+        { label: "How do you read that so fast?", next: "methods" },
         { label: "Back", next: "root" },
       ],
     },
@@ -30,8 +30,8 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_open: {
       text: "Work aboard is trust first, coin second. I do not sail for captains who spend faster than they think.",
       responses: [
-        { label: "What do ye expect from a captain?", next: "work_expect" },
-        { label: "What would ye do on my deck?", next: "work_terms" },
+        { label: "What do you expect from a captain?", next: "work_expect" },
+        { label: "What would you do on my deck?", next: "work_terms" },
         { label: "Back", next: "root" },
       ],
     },
@@ -42,7 +42,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_terms: {
       text: "I negotiate every sale. Small margins, repeated often. That is where fortunes are made.",
       responses: [
-        { label: "Ask him plain to sign aboard.", action: "probe_hire" },
+        { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
@@ -75,9 +75,9 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     root: {
       text: "Tommy Fuse. Young, quick, and never farther than two steps from powder.",
       responses: [
-        { label: "Where'd ye learn guns?", next: "origin" },
-        { label: "How do ye speed a shot?", next: "science" },
-        { label: "Talk about ship work.", next: "work_open" },
+        { label: "Where did you learn guns?", next: "origin" },
+        { label: "How do you speed a shot?", next: "science" },
+        { label: "Are you for hire aboard my ship?", next: "work_open" },
         { label: "Back to tavern", next: "root" },
       ],
     },
@@ -93,13 +93,13 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     danger: {
-      text: "Aye. So I obsess over drill. Fast is safe only when everyone moves right.",
+      text: "Yes. So I obsess over drill. Fast is safe only when everyone moves right.",
       responses: [{ label: "Back", next: "root" }],
     },
     work_open: {
-      text: "If I sail with ye, I run gun prep and shot rhythm. No panic firing.",
+      text: "If I sail with you, I run gun prep and shot rhythm. No panic firing.",
       responses: [
-        { label: "What rules do ye keep?", next: "work_rules" },
+        { label: "What rules do you keep?", next: "work_rules" },
         { label: "What do I gain from that?", next: "work_terms" },
         { label: "Back", next: "root" },
       ],
@@ -111,7 +111,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_terms: {
       text: "You'll feel shots leave quicker and cleaner. Better launch, better pressure on target ships.",
       responses: [
-        { label: "Ask him plain to sign aboard.", action: "probe_hire" },
+        { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
@@ -123,7 +123,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     hire_success: {
-      text: "Aye! Next broadside's gonna feel different.",
+      text: "Yes! Next broadside's going to feel different.",
       responses: [{ label: "Back", next: "root" }],
     },
     hire_blocked: {
@@ -146,12 +146,12 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       responses: [
         { label: "What kind of hull work?", next: "craft" },
         { label: "Why so quiet?", next: "quiet" },
-        { label: "Talk about ship work.", next: "work_open" },
+        { label: "Are you for hire aboard my ship?", next: "work_open" },
         { label: "Back to tavern", next: "root" },
       ],
     },
     craft: {
-      text: "Hidden braces. Tight seams. The kind of work ye notice only when a hit should've sunk ye and didn't.",
+      text: "Hidden braces. Tight seams. The kind of work you notice only when a hit should've sunk you and didn't.",
       responses: [{ label: "Back", next: "root" }],
     },
     quiet: {
@@ -161,7 +161,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_open: {
       text: "If I sign on, I stay below deck and keep to my bench.",
       responses: [
-        { label: "What do ye need from me?", next: "work_need" },
+        { label: "What do you need from me?", next: "work_need" },
         { label: "What would change on the ship?", next: "work_terms" },
         { label: "Back", next: "root" },
       ],
@@ -173,12 +173,12 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_terms: {
       text: "I'll thicken her where strain runs hottest. She'll hold a little longer in a hard fight.",
       responses: [
-        { label: "Ask him plain to sign aboard.", action: "probe_hire" },
+        { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
     hire_offer: {
-      text: "...Aye. If ye keep your word, I'll keep your hull alive.",
+      text: "...Yes. If you keep your word, I'll keep your hull alive.",
       responses: [
         { label: "Join my crew.", action: "hire" },
         { label: "Not yet.", next: "root" },
@@ -204,11 +204,11 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
 
   "dorian-blackwake": {
     root: {
-      text: "Dorian Blackwake. Say what ye need and skip the pity.",
+      text: "Dorian Blackwake. Say what you need and skip the pity.",
       responses: [
-        { label: "Where'd ye earn that name?", next: "past" },
-        { label: "What can ye do to enemy ships?", next: "skills" },
-        { label: "Talk about ship work.", next: "work_open" },
+        { label: "Where did you earn that name?", next: "past" },
+        { label: "What can you do to enemy ships?", next: "skills" },
+        { label: "Are you for hire aboard my ship?", next: "work_open" },
         { label: "Back to tavern", next: "root" },
       ],
     },
@@ -242,7 +242,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_terms: {
       text: "Your cannons hit with intent. Fewer lucky shots, more dead ships.",
       responses: [
-        { label: "Ask him plain to sign aboard.", action: "probe_hire" },
+        { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
@@ -277,7 +277,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       responses: [
         { label: "Tell me a rumor about this port.", next: "port_rumor" },
         { label: "Tell me a rumor about tavern folk.", next: "crew_rumor" },
-        { label: "Talk about ship work.", next: "work_open" },
+        { label: "Are you for hire aboard my ship?", next: "work_open" },
         { label: "Back to tavern", next: "root" },
       ],
     },
@@ -292,24 +292,24 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_open: {
       text: "Work? I don't swab decks. I keep one ear in every dockside door.",
       responses: [
-        { label: "Could ye advise routes from shore?", next: "work_routes" },
-        { label: "Would ye sail with me at all?", next: "work_terms" },
+        { label: "Could you advise routes from shore?", next: "work_routes" },
+        { label: "Would you sail with me at all?", next: "work_terms" },
         { label: "Back", next: "root" },
       ],
     },
     work_routes: {
-      text: "Pay for rumors and I'll tell ye where not to die. That is the deal I make with captains.",
+      text: "Pay for rumors and I'll tell you where not to die. That is the deal I make with captains.",
       responses: [{ label: "Back", next: "work_open" }],
     },
     work_terms: {
       text: "I trade words, not berths. Boats sink. My table here does not.",
       responses: [
-        { label: "Ask her plain to sign aboard.", action: "probe_hire" },
+        { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
     not_hireable: {
-      text: "Valora smiles thinly. 'No, Captain. I stay where stories wash ashore. But buy a rumor and we both profit.'",
+      text: "No, Captain. I stay where stories wash ashore. Buy a rumor and we both profit.",
       responses: [{ label: "Back", next: "root" }],
     },
   },
@@ -320,7 +320,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       responses: [
         { label: "What makes your repairs different?", next: "craft" },
         { label: "Ever built warships?", next: "history" },
-        { label: "Talk about ship work.", next: "work_open" },
+        { label: "Are you for hire aboard my ship?", next: "work_open" },
         { label: "Back to tavern", next: "root" },
       ],
     },
@@ -335,7 +335,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_open: {
       text: "Aboard your ship I'd run timber maintenance and emergency brace drills.",
       responses: [
-        { label: "What would ye need from crew?", next: "work_need" },
+        { label: "What would you need from crew?", next: "work_need" },
         { label: "What do we gain from that?", next: "work_terms" },
         { label: "Back", next: "root" },
       ],
@@ -347,12 +347,12 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_terms: {
       text: "You'll recover steadier between fights. Not dramatic. Reliable.",
       responses: [
-        { label: "Ask him plain to sign aboard.", action: "probe_hire" },
+        { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
     hire_offer: {
-      text: "Aye. I'll keep your hull breathing.",
+      text: "Yes. I'll keep your hull breathing.",
       responses: [
         { label: "Join my crew.", action: "hire" },
         { label: "Need to think.", next: "root" },
@@ -381,8 +381,8 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       text: "Governor Caspian Vale. Speak quickly. Administration does not pause for sentiment.",
       responses: [
         { label: "Give me the region's history.", next: "history" },
-        { label: "What have ye learned about the dark fleet?", next: "fleet" },
-        { label: "Talk about ship work.", next: "work_open" },
+        { label: "What have you learned about the dark fleet?", next: "fleet" },
+        { label: "Are you for hire aboard my ship?", next: "work_open" },
         { label: "Back to tavern", next: "root" },
       ],
     },
@@ -411,19 +411,19 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_open: {
       text: "If this is a hiring pitch, spare us both the theater.",
       responses: [
-        { label: "Would ye ever advise from aboard?", next: "work_terms" },
+        { label: "Would you ever advise from aboard?", next: "work_terms" },
         { label: "Back", next: "root" },
       ],
     },
     work_terms: {
       text: "I govern ports, Captain. I do not sign under private command.",
       responses: [
-        { label: "Ask him plain to sign aboard.", action: "probe_hire" },
+        { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
     not_hireable: {
-      text: "Caspian folds his hands. 'No. My duty is ashore. Try not to sink before my clerks finish your file.'",
+      text: "No. My duty is ashore. Try not to sink before my clerks finish your file.",
       responses: [{ label: "Back", next: "root" }],
     },
   },
@@ -432,9 +432,9 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     root: {
       text: "Merrick Ash. I cut wood. I keep moving. I don't waste words.",
       responses: [
-        { label: "Where'd ye learn to cut like that?", next: "craft" },
-        { label: "What keeps ye in these docks?", next: "past" },
-        { label: "Talk about ship work.", next: "work_open" },
+        { label: "Where did you learn to cut like that?", next: "craft" },
+        { label: "What keeps you in these docks?", next: "past" },
+        { label: "Are you for hire aboard my ship?", next: "work_open" },
         { label: "Back to tavern", next: "root" },
       ],
     },
@@ -449,7 +449,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_open: {
       text: "On a ship I'd route wood runs and keep the crew from wasting daylight.",
       responses: [
-        { label: "How strict are ye with crew?", next: "work_rules" },
+        { label: "How strict are you with crew?", next: "work_rules" },
         { label: "What's the gain for me?", next: "work_terms" },
         { label: "Back", next: "root" },
       ],
@@ -461,7 +461,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_terms: {
       text: "You'll pull wood faster and cleaner. Less drift, more usable haul.",
       responses: [
-        { label: "Ask him plain to sign aboard.", action: "probe_hire" },
+        { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
@@ -485,7 +485,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       responses: [{ label: "Back", next: "root" }],
     },
     fire_success: {
-      text: "Aye. I'll be with the lumber piles.",
+      text: "Yes. I'll be with the lumber piles.",
       responses: [{ label: "Back", next: "root" }],
     },
   },
@@ -494,9 +494,9 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     root: {
       text: "Rafael Tide. Fisher by instinct, flirt by reputation.",
       responses: [
-        { label: "Ye flirt with everyone?", next: "flirt" },
+        { label: "You flirt with everyone?", next: "flirt" },
         { label: "What makes a good fishing run?", next: "craft" },
-        { label: "Talk about ship work.", next: "work_open" },
+        { label: "Are you for hire aboard my ship?", next: "work_open" },
         { label: "Back to tavern", next: "root" },
       ],
     },
@@ -514,8 +514,8 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_open: {
       text: "Aboard your deck I'd tune routes and net timing. Less wandering, heavier holds.",
       responses: [
-        { label: "And what do ye need from me?", next: "work_need" },
-        { label: "How much better are we talkin'?", next: "work_terms" },
+        { label: "And what do you need from me?", next: "work_need" },
+        { label: "How much better are we talking?", next: "work_terms" },
         { label: "Back", next: "root" },
       ],
     },
@@ -526,7 +526,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_terms: {
       text: "You'll gather fish faster with less wasted drift. Simple and pretty.",
       responses: [
-        { label: "Ask him plain to sign aboard.", action: "probe_hire" },
+        { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
@@ -538,7 +538,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     hire_success: {
-      text: "Aye, Captain. We'll fill the hold and maybe your heart.",
+      text: "Yes, Captain. We'll fill the hold and maybe your heart.",
       responses: [{ label: "Back", next: "root" }],
     },
     hire_blocked: {
@@ -560,8 +560,8 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       text: "Silas Quill. Sculptor first, stone worker second, reluctant sailor always.",
       responses: [
         { label: "Show me your sculptor side.", next: "art" },
-        { label: "How do ye read stone seams?", next: "craft" },
-        { label: "Talk about ship work.", next: "work_open" },
+        { label: "How do you read stone seams?", next: "craft" },
+        { label: "Are you for hire aboard my ship?", next: "work_open" },
         { label: "Back to tavern", next: "root" },
       ],
     },
@@ -579,8 +579,8 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_open: {
       text: "If I sail with you, it is for precision, not adventure.",
       responses: [
-        { label: "What would ye handle?", next: "work_terms" },
-        { label: "What do ye require?", next: "work_need" },
+        { label: "What would you handle?", next: "work_terms" },
+        { label: "What do you require?", next: "work_need" },
         { label: "Back", next: "root" },
       ],
     },
@@ -591,7 +591,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
     work_terms: {
       text: "Your stone yield improves because each cut becomes intentional.",
       responses: [
-        { label: "Ask him plain to sign aboard.", action: "probe_hire" },
+        { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
@@ -624,7 +624,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
 export function getDialogueForCharacter(character: TavernCharacter): ConversationTree {
   return DIALOGUE_BY_ID[character.id] ?? {
     root: {
-      text: `${character.name} nods from the tavern corner.`,
+      text: `I'm ${character.name}. What would you like to know?`,
       responses: [{ label: "Back to tavern", next: "root" }],
     },
   };
