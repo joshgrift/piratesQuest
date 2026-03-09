@@ -21,7 +21,7 @@ npm run build
 ```
 
 Build output goes to `./dist/`.
-For release packaging, `build-game.sh` publishes this app to `../api/fragments/webview/<version>/`.
+For release packaging, `build-game.sh` publishes this app to `../api/fragments/webview/`.
 
 ## Development
 

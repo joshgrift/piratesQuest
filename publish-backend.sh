@@ -5,7 +5,7 @@ IMAGE_NAME="piratesquest-api"
 TAG="${1:-latest}"
 
 echo "=== Building Docker image ${IMAGE_NAME}:${TAG} ==="
-echo "This builds menu + admin web UIs and the .NET API, then packages them together."
+echo "This builds menu + webview + admin web UIs and the .NET API, then packages them together."
 docker build -t "${IMAGE_NAME}:${TAG}" .
 
 echo ""

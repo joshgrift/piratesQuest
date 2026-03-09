@@ -4,11 +4,11 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  // build-game.sh passes a versioned base path like /fragments/webview/0.6.0/
-  // so the API can host this UI under a versioned fragment URL.
+  // build-game.sh passes /fragments/webview/ so the API can host this UI
+  // under a stable fragment URL.
   base: '/',
   build: {
-    outDir: 'dist',
+    outDir: '../api/fragments/webview',
     emptyOutDir: true,
   },
   test: {

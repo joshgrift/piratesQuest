@@ -4,5 +4,5 @@ obj/
 *.suo
 .vs/
 *.DS_Store
-fragments/menu
+fragments/*
 !fragments/.gitkeep

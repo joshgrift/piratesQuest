@@ -63,8 +63,7 @@ partial class Configuration : Node
 
   private static string BuildHostedPortWebViewUrl()
   {
-    var version = GetVersion();
-    return $"{ApiBaseUrl}/fragments/webview/{version}/";
+    return $"{ApiBaseUrl}/fragments/webview";
   }
 
   public override void _Ready()

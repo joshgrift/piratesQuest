@@ -12,13 +12,7 @@ VERSION=$(grep 'config/version=' godot/project.godot | sed 's/config\/version="\
 
 echo "==== Building Port WebView ===="
 npm --prefix webview install
-npm --prefix webview run build -- --base="/fragments/webview/$VERSION/"
-
-WEBVIEW_TARGET_DIR="api/fragments/webview/$VERSION"
-echo "==== Publishing Port WebView to $WEBVIEW_TARGET_DIR ===="
-rm -rf "$WEBVIEW_TARGET_DIR"
-mkdir -p "$WEBVIEW_TARGET_DIR"
-cp -R webview/dist/. "$WEBVIEW_TARGET_DIR/"
+npm --prefix webview run build -- --base="/fragments/webview/"
 
 # Create version directory (use absolute path so Godot resolves it correctly with --path flag)
 VERSION_DIR="$(pwd)/dist/$VERSION"
