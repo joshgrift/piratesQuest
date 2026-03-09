@@ -3,7 +3,6 @@ import { ConversationThreadPanel } from "./ConversationThreadPanel";
 
 interface CharacterConversationOverlayProps {
   isOpen: boolean;
-  title: string;
   speakerName: string;
   speakerPortraitSrc: string;
   speakerPortraitAlt: string;
@@ -15,7 +14,6 @@ interface CharacterConversationOverlayProps {
 
 export function CharacterConversationOverlay({
   isOpen,
-  title,
   speakerName,
   speakerPortraitSrc,
   speakerPortraitAlt,
@@ -30,7 +28,6 @@ export function CharacterConversationOverlay({
     <div className="character-chat-overlay" role="dialog" aria-modal="true" aria-label={`${speakerName} conversation`}>
       <div className="character-chat-overlay-inner">
         <div className="character-chat-overlay-header">
-          <div className="character-chat-overlay-title">{title}</div>
           <button
             type="button"
             className="character-chat-overlay-close-btn"
@@ -41,9 +38,8 @@ export function CharacterConversationOverlay({
         </div>
 
         <ConversationThreadPanel
-          key={`${speakerName}-${title}`}
+          key={speakerName}
           tree={tree}
-          speakerName={speakerName}
           speakerPortraitSrc={speakerPortraitSrc}
           speakerPortraitAlt={speakerPortraitAlt}
           initialNodeId="root"

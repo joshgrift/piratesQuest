@@ -168,12 +168,11 @@ export default function App() {
       const tree = buildTavernConversationTree(character);
 
       return {
-        title: "Tavern Conversation",
         speakerName: character.name,
         speakerPortraitSrc: `${BASE}images/characters/${character.portrait}`,
         speakerPortraitAlt: character.name,
         tree,
-        instantNodeIds: Object.keys(tree),
+        instantNodeIds: [],
         onAction: (actionId: string): string | void => {
           if (actionId === "probe_hire") {
             if (portState.crew.hiredCharacterIds.includes(character.id)) return "already_hired";
@@ -208,12 +207,11 @@ export default function App() {
     if (!character) return null;
 
     return {
-      title: "Crew Conversation",
       speakerName: character.name,
       speakerPortraitSrc: `${BASE}images/characters/${character.portrait}`,
       speakerPortraitAlt: character.name,
       tree: buildCrewConversationTree(character),
-      instantNodeIds: ["root"],
+      instantNodeIds: [],
       onAction: (actionId: string): string | void => {
         if (actionId !== "fire") return;
         handleFireCharacter(character.id);
@@ -392,7 +390,6 @@ export default function App() {
       {activeConversationView && (
         <CharacterConversationOverlay
           isOpen
-          title={activeConversationView.title}
           speakerName={activeConversationView.speakerName}
           speakerPortraitSrc={activeConversationView.speakerPortraitSrc}
           speakerPortraitAlt={activeConversationView.speakerPortraitAlt}

@@ -2824,127 +2824,100 @@ img {
 
 .character-chat-overlay {
   position: fixed;
-  left: 50%;
-  bottom: 14px;
-  transform: translateX(-50%);
-  width: min(980px, 86vw);
-  max-height: min(80vh, 840px);
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 0 0 14px;
   pointer-events: none;
   z-index: 1200;
 }
 
+.character-chat-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 88%, rgba(16, 32, 46, 0.18), rgba(0, 0, 0, 0.62) 72%),
+    linear-gradient(180deg, rgba(4, 10, 16, 0.36), rgba(3, 7, 12, 0.62));
+  pointer-events: auto;
+}
+
 .character-chat-overlay-inner {
+  width: min(980px, 86vw);
+  max-height: min(80vh, 840px);
   pointer-events: auto;
   max-height: inherit;
-  padding: 16px 16px 18px;
-  border-radius: 24px;
-  border: 1px solid rgba(235, 194, 116, 0.35);
-  background:
-    linear-gradient(155deg, rgba(11, 24, 37, 0.68), rgba(38, 23, 13, 0.64)),
-    radial-gradient(circle at 12% 10%, rgba(107, 172, 217, 0.16), transparent 44%),
-    radial-gradient(circle at 84% 82%, rgba(225, 180, 106, 0.16), transparent 42%);
-  box-shadow:
-    0 24px 40px rgba(0, 0, 0, 0.52),
-    inset 0 0 0 1px rgba(249, 220, 153, 0.08);
-  backdrop-filter: blur(2px);
+  position: relative;
+  padding: 8px 8px 10px;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
 .character-chat-overlay-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
-}
-
-.character-chat-overlay-title {
-  font-family: "New Rocker", cursive;
-  font-size: 18px;
-  color: #f4d79f;
-  letter-spacing: 0.03em;
+  margin-bottom: 8px;
 }
 
 .character-chat-overlay-close-btn {
-  border: 1px solid rgba(236, 192, 114, 0.5);
+  border: 1px solid rgba(236, 192, 114, 0.3);
   border-radius: 999px;
-  padding: 6px 11px;
-  background: rgba(15, 33, 50, 0.72);
-  color: #f2d59d;
+  padding: 5px 10px;
+  background: rgba(8, 17, 27, 0.38);
+  color: rgba(242, 213, 157, 0.88);
   font-family: "Texturina", serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
+  backdrop-filter: blur(1px);
 }
 
 .character-chat-overlay-close-btn:hover {
-  background: rgba(30, 52, 74, 0.78);
+  background: rgba(18, 31, 46, 0.55);
 }
 
 .conversation-thread-shell {
-  border-radius: 16px;
-  border: 1px solid rgba(237, 196, 114, 0.3);
-  background:
-    linear-gradient(165deg, rgba(14, 33, 48, 0.84), rgba(46, 27, 15, 0.8)),
-    repeating-linear-gradient(0deg, transparent 0 20px, rgba(233, 191, 108, 0.03) 20px 21px);
-  box-shadow:
-    inset 0 0 0 1px rgba(254, 226, 160, 0.08),
-    0 12px 18px rgba(0, 0, 0, 0.26);
-  padding: 12px;
+  padding: 0;
 }
 
-.conversation-thread-speaker {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px 10px;
-  border-bottom: 1px solid rgba(236, 195, 113, 0.2);
-}
-
-.conversation-thread-speaker-portrait {
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba(241, 203, 129, 0.6);
-  box-shadow: 0 0 12px rgba(127, 194, 238, 0.28);
-}
-
-.conversation-thread-speaker-meta {
+.conversation-thread-chat-intro {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 10px;
 }
 
-.conversation-thread-speaker-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #97a9bb;
+.conversation-thread-chat-intro-portrait {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(242, 201, 120, 0.65);
+  box-shadow:
+    0 0 22px rgba(118, 184, 232, 0.34),
+    0 8px 16px rgba(0, 0, 0, 0.4);
 }
 
-.conversation-thread-speaker-name {
+.conversation-thread-chat-intro-name {
   font-family: "New Rocker", cursive;
-  font-size: 26px;
-  color: #f7deac;
+  font-size: 28px;
   line-height: 1;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+  color: #f9e4ba;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.62);
 }
 
 .conversation-thread-log {
-  margin-top: 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(238, 197, 116, 0.2);
-  background:
-    linear-gradient(180deg, rgba(10, 23, 35, 0.72), rgba(25, 16, 10, 0.72));
-  padding: 12px 10px;
+  padding: 4px 8px;
   max-height: min(48vh, 460px);
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
   scrollbar-width: thin;
   scrollbar-color: rgba(223, 181, 99, 0.7) transparent;
 }
@@ -2962,38 +2935,50 @@ img {
 }
 
 .conversation-thread-avatar {
-  width: 28px;
-  height: 28px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid rgba(236, 194, 114, 0.5);
+  border: 2px solid rgba(236, 194, 114, 0.5);
+  box-shadow:
+    0 0 14px rgba(118, 184, 232, 0.28),
+    0 6px 10px rgba(0, 0, 0, 0.34);
   flex-shrink: 0;
 }
 
 .conversation-thread-bubble {
-  max-width: min(80%, 620px);
-  border-radius: 13px;
-  padding: 10px 11px;
-  font-size: 14px;
-  line-height: 1.5;
+  max-width: min(76%, 620px);
+  border-radius: 12px;
+  padding: 4px 6px;
+  font-size: 22px;
+  line-height: 1.32;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .conversation-thread-bubble.npc {
-  color: #f1e2c2;
-  border: 1px solid rgba(232, 188, 106, 0.36);
+  color: #f8e8c7;
+  border: 1px solid rgba(236, 193, 112, 0.42);
   background:
-    linear-gradient(160deg, rgba(45, 30, 18, 0.88), rgba(21, 40, 58, 0.84));
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.22);
+    linear-gradient(155deg, rgba(44, 30, 18, 0.78), rgba(18, 35, 50, 0.68));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 228, 170, 0.08),
+    0 8px 14px rgba(0, 0, 0, 0.25);
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.72),
+    0 0 18px rgba(6, 17, 27, 0.55);
 }
 
 .conversation-thread-bubble.player {
-  color: #e6f1ff;
-  border: 1px solid rgba(113, 177, 231, 0.42);
+  color: #deedff;
+  font-size: 18px;
+  padding: 8px 12px;
+  border: 1px solid rgba(117, 182, 234, 0.45);
   background:
-    linear-gradient(160deg, rgba(20, 45, 67, 0.92), rgba(14, 31, 46, 0.9));
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.22);
+    linear-gradient(160deg, rgba(20, 47, 72, 0.76), rgba(11, 28, 43, 0.72));
+  box-shadow:
+    inset 0 0 0 1px rgba(169, 210, 247, 0.08),
+    0 6px 12px rgba(0, 0, 0, 0.24);
 }
 
 .conversation-thread-cursor {
@@ -3003,18 +2988,19 @@ img {
 }
 
 .conversation-thread-controls {
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .conversation-thread-skip-btn {
-  width: 100%;
-  border: 1px solid rgba(238, 195, 113, 0.44);
-  border-radius: 10px;
-  padding: 10px;
-  background: rgba(22, 39, 58, 0.82);
-  color: #f0d79f;
+  width: fit-content;
+  min-width: 120px;
+  border: 1px solid rgba(238, 195, 113, 0.3);
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: rgba(22, 39, 58, 0.48);
+  color: #f0d79fcc;
   font-family: "Texturina", serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -3022,32 +3008,29 @@ img {
 .conversation-thread-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
 }
 
 .conversation-thread-option-btn {
-  min-height: 44px;
-  border-radius: 10px;
-  border: 1px solid rgba(231, 187, 105, 0.24);
-  background:
-    linear-gradient(152deg, rgba(13, 28, 42, 0.9), rgba(51, 30, 15, 0.82));
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 229, 173, 0.06),
-    0 6px 10px rgba(0, 0, 0, 0.18);
-  color: #ead8b9;
+  min-height: 46px;
+  border-radius: 999px;
+  border: 1px solid rgba(231, 187, 105, 0.32);
+  background: rgba(20, 35, 49, 0.5);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.16);
+  color: #f2dfba;
   font-family: "Texturina", serif;
   font-size: 13px;
-  text-align: left;
-  padding: 8px 10px;
+  text-align: center;
+  padding: 9px 14px;
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
 .conversation-thread-option-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: rgba(237, 194, 114, 0.62);
-  background:
-    linear-gradient(150deg, rgba(22, 40, 57, 0.94), rgba(64, 39, 20, 0.88));
+  border-color: rgba(237, 194, 114, 0.64);
+  color: #fff3d7;
+  background: rgba(33, 52, 72, 0.64);
 }
 
 .conversation-thread-option-btn:disabled {
@@ -3067,7 +3050,7 @@ img {
 }
 
 @media (max-width: 1100px) {
-  .character-chat-overlay {
+  .character-chat-overlay-inner {
     width: min(760px, 94vw);
   }
 
@@ -3078,7 +3061,10 @@ img {
 
 @media (max-height: 870px) {
   .character-chat-overlay {
-    bottom: 10px;
+    padding-bottom: 10px;
+  }
+
+  .character-chat-overlay-inner {
     max-height: min(84vh, 700px);
   }
 }

@@ -3,7 +3,6 @@ import type { ConversationResponse, ConversationTree } from "./ConversationPanel
 
 interface ConversationThreadPanelProps {
   tree: ConversationTree;
-  speakerName: string;
   speakerPortraitSrc: string;
   speakerPortraitAlt: string;
   initialNodeId?: string;
@@ -32,7 +31,6 @@ function asCompleteMessage(id: number, role: ThreadRole, text: string): ThreadMe
 
 export function ConversationThreadPanel({
   tree,
-  speakerName,
   speakerPortraitSrc,
   speakerPortraitAlt,
   initialNodeId = "root",
@@ -177,16 +175,13 @@ export function ConversationThreadPanel({
 
   return (
     <div className="conversation-thread-shell">
-      <div className="conversation-thread-speaker">
+      <div className="conversation-thread-chat-intro">
         <img
-          className="conversation-thread-speaker-portrait"
+          className="conversation-thread-chat-intro-portrait"
           src={speakerPortraitSrc}
           alt={speakerPortraitAlt}
         />
-        <div className="conversation-thread-speaker-meta">
-          <div className="conversation-thread-speaker-label">Now Talking To</div>
-          <div className="conversation-thread-speaker-name">{speakerName}</div>
-        </div>
+        <div className="conversation-thread-chat-intro-name">{speakerPortraitAlt}</div>
       </div>
 
       <div
