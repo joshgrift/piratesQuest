@@ -173,6 +173,13 @@ public partial class Hud : Control
 
   private void OnIpcMessage(string message)
   {
+    // godot_wry IPC can arrive off the main thread.
+    // Always bounce to main before touching scene tree/game state.
+    CallDeferred(MethodName.HandleIpcMessageOnMain, message);
+  }
+
+  private void HandleIpcMessageOnMain(string message)
+  {
     if (_player == null) return;
 
     IpcMessage msg;
