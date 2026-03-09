@@ -145,9 +145,41 @@ public record StatChangeDto(string Stat, string Modifier, float Value);
 // ── React → Godot (deserialized from IPC JSON) ─────────────────────
 
 /// <summary>
+/// All actions the HUD webview can send to Godot.
+/// The string values on the wire are the snake_case action names in JsonDerivedType.
+/// </summary>
+public enum IpcAction
+{
+  Ready,
+  BuyItems,
+  SellItems,
+  PurchaseComponent,
+  EquipComponent,
+  UnequipComponent,
+  Heal,
+  SetInventory,
+  ClearComponents,
+  SetHealth,
+  BuildVault,
+  UpgradeVault,
+  VaultDeposit,
+  VaultWithdraw,
+  UpgradeShip,
+  HireCharacter,
+  FireCharacter,
+  SetShipTier,
+  SetVault,
+  DeleteVault,
+  InputKey,
+  InputCameraRotate,
+  InputCameraZoom,
+  InputCameraPan,
+}
+
+/// <summary>
 /// Base type for all IPC messages from the React UI.
 /// Uses System.Text.Json polymorphic deserialization keyed on the
-/// "action" property so we can pattern-match in C#.
+/// "action" property, and exposes that action as an enum for C# dispatch.
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "action")]
 [JsonDerivedType(typeof(ReadyMessage), "ready")]
@@ -157,7 +189,6 @@ public record StatChangeDto(string Stat, string Modifier, float Value);
 [JsonDerivedType(typeof(EquipComponentMessage), "equip_component")]
 [JsonDerivedType(typeof(UnequipComponentMessage), "unequip_component")]
 [JsonDerivedType(typeof(HealMessage), "heal")]
-[JsonDerivedType(typeof(FocusParentMessage), "focus_parent")]
 [JsonDerivedType(typeof(SetInventoryMessage), "set_inventory")]
 [JsonDerivedType(typeof(ClearComponentsMessage), "clear_components")]
 [JsonDerivedType(typeof(SetHealthMessage), "set_health")]
@@ -175,38 +206,50 @@ public record StatChangeDto(string Stat, string Modifier, float Value);
 [JsonDerivedType(typeof(InputCameraRotateMessage), "input_camera_rotate")]
 [JsonDerivedType(typeof(InputCameraZoomMessage), "input_camera_zoom")]
 [JsonDerivedType(typeof(InputCameraPanMessage), "input_camera_pan")]
-public record IpcMessage;
+public abstract record IpcMessage
+{
+  public abstract IpcAction Action { get; }
+}
 
 public record BuyItemsMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.BuyItems;
   public ItemQuantity[] Items { get; init; } = [];
 }
 
 public record SellItemsMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.SellItems;
   public ItemQuantity[] Items { get; init; } = [];
 }
 
 public record PurchaseComponentMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.PurchaseComponent;
   public string Name { get; init; } = "";
 }
 
 public record EquipComponentMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.EquipComponent;
   public string Name { get; init; } = "";
 }
 
 public record UnequipComponentMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.UnequipComponent;
   public string Name { get; init; } = "";
 }
 
-public record HealMessage : IpcMessage;
+public record HealMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.Heal;
+}
 
-public record ReadyMessage : IpcMessage;
-
-public record FocusParentMessage : IpcMessage;
+public record ReadyMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.Ready;
+}
 
 /// <summary>
 /// Creative-mode only: sets a specific inventory item to an exact quantity.
@@ -214,6 +257,7 @@ public record FocusParentMessage : IpcMessage;
 /// </summary>
 public record SetInventoryMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.SetInventory;
   public ItemQuantity[] Items { get; init; } = [];
 }
 
@@ -221,7 +265,10 @@ public record SetInventoryMessage : IpcMessage
 /// Creative-mode only: removes all owned components.
 /// Rejected by the server if creative mode is not enabled.
 /// </summary>
-public record ClearComponentsMessage : IpcMessage;
+public record ClearComponentsMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.ClearComponents;
+}
 
 /// <summary>
 /// Creative-mode only: sets the player's health to an exact value.
@@ -229,57 +276,76 @@ public record ClearComponentsMessage : IpcMessage;
 /// </summary>
 public record SetHealthMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.SetHealth;
   public int Health { get; init; }
 }
 
 /// <summary>Upgrade the ship to the next tier.</summary>
-public record UpgradeShipMessage : IpcMessage;
+public record UpgradeShipMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.UpgradeShip;
+}
 
 /// <summary>Hire a tavern character currently at this port.</summary>
 public record HireCharacterMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.HireCharacter;
   public string CharacterId { get; init; } = "";
 }
 
 /// <summary>Fire a currently hired tavern character.</summary>
 public record FireCharacterMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.FireCharacter;
   public string CharacterId { get; init; } = "";
 }
 
 /// <summary>Build a new vault at the current port (one per player).</summary>
-public record BuildVaultMessage : IpcMessage;
+public record BuildVaultMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.BuildVault;
+}
 
 /// <summary>Upgrade the vault to the next level.</summary>
-public record UpgradeVaultMessage : IpcMessage;
+public record UpgradeVaultMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.UpgradeVault;
+}
 
 /// <summary>Move items from inventory into the vault.</summary>
 public record VaultDepositMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.VaultDeposit;
   public ItemQuantity[] Items { get; init; } = [];
 }
 
 /// <summary>Move items from the vault back into inventory.</summary>
 public record VaultWithdrawMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.VaultWithdraw;
   public ItemQuantity[] Items { get; init; } = [];
 }
 
 /// <summary>Creative-mode only: set the player's ship tier directly (0-based index).</summary>
 public record SetShipTierMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.SetShipTier;
   public int Tier { get; init; }
 }
 
 /// <summary>Creative-mode only: set or create a vault at a port with a given level.</summary>
 public record SetVaultMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.SetVault;
   public string PortName { get; init; } = "";
   public int Level { get; init; } = 1;
 }
 
 /// <summary>Creative-mode only: delete the player's vault entirely.</summary>
-public record DeleteVaultMessage : IpcMessage;
+public record DeleteVaultMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.DeleteVault;
+}
 
 /// <summary>
 /// An item type + quantity pair used in buy/sell messages.
@@ -294,6 +360,7 @@ public record ItemQuantity(string Type, int Quantity);
 /// </summary>
 public record InputKeyMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.InputKey;
   public string Key { get; init; } = "";
   public bool Pressed { get; init; }
 }
@@ -305,6 +372,7 @@ public record InputKeyMessage : IpcMessage
 /// </summary>
 public record InputCameraRotateMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.InputCameraRotate;
   public float DeltaX { get; init; }
   public float DeltaY { get; init; }
 }
@@ -316,6 +384,7 @@ public record InputCameraRotateMessage : IpcMessage
 /// </summary>
 public record InputCameraZoomMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.InputCameraZoom;
   public float Delta { get; init; }
 }
 
@@ -326,5 +395,6 @@ public record InputCameraZoomMessage : IpcMessage
 /// </summary>
 public record InputCameraPanMessage : IpcMessage
 {
+  public override IpcAction Action => IpcAction.InputCameraPan;
   public float DeltaX { get; init; }
 }

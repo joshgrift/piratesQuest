@@ -134,7 +134,6 @@ export type IpcMessage =
   | { action: "upgrade_ship" }
   | { action: "hire_character"; characterId: string }
   | { action: "fire_character"; characterId: string }
-  | { action: "focus_parent" }
   | { action: "set_inventory"; items: { type: string; quantity: number }[] }
   | { action: "clear_components" }
   | { action: "set_health"; health: number }
