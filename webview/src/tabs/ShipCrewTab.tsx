@@ -1,5 +1,3 @@
-import { useEffect, useMemo, useState } from "react";
-import { ConversationPanel } from "../components/ConversationPanel";
 import type { ConversationTree } from "../components/ConversationPanel";
 import type { PortState, TavernCharacter } from "../types";
 import { BASE, fmt, formatStatName } from "../utils/helpers";
@@ -19,7 +17,7 @@ function getCrewImpact(state: PortState): Record<string, number> {
   return totals;
 }
 
-function buildOnboardDialogue(character: TavernCharacter): ConversationTree {
+export function buildCrewConversationTree(character: TavernCharacter): ConversationTree {
   const additiveChanges = character.statChanges.filter((s) => s.modifier === "Additive");
   const bonusText = additiveChanges.length === 0
     ? "No direct numbers from my post, Captain, but discipline stays tight."
@@ -38,7 +36,7 @@ function buildOnboardDialogue(character: TavernCharacter): ConversationTree {
       ],
     },
     status: {
-      text: `\"Crew is steady and watch is sharp. We keep this hull ready for trouble.\"`,
+      text: "\"Crew is steady and watch is sharp. We keep this hull ready for trouble.\"",
       responses: [{ label: "Back", next: "root" }],
     },
     impact: {
@@ -58,27 +56,18 @@ function buildOnboardDialogue(character: TavernCharacter): ConversationTree {
 
 interface ShipCrewTabProps {
   state: PortState;
-  onFireCharacter: (characterId: string) => void;
+  onOpenConversation: (characterId: string) => void;
+  activeConversationCharacterId?: string | null;
 }
 
-export function ShipCrewTab({ state, onFireCharacter }: ShipCrewTabProps) {
+export function ShipCrewTab({
+  state,
+  onOpenConversation,
+  activeConversationCharacterId,
+}: ShipCrewTabProps) {
   const hiredSet = new Set(state.crew.hiredCharacterIds);
   const hiredCrew = state.crew.characters.filter((c) => hiredSet.has(c.id));
   const impact = getCrewImpact(state);
-  const [activeCharacterId, setActiveCharacterId] = useState(hiredCrew[0]?.id ?? "");
-
-  useEffect(() => {
-    const stillExists = hiredCrew.some((c) => c.id === activeCharacterId);
-    if (!stillExists) {
-      setActiveCharacterId(hiredCrew[0]?.id ?? "");
-    }
-  }, [hiredCrew, activeCharacterId]);
-
-  const activeCharacter = hiredCrew.find((c) => c.id === activeCharacterId) ?? hiredCrew[0] ?? null;
-  const dialogue = useMemo(
-    () => (activeCharacter ? buildOnboardDialogue(activeCharacter) : null),
-    [activeCharacter],
-  );
 
   return (
     <>
@@ -94,9 +83,6 @@ export function ShipCrewTab({ state, onFireCharacter }: ShipCrewTabProps) {
             {hiredCrew.length}/{state.crew.crewSlots} Hired
           </div>
         </div>
-        <div className="tavern-crew-help">
-          Talk to any hired crewmate below for onboard reports while at sea.
-        </div>
       </div>
 
       {hiredCrew.length === 0 ? (
@@ -105,46 +91,25 @@ export function ShipCrewTab({ state, onFireCharacter }: ShipCrewTabProps) {
         <>
           <div className="tavern-roster">
             {hiredCrew.map((character) => {
-              const isActive = character.id === activeCharacter?.id;
+              const isTalking = activeConversationCharacterId === character.id;
               return (
                 <button
                   key={character.id}
-                  className={`tavern-character-tile ${isActive ? "active" : ""}`}
-                  onClick={() => setActiveCharacterId(character.id)}
+                  className={`tavern-character-tile ${isTalking ? "active" : ""}`}
+                  onClick={() => onOpenConversation(character.id)}
                 >
                   <img
-                    className={`tavern-chat-portrait tavern-character-tile-portrait ${isActive ? "dimmed" : ""}`}
+                    className="tavern-chat-portrait tavern-character-tile-portrait"
                     src={`${BASE}images/characters/${character.portrait}`}
                     alt={character.name}
                   />
                   <span className="tavern-character-tile-main">
                     <span className="tavern-character-name">{character.name}</span>
-                    <span className="tavern-character-talking">{character.role}</span>
                   </span>
-                  <span className="tavern-badge hired">Aboard</span>
                 </button>
               );
             })}
           </div>
-
-          {activeCharacter && dialogue && (
-            <ConversationPanel
-              key={activeCharacter.id}
-              tree={dialogue}
-              speakerName={activeCharacter.name}
-              speakerPortraitSrc={`${BASE}images/characters/${activeCharacter.portrait}`}
-              speakerPortraitAlt={activeCharacter.name}
-              classNamePrefix="tavern-chat"
-              initialNodeId="root"
-              instantNodeIds={["root"]}
-              onAction={(actionId) => {
-                // Crew stand-down is managed from Ship > Crew so Tavern stays focused on recruiting.
-                if (actionId !== "fire") return;
-                onFireCharacter(activeCharacter.id);
-                return "fire_success";
-              }}
-            />
-          )}
         </>
       )}
 
