@@ -548,8 +548,7 @@ img {
 }
 
 .ship-status-resource-pill img {
-  width: 12px;
-  height: 12px;
+  width: 16px;
   object-fit: contain;
 }
 
