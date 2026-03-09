@@ -169,11 +169,6 @@ export default function App() {
       <div className={panelClass}>
         <div className="port-header">
         <div className="port-name">{panelTitle}</div>
-        {portState && (
-          <div className="port-coins">
-            {portState.inventory["Coin"] ?? 0} Gold
-          </div>
-        )}
         </div>
 
         {activePanelMode !== null && activePanelMode !== "leaderboard" && (
