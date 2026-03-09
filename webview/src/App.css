@@ -24,8 +24,8 @@
 
 :root {
   --panel-width: 33.333%;
-  --mode-rail-width: 46px;
-  --mode-rail-gap: 4px;
+  --mode-rail-width: 56px;
+  --mode-rail-gap: 6px;
   --status-widget-gap: 12px;
 }
 
@@ -94,7 +94,7 @@ img {
   pointer-events: auto;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 4px;
   z-index: 1000;
   transition: right 0.22s ease;
 }
@@ -109,55 +109,83 @@ img {
   align-items: center;
   position: relative;
   width: 100%;
-  height: 60px;
+  height: 56px;
   padding: 0;
   border: none;
-  border-radius: 0;
-  clip-path: none;
+  border-radius: 999px;
   background: transparent;
-  color: #1b2d4a;
+  color: #8fbfe6;
   cursor: pointer;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: transform 0.18s ease, opacity 0.18s ease, filter 0.18s ease;
   box-shadow: none;
-  opacity: 0.9;
+  opacity: 0.96;
 }
 
 .rail-mode-icon {
   position: relative;
-  z-index: 2;
-  width: 28px;
-  height: 28px;
+  z-index: 3;
+  width: 25px;
+  height: 25px;
   object-fit: contain;
-  filter: brightness(0) saturate(100%) invert(9%) sepia(40%) saturate(1723%) hue-rotate(180deg) brightness(92%) contrast(96%);
+  filter: brightness(0) saturate(100%) invert(85%) sepia(9%) saturate(626%) hue-rotate(173deg) brightness(95%) contrast(94%);
 }
 
 .rail-mode-btn::before {
   content: "";
   position: absolute;
-  width: 38px;
-  height: 38px;
+  inset: 6px;
   border-radius: 999px;
-  border: 2px solid rgba(26, 63, 106, 0.82);
+  border: 2px solid rgba(206, 160, 83, 0.68);
+  background:
+    radial-gradient(circle at 32% 28%, rgba(214, 171, 95, 0.28), transparent 52%),
+    radial-gradient(circle at center, rgba(18, 44, 70, 0.94) 56%, rgba(11, 27, 44, 0.98) 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(171, 206, 245, 0.22),
-    0 0 0 1px rgba(8, 24, 42, 0.55);
+    inset 0 0 0 1px rgba(247, 223, 161, 0.22),
+    inset 0 -5px 10px rgba(0, 0, 0, 0.35);
 }
 
 .rail-mode-btn::after {
   content: "";
   position: absolute;
-  width: 46px;
-  height: 46px;
+  width: 38px;
+  height: 38px;
   background:
-    linear-gradient(rgba(23, 61, 104, 0.78), rgba(23, 61, 104, 0.78)) center/2px 100% no-repeat,
-    linear-gradient(90deg, rgba(23, 61, 104, 0.78), rgba(23, 61, 104, 0.78)) center/100% 2px no-repeat,
-    radial-gradient(circle at center, transparent 68%, rgba(17, 44, 77, 0.62) 69%, rgba(17, 44, 77, 0.62) 73%, transparent 74%);
-  opacity: 0.95;
+    linear-gradient(rgba(167, 136, 83, 0.5), rgba(167, 136, 83, 0.5)) center/2px 100% no-repeat,
+    linear-gradient(90deg, rgba(167, 136, 83, 0.5), rgba(167, 136, 83, 0.5)) center/100% 2px no-repeat,
+    conic-gradient(from 0deg,
+      transparent 0 14deg,
+      rgba(167, 136, 83, 0.4) 14deg 16deg,
+      transparent 16deg 44deg,
+      rgba(167, 136, 83, 0.32) 44deg 45deg,
+      transparent 45deg 74deg,
+      rgba(167, 136, 83, 0.4) 74deg 76deg,
+      transparent 76deg 104deg,
+      rgba(167, 136, 83, 0.32) 104deg 105deg,
+      transparent 105deg 134deg,
+      rgba(167, 136, 83, 0.4) 134deg 136deg,
+      transparent 136deg 164deg,
+      rgba(167, 136, 83, 0.32) 164deg 165deg,
+      transparent 165deg 194deg,
+      rgba(167, 136, 83, 0.4) 194deg 196deg,
+      transparent 196deg 224deg,
+      rgba(167, 136, 83, 0.32) 224deg 225deg,
+      transparent 225deg 254deg,
+      rgba(167, 136, 83, 0.4) 254deg 256deg,
+      transparent 256deg 284deg,
+      rgba(167, 136, 83, 0.32) 284deg 285deg,
+      transparent 285deg 314deg,
+      rgba(167, 136, 83, 0.4) 314deg 316deg,
+      transparent 316deg 344deg,
+      rgba(167, 136, 83, 0.32) 344deg 345deg,
+      transparent 345deg 360deg);
+  opacity: 0.7;
+  z-index: 1;
 }
 
 .rail-mode-btn:hover:not(:disabled) {
-  transform: translateX(-1px);
+  transform: translateX(-2px) scale(1.02);
   opacity: 1;
+  filter: brightness(1.05);
 }
 
 .rail-mode-btn.active {
@@ -165,18 +193,47 @@ img {
 }
 
 .rail-mode-btn.active::before {
-  border-color: rgba(90, 150, 216, 0.98);
+  border-color: rgba(246, 210, 136, 0.95);
   box-shadow:
-    inset 0 0 0 1px rgba(198, 225, 255, 0.4),
-    0 0 10px rgba(64, 111, 165, 0.4),
-    0 0 0 1px rgba(11, 33, 56, 0.7);
+    inset 0 0 0 1px rgba(255, 231, 173, 0.42),
+    inset 0 -5px 10px rgba(0, 0, 0, 0.32),
+    0 0 12px rgba(92, 143, 203, 0.45);
 }
 
 .rail-mode-btn.active::after {
   background:
-    linear-gradient(rgba(90, 150, 216, 0.95), rgba(90, 150, 216, 0.95)) center/2px 100% no-repeat,
-    linear-gradient(90deg, rgba(90, 150, 216, 0.95), rgba(90, 150, 216, 0.95)) center/100% 2px no-repeat,
-    radial-gradient(circle at center, transparent 68%, rgba(90, 150, 216, 0.52) 69%, rgba(90, 150, 216, 0.52) 74%, transparent 75%);
+    linear-gradient(rgba(105, 163, 221, 0.62), rgba(105, 163, 221, 0.62)) center/2px 100% no-repeat,
+    linear-gradient(90deg, rgba(105, 163, 221, 0.62), rgba(105, 163, 221, 0.62)) center/100% 2px no-repeat,
+    conic-gradient(from 0deg,
+      transparent 0 14deg,
+      rgba(105, 163, 221, 0.54) 14deg 16deg,
+      transparent 16deg 44deg,
+      rgba(105, 163, 221, 0.42) 44deg 45deg,
+      transparent 45deg 74deg,
+      rgba(105, 163, 221, 0.54) 74deg 76deg,
+      transparent 76deg 104deg,
+      rgba(105, 163, 221, 0.42) 104deg 105deg,
+      transparent 105deg 134deg,
+      rgba(105, 163, 221, 0.54) 134deg 136deg,
+      transparent 136deg 164deg,
+      rgba(105, 163, 221, 0.42) 164deg 165deg,
+      transparent 165deg 194deg,
+      rgba(105, 163, 221, 0.54) 194deg 196deg,
+      transparent 196deg 224deg,
+      rgba(105, 163, 221, 0.42) 224deg 225deg,
+      transparent 225deg 254deg,
+      rgba(105, 163, 221, 0.54) 254deg 256deg,
+      transparent 256deg 284deg,
+      rgba(105, 163, 221, 0.42) 284deg 285deg,
+      transparent 285deg 314deg,
+      rgba(105, 163, 221, 0.54) 314deg 316deg,
+      transparent 316deg 344deg,
+      rgba(105, 163, 221, 0.42) 344deg 345deg,
+      transparent 345deg 360deg);
+}
+
+.rail-mode-btn.active .rail-mode-icon {
+  filter: brightness(0) saturate(100%) invert(94%) sepia(31%) saturate(1235%) hue-rotate(169deg) brightness(101%) contrast(97%);
 }
 
 .rail-mode-btn:focus-visible {
@@ -185,16 +242,16 @@ img {
 }
 
 .rail-mode-btn:disabled {
-  color: #1b2d4a;
+  color: #5f7f9b;
   background: transparent;
   box-shadow: none;
   cursor: default;
-  opacity: 0.32;
+  opacity: 0.48;
 }
 
 .rail-mode-btn:disabled::before,
 .rail-mode-btn:disabled::after {
-  opacity: 0.45;
+  opacity: 0.38;
 }
 
 /* ── Ship Status Widget ───────────────────────────────────────────── */
@@ -549,6 +606,9 @@ img {
 
 .ship-status-resource-pill img {
   width: 16px;
+  height: 16px;
+  position: relative;
+  top: 2px;
   object-fit: contain;
 }
 
