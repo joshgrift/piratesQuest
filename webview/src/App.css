@@ -24,6 +24,8 @@
 
 :root {
   --panel-width: 33.333%;
+  --mode-rail-width: 46px;
+  --mode-rail-gap: 4px;
 }
 
 body {
@@ -71,42 +73,127 @@ img {
   background: linear-gradient(160deg, #0d1b2a 0%, #1b2d4a 40%, #162338 100%);
   display: flex;
   flex-direction: column;
-  transition: right 0.25s ease;
   overflow: hidden;
-}
-
-.port-panel.open {
-  right: 0;
+  border-left: 1px solid rgba(212, 167, 72, 0.22);
+  box-shadow: -16px 0 40px rgba(0, 0, 0, 0.45);
+  transform: translateX(0);
+  transition: transform 0.22s ease;
 }
 
 .port-panel.hidden {
-  right: calc(-1 * var(--panel-width));
+  transform: translateX(100%);
+  pointer-events: none;
 }
 
-.panel-toggle {
+.mode-rail {
   position: fixed;
   top: 14px;
-  right: var(--panel-width);
+  right: calc(var(--panel-width) + var(--mode-rail-gap));
+  width: var(--mode-rail-width);
   pointer-events: auto;
-  transform: translateX(-8px);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   z-index: 1000;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #d4a748;
-  background: rgba(13, 27, 42, 0.9);
-  color: #d4a748;
-  font-family: "New Rocker", cursive;
-  font-size: 15px;
+  transition: right 0.22s ease;
+}
+
+.mode-rail.collapsed {
+  right: var(--mode-rail-gap);
+}
+
+.rail-mode-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  height: 60px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  clip-path: none;
+  background: transparent;
+  color: #1b2d4a;
   cursor: pointer;
-  transition: right 0.4s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  box-shadow: none;
+  opacity: 0.9;
 }
 
-.panel-toggle:hover {
-  background: rgba(27, 45, 74, 0.96);
+.rail-mode-icon {
+  position: relative;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(9%) sepia(40%) saturate(1723%) hue-rotate(180deg) brightness(92%) contrast(96%);
 }
 
-.panel-toggle.panel-hidden {
-  right: 0;
+.rail-mode-btn::before {
+  content: "";
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 2px solid rgba(26, 63, 106, 0.82);
+  box-shadow:
+    inset 0 0 0 1px rgba(171, 206, 245, 0.22),
+    0 0 0 1px rgba(8, 24, 42, 0.55);
+}
+
+.rail-mode-btn::after {
+  content: "";
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  background:
+    linear-gradient(rgba(23, 61, 104, 0.78), rgba(23, 61, 104, 0.78)) center/2px 100% no-repeat,
+    linear-gradient(90deg, rgba(23, 61, 104, 0.78), rgba(23, 61, 104, 0.78)) center/100% 2px no-repeat,
+    radial-gradient(circle at center, transparent 68%, rgba(17, 44, 77, 0.62) 69%, rgba(17, 44, 77, 0.62) 73%, transparent 74%);
+  opacity: 0.95;
+}
+
+.rail-mode-btn:hover:not(:disabled) {
+  transform: translateX(-1px);
+  opacity: 1;
+}
+
+.rail-mode-btn.active {
+  opacity: 1;
+}
+
+.rail-mode-btn.active::before {
+  border-color: rgba(90, 150, 216, 0.98);
+  box-shadow:
+    inset 0 0 0 1px rgba(198, 225, 255, 0.4),
+    0 0 10px rgba(64, 111, 165, 0.4),
+    0 0 0 1px rgba(11, 33, 56, 0.7);
+}
+
+.rail-mode-btn.active::after {
+  background:
+    linear-gradient(rgba(90, 150, 216, 0.95), rgba(90, 150, 216, 0.95)) center/2px 100% no-repeat,
+    linear-gradient(90deg, rgba(90, 150, 216, 0.95), rgba(90, 150, 216, 0.95)) center/100% 2px no-repeat,
+    radial-gradient(circle at center, transparent 68%, rgba(90, 150, 216, 0.52) 69%, rgba(90, 150, 216, 0.52) 74%, transparent 75%);
+}
+
+.rail-mode-btn:focus-visible {
+  outline: 2px solid #f0c77a;
+  outline-offset: 2px;
+}
+
+.rail-mode-btn:disabled {
+  color: #1b2d4a;
+  background: transparent;
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.32;
+}
+
+.rail-mode-btn:disabled::before,
+.rail-mode-btn:disabled::after {
+  opacity: 0.45;
 }
 
 .left-inventory-panel,
@@ -212,7 +299,7 @@ img {
 
 .port-name {
   font-family: "New Rocker", cursive;
-  font-size: 26px;
+  font-size: 24px;
   color: #d4a748;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
   text-align: center;
@@ -220,17 +307,10 @@ img {
 
 .port-coins {
   text-align: center;
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 15px;
   color: #d4a748;
   font-weight: 600;
-}
-
-.port-coins img {
-  width: 18px;
-  height: 18px;
-  vertical-align: middle;
-  margin-right: 4px;
 }
 
 /* ── Tabs ──────────────────────────────────────────────────────────── */
@@ -240,43 +320,6 @@ img {
   gap: 0;
   flex-shrink: 0;
   border-bottom: 2px solid rgba(139, 105, 20, 0.3);
-}
-
-.section-bar {
-  display: flex;
-  gap: 8px;
-  padding: 8px 12px 10px;
-  border-bottom: 1px solid rgba(139, 105, 20, 0.28);
-}
-
-.section-btn {
-  flex: 1;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(139, 105, 20, 0.35);
-  border-radius: 8px;
-  color: #8b9ab5;
-  font-family: "New Rocker", cursive;
-  font-size: 15px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.section-btn:hover:not(:disabled) {
-  color: #d4a748;
-  border-color: #d4a748;
-  background: rgba(212, 167, 72, 0.08);
-}
-
-.section-btn.active {
-  color: #d4a748;
-  border-color: #d4a748;
-  background: rgba(212, 167, 72, 0.12);
-}
-
-.section-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
 }
 
 .tab-btn {

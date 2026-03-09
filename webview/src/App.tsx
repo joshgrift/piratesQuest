@@ -3,7 +3,7 @@ import "./App.css";
 import type { PortState } from "./types";
 import { sendIpc } from "./utils/ipc";
 import { useInputCapture } from "./hooks/useInputCapture";
-import { inventoryIcon } from "./utils/helpers";
+import { BASE, inventoryIcon } from "./utils/helpers";
 import { MarketTab } from "./tabs/MarketTab";
 import { ShipyardTab } from "./tabs/ShipyardTab";
 import { VaultTab } from "./tabs/VaultTab";
@@ -13,21 +13,24 @@ import { TavernTab } from "./tabs/TavernTab";
 import { ShipCrewTab } from "./tabs/ShipCrewTab";
 import { LeaderboardTab } from "./tabs/LeaderboardTab";
 
-type ShipTab = "guide" | "leaderboard" | "ship_crew" | "ship_status";
+type ShipTab = "guide" | "ship_crew" | "ship_status";
 type PortTab = "market" | "shipyard" | "tavern" | "vault" | "creative";
-type Section = "ship" | "port";
+type PanelMode = "ship" | "port" | "leaderboard";
 type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
 const INVENTORY_ORDER = ["Coin", "Wood", "Fish", "Iron", "Tea", "CannonBall", "Trophy"] as const;
+const SHIP_ICON = `${BASE}icons/flat/ship-wheel.svg`;
+const PORT_ICON = `${BASE}icons/flat/anchor.svg`;
+const LEADERBOARD_ICON = `${BASE}icons/flat/pirate-hat.svg`;
 
 export default function App() {
   useInputCapture();
 
   const [portState, setPortState] = useState<PortState | null>(null);
-  const [isPanelVisible, setIsPanelVisible] = useState(true);
-  const [activeSection, setActiveSection] = useState<Section>("ship");
+  const [activePanelMode, setActivePanelMode] = useState<PanelMode | null>("ship");
   const [activeShipTab, setActiveShipTab] = useState<ShipTab>("guide");
   const [activePortTab, setActivePortTab] = useState<PortTab>("market");
   const prevIsInPortRef = useRef<boolean | null>(null);
+  const prePortPanelModeRef = useRef<PanelMode | null>("ship");
 
   useEffect(() => {
     window.openPort = (data: PortState) => {
@@ -35,9 +38,11 @@ export default function App() {
     };
 
     window.closePort = () => {
-      // Keep the panel visible at all times. On close, just return
-      // to ship defaults while preserving the latest state snapshot.
-      setActiveSection("ship");
+      // Keep the panel visible at all times. On close we reset to
+      // safe ship defaults while preserving the latest state snapshot.
+      // Godot calls closePort when undocking, so we force local state
+      // to sea mode even before the next updateState payload arrives.
+      setPortState((prev) => (prev ? { ...prev, isInPort: false } : prev));
       setActiveShipTab("guide");
     };
 
@@ -53,17 +58,36 @@ export default function App() {
     const prevIsInPort = prevIsInPortRef.current;
     prevIsInPortRef.current = isInPort;
 
-    // Auto-open Port section only on sea -> port transition.
+    // Auto-open Port mode only on sea -> port transition.
     if (isInPort && prevIsInPort !== true) {
-      setActiveSection("port");
+      prePortPanelModeRef.current = activePanelMode;
+      setActivePanelMode("port");
       return;
     }
 
-    // If we leave port while viewing port-only pages, switch back to ship.
-    if (!isInPort && activeSection === "port") {
-      setActiveSection("ship");
+    // Leaving port restores the panel mode we had before docking
+    // (including hidden state if the panel was collapsed).
+    if (!isInPort && prevIsInPort === true) {
+      setActivePanelMode(prePortPanelModeRef.current);
     }
-  }, [portState?.isInPort, activeSection]);
+  }, [portState?.isInPort, activePanelMode]);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      if (e.repeat) return;
+
+      if (activePanelMode !== null) {
+        e.preventDefault();
+        setActivePanelMode(null);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [activePanelMode]);
 
   const handleHireCharacter = (characterId: string): HireOutcome => {
     if (!portState) return "not_hireable";
@@ -88,16 +112,22 @@ export default function App() {
     sendIpc({ action: "fire_character", characterId });
   };
 
-  const panelClass = [
-    "port-panel",
-    isPanelVisible ? "open" : "hidden",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const panelClass = ["port-panel", activePanelMode === null ? "hidden" : ""].filter(Boolean).join(" ");
+  const isInPort = !!portState?.isInPort;
   const healthPct = portState && portState.maxHealth > 0
     ? Math.max(0, Math.min(100, (portState.health / portState.maxHealth) * 100))
     : 0;
   const healthHue = Math.round((healthPct / 100) * 120);
+  const panelTitle = activePanelMode === "port"
+    ? (portState?.portName ?? "Port")
+    : activePanelMode === "leaderboard"
+      ? "Hall of Captains"
+      : "Ship Operations";
+
+  const handleModeSelect = (mode: PanelMode) => {
+    if (mode === "port" && !isInPort) return;
+    setActivePanelMode((prev) => (prev === mode ? null : mode));
+  };
 
   return (
     <>
@@ -140,67 +170,62 @@ export default function App() {
         )}
       </div>
 
-      <button
-        className={`panel-toggle ${isPanelVisible ? "" : "panel-hidden"}`.trim()}
-        onClick={() => setIsPanelVisible((prev) => !prev)}
-        type="button"
-        aria-label={isPanelVisible ? "Hide port panel" : "Show port panel"}
-      >
-        {isPanelVisible ? "Hide" : "Show"}
-      </button>
+      <div className={`mode-rail ${activePanelMode === null ? "collapsed" : ""}`} role="tablist" aria-label="Panel mode">
+        <button
+          className={`rail-mode-btn ${activePanelMode === "port" ? "active" : ""}`}
+          onClick={() => handleModeSelect("port")}
+          type="button"
+          role="tab"
+          aria-selected={activePanelMode === "port"}
+          aria-label="Port mode"
+          title={isInPort ? "Port" : "Port mode is only available while docked."}
+          disabled={!isInPort}
+        >
+          <img className="rail-mode-icon" src={PORT_ICON} alt="" />
+        </button>
+        <button
+          className={`rail-mode-btn ${activePanelMode === "ship" ? "active" : ""}`}
+          onClick={() => handleModeSelect("ship")}
+          type="button"
+          role="tab"
+          aria-selected={activePanelMode === "ship"}
+          aria-label="Ship mode"
+          title="Ship"
+        >
+          <img className="rail-mode-icon" src={SHIP_ICON} alt="" />
+        </button>
+        <button
+          className={`rail-mode-btn ${activePanelMode === "leaderboard" ? "active" : ""}`}
+          onClick={() => handleModeSelect("leaderboard")}
+          type="button"
+          role="tab"
+          aria-selected={activePanelMode === "leaderboard"}
+          aria-label="Leaderboard mode"
+          title="Leaderboard"
+        >
+          <img className="rail-mode-icon" src={LEADERBOARD_ICON} alt="" />
+        </button>
+      </div>
 
       <div className={panelClass}>
-        <div className="section-bar">
-        <button
-          className={`section-btn ${activeSection === "ship" ? "active" : ""}`}
-          onClick={() => setActiveSection("ship")}
-        >
-          Ship
-        </button>
-        <button
-          className={`section-btn ${activeSection === "port" ? "active" : ""}`}
-          onClick={() => setActiveSection("port")}
-          disabled={!portState?.isInPort}
-          title={!portState?.isInPort ? "Port section is only available while docked." : undefined}
-        >
-          Port
-        </button>
-        </div>
-
         <div className="port-header">
-        <div className="view-context-title">
-          {activeSection === "ship" ? "Ship Panel" : "Port Panel"}
-        </div>
-        <div className="port-name">
-          {activeSection === "ship"
-            ? "Ship Operations"
-            : (portState?.portName ?? "Port")}
-        </div>
-        <div className={`location-badge ${portState?.isInPort ? "in-port" : "at-sea"}`}>
-          {portState?.isInPort ? "In Port" : "At Sea"}
-        </div>
+        <div className="port-name">{panelTitle}</div>
         {portState && (
           <div className="port-coins">
-            <img src={inventoryIcon("Coin")} alt="coins" />
             {portState.inventory["Coin"] ?? 0} Gold
           </div>
         )}
         </div>
 
+        {activePanelMode !== null && activePanelMode !== "leaderboard" && (
         <div className="tab-bar">
-        {activeSection === "ship" ? (
+        {activePanelMode === "ship" ? (
           <>
             <button
               className={`tab-btn ${activeShipTab === "guide" ? "active" : ""}`}
               onClick={() => setActiveShipTab("guide")}
             >
               Scarlett
-            </button>
-            <button
-              className={`tab-btn ${activeShipTab === "leaderboard" ? "active" : ""}`}
-              onClick={() => setActiveShipTab("leaderboard")}
-            >
-              Leaderboard
             </button>
             <button
               className={`tab-btn ${activeShipTab === "ship_crew" ? "active" : ""}`}
@@ -252,14 +277,13 @@ export default function App() {
           </>
         )}
         </div>
+        )}
 
         {portState && (
           <div className="tab-content">
-          {activeSection === "ship" ? (
+          {activePanelMode === "ship" ? (
             activeShipTab === "guide" ? (
               <GuideTab />
-            ) : activeShipTab === "leaderboard" ? (
-              <LeaderboardTab entries={portState.leaderboard} />
             ) : activeShipTab === "ship_status" ? (
               <ShipyardTab
                 state={portState}
@@ -273,8 +297,10 @@ export default function App() {
                 onFireCharacter={handleFireCharacter}
               />
             ) : (
-              <LeaderboardTab entries={portState.leaderboard} />
+              <GuideTab />
             )
+          ) : activePanelMode === "leaderboard" ? (
+            <LeaderboardTab entries={portState.leaderboard} />
           ) : activePortTab === "market" ? (
             <MarketTab state={portState} />
           ) : activePortTab === "shipyard" ? (

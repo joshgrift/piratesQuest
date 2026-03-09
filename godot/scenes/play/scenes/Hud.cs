@@ -89,6 +89,7 @@ public partial class Hud : Control
     GD.Print($"Player {player.Name} entered port {port.PortName}");
 
     _currentPort = port;
+    CallDeferred(MethodName.OnStateChange);
   }
 
   private void OnPlayerDepartedPort(Port port, Player player)
@@ -96,6 +97,7 @@ public partial class Hud : Control
     if (_player == null || player.Name != _player.Name) return;
     GD.Print($"Player {player.Name} departed port");
     _currentPort = null;
+    CallDeferred(MethodName.OnStateChange);
   }
 
   private void SyncWebViewSize()

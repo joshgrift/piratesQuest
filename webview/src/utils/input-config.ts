@@ -54,8 +54,8 @@ export const INPUT_CONFIG = {
    */
   uiSelectors: [
     ".port-panel",
+    ".mode-rail",
     ".left-inventory-panel",
     ".left-health-panel",
-    ".panel-toggle",
   ],
 } as const;

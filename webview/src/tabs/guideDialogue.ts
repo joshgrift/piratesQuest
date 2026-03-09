@@ -17,7 +17,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
       { label: "What if I'm overburdened?", next: "overburdened" },
       { label: "How does the leaderboard work?", next: "leaderboard" },
       { label: "What happens when I die?", next: "death" },
-      { label: "How do Ship and Port sections work?", next: "webview_sections" },
+      { label: "How do panel modes work?", next: "webview_sections" },
       { label: "What can I do at ports?", next: "ports" },
       { label: "How does tavern crew hiring work?", next: "tavern" },
       { label: "How does the vault work?", next: "vault" },
@@ -274,11 +274,16 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
 
   // ── Leaderboard ──
   leaderboard: {
-    text: "See that list on the left side of yer screen? That's the leaderboard! It ranks every captain on the server by their Trophy count.",
+    text: "Use the trophy button on the panel rail, captain. That's Leaderboard mode, and it ranks every captain on the server by Trophy count.",
     responses: [
       { label: "How do I get trophies?", next: "leaderboard_trophies" },
+      { label: "So trophy button means rankings?", next: "leaderboard_right" },
       { label: "Ask about something else", next: "root" },
     ],
+  },
+  leaderboard_right: {
+    text: "Aye, dead right. Trophy for rankings, ship for crew and status, anchor for port business.",
+    responses: [{ label: "What else can I learn?", next: "root" }],
   },
   leaderboard_trophies: {
     text: "Trophies are earned through glory \u2014 sinkin' other players, completin' challenges, and provin' yer worth on the high seas. The more ye have, the higher ye climb.\n\nFair warning though: when ye die, ye lose half yer trophies just like everything else. So stay alive if ye want to stay on top!",
@@ -303,15 +308,32 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
 
   // ── Ports ──
   webview_sections: {
-    text: "New trick, captain: this ship panel sails with ye now. The Ship section is always there for stats, crew, health, and me, yer first mate. The Port section only wakes up when ye dock.",
+    text: "New layout, captain: one command panel with three rail buttons. Ship for ship tools, anchor for port services, trophy for leaderboard.",
     responses: [
+      { label: "Which button is locked at sea?", next: "webview_quiz" },
       { label: "What can I manage while at sea?", next: "webview_ship" },
       { label: "What stays port-only?", next: "webview_port_only" },
       { label: "Ask about something else", next: "root" },
     ],
   },
+  webview_quiz: {
+    text: "Quick quiz: while ye're at sea, which panel button goes grey?",
+    responses: [
+      { label: "Anchor / Port", next: "webview_quiz_right" },
+      { label: "Ship", next: "webview_quiz_wrong" },
+      { label: "Trophy / Leaderboard", next: "webview_quiz_wrong" },
+    ],
+  },
+  webview_quiz_right: {
+    text: "Sharp as a boarding axe. Anchor stays grey till ye dock.",
+    responses: [{ label: "What else can I learn?", next: "root" }],
+  },
+  webview_quiz_wrong: {
+    text: "Nay, matey. Ship and Leaderboard work at sea. Anchor waits for port.",
+    responses: [{ label: "Got it. What else?", next: "root" }],
+  },
   webview_ship: {
-    text: "At sea ye can read ship stats, check current crew, and watch crew impact. Ye can also inspect components. Keepin' tabs on the ship mid-voyage wins fights before cannons speak.",
+    text: "At sea ye can use Ship mode for Scarlett, crew, and ship status. Leaderboard mode stays open too, so ye can watch rivals live.",
     responses: [
       { label: "So what can't I do at sea?", next: "webview_port_only" },
       { label: "Ask about something else", next: "root" },

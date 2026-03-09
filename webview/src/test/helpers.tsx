@@ -81,21 +81,30 @@ export function renderApp(overridesOrOptions?: Partial<PortState> | RenderAppOpt
   }
 
   if (tab) {
-    if (["market", "shipyard", "tavern", "vault", "creative"].includes(tab)) {
-      const sectionButton = screen.getByRole("button", { name: "Port" });
+    if (tab === "leaderboard") {
+      const modeButton = screen.getByRole("tab", { name: "Leaderboard mode" });
       act(() => {
-        sectionButton.click();
+        modeButton.click();
+      });
+    } else if (["market", "shipyard", "tavern", "vault", "creative"].includes(tab)) {
+      const modeButton = screen.getByRole("tab", { name: "Port mode" });
+      act(() => {
+        modeButton.click();
+      });
+      const tabButton = screen.getByRole("button", { name: TAB_LABELS[tab] });
+      act(() => {
+        tabButton.click();
       });
     } else {
-      const sectionButton = screen.getByRole("button", { name: "Ship" });
+      const modeButton = screen.getByRole("tab", { name: "Ship mode" });
       act(() => {
-        sectionButton.click();
+        modeButton.click();
+      });
+      const tabButton = screen.getByRole("button", { name: TAB_LABELS[tab] });
+      act(() => {
+        tabButton.click();
       });
     }
-    const tabButton = screen.getByRole("button", { name: TAB_LABELS[tab] });
-    act(() => {
-      tabButton.click();
-    });
   }
 
   return {
