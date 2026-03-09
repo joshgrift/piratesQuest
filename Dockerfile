@@ -26,6 +26,7 @@ WORKDIR /app
 
 COPY --from=api-build /app/publish ./
 COPY --from=menu-build /src/api/fragments/menu/ ./fragments/menu/
+COPY --from=menu-build /src/api/fragments/webview/ ./fragments/webview/
 COPY --from=admin-build /src/api/wwwroot/admin/ ./wwwroot/admin/
 
 # ASP.NET listens on 8080 by default in .NET 8+
