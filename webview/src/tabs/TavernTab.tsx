@@ -1,66 +1,48 @@
 import { useEffect, useMemo, useState } from "react";
 import { ConversationPanel } from "../components/ConversationPanel";
-import { BASE, fmt, formatStatName } from "../utils/helpers";
-import type { PortState, TavernCharacter } from "../types";
-import { getDialogueForCharacter, toStatBonusMap } from "./tavernData";
+import { BASE } from "../utils/helpers";
+import type { PortState } from "../types";
+import { getDialogueForCharacter } from "./tavernData";
 
 type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
 
 interface TavernTabProps {
   state: PortState;
   onHireCharacter: (characterId: string) => HireOutcome;
-  onFireCharacter: (characterId: string) => void;
-}
-
-function sumActiveCrewBonuses(
-  characters: TavernCharacter[],
-  hiredIds: string[],
-): Record<string, number> {
-  const hiredSet = new Set(hiredIds);
-  const totals: Record<string, number> = {};
-
-  for (const character of characters) {
-    if (!hiredSet.has(character.id)) continue;
-
-    const bonuses = toStatBonusMap(character.statChanges);
-    for (const [stat, bonus] of Object.entries(bonuses)) {
-      totals[stat] = (totals[stat] ?? 0) + bonus;
-    }
-  }
-
-  return totals;
 }
 
 export function TavernTab({
   state,
   onHireCharacter,
-  onFireCharacter,
 }: TavernTabProps) {
+  // Tavern is now "recruiting only": discover NPCs and hire them.
+  // Crew management (firing, active bonuses, onboard reports) lives in Ship > Crew.
+  const hiredSet = useMemo(
+    () => new Set(state.crew.hiredCharacterIds),
+    [state.crew.hiredCharacterIds],
+  );
+
+  // Hide characters already in your crew: Tavern is for new recruits.
+  const visibleCharacters = useMemo(
+    () => state.tavern.characters.filter((c) => !hiredSet.has(c.id)),
+    [state.tavern.characters, hiredSet],
+  );
+
   const [activeCharacterId, setActiveCharacterId] = useState(
-    state.tavern.characters[0]?.id ?? "",
+    visibleCharacters[0]?.id ?? "",
   );
 
   useEffect(() => {
-    const hasActive = state.tavern.characters.some((c) => c.id === activeCharacterId);
+    const hasActive = visibleCharacters.some((c) => c.id === activeCharacterId);
     if (!hasActive) {
-      setActiveCharacterId(state.tavern.characters[0]?.id ?? "");
+      setActiveCharacterId(visibleCharacters[0]?.id ?? "");
     }
-  }, [state.tavern.characters, activeCharacterId]);
+  }, [visibleCharacters, activeCharacterId]);
 
   const activeCharacter =
-    state.tavern.characters.find((c) => c.id === activeCharacterId)
-    ?? state.tavern.characters[0]
+    visibleCharacters.find((c) => c.id === activeCharacterId)
+    ?? visibleCharacters[0]
     ?? null;
-
-  const hiredSet = useMemo(
-    () => new Set(state.tavern.hiredCharacterIds),
-    [state.tavern.hiredCharacterIds],
-  );
-
-  const totalBonuses = useMemo(
-    () => sumActiveCrewBonuses(state.tavern.characters, state.tavern.hiredCharacterIds),
-    [state.tavern.characters, state.tavern.hiredCharacterIds],
-  );
 
   const conversationTree = useMemo(() => {
     if (!activeCharacter) {
@@ -121,58 +103,11 @@ export function TavernTab({
       };
     }
 
-    if (!tree.fire_success) {
-      tree.fire_success = {
-        text: "Understood. I'll step off at the pier.",
-        responses: [{ label: "Back", next: "root" }],
-      };
-    }
-
-    if (hiredSet.has(activeCharacter.id)) {
-      const bonusMap = toStatBonusMap(activeCharacter.statChanges);
-      const bonusEntries = Object.entries(bonusMap);
-      const bonusSummary = bonusEntries.length === 0
-        ? "No numeric bonus from this post, but morale and discipline stay solid."
-        : bonusEntries
-          .map(([stat, value]) => `${formatStatName(stat)} +${fmt(value)}`)
-          .join(", ");
-
-      if (!tree.onboard_report) {
-        tree.onboard_report = {
-          text: `${activeCharacter.name} gives a crisp nod. "${activeCharacter.role} post is steady, Captain. Crew knows their rhythm."`,
-          responses: [{ label: "Back", next: "root" }],
-        };
-      }
-
-      if (!tree.onboard_numbers) {
-        tree.onboard_numbers = {
-          text: `Current contribution: ${bonusSummary}`,
-          responses: [{ label: "Back", next: "root" }],
-        };
-      }
-
-      if (!tree.onboard_need) {
-        tree.onboard_need = {
-          text: `"Keep us supplied and decisive, Captain. I'll handle the rest."`,
-          responses: [{ label: "Back", next: "root" }],
-        };
-      }
-
-      root.text = `${activeCharacter.name} straightens as you approach. "Aboard and ready, Captain."`;
-      root.responses = [
-        { label: "Any report from your station?", next: "onboard_report" },
-        { label: "How are our numbers?", next: "onboard_numbers" },
-        { label: "Need anything from me?", next: "onboard_need" },
-        { label: "Stand down (fire crew).", action: "fire" },
-        { label: "Back to tavern", next: "root" },
-      ];
-    }
-
     return tree;
   }, [activeCharacter, hiredSet]);
 
   if (!activeCharacter) {
-    return <div className="empty-state">No tavern regulars at this port yet.</div>;
+    return <div className="empty-state">No new tavern recruits at this port right now.</div>;
   }
 
   const handleConversationAction = (actionId: string): string | void => {
@@ -197,38 +132,14 @@ export function TavernTab({
       }
     }
 
-    if (actionId === "fire") {
-      onFireCharacter(activeCharacter.id);
-      return "fire_success";
-    }
+    return;
   };
 
   return (
     <div className="tavern-layout">
-      <div className="card tavern-crew-card">
-        <div className="section-title">Crew Berths</div>
-        <div className="tavern-slots-row">
-          <div className="capacity-slots">
-            {Array.from({ length: state.tavern.crewSlots }).map((_, i) => (
-              <div
-                key={i}
-                className={`slot ${i < state.tavern.hiredCharacterIds.length ? "filled" : ""}`}
-              />
-            ))}
-          </div>
-          <div className="tavern-slots-count">
-            {state.tavern.hiredCharacterIds.length}/{state.tavern.crewSlots} Hired
-          </div>
-        </div>
-        <div className="tavern-crew-help">
-          No swapping at full capacity. Fire first, then hire someone new.
-        </div>
-      </div>
-
       <div className="tavern-roster">
-        {state.tavern.characters.map((character) => {
+        {visibleCharacters.map((character) => {
           const isActive = character.id === activeCharacter.id;
-          const isHired = hiredSet.has(character.id);
 
           return (
             <button
@@ -245,7 +156,6 @@ export function TavernTab({
                 <span className="tavern-character-name">{character.name}</span>
                 {isActive && <span className="tavern-character-talking">Talking</span>}
               </span>
-              {isHired && <span className="tavern-badge hired">Hired</span>}
             </button>
           );
         })}
@@ -262,39 +172,6 @@ export function TavernTab({
         instantNodeIds={Object.keys(conversationTree)}
         onAction={handleConversationAction}
       />
-
-      <div className="card tavern-stats-card">
-        <div className="section-title">Crew Impact</div>
-        {Object.keys(totalBonuses).length === 0 ? (
-          <div className="empty-state">No active crew bonuses yet.</div>
-        ) : (
-          <div className="tavern-bonus-list">
-            {Object.entries(totalBonuses).map(([stat, value]) => (
-              <div key={stat} className="stat-row">
-                <span className="stat-label">{formatStatName(stat)}</span>
-                <span className="stat-value stat-bonus">+{fmt(value)}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="tavern-stats-sep" />
-        <div className="tavern-stats-title">Effective Ship Stats</div>
-        <div className="stats-grid">
-          {Object.entries(state.stats).map(([stat, value]) => {
-            const bonus = totalBonuses[stat] ?? 0;
-            return (
-              <div key={stat} className="stat-row">
-                <span className="stat-label">{formatStatName(stat)}</span>
-                <span className="stat-value">
-                  {fmt(value)}
-                  {bonus !== 0 && <span className="stat-bonus"> (+{fmt(bonus)})</span>}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }

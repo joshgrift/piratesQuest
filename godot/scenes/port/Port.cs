@@ -68,6 +68,22 @@ public partial class Port : Node3D, IIntractable
   /// </summary>
   public HudPortSnapshotDto ExportHudSnapshot()
   {
+    var tavernCharacters = TavernData
+      .GetCharactersForPort(PortName ?? "")
+      .Select(c => new TavernCharacterDto(
+        c.Id,
+        c.Name,
+        c.Role,
+        c.Portrait,
+        c.Hireable,
+        c.StatChanges.Select(sc => new StatChangeDto(
+          sc.Stat.ToString(),
+          sc.Modifier.ToString(),
+          sc.Value
+        )).ToArray()
+      ))
+      .ToArray();
+
     return new HudPortSnapshotDto
     {
       PortName = PortName ?? "",
@@ -77,7 +93,11 @@ public partial class Port : Node3D, IIntractable
           item.BuyPrice,
           item.SellPrice
         ))
-        .ToArray()
+        .ToArray(),
+      Tavern = new TavernStateDto
+      {
+        Characters = tavernCharacters
+      }
     };
   }
 }

@@ -81,8 +81,6 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
     },
     vault: null,
     tavern: {
-      crewSlots: 2,
-      hiredCharacterIds: [],
       characters: [
         {
           id: "gideon-gearlock",
@@ -109,6 +107,11 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
           statChanges: [],
         },
       ],
+    },
+    crew: {
+      crewSlots: 2,
+      hiredCharacterIds: [],
+      characters: [],
     },
     leaderboard: [
       { nickname: "Captain Flint", trophies: 42, isLocal: false },

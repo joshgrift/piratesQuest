@@ -274,6 +274,11 @@ public partial class Hud : Control
     return _player?.GetNodeOrNull<CameraPivot>("CameraPivot");
   }
 
+  // BuildHUDState is a pure composer over child snapshots.
+  // Rule: gather data from child export methods only (Player/Port DTO exports),
+  // never by reading child internals directly (fields/methods like
+  // _player.HiredCrewCharacterIds, TavernData lookups from HUD, etc).
+  // If a HUD field needs new data, add it to the owning child export first.
   private HudStateDto BuildHUDState()
   {
     var state = _player.ExportHudState();
@@ -291,45 +296,9 @@ public partial class Hud : Control
       IsInPort = true,
       PortName = portSnapshot.PortName,
       ItemsForSale = portSnapshot.ItemsForSale,
-      Tavern = BuildTavernStateForPort(portSnapshot.PortName),
+      Tavern = portSnapshot.Tavern ?? new TavernStateDto { Characters = [] },
+      Crew = state.Crew ?? new CrewStateDto(),
       Vault = BuildVaultStateForPort(state.Vault, portSnapshot.PortName),
-    };
-  }
-
-  private TavernStateDto BuildTavernStateForPort(string portName)
-  {
-    // Show tavern locals for this port first, then include hired crew from
-    // other ports so all active crew are always visible/manageable.
-    var tavernCharactersById = TavernData
-      .GetCharactersForPort(portName ?? "")
-      .ToDictionary(c => c.Id, c => c, StringComparer.Ordinal);
-
-    foreach (var hiredId in _player.HiredCrewCharacterIds)
-    {
-      if (tavernCharactersById.ContainsKey(hiredId)) continue;
-      var hiredCharacter = TavernData.GetCharacterById(hiredId);
-      if (hiredCharacter != null)
-        tavernCharactersById[hiredCharacter.Id] = hiredCharacter;
-    }
-
-    return new TavernStateDto
-    {
-      CrewSlots = _player.GetCrewSlotCapacity(),
-      HiredCharacterIds = _player.HiredCrewCharacterIds.ToArray(),
-      Characters = tavernCharactersById.Values
-        .Select(c => new TavernCharacterDto(
-          c.Id,
-          c.Name,
-          c.Role,
-          c.Portrait,
-          c.Hireable,
-          c.StatChanges.Select(sc => new StatChangeDto(
-            sc.Stat.ToString(),
-            sc.Modifier.ToString(),
-            sc.Value
-          )).ToArray()
-        ))
-        .ToArray(),
     };
   }
 

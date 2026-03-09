@@ -161,6 +161,10 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   private readonly Inventory _inventory = new();
   private int _fireCoolDownInSeconds = 2;
   private double _firedTimerCountdown = 0;
+  // Edge-trigger flag for CannonReadyToFire:
+  // false = we're in a cooldown window and haven't announced readiness yet.
+  // true  = ready signal already emitted for the current cooldown cycle.
+  private bool _cannonReadySignalEmitted = true;
 
   // Ship banking/tilt when turning
   private float _currentTurnInput = 0.0f;
@@ -278,14 +282,18 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       UpdateMovement((float)delta);
 
       // Firing
-      if (_firedTimerCountdown < 0)
+      if (_firedTimerCountdown > 0)
       {
-        _firedTimerCountdown = 0;
-        EmitSignal(SignalName.CannonReadyToFire);
-      }
-      else
-      {
+        // Countdown only while we're actually cooling down.
         _firedTimerCountdown -= delta;
+
+        // Emit exactly once when cooldown finishes.
+        if (_firedTimerCountdown <= 0 && !_cannonReadySignalEmitted)
+        {
+          _firedTimerCountdown = 0;
+          _cannonReadySignalEmitted = true;
+          EmitSignal(SignalName.CannonReadyToFire);
+        }
       }
 
       // Check for left cannon fire (Q key)
@@ -363,6 +371,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (_inventory.GetItemCount(InventoryItemType.CannonBall) <= 0)
     {
       GD.PrintErr($"{Name} tried to fire cannons but has no cannonballs!");
+      _cannonReadySignalEmitted = false;
       _firedTimerCountdown = 0.1f;
       return;
     }
@@ -371,6 +380,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     UpdateInventory(InventoryItemType.CannonBall, -1);
 
     // Start the cooldown timer
+    _cannonReadySignalEmitted = false;
     _firedTimerCountdown = _fireCoolDownInSeconds;
 
     // Select which cannon pivot to use based on the parameter
@@ -1004,7 +1014,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       ShipTiers = shipTiers,
       IsCreative = Configuration.IsCreative,
       Costs = ExportCostsForHud(),
-      Tavern = ExportTavernForHud(),
+      Tavern = new TavernStateDto
+      {
+        Characters = [],
+      },
+      Crew = ExportCrewForHud(),
       Vault = ExportVaultForHud(),
       Leaderboard = [],
     };
@@ -1077,16 +1091,16 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     };
   }
 
-  private TavernStateDto ExportTavernForHud()
+  private CrewStateDto ExportCrewForHud()
   {
     // Player export stays port-agnostic: include only currently hired crew.
-    var tavernCharacters = new System.Collections.Generic.List<TavernCharacterDto>();
+    var crewCharacters = new System.Collections.Generic.List<TavernCharacterDto>();
     foreach (var hiredId in HiredCrewCharacterIds)
     {
       var hiredCharacter = TavernData.GetCharacterById(hiredId);
       if (hiredCharacter != null)
       {
-        tavernCharacters.Add(new TavernCharacterDto(
+        crewCharacters.Add(new TavernCharacterDto(
           hiredCharacter.Id,
           hiredCharacter.Name,
           hiredCharacter.Role,
@@ -1101,11 +1115,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       }
     }
 
-    return new TavernStateDto
+    return new CrewStateDto
     {
       CrewSlots = GetCrewSlotCapacity(),
       HiredCharacterIds = HiredCrewCharacterIds.ToArray(),
-      Characters = tavernCharacters.ToArray(),
+      Characters = crewCharacters.ToArray(),
     };
   }
 

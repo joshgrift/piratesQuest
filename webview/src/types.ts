@@ -20,6 +20,7 @@ export interface PortState {
   /** Null when the player hasn't built a vault yet. */
   vault: VaultState | null;
   tavern: TavernState;
+  crew: CrewState;
   leaderboard: LeaderboardEntry[];
 }
 
@@ -54,8 +55,15 @@ export interface VaultState {
 
 /** Tavern state for the currently docked port. */
 export interface TavernState {
+  /** Characters physically present at the current port. */
+  characters: TavernCharacter[];
+}
+
+/** Player crew state (available at sea and in port). */
+export interface CrewState {
   crewSlots: number;
   hiredCharacterIds: string[];
+  /** Detailed data for currently hired crew. */
   characters: TavernCharacter[];
 }
 

@@ -23,9 +23,12 @@ describe("TavernTab", () => {
     const { ipcSpy } = renderApp({
       tab: "tavern",
       state: {
-        tavern: {
+        crew: {
           crewSlots: 2,
           hiredCharacterIds: ["gideon-gearlock", "tommy-fuse"],
+          characters: [],
+        },
+        tavern: {
           characters: [
             {
               id: "gideon-gearlock",
@@ -56,8 +59,6 @@ describe("TavernTab", () => {
       },
     });
 
-    expect(screen.getByText("2/2 Hired")).toBeInTheDocument();
-
     fireEvent.click(screen.getByRole("button", { name: /Elder Bertram/ }));
     fireEvent.click(screen.getByRole("button", { name: /Talk about ship work\./ }));
     fireEvent.click(await screen.findByRole("button", { name: /What would change on the ship\?/ }));
@@ -66,36 +67,6 @@ describe("TavernTab", () => {
 
     const actions = getIpcMessages(ipcSpy) as { action: string }[];
     expect(actions.find((a) => a.action === "hire_character")).toBeUndefined();
-  });
-
-  it("sends fire IPC for hired characters", () => {
-    const { ipcSpy } = renderApp({
-      tab: "tavern",
-      state: {
-        tavern: {
-          crewSlots: 2,
-          hiredCharacterIds: ["dorian-blackwake"],
-          characters: [
-            {
-              id: "dorian-blackwake",
-              name: "Dorian Blackwake",
-              role: "Broken Cannoneer",
-              portrait: "character31.png",
-              hireable: true,
-              statChanges: [{ stat: "AttackDamage", modifier: "Additive", value: 5 }],
-            },
-          ],
-        },
-      },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /Stand down \(fire crew\)\./ }));
-
-    const actions = getIpcMessages(ipcSpy) as { action: string; characterId?: string }[];
-    expect(actions).toContainEqual({
-      action: "fire_character",
-      characterId: "dorian-blackwake",
-    });
   });
 
   it("hides hireability status in the roster until conversation", () => {

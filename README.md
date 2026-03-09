@@ -119,6 +119,8 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 - [ ] Quests
 - [ ] Characters
 - [ ] AI ships
+- [ ] New embed code
+  - [ ] Built by HAND to fix all of the issues we're seeing
 
 ### Planned
 - [ ] Better Island mesh

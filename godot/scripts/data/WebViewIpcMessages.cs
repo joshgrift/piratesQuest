@@ -27,6 +27,7 @@ public record HudStateDto
   public bool IsCreative { get; init; }
   public PortCostsDto Costs { get; init; } = new();
   public TavernStateDto Tavern { get; init; } = new();
+  public CrewStateDto Crew { get; init; } = new();
   public LeaderboardEntryDto[] Leaderboard { get; init; } = [];
 
   /// <summary>
@@ -47,11 +48,20 @@ public record LeaderboardEntryDto(
 /// </summary>
 public record TavernStateDto
 {
+  /// <summary>Characters physically present at this port.</summary>
+  public TavernCharacterDto[] Characters { get; init; } = [];
+}
+
+/// <summary>
+/// Player crew snapshot used by Ship > Crew in the HUD.
+/// </summary>
+public record CrewStateDto
+{
   /// <summary>How many crew can be hired with the current ship tier.</summary>
   public int CrewSlots { get; init; }
   /// <summary>Character ids currently hired by this player.</summary>
   public string[] HiredCharacterIds { get; init; } = [];
-  /// <summary>Characters physically present at this port.</summary>
+  /// <summary>Detailed data for currently hired crew.</summary>
   public TavernCharacterDto[] Characters { get; init; } = [];
 }
 
@@ -110,6 +120,7 @@ public record HudPortSnapshotDto
 {
   public string PortName { get; init; } = "";
   public ShopItemDto[] ItemsForSale { get; init; } = [];
+  public TavernStateDto Tavern { get; init; } = new();
 }
 
 public record ShipTierDto(

@@ -71,10 +71,10 @@ export default function App() {
     const character = portState?.tavern.characters.find((c) => c.id === characterId);
     if (!character?.hireable) return "not_hireable";
 
-    const alreadyHired = portState.tavern.hiredCharacterIds.includes(characterId);
+    const alreadyHired = portState.crew.hiredCharacterIds.includes(characterId);
     if (alreadyHired) return "already_hired";
 
-    if (portState.tavern.hiredCharacterIds.length >= portState.tavern.crewSlots) {
+    if (portState.crew.hiredCharacterIds.length >= portState.crew.crewSlots) {
       return "slots_full";
     }
 
@@ -84,7 +84,7 @@ export default function App() {
 
   const handleFireCharacter = (characterId: string) => {
     if (!portState) return;
-    if (!portState?.tavern.hiredCharacterIds.includes(characterId)) return;
+    if (!portState?.crew.hiredCharacterIds.includes(characterId)) return;
     sendIpc({ action: "fire_character", characterId });
   };
 
@@ -268,7 +268,10 @@ export default function App() {
                 showShipUpgrade={false}
               />
             ) : activeShipTab === "ship_crew" ? (
-              <ShipCrewTab state={portState} />
+              <ShipCrewTab
+                state={portState}
+                onFireCharacter={handleFireCharacter}
+              />
             ) : (
               <LeaderboardTab entries={portState.leaderboard} />
             )
@@ -281,7 +284,6 @@ export default function App() {
               <TavernTab
                 state={portState}
                 onHireCharacter={handleHireCharacter}
-                onFireCharacter={handleFireCharacter}
               />
             ) : (
               <div className="empty-state">Dock at a port to access tavern services.</div>

@@ -5,10 +5,10 @@ import type { PortState, TavernCharacter } from "../types";
 import { BASE, fmt, formatStatName } from "../utils/helpers";
 
 function getCrewImpact(state: PortState): Record<string, number> {
-  const hired = new Set(state.tavern.hiredCharacterIds);
+  const hired = new Set(state.crew.hiredCharacterIds);
   const totals: Record<string, number> = {};
 
-  for (const character of state.tavern.characters) {
+  for (const character of state.crew.characters) {
     if (!hired.has(character.id)) continue;
     for (const change of character.statChanges) {
       if (change.modifier !== "Additive") continue;
@@ -34,6 +34,7 @@ function buildOnboardDialogue(character: TavernCharacter): ConversationTree {
         { label: "Give me your status report.", next: "status" },
         { label: "What do ye add to the ship?", next: "impact" },
         { label: "Any advice for this voyage?", next: "advice" },
+        { label: "Stand down at next port.", action: "fire" },
       ],
     },
     status: {
@@ -48,12 +49,21 @@ function buildOnboardDialogue(character: TavernCharacter): ConversationTree {
       text: "\"Keep cargo under control, keep powder dry, and never sail blind into a broadside lane.\"",
       responses: [{ label: "Back", next: "root" }],
     },
+    fire_success: {
+      text: "\"Understood, Captain. I'll leave the ship when we dock.\"",
+      responses: [{ label: "Back", next: "root" }],
+    },
   };
 }
 
-export function ShipCrewTab({ state }: { state: PortState }) {
-  const hiredSet = new Set(state.tavern.hiredCharacterIds);
-  const hiredCrew = state.tavern.characters.filter((c) => hiredSet.has(c.id));
+interface ShipCrewTabProps {
+  state: PortState;
+  onFireCharacter: (characterId: string) => void;
+}
+
+export function ShipCrewTab({ state, onFireCharacter }: ShipCrewTabProps) {
+  const hiredSet = new Set(state.crew.hiredCharacterIds);
+  const hiredCrew = state.crew.characters.filter((c) => hiredSet.has(c.id));
   const impact = getCrewImpact(state);
   const [activeCharacterId, setActiveCharacterId] = useState(hiredCrew[0]?.id ?? "");
 
@@ -76,12 +86,12 @@ export function ShipCrewTab({ state }: { state: PortState }) {
       <div className="card">
         <div className="tavern-slots-row">
           <div className="capacity-slots">
-            {Array.from({ length: state.tavern.crewSlots }).map((_, i) => (
+            {Array.from({ length: state.crew.crewSlots }).map((_, i) => (
               <div key={i} className={`slot ${i < hiredCrew.length ? "filled" : ""}`} />
             ))}
           </div>
           <div className="tavern-slots-count">
-            {hiredCrew.length}/{state.tavern.crewSlots} Hired
+            {hiredCrew.length}/{state.crew.crewSlots} Hired
           </div>
         </div>
         <div className="tavern-crew-help">
@@ -127,6 +137,12 @@ export function ShipCrewTab({ state }: { state: PortState }) {
               classNamePrefix="tavern-chat"
               initialNodeId="root"
               instantNodeIds={["root"]}
+              onAction={(actionId) => {
+                // Crew stand-down is managed from Ship > Crew so Tavern stays focused on recruiting.
+                if (actionId !== "fire") return;
+                onFireCharacter(activeCharacter.id);
+                return "fire_success";
+              }}
             />
           )}
         </>
