@@ -122,17 +122,6 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 
 
 ## ROADMAP
-### 0.6.0 Alpha
-- [x] Characters
-- [x] New embed code
-  - [x] Built by HAND to fix all of the issues we're seeing
-- [x] UI Upgrade!
-  - [x] New Status Widget
-  - [x] New inventory display
-  - [x] Better panel management
-  - [x] More interactive chat menu
-  - [x] Re-theme
-
 ### Alpha 7 - Quests
 - [ ] Quests
   - [ ] Basically a todo list. The list will search a new long term storage item:
