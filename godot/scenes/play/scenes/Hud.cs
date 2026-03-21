@@ -149,6 +149,8 @@ public partial class Hud : Control
     _webView.Set("transparent", true);
     _webView.Set("forward_input_events", true);
     _webView.Set("focused_when_created", true);
+    // Allow the native webview to host dev tools.
+    _webView.Set("devtools", true);
     GD.Print($"HUD: loading webview URL {Configuration.WebViewUrl}");
     _webView.Set("url", Configuration.WebViewUrl);
     // godot_wry examples call load_url explicitly after scene creation.
@@ -159,7 +161,6 @@ public partial class Hud : Control
       GD.PushWarning("HUD: WebView node does not expose load_url method.");
 
     _webView.Connect("ipc_message", new Callable(this, MethodName.OnIpcMessage));
-    // TODO Disable dev tools in prod builds
 
     // Keep the webview under a CanvasLayer so canvas stretch does not
     // distort the native coordinates passed to godot_wry.

@@ -143,6 +143,8 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 - [ ] Map?
 - [ ] Polish and Stability
 - [ ] New Terrain
+- [ ] Bugs
+  - [ ] "Ride side of your screen" - from scarlett
 
 ### Alpha 9 - AI Update
 - [ ] AI ships
