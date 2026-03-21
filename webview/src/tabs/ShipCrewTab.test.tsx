@@ -2,6 +2,11 @@ import { describe, it, expect } from "vitest";
 import { fireEvent, screen } from "@testing-library/react";
 import { getIpcMessages, renderApp } from "../test/helpers";
 
+function skipTypingIfNeeded() {
+  const skipButton = screen.queryByRole("button", { name: "Skip Typing" });
+  if (skipButton) fireEvent.click(skipButton);
+}
+
 describe("ShipCrewTab", () => {
   it("sends fire IPC from Ship > Crew tab", async () => {
     const { ipcSpy } = renderApp({
@@ -27,6 +32,8 @@ describe("ShipCrewTab", () => {
       },
     });
 
+    fireEvent.click(await screen.findByRole("button", { name: /Dorian Blackwake/ }));
+    skipTypingIfNeeded();
     fireEvent.click(await screen.findByRole("button", { name: /Stand down at next port\./ }));
 
     const actions = getIpcMessages(ipcSpy) as { action: string; characterId?: string }[];

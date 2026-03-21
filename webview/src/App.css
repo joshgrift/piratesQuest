@@ -2934,6 +2934,14 @@ img {
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
 }
 
+.tavern-character-role {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #9fb3c7;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .tavern-character-talking {
   margin-top: 2px;
   font-size: 10px;

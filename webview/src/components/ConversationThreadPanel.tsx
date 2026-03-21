@@ -215,7 +215,7 @@ export function ConversationThreadPanel({
     }
 
     // Keep space for a persistent "Goodbye" option at the bottom.
-    const trimmed = withTopicReturn.slice(0, 3);
+    const trimmed = withTopicReturn.slice(0, 6);
     const firstAction = withTopicReturn.find((response) => !!response.action);
 
     // If we trimmed away the only action option (hire/fire/etc), swap it back in.

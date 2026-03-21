@@ -1,7 +1,7 @@
 import type { QuestHudState } from "../types";
 import { BASE } from "../utils/helpers";
 import { ConversationPanel } from "../components/ConversationPanel";
-import { GUIDE_DIALOGUE } from "./guideDialogue";
+import { buildScarlettDialogue } from "./guideDialogue";
 
 export function GuideTab({
   quests,
@@ -12,7 +12,7 @@ export function GuideTab({
 }) {
   return (
     <ConversationPanel
-      tree={GUIDE_DIALOGUE}
+      tree={buildScarlettDialogue(quests.available.some((quest) => quest.giverNpcId === "scarlett"))}
       speakerName="Scarlett"
       speakerPortraitSrc={`${BASE}images/characters/character2.png`}
       speakerPortraitAlt="Scarlett"

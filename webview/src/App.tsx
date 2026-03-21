@@ -13,6 +13,7 @@ import { buildTavernConversationTree } from "./tabs/TavernTab";
 import { ShipCrewTab, buildCrewConversationTree } from "./tabs/ShipCrewTab";
 import { LeaderboardTab } from "./tabs/LeaderboardTab";
 import { StatsTab } from "./tabs/StatsTab";
+import { buildScarlettDialogue, SCARLETT_CHARACTER } from "./tabs/guideDialogue";
 import { ShipStatusWidget } from "./components/ShipStatusWidget";
 import { QuestStatusWidget } from "./components/QuestStatusWidget";
 import { CharacterConversationOverlay } from "./components/CharacterConversationOverlay";
@@ -20,7 +21,7 @@ import { CharacterConversationOverlay } from "./components/CharacterConversation
 type PortTab = "market" | "shipyard" | "vault" | "creative";
 type PanelMode = "ship" | "quests" | "crew" | "port" | "stats" | "leaderboard";
 type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
-type ConversationSource = "tavern" | "crew";
+type ConversationSource = "tavern" | "crew" | "guide";
 
 interface ActiveConversation {
   source: ConversationSource;
@@ -140,6 +141,8 @@ export default function App() {
   useEffect(() => {
     if (!activeConversation || !portState) return;
 
+    if (activeConversation.source === "guide") return;
+
     if (activeConversation.source === "tavern") {
       if (!portState.isInPort) {
         setActiveConversation(null);
@@ -181,6 +184,29 @@ export default function App() {
 
   const activeConversationView = useMemo(() => {
     if (!portState || !activeConversation) return null;
+
+    if (activeConversation.source === "guide") {
+      const scarlettQuest = findQuestForNpc(portState, SCARLETT_CHARACTER.id);
+
+      return {
+        speakerName: SCARLETT_CHARACTER.name,
+        speakerPortraitSrc: `${BASE}images/characters/${SCARLETT_CHARACTER.portrait}`,
+        speakerPortraitAlt: SCARLETT_CHARACTER.name,
+        tree: buildScarlettDialogue(!!scarlettQuest),
+        instantNodeIds: ["root"],
+        onAction: (actionId: string): string | void => {
+          if (actionId !== "accept_scarlett_quest") return;
+          if (!scarlettQuest) return "quests_already_started";
+
+          sendIpc({
+            action: "accept_quest",
+            questId: scarlettQuest.id,
+            characterId: SCARLETT_CHARACTER.id,
+          });
+          return "quest_accept_success";
+        },
+      };
+    }
 
     if (activeConversation.source === "tavern") {
       const character = portState.tavern.characters.find((c) => c.id === activeConversation.characterId);
@@ -404,8 +430,15 @@ export default function App() {
             ) : activePanelMode === "crew" ? (
               <ShipCrewTab
                 state={portState}
-                onOpenConversation={(characterId) => openConversation("crew", characterId)}
-                activeConversationCharacterId={activeConversation?.source === "crew" ? activeConversation.characterId : null}
+                onOpenConversation={(characterId) => openConversation(
+                  characterId === SCARLETT_CHARACTER.id ? "guide" : "crew",
+                  characterId,
+                )}
+                activeConversationCharacterId={
+                  activeConversation?.source === "crew" || activeConversation?.source === "guide"
+                    ? activeConversation.characterId
+                    : null
+                }
               />
             ) : activePanelMode === "stats" ? (
               <StatsTab state={portState} />

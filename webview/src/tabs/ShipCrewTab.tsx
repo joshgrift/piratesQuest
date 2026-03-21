@@ -1,6 +1,7 @@
 import type { ConversationTree } from "../components/ConversationPanel";
 import type { PortState, TavernCharacter } from "../types";
 import { BASE, fmt, formatStatName } from "../utils/helpers";
+import { SCARLETT_CHARACTER } from "./guideDialogue";
 
 function getCrewImpact(state: PortState): Record<string, number> {
   const hired = new Set(state.crew.hiredCharacterIds);
@@ -67,6 +68,9 @@ export function ShipCrewTab({
 }: ShipCrewTabProps) {
   const hiredSet = new Set(state.crew.hiredCharacterIds);
   const hiredCrew = state.crew.characters.filter((c) => hiredSet.has(c.id));
+  // Scarlett always stays available here as the onboard guide, even though
+  // she is not a hireable crew stat source.
+  const crewContacts = [SCARLETT_CHARACTER, ...hiredCrew];
   const impact = getCrewImpact(state);
 
   return (
@@ -85,12 +89,12 @@ export function ShipCrewTab({
         </div>
       </div>
 
-      {hiredCrew.length === 0 ? (
+      {crewContacts.length === 0 ? (
         <div className="empty-state">No active crew yet. Hire crew in a port tavern.</div>
       ) : (
         <>
           <div className="tavern-roster">
-            {hiredCrew.map((character) => {
+            {crewContacts.map((character) => {
               const isTalking = activeConversationCharacterId === character.id;
               return (
                 <button
@@ -105,6 +109,7 @@ export function ShipCrewTab({
                   />
                   <span className="tavern-character-tile-main">
                     <span className="tavern-character-name">{character.name}</span>
+                    <span className="tavern-character-role">{character.role}</span>
                   </span>
                 </button>
               );
