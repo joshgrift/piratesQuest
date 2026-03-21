@@ -150,6 +150,7 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 - [ ] Better Mono Repo control
 - [ ] Stats Panel
 - [ ] Fix communications
+- [ ] Map?
 
 ### Alpha 8 - AI Update
 - [ ] AI ships
