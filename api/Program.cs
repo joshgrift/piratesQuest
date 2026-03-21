@@ -52,6 +52,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services.AddHttpClient<IDiscordNotifier, DiscordNotifier>();
 builder.Services.AddHostedService<ServerOfflineMonitor>();
+builder.Services.AddHostedService<LeaderboardRefreshService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured");
@@ -338,6 +339,33 @@ app.MapPost("/api/server/{id}/heartbeat", async (int id, HeartbeatRequest reques
         playerMax,
         serverVersion
     });
+}).AddEndpointFilter(ServerAuthFilter);
+
+// ---------------------------------------------------------------------------
+// GET /api/server/{id}/leaderboard  [server auth]
+// Dedicated game servers can fetch the cached leaderboard for their shard.
+// ---------------------------------------------------------------------------
+app.MapGet("/api/server/{id}/leaderboard", async (int id, AppDbContext db) =>
+{
+    if (!await db.GameServers.AnyAsync(server => server.Id == id))
+        return Results.NotFound(new { error = "Server not found" });
+
+    var leaderboard = await db.LeaderboardEntries
+        .Where(entry => entry.ServerId == id)
+        .OrderByDescending(entry => entry.TotalGold)
+        .ThenByDescending(entry => entry.VaultGold)
+        .ThenBy(entry => entry.UserId)
+        .Select(entry => new
+        {
+            entry.UserId,
+            entry.InventoryGold,
+            entry.VaultGold,
+            entry.TotalGold,
+            entry.UpdatedAt
+        })
+        .ToListAsync();
+
+    return Results.Ok(leaderboard);
 }).AddEndpointFilter(ServerAuthFilter);
 
 // ---------------------------------------------------------------------------

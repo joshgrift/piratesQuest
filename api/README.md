@@ -13,6 +13,8 @@ This API is designed to be stateless at the process level:
   - `PlayerMax`
   - `ServerVersion`
 - `GET /api/servers` reads from DB only (no in-memory cache), so results survive API restarts and scale across multiple API instances.
+- A background service rebuilds the `LeaderboardEntries` table about every 5 minutes from saved player state.
+- `GET /api/server/{id}/leaderboard` reads from that cached table, scoped to one game server.
 
 ## Running
 
@@ -59,6 +61,7 @@ Game servers authenticate by sending the shared secret in the `X-Server-Key` hea
 | `GET` | `/api/servers` | JWT | List active game servers |
 | `GET` | `/api/server/{id}/state/{user}` | Server key | Get a player's saved game state |
 | `PUT` | `/api/server/{id}/state/{user}` | Server key | Save a player's game state (opaque JSON) |
+| `GET` | `/api/server/{id}/leaderboard` | Server key | Get cached gold rankings for one server |
 | `DELETE` | `/api/management/server/{id}/state/{user}` | Admin | Clear one player's saved state on one server |
 | `POST` | `/api/server/{id}/presence` | Server key | Report a player join/leave event |
 | `POST` | `/api/server/{id}/heartbeat` | Server key | Persist server runtime info and liveness |
