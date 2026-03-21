@@ -1,0 +1,6 @@
+#!/bin/zsh
+
+# Open a repo-local shell where the project root is first on PATH.
+# That makes `run` work without `./`, but only inside this shell.
+export PATH="$(cd "$(dirname "$0")" && pwd):${PATH}"
+exec /bin/zsh
