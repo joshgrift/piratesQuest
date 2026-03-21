@@ -526,6 +526,32 @@ app.MapPut("/api/management/user/{id}/role", async (int id, RoleRequest request,
 }).RequireAuthorization().AddEndpointFilter(AdminAuthFilter);
 
 // ---------------------------------------------------------------------------
+// DELETE /api/management/server/{id}/state/{user}  [admin]
+// Lets an admin clear one player's saved state on one server.
+// ---------------------------------------------------------------------------
+app.MapDelete("/api/management/server/{id}/state/{user}", async (int id, string user, AppDbContext db) =>
+{
+    var server = await db.GameServers.FindAsync(id);
+    if (server is null)
+        return Results.NotFound(new { error = "Server not found" });
+
+    var normalizedUser = (user ?? string.Empty).Trim();
+    if (string.IsNullOrWhiteSpace(normalizedUser))
+        return Results.BadRequest(new { error = "User is required" });
+
+    var state = await db.GameStates
+        .FirstOrDefaultAsync(s => s.ServerId == id && s.UserId == normalizedUser);
+
+    if (state is null)
+        return Results.NotFound(new { error = "Saved state not found" });
+
+    db.GameStates.Remove(state);
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { deleted = true, serverId = id, user = normalizedUser });
+}).RequireAuthorization().AddEndpointFilter(AdminAuthFilter);
+
+// ---------------------------------------------------------------------------
 // DELETE /api/management/server/{id}  [admin]
 // ---------------------------------------------------------------------------
 app.MapDelete("/api/management/server/{id}", async (int id, AppDbContext db) =>

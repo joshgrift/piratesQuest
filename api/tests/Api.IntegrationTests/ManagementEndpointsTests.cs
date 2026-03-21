@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using FluentAssertions;
 
@@ -86,5 +87,50 @@ public sealed class ManagementEndpointsTests(ApiTestFixture fixture)
 
         var promotedUsersResponse = await fixture.Client.SendAsync(promotedUsersRequest);
         promotedUsersResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Admin_CanClearSavedStateForUserOnServer()
+    {
+        await fixture.ResetDatabaseAsync();
+
+        var adminToken = await TestHttpHelpers.SignupAndGetTokenAsync(fixture.Client, "admin", "pw");
+        var serverId = await TestHttpHelpers.CreateServerAsAdminAsync(fixture.Client, adminToken);
+
+        var putStateRequest = new HttpRequestMessage(HttpMethod.Put, $"/api/server/{serverId}/state/scarlett")
+        {
+            Content = new StringContent("{\"gold\":99}", Encoding.UTF8, "application/json")
+        };
+        putStateRequest.WithServerKey();
+
+        var putStateResponse = await fixture.Client.SendAsync(putStateRequest);
+        putStateResponse.EnsureSuccessStatusCode();
+
+        var clearStateRequest = new HttpRequestMessage(HttpMethod.Delete, $"/api/management/server/{serverId}/state/scarlett");
+        clearStateRequest.WithBearerToken(adminToken);
+
+        var clearStateResponse = await fixture.Client.SendAsync(clearStateRequest);
+        clearStateResponse.EnsureSuccessStatusCode();
+
+        var getStateRequest = new HttpRequestMessage(HttpMethod.Get, $"/api/server/{serverId}/state/scarlett");
+        getStateRequest.WithServerKey();
+
+        var getStateResponse = await fixture.Client.SendAsync(getStateRequest);
+        getStateResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Admin_ClearSavedState_WhenMissing_ReturnsNotFound()
+    {
+        await fixture.ResetDatabaseAsync();
+
+        var adminToken = await TestHttpHelpers.SignupAndGetTokenAsync(fixture.Client, "admin", "pw");
+        var serverId = await TestHttpHelpers.CreateServerAsAdminAsync(fixture.Client, adminToken);
+
+        var clearStateRequest = new HttpRequestMessage(HttpMethod.Delete, $"/api/management/server/{serverId}/state/missing-user");
+        clearStateRequest.WithBearerToken(adminToken);
+
+        var clearStateResponse = await fixture.Client.SendAsync(clearStateRequest);
+        clearStateResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

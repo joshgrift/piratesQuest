@@ -59,6 +59,7 @@ Game servers authenticate by sending the shared secret in the `X-Server-Key` hea
 | `GET` | `/api/servers` | JWT | List active game servers |
 | `GET` | `/api/server/{id}/state/{user}` | Server key | Get a player's saved game state |
 | `PUT` | `/api/server/{id}/state/{user}` | Server key | Save a player's game state (opaque JSON) |
+| `DELETE` | `/api/management/server/{id}/state/{user}` | Admin | Clear one player's saved state on one server |
 | `POST` | `/api/server/{id}/presence` | Server key | Report a player join/leave event |
 | `POST` | `/api/server/{id}/heartbeat` | Server key | Persist server runtime info and liveness |
 | `GET` | `/fragments/{spaId}` | Public | Serve a SPA from `fragments/{spaId}/` |

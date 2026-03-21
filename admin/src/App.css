@@ -110,6 +110,12 @@ textarea {
   gap: 0.5rem;
 }
 
+.action-stack {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 14rem;
+}
+
 button {
   border: none;
   border-radius: 999px;

@@ -123,6 +123,25 @@ function defaultApiUrl(): string {
   return normalizeApiBase(window.location.origin || "http://localhost:5236");
 }
 
+function buildUserStateSelections(
+  users: UserSummary[],
+  servers: GameServer[],
+  previousSelections: Record<number, string>
+): Record<number, string> {
+  const firstServerId = servers[0] ? String(servers[0].id) : "";
+  const validServerIds = new Set(servers.map((server) => String(server.id)));
+  const nextSelections: Record<number, string> = {};
+
+  for (const user of users) {
+    const previousSelection = previousSelections[user.id];
+    nextSelections[user.id] = previousSelection && validServerIds.has(previousSelection)
+      ? previousSelection
+      : firstServerId;
+  }
+
+  return nextSelections;
+}
+
 export default function App() {
   const [apiBaseUrl, setApiBaseUrl] = useState(defaultApiUrl);
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_STORAGE_KEY) ?? "");
@@ -131,6 +150,7 @@ export default function App() {
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [servers, setServers] = useState<GameServer[]>([]);
   const [serverDrafts, setServerDrafts] = useState<Record<number, ServerDraft>>({});
+  const [selectedStateServerByUserId, setSelectedStateServerByUserId] = useState<Record<number, string>>({});
 
   const [versionInput, setVersionInput] = useState("");
   const [loginUser, setLoginUser] = useState("");
@@ -213,6 +233,10 @@ export default function App() {
         nextDrafts[server.id] = { name: server.name, description: server.description ?? "" };
       }
       setServerDrafts(nextDrafts);
+      // Each user row needs a current server target for the clear-state action.
+      setSelectedStateServerByUserId((current) =>
+        buildUserStateSelections(userPayload, serverPayload, current)
+      );
 
       setNotice("Admin data refreshed.");
     } catch (requestError) {
@@ -251,6 +275,7 @@ export default function App() {
     setUsers([]);
     setServers([]);
     setServerDrafts({});
+    setSelectedStateServerByUserId({});
     setNotice("Logged out.");
   }
 
@@ -383,6 +408,41 @@ export default function App() {
     }
   }
 
+  async function onClearSavedState(userId: number, username: string) {
+    if (!token) {
+      return;
+    }
+
+    const selectedServerId = selectedStateServerByUserId[userId];
+    if (!selectedServerId) {
+      setError("Pick a server first.");
+      return;
+    }
+
+    const server = servers.find((entry) => String(entry.id) === selectedServerId);
+    const serverLabel = server ? `${server.name} (#${server.id})` : `server ${selectedServerId}`;
+    const shouldClear = window.confirm(
+      `Clear saved state for ${username} on ${serverLabel}? This cannot be undone.`
+    );
+    if (!shouldClear) {
+      return;
+    }
+
+    try {
+      setError("");
+      // The game stores save data by auth user id from the JWT, not by username.
+      await apiRequest(
+        apiBaseUrl,
+        `/api/management/server/${selectedServerId}/state/${encodeURIComponent(String(userId))}`,
+        "DELETE",
+        token
+      );
+      setNotice(`Cleared saved state for ${username} (user ${userId}) on ${serverLabel}.`);
+    } catch (requestError) {
+      setError(getMessage(requestError));
+    }
+  }
+
   function updateServerDraft(serverId: number, next: Partial<ServerDraft>) {
     setServerDrafts((current) => {
       const previous = current[serverId] ?? { name: "", description: "" };
@@ -394,6 +454,13 @@ export default function App() {
         },
       };
     });
+  }
+
+  function updateSelectedStateServer(userId: number, serverId: string) {
+    setSelectedStateServerByUserId((current) => ({
+      ...current,
+      [userId]: serverId,
+    }));
   }
 
   return (
@@ -519,7 +586,34 @@ export default function App() {
                       </select>
                     </td>
                     <td>{prettyDate(user.createdAt)}</td>
-                    <td>Auto-save on role change</td>
+                    <td>
+                      <div className="action-stack">
+                        <div>Auto-save on role change</div>
+                        <select
+                          value={selectedStateServerByUserId[user.id] ?? ""}
+                          onChange={(event) => updateSelectedStateServer(user.id, event.target.value)}
+                          disabled={!isAuthed || sortedServers.length === 0}
+                        >
+                          {sortedServers.length === 0 ? (
+                            <option value="">No servers</option>
+                          ) : (
+                            sortedServers.map((server) => (
+                              <option key={server.id} value={server.id}>
+                                {server.name} (#{server.id})
+                              </option>
+                            ))
+                          )}
+                        </select>
+                        <button
+                          type="button"
+                          className="danger"
+                          onClick={() => void onClearSavedState(user.id, user.username)}
+                          disabled={!isAuthed || sortedServers.length === 0}
+                        >
+                          Clear Saved State
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
