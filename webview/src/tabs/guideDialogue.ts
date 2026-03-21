@@ -17,6 +17,7 @@ export function buildScarlettDialogue(
     root: {
       text: "Ahoy, captain. What can I help ye with today?",
       responses: [
+        { label: "Where do I keep track of quests?", next: "quests_log_intro" },
         { label: "I have some questions about ports.", next: "ports_intro" },
         { label: "How do I finish quests?", next: "quests_turnin_root" },
         { label: "Teach me about sailing and combat.", next: "sailing_intro" },
@@ -30,6 +31,14 @@ export function buildScarlettDialogue(
           label: "If I impress you, do I at least get a smile?",
           next: "flirt_intro",
         },
+      ],
+    },
+
+    quests_log_intro: {
+      text: "Use the Quests button at the top left when ye need a reminder. It shows your active job, what's finished, and what's still waiting on your attention.",
+      responses: [
+        { label: "How do I finish quests?", next: "quests_turnin_root" },
+        { label: "Tell me about sailing and combat.", next: "sailing_intro" },
       ],
     },
 
@@ -114,6 +123,7 @@ export function buildScarlettDialogue(
     sailing_basics: {
       text: "W moves you forward, S slows you down, and A or D turns the ship. Cargo weight matters too. When the hold gets too full, the ship feels sluggish and tight turns start feeling like bad ideas.",
       responses: [
+        { label: "Where do I keep track of quests?", next: "quests_log_intro" },
         { label: "How does combat work?", next: "combat_basics" },
         { label: "Any survival advice?", next: "sailing_survival" },
       ],

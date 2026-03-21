@@ -139,24 +139,15 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 
 
 ## ROADMAP
-### Alpha 7 - Quests
-- [x] Quests
-  - [x] Better Quest tab into panel and each card needs improvement
-  - [x] Animations and celebrations when a quest is complete
-  - [x] More instructions when getting a quest
-- [x] Hall of captains should display the total money earned based on the api looping through the entire db
-- [x] Rework scarlett to be intrusive and then act like a crew member
-- [x] Better Mono Repo control
-- [x] Stats Panel
-- [ ] Fix communications
-  - [ ] All player messages should not sound like pirates
-- [ ] Add intrusitve scarlett messages
+### Alpha 8 - Cleanup & Map
 - [ ] Map?
+- [ ] Polish and Stability
+- [ ] New Terrain
 
-### Alpha 8 - AI Update
+### Alpha 9 - AI Update
 - [ ] AI ships
 
-### Alpha 9 - World Update
+### Alpha 10 - World Update
 - [ ] Proper terrain with awesome islands and a large Island
 - [ ] More characters, Quests, and a bunch of content
 

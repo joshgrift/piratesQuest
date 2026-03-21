@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { renderApp } from "./helpers";
+import { screen } from "@testing-library/react";
+import { getIpcMessages, renderApp } from "./helpers";
 import { makeOwnedComponent } from "./fixtures";
 
 describe("App", () => {
@@ -105,5 +106,44 @@ describe("App", () => {
     expect(completedRow).toHaveClass("complete");
     expect(completedLabel).toHaveTextContent("Buy 1 Tea");
     expect(completedValue).toHaveTextContent("1/1");
+  });
+
+  it("auto-opens Scarlett's onboarding and accepts her starter quest at sea", () => {
+    const { ipcSpy } = renderApp({
+      isInPort: false,
+      quests: {
+        available: [
+          {
+            id: "scarlett_sail_to_port",
+            title: "Sail to Port",
+            giverNpcId: "scarlett",
+            giverName: "Scarlett",
+            giverPortrait: "character2.png",
+            giverPortName: "",
+            revealGiverInQuestLog: true,
+            canAcceptFromQuestLog: true,
+            description: "Dock once.",
+            completionText: "Nicely done.",
+            isReadyToTurnIn: false,
+            unlocks: ["SellGoods", "TavernTalk"],
+            steps: [],
+          },
+        ],
+        active: null,
+        all: [],
+        completedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    expect(screen.getByText(/top-left Quests button/i)).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Scarlett conversation" })).not.toBeInTheDocument();
+
+    const actions = getIpcMessages(ipcSpy) as { action: string; questId?: string; characterId?: string }[];
+    expect(actions).toContainEqual({
+      action: "accept_quest",
+      questId: "scarlett_sail_to_port",
+      characterId: "scarlett",
+    });
   });
 });

@@ -53,6 +53,16 @@ function buildQuestCompletionComment(state: PortState, questId: string): NpcComm
   };
 }
 
+function buildScarlettWorldJoinComment(): NpcCommentToastData {
+  return {
+    id: "scarlett-world-join",
+    portraitSrc: `${BASE}images/characters/${SCARLETT_CHARACTER.portrait}`,
+    portraitAlt: SCARLETT_CHARACTER.name,
+    name: SCARLETT_CHARACTER.name,
+    message: "W moves ahead, S slows ye down, and A or D steers. Tap the top-left Quests button if ye need your orders again. I've already accepted your first job: sail into any port and dock clean.",
+  };
+}
+
 export default function App() {
   useInputCapture();
 
@@ -65,6 +75,7 @@ export default function App() {
   const prevCompletedQuestIdsRef = useRef<string[] | null>(null);
   const prePortPanelModeRef = useRef<PanelMode | null>("ship");
   const lastTalkedCharacterIdRef = useRef<string | null>(null);
+  const hasShownScarlettWorldIntroRef = useRef(false);
 
   const hasUnlockedFeature = (feature: string): boolean =>
     portState?.quests.unlockedFeatures.includes(feature) ?? false;
@@ -207,6 +218,33 @@ export default function App() {
     if (newComments.length === 0) return;
 
     setNpcCommentQueue((current) => [...current, ...newComments]);
+  }, [portState]);
+
+  useEffect(() => {
+    if (!portState) return;
+    if (hasShownScarlettWorldIntroRef.current) return;
+
+    const hasFinishedStarterQuest = portState.quests.completedIds.includes("scarlett_sail_to_port");
+    if (hasFinishedStarterQuest) return;
+
+    const starterQuest = portState.quests.available.find((quest) => quest.id === "scarlett_sail_to_port");
+    const starterQuestAlreadyActive = portState.quests.active?.id === "scarlett_sail_to_port";
+
+    if (!starterQuest && !starterQuestAlreadyActive) return;
+
+    hasShownScarlettWorldIntroRef.current = true;
+
+    // Accept the starter quest immediately so the quest tracker matches
+    // Scarlett's onboarding toast from the first moment the player sees it.
+    if (starterQuest) {
+      sendIpc({
+        action: "accept_quest",
+        questId: starterQuest.id,
+        characterId: SCARLETT_CHARACTER.id,
+      });
+    }
+
+    setNpcCommentQueue((current) => [...current, buildScarlettWorldJoinComment()]);
   }, [portState]);
 
   const openConversation = (source: ConversationSource, characterId: string) => {
