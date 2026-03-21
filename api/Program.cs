@@ -50,7 +50,9 @@ var connectionString = NormalizeConnectionString(rawConnStr);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
-builder.Services.AddHttpClient<DiscordNotifier>();
+builder.Services.AddHttpClient<IDiscordNotifier, DiscordNotifier>();
+builder.Services.AddHostedService<ServerOfflineMonitor>();
+builder.Services.AddHostedService<LeaderboardRefreshService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured");
@@ -118,9 +120,6 @@ app.UseAuthorization();
 
 var serverApiKey = builder.Configuration["ServerApiKey"]
     ?? throw new InvalidOperationException("ServerApiKey is not configured");
-
-// Server is considered online if heartbeat (or presence) was seen recently.
-const int serverOnlineWindowSeconds = 150;
 
 string CreateUserToken(User user)
 {
@@ -211,8 +210,7 @@ app.MapGet("/api/servers", async (AppDbContext db) =>
 
     var servers = dbServers.Select(server =>
     {
-        var isOnline = server.LastSeenUtc.HasValue
-            && (nowUtc - server.LastSeenUtc.Value).TotalSeconds <= serverOnlineWindowSeconds;
+        var isOnline = ServerLiveness.IsOnline(server.LastSeenUtc, nowUtc);
 
         return new
         {
@@ -289,7 +287,7 @@ app.MapPost("/api/server/{id}/presence", async (
     int id,
     PresenceEventRequest request,
     AppDbContext db,
-    DiscordNotifier discordNotifier) =>
+    IDiscordNotifier discordNotifier) =>
 {
     var username = (request.Username ?? string.Empty).Trim();
     if (string.IsNullOrWhiteSpace(username))
@@ -341,6 +339,55 @@ app.MapPost("/api/server/{id}/heartbeat", async (int id, HeartbeatRequest reques
         playerMax,
         serverVersion
     });
+}).AddEndpointFilter(ServerAuthFilter);
+
+// ---------------------------------------------------------------------------
+// GET /api/server/{id}/leaderboard  [server auth]
+// Dedicated game servers can fetch the cached leaderboard for their shard.
+// ---------------------------------------------------------------------------
+app.MapGet("/api/server/{id}/leaderboard", async (int id, AppDbContext db) =>
+{
+    if (!await db.GameServers.AnyAsync(server => server.Id == id))
+        return Results.NotFound(new { error = "Server not found" });
+
+    var leaderboardEntries = await db.LeaderboardEntries
+        .Where(entry => entry.ServerId == id)
+        .OrderByDescending(entry => entry.TotalGold)
+        .ThenByDescending(entry => entry.VaultGold)
+        .ThenBy(entry => entry.UserId)
+        .ToListAsync();
+
+    var parsedUserIds = leaderboardEntries
+        .Select(entry => int.TryParse(entry.UserId, out var parsedId) ? parsedId : (int?)null)
+        .Where(idValue => idValue.HasValue)
+        .Select(idValue => idValue!.Value)
+        .Distinct()
+        .ToArray();
+
+    var usernamesById = await db.Users
+        .Where(user => parsedUserIds.Contains(user.Id))
+        .ToDictionaryAsync(user => user.Id, user => user.Username);
+
+    var leaderboard = leaderboardEntries.Select(entry =>
+    {
+        var captainName = entry.UserId;
+        if (int.TryParse(entry.UserId, out var parsedId) &&
+            usernamesById.TryGetValue(parsedId, out var username))
+        {
+            captainName = username;
+        }
+
+        return new
+        {
+            CaptainName = captainName,
+            entry.InventoryGold,
+            entry.VaultGold,
+            entry.TotalGold,
+            entry.UpdatedAt
+        };
+    });
+
+    return Results.Ok(leaderboard);
 }).AddEndpointFilter(ServerAuthFilter);
 
 // ---------------------------------------------------------------------------
@@ -526,6 +573,32 @@ app.MapPut("/api/management/user/{id}/role", async (int id, RoleRequest request,
     await db.SaveChangesAsync();
 
     return Results.Ok(new { user.Id, user.Username, Role = user.Role.ToString() });
+}).RequireAuthorization().AddEndpointFilter(AdminAuthFilter);
+
+// ---------------------------------------------------------------------------
+// DELETE /api/management/server/{id}/state/{user}  [admin]
+// Lets an admin clear one player's saved state on one server.
+// ---------------------------------------------------------------------------
+app.MapDelete("/api/management/server/{id}/state/{user}", async (int id, string user, AppDbContext db) =>
+{
+    var server = await db.GameServers.FindAsync(id);
+    if (server is null)
+        return Results.NotFound(new { error = "Server not found" });
+
+    var normalizedUser = (user ?? string.Empty).Trim();
+    if (string.IsNullOrWhiteSpace(normalizedUser))
+        return Results.BadRequest(new { error = "User is required" });
+
+    var state = await db.GameStates
+        .FirstOrDefaultAsync(s => s.ServerId == id && s.UserId == normalizedUser);
+
+    if (state is null)
+        return Results.NotFound(new { error = "Saved state not found" });
+
+    db.GameStates.Remove(state);
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { deleted = true, serverId = id, user = normalizedUser });
 }).RequireAuthorization().AddEndpointFilter(AdminAuthFilter);
 
 // ---------------------------------------------------------------------------

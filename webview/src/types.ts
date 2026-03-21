@@ -26,12 +26,46 @@ export interface PortState {
   tavern: TavernState;
   crew: CrewState;
   leaderboard: LeaderboardEntry[];
+  quests: QuestHudState;
+  serverStateJson: string;
 }
 
 export interface LeaderboardEntry {
-  nickname: string;
-  trophies: number;
-  isLocal: boolean;
+  captainName: string;
+  inventoryGold: number;
+  vaultGold: number;
+  totalGold: number;
+}
+
+export interface QuestHudState {
+  available: QuestSummary[];
+  active: QuestSummary | null;
+  all: QuestSummary[];
+  completedIds: string[];
+  unlockedFeatures: string[];
+}
+
+export interface QuestSummary {
+  id: string;
+  title: string;
+  giverNpcId: string;
+  giverName: string;
+  giverPortrait: string;
+  giverPortName: string;
+  revealGiverInQuestLog: boolean;
+  canAcceptFromQuestLog: boolean;
+  description: string;
+  completionText: string;
+  isReadyToTurnIn: boolean;
+  unlocks: string[];
+  steps: QuestStepProgress[];
+}
+
+export interface QuestStepProgress {
+  label: string;
+  currentValue: number;
+  requiredValue: number;
+  isComplete: boolean;
 }
 
 export interface PortCosts {
@@ -138,6 +172,11 @@ export type IpcMessage =
   | { action: "upgrade_ship" }
   | { action: "hire_character"; characterId: string }
   | { action: "fire_character"; characterId: string }
+  | { action: "talk_to_npc"; characterId: string }
+  | { action: "accept_quest"; questId: string; characterId: string }
+  | { action: "complete_quest"; questId?: string }
+  | { action: "uncomplete_quest"; questId: string }
+  | { action: "set_active_quest"; questId: string }
   | { action: "set_inventory"; items: { type: string; quantity: number }[] }
   | { action: "clear_components" }
   | { action: "set_health"; health: number }

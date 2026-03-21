@@ -83,6 +83,19 @@ public partial class ProjectilePartial : RigidBody3D
     // Without this check, each client would deal damage separately = chaos!
     if (!Multiplayer.IsServer()) return;
 
+    if (body is Player playerBody)
+    {
+      playerBody.Rpc(Player.MethodName.TakeDamageFrom, Damage, PlayerId);
+
+      // Spawn the explosion effect at the cannonball's current position.
+      // We use Rpc to tell ALL clients to spawn the effect (so everyone sees it).
+      Rpc(MethodName.SpawnExplosionEffect, GlobalPosition);
+
+      // Remove the cannonball. CallDeferred waits until it's safe to delete.
+      CallDeferred(MethodName.QueueFree);
+      return;
+    }
+
     if (body is IDamageable)
     {
       // Deal damage to the target via RPC (so all clients see it)
@@ -121,4 +134,3 @@ public partial class ProjectilePartial : RigidBody3D
     explosion.GlobalPosition = position;
   }
 }
-

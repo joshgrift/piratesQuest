@@ -37,6 +37,7 @@ public sealed class ApiTestFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("ServerApiKey", ServerApiKey);
         Environment.SetEnvironmentVariable("DiscordBot__Token", string.Empty);
         Environment.SetEnvironmentVariable("DiscordBot__ChannelId", string.Empty);
+        Environment.SetEnvironmentVariable("DiscordBot__ActivityChannelId", string.Empty);
 
         _factory = new PiratesQuestApiFactory(_postgres.GetConnectionString());
 
@@ -65,6 +66,7 @@ public sealed class ApiTestFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("ServerApiKey", null);
         Environment.SetEnvironmentVariable("DiscordBot__Token", null);
         Environment.SetEnvironmentVariable("DiscordBot__ChannelId", null);
+        Environment.SetEnvironmentVariable("DiscordBot__ActivityChannelId", null);
     }
 
     private async Task InitializeRespawnerAsync()
@@ -94,7 +96,8 @@ public sealed class ApiTestFixture : IAsyncLifetime
                     ["Jwt:Key"] = JwtKey,
                     ["ServerApiKey"] = ServerApiKey,
                     ["DiscordBot:Token"] = string.Empty,
-                    ["DiscordBot:ChannelId"] = string.Empty
+                    ["DiscordBot:ChannelId"] = string.Empty,
+                    ["DiscordBot:ActivityChannelId"] = string.Empty
                 });
             });
         }

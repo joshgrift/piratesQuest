@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<User> Users => Set<User>();
     public DbSet<GameServer> GameServers => Set<GameServer>();
     public DbSet<GameState> GameStates => Set<GameState>();
+    public DbSet<LeaderboardEntry> LeaderboardEntries => Set<LeaderboardEntry>();
     public DbSet<Meta> Meta => Set<Meta>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -32,6 +33,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Meta>(e =>
         {
             e.HasIndex(m => m.Key).IsUnique();
+        });
+
+        modelBuilder.Entity<LeaderboardEntry>(e =>
+        {
+            e.HasIndex(entry => new { entry.ServerId, entry.UserId }).IsUnique();
+            e.HasIndex(entry => new { entry.ServerId, entry.TotalGold });
+            e.HasOne(entry => entry.Server)
+                .WithMany()
+                .HasForeignKey(entry => entry.ServerId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

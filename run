@@ -1,0 +1,661 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Small local process manager for PiratesQuest development.
+#
+# Why this exists:
+# - `./run up` starts the common local stack once.
+# - `./run restart client` restarts only the client.
+# - `./run restart api` restarts only the API.
+# - Processes stay running in the background until you stop them.
+#
+# This keeps the "easy to use" workflow, but removes the need to rerun
+# the whole stack whenever you only changed one piece.
+
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "${ROOT_DIR}"
+
+RUN_DIR="${ROOT_DIR}/.run"
+PID_DIR="${RUN_DIR}/pids"
+LOG_DIR="${RUN_DIR}/logs"
+
+GODOT_BIN="${GODOT_BIN:-/Applications/Godot_mono.app/Contents/MacOS/Godot}"
+SERVER_ID="${SERVER_ID:-1}"
+SERVER_API_KEY="${SERVER_API_KEY:-dev-server-api-key}"
+DEFAULT_API_URL="http://localhost:5236"
+
+ACTION="up"
+TARGET="all"
+USE_PROD=false
+SERVER_ONLY=false
+BUILD_FIRST=false
+CLIENT_USER=""
+CLIENT_PASS=""
+
+mkdir -p "${PID_DIR}" "${LOG_DIR}"
+
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+RESET='\033[0m'
+
+print_help() {
+  cat <<'EOF'
+Usage:
+  ./run
+  ./run <action> [target] [options]
+
+Actions:
+  up        Start one service or the full stack, then stream logs
+  down      Stop one service or the full stack
+  restart   Restart one service or the full stack
+  status    Show what is currently running
+  build     Build one project without starting it
+  help      Show this help
+
+Targets:
+  all
+  backend   Docker DB + API
+  api
+  webview
+  server
+  client
+  godot
+  menu
+  admin
+
+Examples:
+  ./run
+  ./run up
+  ./run status
+  ./run restart client
+  ./run restart api
+  ./run down client
+  ./run build godot
+  ./run up server --prod
+
+Options:
+  --build              Build before starting or restarting the target
+  --server             For `up all`, skip starting the client
+  --prod               Use https://pirates.quest for API instead of local API
+  --user <name>        Pass login user when starting the client
+  --password <pass>    Pass login password when starting the client
+
+Typical flow:
+  1. ./run up
+  2. Make a change
+  3. In another terminal: ./run restart client
+  4. Or: ./run restart api
+EOF
+}
+
+print_info() {
+  local color="$1"
+  local text="$2"
+  echo -e "${color}${text}${RESET}"
+}
+
+service_pid_file() {
+  echo "${PID_DIR}/$1.pid"
+}
+
+service_log_file() {
+  echo "${LOG_DIR}/$1.log"
+}
+
+service_port() {
+  case "$1" in
+    api) echo "5236" ;;
+    webview) echo "5173" ;;
+    server) echo "7777" ;;
+    *) echo "" ;;
+  esac
+}
+
+service_pattern() {
+  case "$1" in
+    webview) echo "${ROOT_DIR}/webview/node_modules/.bin/vite --host localhost --port 5173" ;;
+    api) echo "dotnet run --project api" ;;
+    server) echo "${GODOT_BIN} --path godot --position 0,50 --server" ;;
+    client) echo "${GODOT_BIN} --path godot --resolution 2400x1000 --position 0,50 --client1" ;;
+    *) echo "" ;;
+  esac
+}
+
+find_service_pids() {
+  local service="$1"
+  local port
+  local pattern
+
+  port="$(service_port "${service}")"
+  if [[ -n "${port}" ]]; then
+    lsof -ti tcp:"${port}" || true
+    return 0
+  fi
+
+  pattern="$(service_pattern "${service}")"
+  if [[ -n "${pattern}" ]]; then
+    pgrep -f "${pattern}" || true
+  fi
+}
+
+service_is_running() {
+  local service="$1"
+  local pids
+
+  pids="$(find_service_pids "${service}")"
+  [[ -n "${pids}" ]]
+}
+
+ensure_node_modules() {
+  local app_dir="$1"
+
+  # Installing every run is slow, so only do it the first time.
+  if [[ ! -d "${app_dir}/node_modules" ]]; then
+    print_info "${YELLOW}" "=== Installing ${app_dir} dependencies ==="
+    npm --prefix "${app_dir}" install
+  fi
+}
+
+build_menu() {
+  print_info "${YELLOW}" "=== Building Menu WebView ==="
+  ensure_node_modules "menu"
+  npm --prefix menu run build
+}
+
+build_admin() {
+  print_info "${YELLOW}" "=== Building Admin Panel ==="
+  ensure_node_modules "admin"
+  npm --prefix admin run build
+}
+
+build_godot() {
+  print_info "${YELLOW}" "=== Building Godot C# Project ==="
+  dotnet build godot
+}
+
+clear_log_files() {
+  print_info "${BLUE}" "=== Clearing Previous Logs ==="
+  rm -f "${LOG_DIR}"/*.log
+}
+
+kill_port_if_needed() {
+  local port="$1"
+  local pids
+
+  if [[ -z "${port}" ]]; then
+    return 0
+  fi
+
+  pids="$(lsof -ti tcp:"${port}" || true)"
+  if [[ -n "${pids}" ]]; then
+    print_info "${YELLOW}" "Stopping existing process on port ${port} (${pids})"
+    graceful_stop_pids "TERM" ${pids}
+  fi
+}
+
+graceful_stop_pids() {
+  local first_signal="$1"
+  shift
+  local pids=("$@")
+  local pid
+  local still_running=()
+
+  if [[ ${#pids[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  kill -"${first_signal}" "${pids[@]}" 2>/dev/null || true
+
+  # Give the app a moment to shut down cleanly before escalating.
+  sleep 2
+
+  for pid in "${pids[@]}"; do
+    if kill -0 "${pid}" 2>/dev/null; then
+      still_running+=("${pid}")
+    fi
+  done
+
+  if [[ ${#still_running[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  kill -TERM "${still_running[@]}" 2>/dev/null || true
+  sleep 2
+
+  local stubborn=()
+  for pid in "${still_running[@]}"; do
+    if kill -0 "${pid}" 2>/dev/null; then
+      stubborn+=("${pid}")
+    fi
+  done
+
+  if [[ ${#stubborn[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  print_info "${YELLOW}" "Some processes ignored graceful shutdown, forcing stop (${stubborn[*]})"
+  kill -KILL "${stubborn[@]}" 2>/dev/null || true
+}
+
+ensure_docker_db() {
+  if ! docker info >/dev/null 2>&1; then
+    print_info "${RED}" "Error: Docker is not running. Please start Docker Desktop and try again."
+    exit 1
+  fi
+
+  if ! docker compose -f api/docker-compose.yml ps --status running 2>/dev/null | grep -q "db"; then
+    print_info "${BLUE}" "Database container not running, starting it..."
+    docker compose -f api/docker-compose.yml up -d
+  fi
+}
+
+require_godot() {
+  if [[ ! -x "${GODOT_BIN}" ]]; then
+    print_info "${RED}" "Error: Godot binary not found at ${GODOT_BIN}."
+    echo "Set GODOT_BIN to your Godot 4 Mono executable path and try again."
+    exit 1
+  fi
+}
+
+maybe_build_for_service() {
+  local service="$1"
+
+  if [[ "${BUILD_FIRST}" != "true" ]]; then
+    return 0
+  fi
+
+  case "${service}" in
+    api)
+      print_info "${YELLOW}" "=== Building API ==="
+      dotnet build api
+      ;;
+    server|client|godot)
+      build_godot
+      ;;
+    menu)
+      build_menu
+      ;;
+    admin)
+      build_admin
+      ;;
+    webview)
+      ensure_node_modules "webview"
+      ;;
+  esac
+}
+
+start_service() {
+  local service="$1"
+  local pid_file
+  local log_file
+  local port
+  local pid
+  local client_args
+  local server_args
+  local running_pids
+
+  pid_file="$(service_pid_file "${service}")"
+  log_file="$(service_log_file "${service}")"
+  port="$(service_port "${service}")"
+
+  if service_is_running "${service}"; then
+    print_info "${YELLOW}" "${service} is already running."
+    return 0
+  fi
+
+  maybe_build_for_service "${service}"
+
+  case "${service}" in
+    webview)
+      ensure_node_modules "webview"
+      kill_port_if_needed "${port}"
+      print_info "${YELLOW}" "=== Starting Port WebView ==="
+      nohup npm --prefix webview run dev -- --host localhost --port 5173 >>"${log_file}" 2>&1 &
+      pid=$!
+      ;;
+    api)
+      if [[ "${USE_PROD}" == "true" ]]; then
+        print_info "${YELLOW}" "Skipping local API start because --prod was passed."
+        return 0
+      fi
+      ensure_docker_db
+      kill_port_if_needed "${port}"
+      print_info "${BLUE}" "=== Starting Backend API ==="
+      nohup dotnet run --project api >>"${log_file}" 2>&1 &
+      pid=$!
+      ;;
+    server)
+      require_godot
+      if [[ "${USE_PROD}" != "true" ]]; then
+        ensure_docker_db
+      fi
+      kill_port_if_needed "${port}"
+      print_info "${RED}" "=== Starting Dedicated Server ==="
+      server_args=(
+        "${GODOT_BIN}" --path godot --position 0,50 --server
+        --server-id "${SERVER_ID}"
+        --server-api-key "${SERVER_API_KEY}"
+      )
+      if [[ "${USE_PROD}" == "true" ]]; then
+        server_args+=(--api-url "https://pirates.quest")
+      fi
+      nohup "${server_args[@]}" >>"${log_file}" 2>&1 &
+      pid=$!
+      ;;
+    client)
+      require_godot
+      print_info "${GREEN}" "=== Starting Client ==="
+      client_args=(
+        "${GODOT_BIN}" --path godot --resolution 2400x1000 --position 0,50
+        --client1
+        --creative
+      )
+      if [[ "${USE_PROD}" == "true" ]]; then
+        client_args+=(--api-url "https://pirates.quest")
+      else
+        client_args+=(--webview-url "http://localhost:5173/")
+      fi
+      if [[ -n "${CLIENT_USER}" && -n "${CLIENT_PASS}" ]]; then
+        client_args+=(--user "${CLIENT_USER}" --password "${CLIENT_PASS}" --disableSaveUser)
+      fi
+      nohup "${client_args[@]}" >>"${log_file}" 2>&1 &
+      pid=$!
+      ;;
+    *)
+      print_info "${RED}" "Unknown service: ${service}"
+      exit 1
+      ;;
+  esac
+
+  echo "${pid}" > "${pid_file}"
+  print_info "${GREEN}" "${service} started. Log: ${log_file}"
+  sleep 1
+
+  running_pids="$(find_service_pids "${service}")"
+  if [[ -n "${running_pids}" ]]; then
+    echo "${running_pids}" | head -n 1 > "${pid_file}"
+  fi
+}
+
+stop_service() {
+  local service="$1"
+  local pid_file
+  local pids
+  local first_signal
+
+  pid_file="$(service_pid_file "${service}")"
+
+  if ! service_is_running "${service}"; then
+    print_info "${YELLOW}" "${service} is not running."
+    rm -f "${pid_file}"
+    return 0
+  fi
+
+  pids="$(find_service_pids "${service}")"
+  print_info "${YELLOW}" "Stopping ${service} (${pids})"
+  first_signal="TERM"
+
+  # For Godot, try SIGINT first because it is closer to a normal quit.
+  # That reduces the chance of macOS showing a crash-style popup.
+  if [[ "${service}" == "server" || "${service}" == "client" ]]; then
+    first_signal="INT"
+  fi
+
+  # shellcheck disable=SC2086
+  graceful_stop_pids "${first_signal}" ${pids}
+  rm -f "${pid_file}"
+}
+
+restart_service() {
+  local service="$1"
+  stop_service "${service}"
+  sleep 1
+  start_service "${service}"
+}
+
+start_target() {
+  case "$1" in
+    all)
+      # Build the slow shared assets once up front for the "start everything" flow.
+      build_godot
+      build_menu
+      build_admin
+      if [[ "${USE_PROD}" != "true" ]]; then
+        start_service "webview"
+        start_service "api"
+      fi
+      start_service "server"
+      if [[ "${SERVER_ONLY}" == "false" ]]; then
+        start_service "client"
+      fi
+      ;;
+    backend)
+      if [[ "${USE_PROD}" == "true" ]]; then
+        print_info "${YELLOW}" "backend target is local-only. Nothing to start with --prod."
+        return 0
+      fi
+      start_service "api"
+      ;;
+    api|webview|server|client)
+      start_service "$1"
+      ;;
+    *)
+      print_info "${RED}" "Unknown start target: $1"
+      exit 1
+      ;;
+  esac
+}
+
+stop_target() {
+  case "$1" in
+    all)
+      stop_service "client"
+      stop_service "server"
+      stop_service "api"
+      stop_service "webview"
+      ;;
+    backend)
+      stop_service "api"
+      ;;
+    api|webview|server|client)
+      stop_service "$1"
+      ;;
+    *)
+      print_info "${RED}" "Unknown stop target: $1"
+      exit 1
+      ;;
+  esac
+}
+
+restart_target() {
+  case "$1" in
+    all)
+      stop_target "all"
+      sleep 1
+      start_target "all"
+      ;;
+    backend)
+      restart_service "api"
+      ;;
+    api|webview|server|client)
+      restart_service "$1"
+      ;;
+    *)
+      print_info "${RED}" "Unknown restart target: $1"
+      exit 1
+      ;;
+  esac
+}
+
+show_status() {
+  local service
+  local pids
+
+  print_info "${BLUE}" "=== Service Status ==="
+  for service in webview api server client; do
+    if service_is_running "${service}"; then
+      pids="$(find_service_pids "${service}" | tr '\n' ' ' | sed 's/[[:space:]]*$//')"
+      echo -e "${GREEN}${service}: running${RESET} (pid ${pids})"
+    else
+      echo -e "${RED}${service}: stopped${RESET}"
+    fi
+  done
+}
+
+show_logs() {
+  local service="$1"
+  local log_file
+  local files
+
+  case "${service}" in
+    all)
+      files=(
+        "$(service_log_file "webview")"
+        "$(service_log_file "api")"
+        "$(service_log_file "server")"
+        "$(service_log_file "client")"
+      )
+      touch "${files[@]}"
+      tail -n 40 -F "${files[@]}" | awk '
+        BEGIN {
+          reset = sprintf("%c[0m", 27)
+          yellow = sprintf("%c[0;33m", 27)
+          blue = sprintf("%c[0;34m", 27)
+          red = sprintf("%c[0;31m", 27)
+          green = sprintf("%c[0;32m", 27)
+        }
+        /^==> .* <==$/ {
+          current=$0
+          sub(/^==> /, "", current)
+          sub(/ <==$/, "", current)
+          sub(/^.*\//, "", current)
+          sub(/\.log$/, "", current)
+          next
+        }
+        {
+          color = reset
+          if (current == "webview") color = yellow
+          else if (current == "api") color = blue
+          else if (current == "server") color = red
+          else if (current == "client") color = green
+
+          if (current == "") {
+            print $0
+          } else {
+            printf "%s[%s]%s %s\n", color, current, reset, $0
+          }
+          fflush()
+        }
+      '
+      ;;
+    backend)
+      service="api"
+      ;;
+    api|webview|server|client) ;;
+    *)
+      print_info "${RED}" "Logs are available for: all, api, webview, server, client"
+      exit 1
+      ;;
+  esac
+
+  log_file="$(service_log_file "${service}")"
+  touch "${log_file}"
+  case "${service}" in
+    webview) print_info "${YELLOW}" "=== Tailing webview logs ===" ;;
+    api) print_info "${BLUE}" "=== Tailing api logs ===" ;;
+    server) print_info "${RED}" "=== Tailing server logs ===" ;;
+    client) print_info "${GREEN}" "=== Tailing client logs ===" ;;
+  esac
+  tail -n 40 -F "${log_file}"
+}
+
+build_target() {
+  case "$1" in
+    godot)
+      build_godot
+      ;;
+    menu)
+      build_menu
+      ;;
+    admin)
+      build_admin
+      ;;
+    api)
+      print_info "${YELLOW}" "=== Building API ==="
+      dotnet build api
+      ;;
+    *)
+      print_info "${RED}" "Build targets: godot, menu, admin, api"
+      exit 1
+      ;;
+  esac
+}
+
+if [[ $# -gt 0 ]]; then
+  case "$1" in
+    up|down|restart|status|build|help)
+      ACTION="$1"
+      shift
+      ;;
+  esac
+fi
+
+if [[ $# -gt 0 ]]; then
+  case "$1" in
+    all|backend|api|webview|server|client|godot|menu|admin)
+      TARGET="$1"
+      shift
+      ;;
+  esac
+fi
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --build) BUILD_FIRST=true; shift ;;
+    --server) SERVER_ONLY=true; shift ;;
+    --prod) USE_PROD=true; shift ;;
+    --user) CLIENT_USER="$2"; shift 2 ;;
+    --password) CLIENT_PASS="$2"; shift 2 ;;
+    --help|-h) print_help; exit 0 ;;
+    *)
+      print_info "${RED}" "Unknown argument: $1"
+      echo
+      print_help
+      exit 1
+      ;;
+  esac
+done
+
+case "${ACTION}" in
+  up)
+    clear_log_files
+    start_target "${TARGET}"
+    print_info "${GREEN}" "Requested services are running in the background."
+    echo "Streaming logs below. Use another terminal for restart/down/build commands."
+    show_logs "${TARGET}"
+    ;;
+  down)
+    stop_target "${TARGET}"
+    ;;
+  restart)
+    restart_target "${TARGET}"
+    print_info "${GREEN}" "Requested services were restarted in the background."
+    ;;
+  status)
+    show_status
+    ;;
+  build)
+    build_target "${TARGET}"
+    ;;
+  help)
+    print_help
+    ;;
+  *)
+    print_info "${RED}" "Unknown action: ${ACTION}"
+    print_help
+    exit 1
+    ;;
+esac

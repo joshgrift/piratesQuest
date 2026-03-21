@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import type { ConversationTree } from "../components/ConversationPanel";
-import type { PortState, TavernCharacter } from "../types";
+import type { PortState, QuestSummary, TavernCharacter } from "../types";
 import { BASE } from "../utils/helpers";
+import { describeQuestUnlocks } from "../utils/questUnlocks";
 import { getDialogueForCharacter } from "./tavernData";
 
 interface TavernTabProps {
@@ -10,7 +11,10 @@ interface TavernTabProps {
   activeConversationCharacterId?: string | null;
 }
 
-export function buildTavernConversationTree(character: TavernCharacter): ConversationTree {
+export function buildTavernConversationTree(
+  character: TavernCharacter,
+  availableQuest: QuestSummary | null,
+): ConversationTree {
   const baseTree = getDialogueForCharacter(character);
   const tree = Object.fromEntries(
     Object.entries(baseTree).map(([nodeId, node]) => [
@@ -22,7 +26,7 @@ export function buildTavernConversationTree(character: TavernCharacter): Convers
   if (!tree.root) {
     return {
       root: {
-        text: `Name's ${character.name}. Say what you need, Captain.`,
+        text: `I'm ${character.name}. Say what you need, Captain.`,
         responses: [{ label: "Leave", next: "root" }],
       },
     };
@@ -30,7 +34,7 @@ export function buildTavernConversationTree(character: TavernCharacter): Convers
 
   if (!tree.hire_offer) {
     tree.hire_offer = {
-      text: "If we're to sail together, say the word plain.",
+      text: "I'm interested, is that an offer I hear?",
       responses: [
         { label: "Join my crew.", action: "hire" },
         { label: "Not today.", next: "root" },
@@ -47,7 +51,7 @@ export function buildTavernConversationTree(character: TavernCharacter): Convers
 
   if (!tree.hire_success) {
     tree.hire_success = {
-      text: "Yes. I'll be ready at the dock.",
+      text: "Alright. I'll meet you at the dock.",
       responses: [{ label: "Back", next: "root" }],
     };
   }
@@ -62,6 +66,21 @@ export function buildTavernConversationTree(character: TavernCharacter): Convers
   if (!tree.already_hired) {
     tree.already_hired = {
       text: "Already aboard, Captain.",
+      responses: [{ label: "Back", next: "root" }],
+    };
+  }
+
+  if (availableQuest?.giverNpcId === character.id) {
+    tree.root.responses.unshift({ label: `Ask about: ${availableQuest.title}`, next: "quest_offer" });
+    tree.quest_offer = {
+      text: `${availableQuest.description}\n\n${describeQuestUnlocks(availableQuest.unlocks)}`,
+      responses: [
+        { label: "Alright, I'm in.", action: "accept_quest" },
+        { label: "Maybe later.", next: "root" },
+      ],
+    };
+    tree.quest_accept_success = {
+      text: "Perfect. Go do the job, then come back with a story that's at least a little embarrassing.",
       responses: [{ label: "Back", next: "root" }],
     };
   }

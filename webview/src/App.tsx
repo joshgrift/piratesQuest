@@ -7,39 +7,78 @@ import { BASE } from "./utils/helpers";
 import { MarketTab } from "./tabs/MarketTab";
 import { ShipyardTab } from "./tabs/ShipyardTab";
 import { VaultTab } from "./tabs/VaultTab";
-import { GuideTab } from "./tabs/GuideTab";
 import { CreativeTab } from "./tabs/CreativeTab";
+import { QuestsTab } from "./tabs/QuestsTab";
 import { buildTavernConversationTree } from "./tabs/TavernTab";
 import { ShipCrewTab, buildCrewConversationTree } from "./tabs/ShipCrewTab";
 import { LeaderboardTab } from "./tabs/LeaderboardTab";
+import { StatsTab } from "./tabs/StatsTab";
+import { buildScarlettDialogue, SCARLETT_CHARACTER } from "./tabs/guideDialogue";
 import { ShipStatusWidget } from "./components/ShipStatusWidget";
+import { QuestStatusWidget } from "./components/QuestStatusWidget";
 import { CharacterConversationOverlay } from "./components/CharacterConversationOverlay";
+import { NpcCommentToast, type NpcCommentToastData } from "./components/NpcCommentToast";
 
-type ShipTab = "guide" | "ship_crew" | "ship_status";
 type PortTab = "market" | "shipyard" | "vault" | "creative";
-type PanelMode = "ship" | "port" | "leaderboard";
+type PanelMode = "ship" | "quests" | "crew" | "port" | "stats" | "leaderboard";
 type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
-type ConversationSource = "tavern" | "crew";
+type ConversationSource = "tavern" | "crew" | "guide";
 
 interface ActiveConversation {
   source: ConversationSource;
   characterId: string;
 }
 
-const SHIP_ICON = `${BASE}icons/flat/ship-wheel.svg`;
+const SHIP_ICON = `${BASE}icons/flat/caravel.svg`;
+const QUESTS_ICON = `${BASE}icons/flat/tied-scroll.svg`;
+const CREW_ICON = `${BASE}icons/flat/bandana.svg`;
 const PORT_ICON = `${BASE}icons/flat/anchor.svg`;
+const STATS_ICON = `${BASE}icons/flat/sextant.svg`;
 const LEADERBOARD_ICON = `${BASE}icons/flat/pirate-hat.svg`;
+
+function findQuestForNpc(state: PortState, characterId: string) {
+  return state.quests.available.find((quest) => quest.giverNpcId === characterId) ?? null;
+}
+
+function buildQuestCompletionComment(state: PortState, questId: string): NpcCommentToastData | null {
+  const quest = state.quests.all.find((entry) => entry.id === questId);
+  if (!quest) return null;
+
+  return {
+    id: `quest-complete-${quest.id}`,
+    portraitSrc: `${BASE}images/characters/${quest.giverPortrait}`,
+    portraitAlt: quest.giverName,
+    name: quest.giverName,
+    message: quest.completionText,
+  };
+}
+
+function buildScarlettWorldJoinComment(): NpcCommentToastData {
+  return {
+    id: "scarlett-world-join",
+    portraitSrc: `${BASE}images/characters/${SCARLETT_CHARACTER.portrait}`,
+    portraitAlt: SCARLETT_CHARACTER.name,
+    name: SCARLETT_CHARACTER.name,
+    message: "W moves ahead, S slows ye down, and A or D steers. Tap the top-left Quests button if ye need your orders again. I've already accepted your first job: sail into any port and dock clean.",
+  };
+}
 
 export default function App() {
   useInputCapture();
 
   const [portState, setPortState] = useState<PortState | null>(null);
   const [activePanelMode, setActivePanelMode] = useState<PanelMode | null>("ship");
-  const [activeShipTab, setActiveShipTab] = useState<ShipTab>("guide");
   const [activePortTab, setActivePortTab] = useState<PortTab>("market");
   const [activeConversation, setActiveConversation] = useState<ActiveConversation | null>(null);
+  const [npcCommentQueue, setNpcCommentQueue] = useState<NpcCommentToastData[]>([]);
   const prevIsInPortRef = useRef<boolean | null>(null);
+  const prevCompletedQuestIdsRef = useRef<string[] | null>(null);
   const prePortPanelModeRef = useRef<PanelMode | null>("ship");
+  const lastTalkedCharacterIdRef = useRef<string | null>(null);
+  const hasShownScarlettWorldIntroRef = useRef(false);
+
+  const hasUnlockedFeature = (feature: string): boolean =>
+    portState?.quests.unlockedFeatures.includes(feature) ?? false;
 
   useEffect(() => {
     window.openPort = (data: PortState) => {
@@ -52,7 +91,6 @@ export default function App() {
       // Godot calls closePort when undocking, so we force local state
       // to sea mode even before the next updateState payload arrives.
       setPortState((prev) => (prev ? { ...prev, isInPort: false } : prev));
-      setActiveShipTab("guide");
     };
 
     window.updateState = (data: PortState) => {
@@ -130,6 +168,8 @@ export default function App() {
   useEffect(() => {
     if (!activeConversation || !portState) return;
 
+    if (activeConversation.source === "guide") return;
+
     if (activeConversation.source === "tavern") {
       if (!portState.isInPort) {
         setActiveConversation(null);
@@ -151,6 +191,62 @@ export default function App() {
     }
   }, [activeConversation, portState]);
 
+  useEffect(() => {
+    if (!activeConversation) {
+      lastTalkedCharacterIdRef.current = null;
+      return;
+    }
+
+    if (lastTalkedCharacterIdRef.current === activeConversation.characterId) return;
+    lastTalkedCharacterIdRef.current = activeConversation.characterId;
+    sendIpc({ action: "talk_to_npc", characterId: activeConversation.characterId });
+  }, [activeConversation]);
+
+  useEffect(() => {
+    const completedIds = portState?.quests.completedIds ?? [];
+    const previousIds = prevCompletedQuestIdsRef.current;
+    prevCompletedQuestIdsRef.current = completedIds;
+
+    if (!portState || previousIds === null) return;
+
+    const previousIdSet = new Set(previousIds);
+    const newComments = completedIds
+      .filter((questId) => !previousIdSet.has(questId))
+      .map((questId) => buildQuestCompletionComment(portState, questId))
+      .filter((comment): comment is NpcCommentToastData => comment !== null);
+
+    if (newComments.length === 0) return;
+
+    setNpcCommentQueue((current) => [...current, ...newComments]);
+  }, [portState]);
+
+  useEffect(() => {
+    if (!portState) return;
+    if (hasShownScarlettWorldIntroRef.current) return;
+
+    const hasFinishedStarterQuest = portState.quests.completedIds.includes("scarlett_sail_to_port");
+    if (hasFinishedStarterQuest) return;
+
+    const starterQuest = portState.quests.available.find((quest) => quest.id === "scarlett_sail_to_port");
+    const starterQuestAlreadyActive = portState.quests.active?.id === "scarlett_sail_to_port";
+
+    if (!starterQuest && !starterQuestAlreadyActive) return;
+
+    hasShownScarlettWorldIntroRef.current = true;
+
+    // Accept the starter quest immediately so the quest tracker matches
+    // Scarlett's onboarding toast from the first moment the player sees it.
+    if (starterQuest) {
+      sendIpc({
+        action: "accept_quest",
+        questId: starterQuest.id,
+        characterId: SCARLETT_CHARACTER.id,
+      });
+    }
+
+    setNpcCommentQueue((current) => [...current, buildScarlettWorldJoinComment()]);
+  }, [portState]);
+
   const openConversation = (source: ConversationSource, characterId: string) => {
     setActiveConversation((prev) => {
       if (prev?.source === source && prev.characterId === characterId) return prev;
@@ -161,11 +257,35 @@ export default function App() {
   const activeConversationView = useMemo(() => {
     if (!portState || !activeConversation) return null;
 
+    if (activeConversation.source === "guide") {
+      const scarlettQuest = findQuestForNpc(portState, SCARLETT_CHARACTER.id);
+
+      return {
+        speakerName: SCARLETT_CHARACTER.name,
+        speakerPortraitSrc: `${BASE}images/characters/${SCARLETT_CHARACTER.portrait}`,
+        speakerPortraitAlt: SCARLETT_CHARACTER.name,
+        tree: buildScarlettDialogue(!!scarlettQuest),
+        instantNodeIds: ["root"],
+        onAction: (actionId: string): string | void => {
+          if (actionId !== "accept_scarlett_quest") return;
+          if (!scarlettQuest) return "quests_already_started";
+
+          sendIpc({
+            action: "accept_quest",
+            questId: scarlettQuest.id,
+            characterId: SCARLETT_CHARACTER.id,
+          });
+          return "quest_accept_success";
+        },
+      };
+    }
+
     if (activeConversation.source === "tavern") {
       const character = portState.tavern.characters.find((c) => c.id === activeConversation.characterId);
       if (!character) return null;
 
-      const tree = buildTavernConversationTree(character);
+      const availableQuest = findQuestForNpc(portState, character.id);
+      const tree = buildTavernConversationTree(character, availableQuest);
 
       return {
         speakerName: character.name,
@@ -193,6 +313,15 @@ export default function App() {
               default:
                 return "root";
             }
+          }
+
+          if (actionId === "accept_quest" && availableQuest) {
+            sendIpc({
+              action: "accept_quest",
+              questId: availableQuest.id,
+              characterId: character.id,
+            });
+            return "quest_accept_success";
           }
 
           return;
@@ -224,9 +353,15 @@ export default function App() {
   const isInPort = !!portState?.isInPort;
   const panelTitle = activePanelMode === "port"
     ? (portState?.portName ?? "Port")
+    : activePanelMode === "quests"
+      ? "quests"
+      : activePanelMode === "crew"
+        ? "crew"
+    : activePanelMode === "stats"
+      ? "stats"
     : activePanelMode === "leaderboard"
       ? "Hall of Captains"
-      : "Ship Operations";
+      : "ship";
 
   const handleModeSelect = (mode: PanelMode) => {
     if (mode === "port" && !isInPort) return;
@@ -235,6 +370,14 @@ export default function App() {
 
   return (
     <>
+      <QuestStatusWidget
+        state={portState}
+        panelOpen={activePanelMode !== null}
+        onOpenQuests={() => {
+          setActivePanelMode("quests");
+          setActiveConversation(null);
+        }}
+      />
       <ShipStatusWidget state={portState} panelOpen={activePanelMode !== null} />
 
       <div className={`mode-rail ${activePanelMode === null ? "collapsed" : ""}`} role="tablist" aria-label="Panel mode">
@@ -262,6 +405,39 @@ export default function App() {
           <img className="rail-mode-icon" src={SHIP_ICON} alt="" />
         </button>
         <button
+          className={`rail-mode-btn ${activePanelMode === "quests" ? "active" : ""}`}
+          onClick={() => handleModeSelect("quests")}
+          type="button"
+          role="tab"
+          aria-selected={activePanelMode === "quests"}
+          aria-label="Quests mode"
+          title="Quests"
+        >
+          <img className="rail-mode-icon" src={QUESTS_ICON} alt="" />
+        </button>
+        <button
+          className={`rail-mode-btn ${activePanelMode === "crew" ? "active" : ""}`}
+          onClick={() => handleModeSelect("crew")}
+          type="button"
+          role="tab"
+          aria-selected={activePanelMode === "crew"}
+          aria-label="Crew mode"
+          title="Crew"
+        >
+          <img className="rail-mode-icon" src={CREW_ICON} alt="" />
+        </button>
+        <button
+          className={`rail-mode-btn ${activePanelMode === "stats" ? "active" : ""}`}
+          onClick={() => handleModeSelect("stats")}
+          type="button"
+          role="tab"
+          aria-selected={activePanelMode === "stats"}
+          aria-label="Stats mode"
+          title="Stats"
+        >
+          <img className="rail-mode-icon" src={STATS_ICON} alt="" />
+        </button>
+        <button
           className={`rail-mode-btn ${activePanelMode === "leaderboard" ? "active" : ""}`}
           onClick={() => handleModeSelect("leaderboard")}
           type="button"
@@ -279,58 +455,35 @@ export default function App() {
           <div className="port-name">{panelTitle}</div>
         </div>
 
-        {activePanelMode !== null && activePanelMode !== "leaderboard" && (
+        {activePanelMode === "port" && (
           <div className="tab-bar">
-            {activePanelMode === "ship" ? (
-              <>
-                <button
-                  className={`tab-btn ${activeShipTab === "guide" ? "active" : ""}`}
-                  onClick={() => setActiveShipTab("guide")}
-                >
-                  Scarlett
-                </button>
-                <button
-                  className={`tab-btn ${activeShipTab === "ship_crew" ? "active" : ""}`}
-                  onClick={() => setActiveShipTab("ship_crew")}
-                >
-                  Crew
-                </button>
-                <button
-                  className={`tab-btn ${activeShipTab === "ship_status" ? "active" : ""}`}
-                  onClick={() => setActiveShipTab("ship_status")}
-                >
-                  Ship Status
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  className={`tab-btn ${activePortTab === "market" ? "active" : ""}`}
-                  onClick={() => setActivePortTab("market")}
-                >
-                  Market
-                </button>
-                <button
-                  className={`tab-btn ${activePortTab === "shipyard" ? "active" : ""}`}
-                  onClick={() => setActivePortTab("shipyard")}
-                >
-                  Shipyard
-                </button>
-                <button
-                  className={`tab-btn vault-tab-btn ${activePortTab === "vault" ? "active" : ""}`}
-                  onClick={() => setActivePortTab("vault")}
-                >
-                  Vault
-                </button>
-                {portState?.isCreative && portState?.isInPort && (
-                  <button
-                    className={`tab-btn creative-tab-btn ${activePortTab === "creative" ? "active" : ""}`}
-                    onClick={() => setActivePortTab("creative")}
-                  >
-                    Creative
-                  </button>
-                )}
-              </>
+            <button
+              className={`tab-btn ${activePortTab === "market" ? "active" : ""}`}
+              onClick={() => setActivePortTab("market")}
+            >
+              Market
+            </button>
+            <button
+              className={`tab-btn ${activePortTab === "shipyard" ? "active" : ""}`}
+              onClick={() => setActivePortTab("shipyard")}
+            >
+              Shipyard
+            </button>
+            {hasUnlockedFeature("Vault") && (
+              <button
+                className={`tab-btn vault-tab-btn ${activePortTab === "vault" ? "active" : ""}`}
+                onClick={() => setActivePortTab("vault")}
+              >
+                Vault
+              </button>
+            )}
+            {portState?.isCreative && portState?.isInPort && (
+              <button
+                className={`tab-btn creative-tab-btn ${activePortTab === "creative" ? "active" : ""}`}
+                onClick={() => setActivePortTab("creative")}
+              >
+                Creative
+              </button>
             )}
           </div>
         )}
@@ -338,26 +491,31 @@ export default function App() {
         {portState && (
           <div className="tab-content">
             {activePanelMode === "ship" ? (
-              activeShipTab === "guide" ? (
-                <GuideTab />
-              ) : activeShipTab === "ship_status" ? (
-                <ShipyardTab
-                  state={portState}
-                  isInPort={portState.isInPort}
-                  showForSale={false}
-                  showShipUpgrade={false}
-                />
-              ) : activeShipTab === "ship_crew" ? (
-                <ShipCrewTab
-                  state={portState}
-                  onOpenConversation={(characterId) => openConversation("crew", characterId)}
-                  activeConversationCharacterId={activeConversation?.source === "crew" ? activeConversation.characterId : null}
-                />
-              ) : (
-                <GuideTab />
-              )
+              <ShipyardTab
+                state={portState}
+                isInPort={portState.isInPort}
+                showForSale={false}
+                showShipUpgrade={false}
+              />
+            ) : activePanelMode === "quests" ? (
+              <QuestsTab state={portState} />
+            ) : activePanelMode === "crew" ? (
+              <ShipCrewTab
+                state={portState}
+                onOpenConversation={(characterId) => openConversation(
+                  characterId === SCARLETT_CHARACTER.id ? "guide" : "crew",
+                  characterId,
+                )}
+                activeConversationCharacterId={
+                  activeConversation?.source === "crew" || activeConversation?.source === "guide"
+                    ? activeConversation.characterId
+                    : null
+                }
+              />
+            ) : activePanelMode === "stats" ? (
+              <StatsTab state={portState} />
             ) : activePanelMode === "leaderboard" ? (
-              <LeaderboardTab entries={portState.leaderboard} />
+              <LeaderboardTab entries={portState.leaderboard} playerName={portState.playerName} />
             ) : activePortTab === "market" ? (
               <MarketTab
                 state={portState}
@@ -366,7 +524,7 @@ export default function App() {
               />
             ) : activePortTab === "shipyard" ? (
               <ShipyardTab state={portState} isInPort={portState.isInPort} />
-            ) : activePortTab === "vault" ? (
+            ) : activePortTab === "vault" && hasUnlockedFeature("Vault") ? (
               portState.isInPort ? (
                 <VaultTab state={portState} />
               ) : (
@@ -399,6 +557,11 @@ export default function App() {
           onClose={() => setActiveConversation(null)}
         />
       )}
+
+      <NpcCommentToast
+        comment={npcCommentQueue[0] ?? null}
+        onDismiss={() => setNpcCommentQueue((current) => current.slice(1))}
+      />
     </>
   );
 }

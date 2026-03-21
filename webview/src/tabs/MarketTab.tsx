@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { sendIpc } from "../utils/ipc";
 import { inventoryIcon } from "../utils/helpers";
 import type { PortState } from "../types";
@@ -18,6 +18,9 @@ export function MarketTab({
   activeConversationCharacterId,
 }: MarketTabProps) {
   const coins = state.inventory["Coin"] ?? 0;
+  const buyUnlocked = state.quests.unlockedFeatures.includes("BuyGoods");
+  const sellUnlocked = state.quests.unlockedFeatures.includes("SellGoods");
+  const tavernUnlocked = state.quests.unlockedFeatures.includes("TavernTalk");
   const [mode, setMode] = useState<TradeMode>("buy");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [flashConfirm, setFlashConfirm] = useState(false);
@@ -83,9 +86,21 @@ export function MarketTab({
     setQuantities({});
   };
 
+  useEffect(() => {
+    if (mode === "buy" && buyUnlocked) return;
+    if (mode === "sell" && sellUnlocked) return;
+    if (buyUnlocked) {
+      setMode("buy");
+      return;
+    }
+    if (sellUnlocked) {
+      setMode("sell");
+    }
+  }, [buyUnlocked, sellUnlocked, mode]);
+
   return (
     <>
-      {state.isInPort && (
+      {state.isInPort && tavernUnlocked && (
         <section className="market-people-section" aria-label="People in port">
           <h3 className="market-people-title">People in Port</h3>
           <TavernTab
@@ -98,22 +113,28 @@ export function MarketTab({
 
       <div className="market-gold-header">{coins} Gold</div>
 
-      <div className="mode-toggle">
-        <button
-          className={`mode-btn ${mode === "buy" ? "active" : ""}`}
-          onClick={() => handleModeChange("buy")}
-        >
-          Buy Goods
-        </button>
-        <button
-          className={`mode-btn ${mode === "sell" ? "active" : ""}`}
-          onClick={() => handleModeChange("sell")}
-        >
-          Sell Goods
-        </button>
-      </div>
+      {(buyUnlocked || sellUnlocked) && (
+        <div className="mode-toggle">
+          {buyUnlocked && (
+            <button
+              className={`mode-btn ${mode === "buy" ? "active" : ""}`}
+              onClick={() => handleModeChange("buy")}
+            >
+              Buy Goods
+            </button>
+          )}
+          {sellUnlocked && (
+            <button
+              className={`mode-btn ${mode === "sell" ? "active" : ""}`}
+              onClick={() => handleModeChange("sell")}
+            >
+              Sell Goods
+            </button>
+          )}
+        </div>
+      )}
 
-      {items.length === 0 ? (
+      {!buyUnlocked && !sellUnlocked ? null : items.length === 0 ? (
         <div className="empty-state">
           No items available to {mode}
         </div>

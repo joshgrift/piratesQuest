@@ -18,12 +18,29 @@ PiratesQuest uses three pieces:
 ## Running
 
 ```bash
-./run.sh
+./run
 ```
 
-Starts the backend (Docker DB + API), a game server, and a client. Use `--server` to skip the client. Default API URL is `http://localhost:5236`.
+Starts the backend (Docker DB + API), a game server, and a client in the background, then streams logs from all services in that terminal. Each `up` run clears the previous log files first. Use `--server` to skip the client. Default API URL is `http://localhost:5236`.
+
+If you want to type `run` without `./`, there are two repo-local options:
+- With `direnv`: run `direnv allow` once in this repo. The included `.envrc` adds the repo root to `PATH` only while you are here.
+- Without `direnv`: start a repo-scoped shell with `./repo-shell`, then use `run`.
 
 This runs everything, use this whenever in doubt. AI agents should never use the run command, as it's quite intensive.
+
+The important part is that services keep running, so you can restart just one piece without restarting the rest:
+
+```bash
+./run up                 # start the full stack, then watch all logs
+./run status             # see what's running
+./run restart client     # restart only the client from another terminal
+./run restart api        # restart only the API from another terminal
+./run down client        # stop only the client
+./run build godot        # build one project without starting it
+```
+
+There are also targeted `up` commands like `./run up api`, `./run up server`, and `./run up webview`.
 
 ### Run client in editor
 - Open `godot/project.godot` in Godot 4
@@ -39,7 +56,7 @@ All scripts are in the repo root and run from there.
 | Script | Description |
 |--------|-------------|
 | `build-game.sh` | Builds the port UI and publishes it to `api/fragments/webview/`, then exports macOS, Windows, and Linux server builds zipped into `dist/<version>/`. Supports `--skip-notarization` (or `--no-notarize`) to skip macOS notarization (and codesign) for that run. |
-| `run.sh` | Runs a local dev session. Builds menu + admin, starts the port UI Vite dev server (`localhost:5173`), backend, a game server, and a client side-by-side. Supports `--server` (server only), `--prod` (use production API at pirates.quest), `--user`, and `--password` flags. |
+| `run` | Small local process manager for development. Supports `up`, `down`, `restart`, `status`, and `build`, so you can keep the stack running and restart only the service you changed. `up` streams the combined logs. Supports `--build`, `--server`, `--prod`, `--user`, and `--password` flags. |
 | `publish-backend.sh` | Builds the menu webview + port webview + API into a Docker image (`piratesquest-api`). Pass an optional tag argument (default `latest`). |
 | `manage.sh` | Admin CLI for the REST API. Manage users, game servers, roles, and game version. Requires `PQ_API_URL` and either `PQ_TOKEN` or a login. |
 | `admin/` | React/TypeScript admin panel that replaces most `manage.sh` usage. Build output is `api/wwwroot/admin/` and is served by the API at `/admin/`. |
@@ -122,53 +139,15 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 
 
 ## ROADMAP
-### Alpha 7 - Quests
-- [ ] Quests
-  - [ ] Basically a todo list. The list will search a new long term storage item:
-  - [ ] Player Stats, which are different from ship stats. Player stats are a list of things that is relevant for a quest.
-    - [ ] There will be two versions. The long term one, and the "Since new quest" one. 
-    - [ ] When you accept a quest, your quest one will be reset. 
-    - [ ] Whenever you do an action, it will be updated in your player stats. If a quest if active, it will do the quest one too
-    - [ ] Each time stats are updated, quests todo list is reloaded to see how close you are to completing the quest. 
+### Alpha 8 - Cleanup & Map
+- [ ] Map?
+- [ ] Polish and Stability
+- [ ] New Terrain
 
-Items to add to stats:
-- How many items collected of each
-- How many items bought of each item
-- How many time have you visited ports
-- List of ports visited
-- How many cannonballs shot
-- How many ships hit
-- How many ships sunk
-- Which components have been bought
-- Which crew have been hired
-- Which NPCs have been talked to
-- Which ship level
-- How much money earned total
-- How much money spent
-
-Quest List:
-- (default) Sail to port (Scarlett)
-  - completed when ports_visited.length >= 1
-  - Unlocks Selling & Tavern
-- Harvest For someone (NPC)
-  - compelted when harvest greater then one for each item
-  - Unlocks buy
-- Trade for the merchant (Merchant)
-  - Buy one of each type
-  - Sell one of each type of item for profit
-  - Make at least 100 gold
-  - Unlocks components
-- Beef up your ship (Defense guy)
- - When components eqiped > 1
- - Unlocks Ship leveling up.
-- Kill 5 ships (Cool)
- - Ships killed > 5
- - Unlocked Vault
-
-### Alpha 8 - AI Update
+### Alpha 9 - AI Update
 - [ ] AI ships
 
-### Alpha 9 - World Update
+### Alpha 10 - World Update
 - [ ] Proper terrain with awesome islands and a large Island
 - [ ] More characters, Quests, and a bunch of content
 

@@ -33,6 +33,8 @@ public record HudStateDto
   public TavernStateDto Tavern { get; init; } = new();
   public CrewStateDto Crew { get; init; } = new();
   public LeaderboardEntryDto[] Leaderboard { get; init; } = [];
+  public QuestHudStateDto Quests { get; init; } = new();
+  public string ServerStateJson { get; init; } = "{}";
 
   /// <summary>
   /// The player's vault info. Null when no vault has been built yet.
@@ -42,9 +44,10 @@ public record HudStateDto
 }
 
 public record LeaderboardEntryDto(
-  string Nickname,
-  int Trophies,
-  bool IsLocal
+  string CaptainName,
+  int InventoryGold,
+  int VaultGold,
+  int TotalGold
 );
 
 /// <summary>
@@ -171,6 +174,11 @@ public enum IpcAction
   UpgradeShip,
   HireCharacter,
   FireCharacter,
+  TalkToNpc,
+  AcceptQuest,
+  CompleteQuest,
+  UncompleteQuest,
+  SetActiveQuest,
   SetShipTier,
   SetVault,
   DeleteVault,
@@ -203,6 +211,11 @@ public enum IpcAction
 [JsonDerivedType(typeof(UpgradeShipMessage), "upgrade_ship")]
 [JsonDerivedType(typeof(HireCharacterMessage), "hire_character")]
 [JsonDerivedType(typeof(FireCharacterMessage), "fire_character")]
+[JsonDerivedType(typeof(TalkToNpcMessage), "talk_to_npc")]
+[JsonDerivedType(typeof(AcceptQuestMessage), "accept_quest")]
+[JsonDerivedType(typeof(CompleteQuestMessage), "complete_quest")]
+[JsonDerivedType(typeof(UncompleteQuestMessage), "uncomplete_quest")]
+[JsonDerivedType(typeof(SetActiveQuestMessage), "set_active_quest")]
 [JsonDerivedType(typeof(SetShipTierMessage), "set_ship_tier")]
 [JsonDerivedType(typeof(SetVaultMessage), "set_vault")]
 [JsonDerivedType(typeof(DeleteVaultMessage), "delete_vault")]
@@ -302,6 +315,45 @@ public record FireCharacterMessage : IpcMessage
 {
   public override IpcAction Action => IpcAction.FireCharacter;
   public string CharacterId { get; init; } = "";
+}
+
+/// <summary>Records that the player opened a conversation with an NPC.</summary>
+public record TalkToNpcMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.TalkToNpc;
+  public string CharacterId { get; init; } = "";
+}
+
+/// <summary>Attempts to accept the currently available quest from a specific NPC.</summary>
+public record AcceptQuestMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.AcceptQuest;
+  public string CharacterId { get; init; } = "";
+  public string QuestId { get; init; } = "";
+}
+
+/// <summary>Creative-mode only: force completes the current active quest.</summary>
+public record CompleteQuestMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.CompleteQuest;
+  public string QuestId { get; init; } = "";
+}
+
+/// <summary>Creative-mode only: rolls the selected quest back to active and revokes later quest unlocks.</summary>
+public record UncompleteQuestMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.UncompleteQuest;
+  public string QuestId { get; init; } = "";
+}
+
+/// <summary>
+/// Creative-mode only: makes the selected quest the primary active quest.
+/// If needed, it also reactivates the quest with a fresh progress snapshot.
+/// </summary>
+public record SetActiveQuestMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.SetActiveQuest;
+  public string QuestId { get; init; } = "";
 }
 
 /// <summary>Build a new vault at the current port (one per player).</summary>

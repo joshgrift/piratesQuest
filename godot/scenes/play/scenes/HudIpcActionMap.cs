@@ -26,6 +26,11 @@ public static class HudIpcActionMap
     [IpcAction.UpgradeShip] = (message, player, currentPort) => HandleUpgradeShip(player, currentPort),
     [IpcAction.HireCharacter] = (message, player, currentPort) => HandleHireCharacter(message as HireCharacterMessage, player, currentPort),
     [IpcAction.FireCharacter] = (message, player, currentPort) => HandleFireCharacter(message as FireCharacterMessage, player),
+    [IpcAction.TalkToNpc] = (message, player, currentPort) => HandleTalkToNpc(message as TalkToNpcMessage, player),
+    [IpcAction.AcceptQuest] = (message, player, currentPort) => HandleAcceptQuest(message as AcceptQuestMessage, player, currentPort),
+    [IpcAction.CompleteQuest] = (message, player, currentPort) => HandleCompleteQuest(message as CompleteQuestMessage, player),
+    [IpcAction.UncompleteQuest] = (message, player, currentPort) => HandleUncompleteQuest(message as UncompleteQuestMessage, player),
+    [IpcAction.SetActiveQuest] = (message, player, currentPort) => HandleSetActiveQuest(message as SetActiveQuestMessage, player),
     [IpcAction.BuildVault] = (message, player, currentPort) => HandleBuildVault(player, currentPort),
     [IpcAction.UpgradeVault] = (message, player, currentPort) => HandleUpgradeVault(player),
     [IpcAction.VaultDeposit] = (message, player, currentPort) => HandleVaultDeposit(message as VaultDepositMessage, player, currentPort),
@@ -42,6 +47,7 @@ public static class HudIpcActionMap
   private static void HandleBuyItems(BuyItemsMessage message, Player player, Port currentPort)
   {
     if (message == null || currentPort == null) return;
+    if (!RequireFeature(player, FeatureUnlock.BuyGoods, "buy goods")) return;
     var shopItems = currentPort.ExportHudSnapshot().ItemsForSale;
 
     foreach (var req in message.Items)
@@ -56,12 +62,18 @@ public static class HudIpcActionMap
       GD.Print(ok
         ? $"HUD: Bought {req.Quantity}x {req.Type} for {totalCost} coin"
         : $"HUD: Buy failed for {req.Type}");
+      if (ok)
+      {
+        player.Progress.RecordItemBought(type, req.Quantity, totalCost);
+        player.ReevaluateQuestProgress(currentPort?.PortName);
+      }
     }
   }
 
   private static void HandleSellItems(SellItemsMessage message, Player player, Port currentPort)
   {
     if (message == null || currentPort == null) return;
+    if (!RequireFeature(player, FeatureUnlock.SellGoods, "sell goods")) return;
     var shopItems = currentPort.ExportHudSnapshot().ItemsForSale;
 
     // Crew/components can add SellPriceBonus where 0.005 == +0.5% sale revenue.
@@ -80,12 +92,18 @@ public static class HudIpcActionMap
       GD.Print(ok
         ? $"HUD: Sold {req.Quantity}x {req.Type} for {totalRevenue} coin"
         : $"HUD: Sell failed for {req.Type}");
+      if (ok)
+      {
+        player.Progress.RecordItemSold(type, req.Quantity, totalRevenue);
+        player.ReevaluateQuestProgress(currentPort?.PortName);
+      }
     }
   }
 
   private static void HandlePurchaseComponent(PurchaseComponentMessage message, Player player, Port currentPort)
   {
     if (message == null || currentPort == null) return;
+    if (!RequireFeature(player, FeatureUnlock.ShipyardComponents, "purchase components")) return;
     var component = GameData.Components.FirstOrDefault(c => c.name == message.Name);
     if (component == null) return;
     player.PurchaseComponent(component);
@@ -94,17 +112,21 @@ public static class HudIpcActionMap
   private static void HandleEquipComponent(EquipComponentMessage message, Player player, Port currentPort)
   {
     if (message == null || currentPort == null) return;
+    if (!RequireFeature(player, FeatureUnlock.ShipyardComponents, "equip components")) return;
     var component = GameData.Components.FirstOrDefault(c => c.name == message.Name);
     if (component == null) return;
     player.EquipComponent(component);
+    player.ReevaluateQuestProgress(currentPort?.PortName);
   }
 
   private static void HandleUnequipComponent(UnequipComponentMessage message, Player player, Port currentPort)
   {
     if (message == null || currentPort == null) return;
+    if (!RequireFeature(player, FeatureUnlock.ShipyardComponents, "unequip components")) return;
     var component = GameData.Components.FirstOrDefault(c => c.name == message.Name);
     if (component == null) return;
     player.UnEquipComponent(component);
+    player.ReevaluateQuestProgress(currentPort?.PortName);
   }
 
   private static void HandleHeal(Player player, Port currentPort)
@@ -204,6 +226,7 @@ public static class HudIpcActionMap
   private static void HandleUpgradeShip(Player player, Port currentPort)
   {
     if (currentPort == null) return;
+    if (!RequireFeature(player, FeatureUnlock.ShipTierUpgrades, "upgrade ship class")) return;
     bool ok = player.UpgradeShip();
     GD.Print(ok
       ? $"HUD: Upgraded ship to tier {player.ShipTier}"
@@ -213,6 +236,7 @@ public static class HudIpcActionMap
   private static void HandleHireCharacter(HireCharacterMessage message, Player player, Port currentPort)
   {
     if (message == null || currentPort == null) return;
+    if (!RequireFeature(player, FeatureUnlock.TavernTalk, "hire tavern crew")) return;
     bool ok = player.HireCrew(message.CharacterId, currentPort.PortName);
     GD.Print(ok
       ? $"HUD: Hired character '{message.CharacterId}'"
@@ -228,17 +252,76 @@ public static class HudIpcActionMap
       : $"HUD: Fire failed for '{message.CharacterId}'");
   }
 
+  private static void HandleTalkToNpc(TalkToNpcMessage message, Player player)
+  {
+    if (message == null) return;
+    player.RecordNpcTalkedTo(message.CharacterId);
+  }
+
+  private static void HandleAcceptQuest(AcceptQuestMessage message, Player player, Port currentPort)
+  {
+    if (message == null) return;
+    bool ok = player.AcceptQuest(message.QuestId, message.CharacterId);
+    GD.Print(ok
+      ? $"HUD: Accepted quest '{message.QuestId}' from '{message.CharacterId}'"
+      : $"HUD: Accept quest failed for '{message.QuestId}'");
+  }
+
   private static void HandleBuildVault(Player player, Port currentPort)
   {
     if (currentPort == null) return;
+    if (!RequireFeature(player, FeatureUnlock.Vault, "build a vault")) return;
     bool ok = player.BuildVault(currentPort.PortName);
     GD.Print(ok
       ? $"HUD: Built vault at {currentPort.PortName}"
       : "HUD: Build vault failed");
   }
 
+  private static void HandleCompleteQuest(CompleteQuestMessage message, Player player)
+  {
+    if (!Configuration.IsCreative)
+    {
+      GD.PrintErr("HUD: complete_quest rejected - creative mode is not enabled");
+      return;
+    }
+
+    bool ok = player.ForceCompleteQuest(message?.QuestId);
+    GD.Print(ok
+      ? $"HUD: [Creative] Completed quest '{message?.QuestId ?? player.Progress.CurrentQuestId ?? ""}'"
+      : "HUD: [Creative] Quest completion failed");
+  }
+
+  private static void HandleUncompleteQuest(UncompleteQuestMessage message, Player player)
+  {
+    if (!Configuration.IsCreative)
+    {
+      GD.PrintErr("HUD: uncomplete_quest rejected - creative mode is not enabled");
+      return;
+    }
+
+    bool ok = player.ForceUncompleteQuest(message?.QuestId);
+    GD.Print(ok
+      ? $"HUD: [Creative] Rolled back quest '{message?.QuestId ?? ""}'"
+      : "HUD: [Creative] Quest rollback failed");
+  }
+
+  private static void HandleSetActiveQuest(SetActiveQuestMessage message, Player player)
+  {
+    if (!Configuration.IsCreative)
+    {
+      GD.PrintErr("HUD: set_active_quest rejected - creative mode is not enabled");
+      return;
+    }
+
+    bool ok = player.ForceSetActiveQuest(message?.QuestId);
+    GD.Print(ok
+      ? $"HUD: [Creative] Set active quest to '{message?.QuestId ?? ""}'"
+      : "HUD: [Creative] Set active quest failed");
+  }
+
   private static void HandleUpgradeVault(Player player)
   {
+    if (!RequireFeature(player, FeatureUnlock.Vault, "upgrade the vault")) return;
     bool ok = player.UpgradeVault();
     GD.Print(ok
       ? $"HUD: Upgraded vault to level {player.VaultLevel}"
@@ -248,6 +331,7 @@ public static class HudIpcActionMap
   private static void HandleVaultDeposit(VaultDepositMessage message, Player player, Port currentPort)
   {
     if (message == null || currentPort == null) return;
+    if (!RequireFeature(player, FeatureUnlock.Vault, "use the vault")) return;
     if (player.VaultPortName != currentPort.PortName) return;
 
     foreach (var req in message.Items)
@@ -263,6 +347,7 @@ public static class HudIpcActionMap
   private static void HandleVaultWithdraw(VaultWithdrawMessage message, Player player, Port currentPort)
   {
     if (message == null || currentPort == null) return;
+    if (!RequireFeature(player, FeatureUnlock.Vault, "use the vault")) return;
     if (player.VaultPortName != currentPort.PortName) return;
 
     foreach (var req in message.Items)
@@ -336,5 +421,14 @@ public static class HudIpcActionMap
   private static CameraPivot GetCameraPivot(Player player)
   {
     return player?.GetNodeOrNull<CameraPivot>("CameraPivot");
+  }
+
+  private static bool RequireFeature(Player player, FeatureUnlock feature, string actionName)
+  {
+    if (player.IsFeatureUnlocked(feature))
+      return true;
+
+    GD.PrintErr($"HUD: {actionName} rejected - feature '{feature}' is still locked");
+    return false;
   }
 }

@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Godot;
+using PiratesQuest.Data;
 
 /// <summary>
 /// HTTP client used by the Godot game server to call the REST API.
@@ -164,6 +165,52 @@ public static class ServerAPI
     {
       GD.PrintErr($"Exception sending heartbeat: {ex.Message}");
       return false;
+    }
+  }
+
+  /// <summary>
+  /// Fetches the cached leaderboard rows for one server.
+  /// The API already calculates the totals, so the dedicated server just relays them.
+  /// </summary>
+  public static async Task<(LeaderboardEntryDto[] Entries, bool IsError)> GetLeaderboardAsync(int serverId)
+  {
+    try
+    {
+      var url = $"{Configuration.ApiBaseUrl}/api/server/{serverId}/leaderboard";
+      var request = new HttpRequestMessage(HttpMethod.Get, url);
+      request.Headers.Add("X-Server-Key", Configuration.ServerApiKey);
+
+      using var response = await HttpClient.SendAsync(request);
+      if (!response.IsSuccessStatusCode)
+      {
+        GD.PrintErr($"Failed to fetch leaderboard: HTTP {(int)response.StatusCode}");
+        return (Array.Empty<LeaderboardEntryDto>(), true);
+      }
+
+      var json = await response.Content.ReadAsStringAsync();
+      var rawEntries = JsonSerializer.Deserialize<ServerLeaderboardEntry[]>(
+        json,
+        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+      ) ?? Array.Empty<ServerLeaderboardEntry>();
+
+      var entries = new LeaderboardEntryDto[rawEntries.Length];
+      for (var i = 0; i < rawEntries.Length; i++)
+      {
+        entries[i] = new LeaderboardEntryDto(
+          rawEntries[i].CaptainName,
+          rawEntries[i].InventoryGold,
+          rawEntries[i].VaultGold,
+          rawEntries[i].TotalGold
+        );
+      }
+
+      GD.Print($"Fetched leaderboard with {entries.Length} captains");
+      return (entries, false);
+    }
+    catch (Exception ex)
+    {
+      GD.PrintErr($"Exception fetching leaderboard: {ex.Message}");
+      return (Array.Empty<LeaderboardEntryDto>(), true);
     }
   }
 }

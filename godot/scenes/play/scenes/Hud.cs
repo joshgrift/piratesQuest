@@ -14,6 +14,7 @@ public partial class Hud : Control
   private bool _webViewLoaded = false;
   private Player _player = null;
   private Port _currentPort = null;
+  private LeaderboardEntryDto[] _leaderboardEntries = [];
 
   private static readonly JsonSerializerOptions _jsonOpts = new()
   {
@@ -78,6 +79,12 @@ public partial class Hud : Control
     OnStateChange();
   }
 
+  public void SetLeaderboard(LeaderboardEntryDto[] entries)
+  {
+    _leaderboardEntries = entries ?? [];
+    CallDeferred(MethodName.OnStateChange);
+  }
+
   private void OnInventoryChanged(InventoryItemType itemType, int newAmount, int change)
   {
     OnStateChange();
@@ -88,6 +95,8 @@ public partial class Hud : Control
     if (_player == null || player.Name != _player.Name) return;
     GD.Print($"Player {player.Name} entered port {port.PortName}");
 
+    _player.SetCurrentPort(port.PortName);
+    _player.RecordPortVisit(port.PortName);
     _currentPort = port;
     CallDeferred(MethodName.OnStateChange);
   }
@@ -96,6 +105,7 @@ public partial class Hud : Control
   {
     if (_player == null || player.Name != _player.Name) return;
     GD.Print($"Player {player.Name} departed port");
+    _player.SetCurrentPort(null);
     _currentPort = null;
     CallDeferred(MethodName.OnStateChange);
   }
@@ -215,6 +225,7 @@ public partial class Hud : Control
     }
 
     handler(msg, _player, _currentPort);
+    CallDeferred(MethodName.OnStateChange);
   }
 
   // BuildHUDState is a pure composer over child snapshots.
@@ -231,6 +242,7 @@ public partial class Hud : Control
         IsInPort = false,
         PortName = "",
         ItemsForSale = [],
+        Leaderboard = _leaderboardEntries,
       };
 
     var portSnapshot = _currentPort.ExportHudSnapshot();
@@ -242,6 +254,7 @@ public partial class Hud : Control
       Tavern = portSnapshot.Tavern ?? new TavernStateDto { Characters = [] },
       Crew = state.Crew ?? new CrewStateDto(),
       Vault = BuildVaultStateForPort(state.Vault, portSnapshot.PortName),
+      Leaderboard = _leaderboardEntries,
     };
   }
 

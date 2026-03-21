@@ -8,8 +8,8 @@ using System.Collections.Generic;
 
 public partial class Play : Node3D
 {
-  // 30 seconds keeps API traffic low while still giving regular "server is alive" updates.
   private const double HeartbeatIntervalSeconds = 60.0;
+  private const double LeaderboardSyncIntervalSeconds = 60.0;
   private const int DefaultServerPlayerMax = 8;
 
   [Export] private MultiplayerSpawner _playerSpawner;
@@ -24,6 +24,8 @@ public partial class Play : Node3D
   private PackedScene _deadPlayerScene = GD.Load<PackedScene>("res://scenes/dead_player/dead_player.tscn");
   private readonly Dictionary<long, string> _peerUsernames = new();
   private Timer _heartbeatTimer;
+  private Timer _leaderboardTimer;
+  private LeaderboardEntryDto[] _latestLeaderboard = [];
 
   /// <summary>
   /// Handle global gameplay shortcuts.
@@ -80,6 +82,7 @@ public partial class Play : Node3D
       GD.Print("Auto-save timer started (every 30s)");
 
       StartServerHeartbeatIfNeeded();
+      StartLeaderboardSyncIfNeeded();
 
       // Activate free camera in server mode
       if (Configuration.IsDesignatedServerMode() && _freeCam != null)
@@ -172,6 +175,46 @@ public partial class Play : Node3D
       DefaultServerPlayerMax,
       Configuration.GetVersion()
     );
+  }
+
+  /// <summary>
+  /// Dedicated server only: polls the API cache and relays the latest
+  /// Hall of Captains data to every connected client.
+  /// </summary>
+  private void StartLeaderboardSyncIfNeeded()
+  {
+    if (!Configuration.IsDesignatedServerMode())
+    {
+      return;
+    }
+
+    _leaderboardTimer = new Timer
+    {
+      WaitTime = LeaderboardSyncIntervalSeconds,
+      Autostart = true
+    };
+    _leaderboardTimer.Timeout += OnLeaderboardTimerTimeout;
+    AddChild(_leaderboardTimer);
+
+    _ = RefreshLeaderboardFromApiAsync();
+    GD.Print($"Leaderboard timer started (every {LeaderboardSyncIntervalSeconds:0.#}s)");
+  }
+
+  private void OnLeaderboardTimerTimeout()
+  {
+    _ = RefreshLeaderboardFromApiAsync();
+  }
+
+  private async System.Threading.Tasks.Task RefreshLeaderboardFromApiAsync()
+  {
+    var (entries, isError) = await ServerAPI.GetLeaderboardAsync(Configuration.ServerId);
+    if (isError)
+    {
+      return;
+    }
+
+    var leaderboardJson = JsonSerializer.Serialize(entries);
+    Rpc(MethodName.ReceiveLeaderboardSnapshot, leaderboardJson);
   }
 
   private void OnAutoSave()
@@ -404,6 +447,27 @@ public partial class Play : Node3D
     {
       playerNode.Nickname = username;
     }
+
+    if (_latestLeaderboard.Length > 0)
+    {
+      RpcId(peerId, MethodName.ReceiveLeaderboardSnapshot, JsonSerializer.Serialize(_latestLeaderboard));
+    }
+  }
+
+  [Rpc(MultiplayerApi.RpcMode.Authority, CallLocal = true)]
+  private void ReceiveLeaderboardSnapshot(string leaderboardJson)
+  {
+    var entries = JsonSerializer.Deserialize<LeaderboardEntryDto[]>(
+      leaderboardJson,
+      new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+    ) ?? [];
+
+    _latestLeaderboard = entries;
+
+    if (!Multiplayer.IsServer() && _hud != null)
+    {
+      _hud.SetLeaderboard(entries);
+    }
   }
 
   // Server calls this on the rejected client before disconnecting.
@@ -519,6 +583,11 @@ public partial class Play : Node3D
     if (_heartbeatTimer != null)
     {
       _heartbeatTimer.Timeout -= OnHeartbeatTimerTimeout;
+    }
+
+    if (_leaderboardTimer != null)
+    {
+      _leaderboardTimer.Timeout -= OnLeaderboardTimerTimeout;
     }
   }
 }

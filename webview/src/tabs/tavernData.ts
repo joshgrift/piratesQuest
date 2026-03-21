@@ -4,31 +4,31 @@ import type { StatChange, TavernCharacter } from "../types";
 const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
   "gideon-gearlock": {
     root: {
-      text: "Gideon Gearlock. Merchant ledgers, long memory, and a nose for underpriced cargo.",
+      text: "Gideon Gearlock. I watch prices, remember everything, and get suspicious whenever someone says they're 'just vibing the market.'",
       responses: [
         { label: "What markets do you watch?", next: "markets" },
-        { label: "Any advice for a trader-captain?", next: "advice" },
+        { label: "Any advice for a trader?", next: "advice" },
         { label: "Are you for hire aboard my ship?", next: "work_open" },
         { label: "Back to tavern", next: "root" },
       ],
     },
     markets: {
-      text: "Saint Johns pays clean coin for food after storms. Krakenfall pays hardest for iron when gunsmith orders spike.",
+      text: "Saint Johns usually pays well for food after storms. Krakenfall gets hungry for iron whenever the gunsmiths start pretending they're 'almost caught up.' They never are.",
       responses: [
         { label: "How do you read that so fast?", next: "methods" },
         { label: "Back", next: "root" },
       ],
     },
     methods: {
-      text: "I count dock delays, lamp oil orders, and which captains leave smiling. Prices tell stories before numbers do.",
+      text: "I watch dock delays, lamp oil orders, and which captains leave smiling for no obvious reason. Prices tell the story before the ledger catches up.",
       responses: [{ label: "Back", next: "root" }],
     },
     advice: {
-      text: "Never sell in panic. Hold one run longer if the spread is weak. A patient hold beats a desperate unload.",
+      text: "Don't panic-sell. If the spread is weak, wait. A patient cargo hold makes more money than a captain who gets nervous and calls it strategy.",
       responses: [{ label: "Back", next: "root" }],
     },
     work_open: {
-      text: "Work aboard is trust first, coin second. I do not sail for captains who spend faster than they think.",
+      text: "If I work aboard your ship, trust comes first and money comes second. I don't sail with captains who spend faster than they think.",
       responses: [
         { label: "What do you expect from a captain?", next: "work_expect" },
         { label: "What would you do on my deck?", next: "work_terms" },
@@ -36,44 +36,44 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     work_expect: {
-      text: "Discipline. Logs kept clean. No dumping cargo just to look rich at the dock.",
+      text: "Discipline. Clean logs. And no selling cargo just to feel rich for twelve seconds at the dock.",
       responses: [{ label: "And your terms?", next: "work_terms" }],
     },
     work_terms: {
-      text: "I negotiate every sale. Small margins, repeated often. That is where fortunes are made.",
+      text: "I tighten up every sale. Small margins, repeated often. That's how you end up rich instead of merely loud.",
       responses: [
         { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
     hire_offer: {
-      text: "Then we understand each other. Give me a bunk and I'll sharpen your sales.",
+      text: "Then we understand each other. Give me a bunk and I'll make your sales cleaner.",
       responses: [
         { label: "Join my crew.", action: "hire" },
         { label: "Need more thought.", next: "root" },
       ],
     },
     hire_success: {
-      text: "Good. I'll have your next unload priced before we even tie off.",
+      text: "Good. I'll have your next unload priced before we're fully tied off.",
       responses: [{ label: "Back", next: "root" }],
     },
     hire_blocked: {
-      text: "No berth, no bargain. Free space first.",
+      text: "No berth, no bargain. Make room first.",
       responses: [{ label: "Back", next: "root" }],
     },
     already_hired: {
-      text: "Already aboard. Sell when I say sell and we'll both sleep richer.",
+      text: "I'm already aboard. Listen when I say sell and we'll both sleep better.",
       responses: [{ label: "Back", next: "root" }],
     },
     fire_success: {
-      text: "Then keep your own books, Captain. Try not to bleed coin.",
+      text: "Then keep your own books. Try not to bleed coin all over them.",
       responses: [{ label: "Back", next: "root" }],
     },
   },
 
   "tommy-fuse": {
     root: {
-      text: "Tommy Fuse. Young, quick, and never farther than two steps from powder.",
+      text: "Tommy Fuse. Fast hands, fast mouth, and a professional interest in not exploding by accident.",
       responses: [
         { label: "Where did you learn guns?", next: "origin" },
         { label: "How do you speed a shot?", next: "science" },
@@ -82,22 +82,22 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     origin: {
-      text: "Ran powder from battery to battery in the harbor wars. If I slowed down, men died.",
+      text: "I ran powder from battery to battery during the harbor wars. It was a terrible first job, honestly, but it taught me to move.",
       responses: [{ label: "Back", next: "root" }],
     },
     science: {
-      text: "Dry powder, tighter pack, cleaner vent. Most crews waste force before the ball leaves the barrel.",
+      text: "Dry powder, tighter pack, cleaner vent. Most crews throw away power before the ball even leaves the barrel, then act shocked about it.",
       responses: [
         { label: "Sounds dangerous.", next: "danger" },
         { label: "Back", next: "root" },
       ],
     },
     danger: {
-      text: "Yes. So I obsess over drill. Fast is safe only when everyone moves right.",
+      text: "It is dangerous. That's why I'm obsessed with drill. Fast only works when everyone knows what they're doing.",
       responses: [{ label: "Back", next: "root" }],
     },
     work_open: {
-      text: "If I sail with you, I run gun prep and shot rhythm. No panic firing.",
+      text: "If I sail with you, I handle gun prep and firing rhythm. No panic shots. No random hero nonsense.",
       responses: [
         { label: "What rules do you keep?", next: "work_rules" },
         { label: "What do I gain from that?", next: "work_terms" },
@@ -105,25 +105,25 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     work_rules: {
-      text: "Crews breathe between volleys, reload in sequence, and never hand me wet powder.",
+      text: "The crew breathes between volleys, reloads in sequence, and never hands me wet powder unless they want a speech.",
       responses: [{ label: "Fine. Terms?", next: "work_terms" }],
     },
     work_terms: {
-      text: "You'll feel shots leave quicker and cleaner. Better launch, better pressure on target ships.",
+      text: "Your shots leave quicker and cleaner. Better launches, better pressure, fewer fights where everyone just hopes for the best.",
       responses: [
         { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
     hire_offer: {
-      text: "Say the word and I'll be at your powder room before sunset.",
+      text: "Say the word and I'll be in your powder room before sunset.",
       responses: [
         { label: "Join my crew.", action: "hire" },
         { label: "Not yet.", next: "root" },
       ],
     },
     hire_success: {
-      text: "Yes! Next broadside's going to feel different.",
+      text: "Yes. Your next broadside is going to feel a lot better.",
       responses: [{ label: "Back", next: "root" }],
     },
     hire_blocked: {
@@ -131,18 +131,18 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       responses: [{ label: "Back", next: "root" }],
     },
     already_hired: {
-      text: "Already aboard. Keep cannonballs stocked and we're golden.",
+      text: "I'm already aboard. Just keep cannonballs stocked and we'll get along great.",
       responses: [{ label: "Back", next: "root" }],
     },
     fire_success: {
-      text: "Right then. I'll keep my hands busy till you call.",
+      text: "Alright. I'll find something else irresponsible to optimize.",
       responses: [{ label: "Back", next: "root" }],
     },
   },
 
   "elder-bertram": {
     root: {
-      text: "Bertram. Old shipwright. Quiet by habit, useful by trade.",
+      text: "Bertram. Old shipwright. I don't talk much, but the work tends to make the point for me.",
       responses: [
         { label: "What kind of hull work?", next: "craft" },
         { label: "Why so quiet?", next: "quiet" },
@@ -151,15 +151,15 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     craft: {
-      text: "Hidden braces. Tight seams. The kind of work you notice only when a hit should've sunk you and didn't.",
+      text: "Hidden braces. Tight seams. The kind of work you only notice when a hit should have sunk you and somehow didn't.",
       responses: [{ label: "Back", next: "root" }],
     },
     quiet: {
-      text: "Used to speak more. Lost a crew once. Learned to let timber talk for me.",
+      text: "I used to speak more. Lost a crew once. After that, I decided timber was better company and usually made fewer bad arguments.",
       responses: [{ label: "Back", next: "root" }],
     },
     work_open: {
-      text: "If I sign on, I stay below deck and keep to my bench.",
+      text: "If I sign on, I stay below deck and work. I don't do deck speeches or dramatic pointing.",
       responses: [
         { label: "What do you need from me?", next: "work_need" },
         { label: "What would change on the ship?", next: "work_terms" },
@@ -167,25 +167,25 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     work_need: {
-      text: "Time in port and no fool ordering me to rush wet planks.",
+      text: "Time in port and no fool telling me to rush wet planks. That's how you build regrets.",
       responses: [{ label: "Understood. Terms?", next: "work_terms" }],
     },
     work_terms: {
-      text: "I'll thicken her where strain runs hottest. She'll hold a little longer in a hard fight.",
+      text: "I'll reinforce the places that take the worst strain. Your ship will hold a little longer when things go sideways.",
       responses: [
         { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
     hire_offer: {
-      text: "...Yes. If you keep your word, I'll keep your hull alive.",
+      text: "Alright. If you keep your word, I'll keep your hull alive.",
       responses: [
         { label: "Join my crew.", action: "hire" },
         { label: "Not yet.", next: "root" },
       ],
     },
     hire_success: {
-      text: "I'll start at the ribs. Do not bother me unless we're sinking.",
+      text: "I'll start with the ribs. Don't bother me unless we're sinking or on fire. Preferably not both.",
       responses: [{ label: "Back", next: "root" }],
     },
     hire_blocked: {
@@ -193,7 +193,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       responses: [{ label: "Back", next: "root" }],
     },
     already_hired: {
-      text: "Already aboard. Work's underway.",
+      text: "I'm already aboard. Work's underway.",
       responses: [{ label: "Back", next: "root" }],
     },
     fire_success: {
@@ -204,7 +204,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
 
   "dorian-blackwake": {
     root: {
-      text: "Dorian Blackwake. Say what you need and skip the pity.",
+      text: "Dorian Blackwake. Say what you need, skip the pity, and don't confuse bluntness with a personality flaw.",
       responses: [
         { label: "Where did you earn that name?", next: "past" },
         { label: "What can you do to enemy ships?", next: "skills" },
@@ -213,22 +213,22 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     past: {
-      text: "Fleet mutiny. Smoke, fire, and one long night. That's enough history for one drink.",
+      text: "Fleet mutiny. Smoke, fire, and one very long night. That's enough history for one drink, and probably enough for two.",
       responses: [
         { label: "Fair. Back.", next: "root" },
         { label: "Any lesson from it?", next: "lesson" },
       ],
     },
     lesson: {
-      text: "Hesitation kills faster than cannon fire. Decide, then commit.",
+      text: "Hesitation kills faster than cannon fire. Decide, then commit. Wobbling halfway through a choice is how people become cautionary tales.",
       responses: [{ label: "Back", next: "root" }],
     },
     skills: {
-      text: "I train crews to hit harder with fewer wasted shots. Broadside discipline, not chaos.",
+      text: "I train crews to hit harder with fewer wasted shots. Broadside discipline, not chaos, and definitely not whatever most tavern heroes think they're doing.",
       responses: [{ label: "Back", next: "root" }],
     },
     work_open: {
-      text: "You want me aboard, you run a hard deck. I don't work for soft captains.",
+      text: "If you want me aboard, run a disciplined deck. I don't work for captains who confuse panic with intensity.",
       responses: [
         { label: "Define hard deck.", next: "work_rules" },
         { label: "What do I get if I do?", next: "work_terms" },
@@ -236,11 +236,11 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     work_rules: {
-      text: "No screaming, no panic turns, no half-loaded guns. Orders once, obeyed once.",
+      text: "No screaming, no panic turns, no half-loaded guns. Orders get said once. If I have to repeat myself, something has already gone wrong.",
       responses: [{ label: "And the upside?", next: "work_terms" }],
     },
     work_terms: {
-      text: "Your cannons hit with intent. Fewer lucky shots, more dead ships.",
+      text: "Your cannons hit with intent. Fewer lucky shots, more clean kills, less nonsense.",
       responses: [
         { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
@@ -262,7 +262,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       responses: [{ label: "Back", next: "root" }],
     },
     already_hired: {
-      text: "I'm already yours. Stop checking and start fighting.",
+      text: "I'm already on your crew. Stop checking and go pick a fight worth having.",
       responses: [{ label: "Back", next: "root" }],
     },
     fire_success: {
@@ -273,7 +273,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
 
   "valora-rumwhisper": {
     root: {
-      text: "Valora Rumwhisper. I sell whispers that keep captains alive.",
+      text: "Valora Rumwhisper. I sell information, and unlike advice from strangers at the bar, mine is usually worth hearing.",
       responses: [
         { label: "Tell me a rumor about this port.", next: "port_rumor" },
         { label: "Tell me a rumor about tavern folk.", next: "crew_rumor" },
@@ -282,15 +282,15 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     port_rumor: {
-      text: "Governor audits manifests by moonlight. Anyone moving black powder in bulk gets watched by dawn.",
+      text: "The governor audits manifests by moonlight. Move too much black powder and someone starts watching you by breakfast.",
       responses: [{ label: "Back", next: "root" }],
     },
     crew_rumor: {
-      text: "Merrick counts axe strokes out loud when he's angry. Dorian drinks water before battle, never rum.",
+      text: "Merrick counts axe strokes out loud when he's angry. Dorian drinks water before battle, never rum. Make of that what you like.",
       responses: [{ label: "Back", next: "root" }],
     },
     work_open: {
-      text: "Work? I don't swab decks. I keep one ear in every dockside door.",
+      text: "Work? I don't swab decks. I keep one ear in every dockside door and the other on who's lying badly.",
       responses: [
         { label: "Could you advise routes from shore?", next: "work_routes" },
         { label: "Would you sail with me at all?", next: "work_terms" },
@@ -298,25 +298,25 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     work_routes: {
-      text: "Pay for rumors and I'll tell you where not to die. That is the deal I make with captains.",
+      text: "Pay for rumors and I'll tell you where not to die. It's one of my more appreciated services.",
       responses: [{ label: "Back", next: "work_open" }],
     },
     work_terms: {
-      text: "I trade words, not berths. Boats sink. My table here does not.",
+      text: "I trade in words, not berths. Boats sink. My table here has an excellent survival record.",
       responses: [
         { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
       ],
     },
     not_hireable: {
-      text: "No, Captain. I stay where stories wash ashore. Buy a rumor and we both profit.",
+      text: "No. I stay where stories wash ashore. Buy a rumor and we both profit.",
       responses: [{ label: "Back", next: "root" }],
     },
   },
 
   "harlan-bentbeam": {
     root: {
-      text: "Harlan Bentbeam. Master woodworker. I can teach timber to heal instead of split.",
+      text: "Harlan Bentbeam. Master woodworker. I spend a lot of time convincing timber not to become firewood at the worst possible moment.",
       responses: [
         { label: "What makes your repairs different?", next: "craft" },
         { label: "Ever built warships?", next: "history" },
@@ -325,15 +325,15 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     craft: {
-      text: "Most men patch holes. I rebalance strain across the frame so small damage stops snowballing.",
+      text: "Most people patch holes. I rebalance strain across the frame so small damage doesn't turn into a much more expensive conversation.",
       responses: [{ label: "Back", next: "root" }],
     },
     history: {
-      text: "Built patrol cutters and grain barges. Warships taught me this: survival lives in the small joints.",
+      text: "I built patrol cutters and grain barges. Warships taught me this: survival lives in the boring little joints people ignore until one fails.",
       responses: [{ label: "Back", next: "root" }],
     },
     work_open: {
-      text: "Aboard your ship I'd run timber maintenance and emergency brace drills.",
+      text: "On your ship I'd handle timber maintenance and emergency brace drills. Not glamorous, but very nice to have when things go bad.",
       responses: [
         { label: "What would you need from crew?", next: "work_need" },
         { label: "What do we gain from that?", next: "work_terms" },
@@ -341,11 +341,11 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     work_need: {
-      text: "Dry storage, proper tools, and no idiot hammering nails where grain runs wrong.",
+      text: "Dry storage, proper tools, and nobody hammering nails across the grain like they're improvising a coffin.",
       responses: [{ label: "And results?", next: "work_terms" }],
     },
     work_terms: {
-      text: "You'll recover steadier between fights. Not dramatic. Reliable.",
+      text: "You'll recover more steadily between fights. Not dramatic, but reliable beats dramatic more often than people admit.",
       responses: [
         { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
@@ -378,7 +378,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
 
   "governor-caspian": {
     root: {
-      text: "Governor Caspian Vale. Speak quickly. Administration does not pause for sentiment.",
+      text: "Governor Caspian Vale. Speak quickly. Administration has many flaws, but excessive free time is not one of them.",
       responses: [
         { label: "Give me the region's history.", next: "history" },
         { label: "What have you learned about the dark fleet?", next: "fleet" },
@@ -387,29 +387,29 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     history: {
-      text: "These ports were stitched from old fort harbors after the salt wars. Trade survived because armed escorts became law.",
+      text: "These ports were stitched together from old fort harbors after the salt wars. Trade survived because armed escorts stopped being optional and became policy.",
       responses: [
         { label: "Who broke that peace?", next: "history_2" },
         { label: "Back", next: "root" },
       ],
     },
     history_2: {
-      text: "Privateers first, then masked raiders. Now this dark fleet borrows from both.",
+      text: "Privateers first, then masked raiders. Now this dark fleet borrows the worst habits of both.",
       responses: [{ label: "Back", next: "root" }],
     },
     fleet: {
-      text: "They test defenses with fast cutters, then hit supply chains. Burned flags, no signatures, disciplined withdrawals.",
+      text: "They test defenses with fast cutters, then hit supply lines. Burned flags, no signatures, disciplined withdrawals. Annoyingly competent, in other words.",
       responses: [
         { label: "Any weak points?", next: "fleet_2" },
         { label: "Back", next: "root" },
       ],
     },
     fleet_2: {
-      text: "Their captains overcommit when denied clean exits. Trap them where reefs force narrow turns.",
+      text: "Their captains overcommit when they lose a clean escape route. Trap them where reefs force narrow turns and they start making mistakes.",
       responses: [{ label: "Back", next: "root" }],
     },
     work_open: {
-      text: "If this is a hiring pitch, spare us both the theater.",
+      text: "If this is a hiring pitch, spare both of us the theater.",
       responses: [
         { label: "Would you ever advise from aboard?", next: "work_terms" },
         { label: "Back", next: "root" },
@@ -423,14 +423,14 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     not_hireable: {
-      text: "No. My duty is ashore. Try not to sink before my clerks finish your file.",
+      text: "No. My duty is ashore. Try not to sink before my clerks finish your paperwork.",
       responses: [{ label: "Back", next: "root" }],
     },
   },
 
   "merrick-ash": {
     root: {
-      text: "Merrick Ash. I cut wood. I keep moving. I don't waste words.",
+      text: "Merrick Ash. I cut wood, keep moving, and try not to waste words on people who confuse talking with working.",
       responses: [
         { label: "Where did you learn to cut like that?", next: "craft" },
         { label: "What keeps you in these docks?", next: "past" },
@@ -439,15 +439,15 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     craft: {
-      text: "Mountain camps. Winter quotas. If your swing was sloppy, families froze.",
+      text: "Mountain camps. Winter quotas. If your swing was sloppy, families froze. It was a great system if you enjoy trauma as training.",
       responses: [{ label: "Back", next: "root" }],
     },
     past: {
-      text: "War took my kids. Trees don't lie about what they are, so I stayed with trees.",
+      text: "War took my kids. Trees don't lie about what they are, so I stayed with trees. They've been better company than most people.",
       responses: [{ label: "Back", next: "root" }],
     },
     work_open: {
-      text: "On a ship I'd route wood runs and keep the crew from wasting daylight.",
+      text: "On a ship I'd route wood runs and keep the crew from wasting daylight pretending to be busy.",
       responses: [
         { label: "How strict are you with crew?", next: "work_rules" },
         { label: "What's the gain for me?", next: "work_terms" },
@@ -455,11 +455,11 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     work_rules: {
-      text: "No wandering. No half loads. We cut, stack, and move.",
+      text: "No wandering. No half loads. We cut, stack, move, and save the complaints for later.",
       responses: [{ label: "So what improves?", next: "work_terms" }],
     },
     work_terms: {
-      text: "You'll pull wood faster and cleaner. Less drift, more usable haul.",
+      text: "You'll pull wood faster and cleaner. Less drift, more usable haul, fewer trips where everyone acts surprised by math.",
       responses: [
         { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
@@ -492,7 +492,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
 
   "rafael-tide": {
     root: {
-      text: "Rafael Tide. Fisher by instinct, flirt by reputation.",
+      text: "Rafael Tide. Fisher by instinct, flirt by reputation, and yes, I am aware of both brands.",
       responses: [
         { label: "You flirt with everyone?", next: "flirt" },
         { label: "What makes a good fishing run?", next: "craft" },
@@ -501,18 +501,18 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     flirt: {
-      text: "Only captains with good posture and better judgment. You might qualify.",
+      text: "Only the ones with good posture and better judgment. You might qualify. Jury's still out.",
       responses: [
         { label: "Focus, charmer.", next: "craft" },
         { label: "Back", next: "root" },
       ],
     },
     craft: {
-      text: "Read current lines, time the nets, and never chase dead water. Most crews fish where it's easy, not where it's rich.",
+      text: "Read the current lines, time the nets, and never chase dead water. Most crews fish where it's easy, then wonder why dinner feels disappointing.",
       responses: [{ label: "Back", next: "root" }],
     },
     work_open: {
-      text: "Aboard your deck I'd tune routes and net timing. Less wandering, heavier holds.",
+      text: "On your deck I'd tune routes and net timing. Less wandering, heavier holds, fewer sad little fishing runs.",
       responses: [
         { label: "And what do you need from me?", next: "work_need" },
         { label: "How much better are we talking?", next: "work_terms" },
@@ -520,11 +520,11 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     work_need: {
-      text: "Let me call fishing windows without second-guessing every turn.",
+      text: "Let me call the fishing windows without second-guessing every turn and we'll get along fine.",
       responses: [{ label: "Alright, terms?", next: "work_terms" }],
     },
     work_terms: {
-      text: "You'll gather fish faster with less wasted drift. Simple and pretty.",
+      text: "You'll gather fish faster with less wasted drift. Simple, efficient, and honestly kind of elegant.",
       responses: [
         { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
@@ -538,7 +538,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     hire_success: {
-      text: "Yes, Captain. We'll fill the hold and maybe your heart.",
+      text: "Excellent. We'll fill the hold first and workshop the rest later.",
       responses: [{ label: "Back", next: "root" }],
     },
     hire_blocked: {
@@ -546,7 +546,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       responses: [{ label: "Back", next: "root" }],
     },
     already_hired: {
-      text: "Already aboard, gorgeous. Professionally gorgeous.",
+      text: "I'm already aboard. Very professional of you to keep checking, though.",
       responses: [{ label: "Back", next: "root" }],
     },
     fire_success: {
@@ -557,7 +557,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
 
   "silas-quill": {
     root: {
-      text: "Silas Quill. Sculptor first, stone worker second, reluctant sailor always.",
+      text: "Silas Quill. Sculptor first, stone worker second, reluctant sailor always. The sea and I remain politely unconvinced by each other.",
       responses: [
         { label: "Show me your sculptor side.", next: "art" },
         { label: "How do you read stone seams?", next: "craft" },
@@ -566,18 +566,18 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     art: {
-      text: "Marble remembers touch. I carve what I cannot keep. Mostly men I loved, mostly gone.",
+      text: "Marble remembers touch. I carve what I can't keep. Mostly people I loved, mostly gone. It's healthier than drinking, probably.",
       responses: [
         { label: "And mining pays for this?", next: "craft" },
         { label: "Back", next: "root" },
       ],
     },
     craft: {
-      text: "I follow fault lines by sound. One wrong strike turns clean blocks into rubble.",
+      text: "I follow fault lines by sound. One bad strike turns clean blocks into rubble, which is a nice metaphor and an expensive mistake.",
       responses: [{ label: "Back", next: "root" }],
     },
     work_open: {
-      text: "If I sail with you, it is for precision, not adventure.",
+      text: "If I sail with you, it's for precision, not adventure. Adventure is usually just poor planning with better branding.",
       responses: [
         { label: "What would you handle?", next: "work_terms" },
         { label: "What do you require?", next: "work_need" },
@@ -585,11 +585,11 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     work_need: {
-      text: "Patience. Proper tools. And no drunk swinging picks near my lines.",
+      text: "Patience. Proper tools. And nobody drunk swinging picks near my lines unless they want to become a story.",
       responses: [{ label: "Understood. Terms?", next: "work_terms" }],
     },
     work_terms: {
-      text: "Your stone yield improves because each cut becomes intentional.",
+      text: "Your stone yield improves because every cut becomes intentional. It's shocking how much that helps.",
       responses: [
         { label: "Would you join my crew?", action: "probe_hire" },
         { label: "Back", next: "work_open" },
@@ -603,7 +603,7 @@ const DIALOGUE_BY_ID: Record<string, ConversationTree> = {
       ],
     },
     hire_success: {
-      text: "Do not mistake my help for enthusiasm.",
+      text: "Do not mistake my help for enthusiasm. Those are still separate things.",
       responses: [{ label: "Back", next: "root" }],
     },
     hire_blocked: {

@@ -99,6 +99,43 @@ namespace PiratesQuest.Server.Migrations
                     b.ToTable("GameStates");
                 });
 
+            modelBuilder.Entity("PiratesQuest.Server.Models.LeaderboardEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("InventoryGold")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ServerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalGold")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("VaultGold")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServerId", "TotalGold");
+
+                    b.HasIndex("ServerId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("LeaderboardEntries");
+                });
+
             modelBuilder.Entity("PiratesQuest.Server.Models.Meta", b =>
                 {
                     b.Property<int>("Id")
@@ -160,6 +197,17 @@ namespace PiratesQuest.Server.Migrations
                 });
 
             modelBuilder.Entity("PiratesQuest.Server.Models.GameState", b =>
+                {
+                    b.HasOne("PiratesQuest.Server.Models.GameServer", "Server")
+                        .WithMany()
+                        .HasForeignKey("ServerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Server");
+                });
+
+            modelBuilder.Entity("PiratesQuest.Server.Models.LeaderboardEntry", b =>
                 {
                     b.HasOne("PiratesQuest.Server.Models.GameServer", "Server")
                         .WithMany()

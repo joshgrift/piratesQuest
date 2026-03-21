@@ -9,8 +9,8 @@ describe("TavernTab", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Gideon Gearlock/ }));
     fireEvent.click(screen.getByRole("button", { name: /Ask about ship work\./ }));
-    fireEvent.click(await screen.findByRole("button", { name: /What would ye do on my deck\?/ }));
-    fireEvent.click(await screen.findByRole("button", { name: /Ask him plain to sign aboard\./ }));
+    fireEvent.click(await screen.findByRole("button", { name: /What would you do on my deck\?/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Would you join my crew\?/ }));
     fireEvent.click(await screen.findByRole("button", { name: /Join my crew\./ }));
 
     const actions = getIpcMessages(ipcSpy) as { action: string; characterId?: string }[];
@@ -63,7 +63,7 @@ describe("TavernTab", () => {
     fireEvent.click(screen.getByRole("button", { name: /Elder Bertram/ }));
     fireEvent.click(screen.getByRole("button", { name: /Ask about ship work\./ }));
     fireEvent.click(await screen.findByRole("button", { name: /What would change on the ship\?/ }));
-    fireEvent.click(await screen.findByRole("button", { name: /Ask him plain to sign aboard\./ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Would you join my crew\?/ }));
     fireEvent.click(await screen.findByRole("button", { name: /Join my crew\./ }));
 
     const actions = getIpcMessages(ipcSpy) as { action: string }[];
@@ -82,8 +82,8 @@ describe("TavernTab", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Valora Rumwhisper/ }));
     fireEvent.click(screen.getByRole("button", { name: /Ask about ship work\./ }));
-    fireEvent.click(await screen.findByRole("button", { name: /Would ye sail with me at all\?/ }));
-    fireEvent.click(await screen.findByRole("button", { name: /Ask her plain to sign aboard\./ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Would you sail with me at all\?/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Would you join my crew\?/ }));
 
     expect(await screen.findByText(/i stay where stories wash ashore/i)).toBeInTheDocument();
   });

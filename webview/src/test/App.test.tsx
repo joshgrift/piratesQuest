@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { renderApp } from "./helpers";
+import { screen } from "@testing-library/react";
+import { getIpcMessages, renderApp } from "./helpers";
 import { makeOwnedComponent } from "./fixtures";
 
 describe("App", () => {
@@ -68,5 +69,81 @@ describe("App", () => {
 
     expect(getByTestId("ship-status-component-slots")).toHaveTextContent("2/4");
     expect(getByTestId("ship-status-crew-slots")).toHaveTextContent("2/3");
+  });
+
+  it("marks completed quest widget steps with the complete styling hook", () => {
+    const { container, getByText } = renderApp({
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett-first-quest",
+          title: "Scarlett's Starter Run",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character1.png",
+          giverPortName: "Tortuga",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          description: "A short tutorial quest.",
+          completionText: "Nicely done.",
+          isReadyToTurnIn: false,
+          unlocks: [],
+          steps: [
+            { label: "Buy 1 Tea", currentValue: 1, requiredValue: 1, isComplete: true },
+            { label: "Sell 1 Fish", currentValue: 0, requiredValue: 1, isComplete: false },
+          ],
+        },
+        all: [],
+        completedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    const completedRow = getByText("Buy 1 Tea").closest(".quest-status-row");
+    const completedLabel = container.querySelector(".quest-status-row.complete .quest-status-row-label");
+    const completedValue = container.querySelector(".quest-status-row.complete .quest-status-row-value");
+
+    expect(completedRow).toHaveClass("complete");
+    expect(completedLabel).toHaveTextContent("Buy 1 Tea");
+    expect(completedValue).toHaveTextContent("1/1");
+  });
+
+  it("auto-opens Scarlett's onboarding and accepts her starter quest at sea", () => {
+    const { ipcSpy } = renderApp({
+      isInPort: false,
+      quests: {
+        available: [
+          {
+            id: "scarlett_sail_to_port",
+            title: "Sail to Port",
+            giverNpcId: "scarlett",
+            giverName: "Scarlett",
+            giverPortrait: "character2.png",
+            giverPortName: "",
+            revealGiverInQuestLog: true,
+            canAcceptFromQuestLog: true,
+            description: "Dock once.",
+            completionText: "Nicely done.",
+            isReadyToTurnIn: false,
+            unlocks: ["SellGoods", "TavernTalk"],
+            steps: [],
+          },
+        ],
+        active: null,
+        all: [],
+        completedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    expect(screen.getByText(/top-left Quests button/i)).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Scarlett conversation" })).not.toBeInTheDocument();
+
+    const actions = getIpcMessages(ipcSpy) as { action: string; questId?: string; characterId?: string }[];
+    expect(actions).toContainEqual({
+      action: "accept_quest",
+      questId: "scarlett_sail_to_port",
+      characterId: "scarlett",
+    });
   });
 });
