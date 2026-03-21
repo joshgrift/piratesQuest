@@ -141,46 +141,7 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 ## ROADMAP
 ### Alpha 7 - Quests
 - [ ] Quests
-  - [ ] Basically a todo list. The list will search a new long term storage item:
-  - [ ] Player Stats, which are different from ship stats. Player stats are a list of things that is relevant for a quest.
-    - [ ] There will be two versions. The long term one, and the "Since new quest" one. 
-    - [ ] When you accept a quest, your quest one will be reset. 
-    - [ ] Whenever you do an action, it will be updated in your player stats. If a quest if active, it will do the quest one too
-    - [ ] Each time stats are updated, quests todo list is reloaded to see how close you are to completing the quest. 
 - [ ] Better Mono Repo control
-Items to add to stats:
-- How many items collected of each
-- How many items bought of each item
-- How many time have you visited ports
-- List of ports visited
-- How many cannonballs shot
-- How many ships hit
-- How many ships sunk
-- Which components have been bought
-- Which crew have been hired
-- Which NPCs have been talked to
-- Which ship level
-- How much money earned total
-- How much money spent
-
-Quest List:
-- (default) Sail to port (Scarlett)
-  - completed when ports_visited.length >= 1
-  - Unlocks Selling & Tavern
-- Harvest For someone (NPC)
-  - compelted when harvest greater then one for each item
-  - Unlocks buy
-- Trade for the merchant (Merchant)
-  - Buy one of each type
-  - Sell one of each type of item for profit
-  - Make at least 100 gold
-  - Unlocks components
-- Beef up your ship (Defense guy)
- - When components eqiped > 1
- - Unlocks Ship leveling up.
-- Kill 5 ships (Cool)
- - Ships killed > 5
- - Unlocked Vault
 
 ### Alpha 8 - AI Update
 - [ ] AI ships

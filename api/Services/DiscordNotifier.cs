@@ -9,6 +9,7 @@ namespace PiratesQuest.Server.Services;
 /// If config is missing, calls become a no-op.
 /// </summary>
 public sealed class DiscordNotifier
+    : IDiscordNotifier
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
@@ -24,18 +25,29 @@ public sealed class DiscordNotifier
         _logger = logger;
     }
 
-    public async Task NotifyPlayerPresenceAsync(string serverName, string username, bool isOnline)
+    public Task NotifyPlayerPresenceAsync(string serverName, string username, bool isOnline, CancellationToken cancellationToken = default)
+    {
+        // Leave events are too noisy for Discord, so only post joins.
+        if (!isOnline)
+            return Task.CompletedTask;
+
+        var content = $"{username} has sailed into {serverName}, beware!";
+        return SendMessageAsync(content, ResolvePresenceChannelId(), cancellationToken);
+    }
+
+    public Task NotifyServerOfflineAsync(string serverName, CancellationToken cancellationToken = default)
+    {
+        var content = $"{serverName} has gone offline. No heartbeat from the server.";
+        return SendMessageAsync(content, ResolveActivityChannelId(), cancellationToken);
+    }
+
+    private async Task SendMessageAsync(string content, string? channelId, CancellationToken cancellationToken)
     {
         var botToken = _configuration["DiscordBot:Token"];
-        var channelId = _configuration["DiscordBot:ChannelId"];
 
         // Keep this optional so local dev still works without Discord credentials.
         if (string.IsNullOrWhiteSpace(botToken) || string.IsNullOrWhiteSpace(channelId))
             return;
-
-        var content = isOnline
-            ? $"{username} has sailed into {serverName}, beware!"
-            : $"{username} has sailed out of {serverName}.";
 
         var payloadJson = JsonSerializer.Serialize(new { content });
         using var request = new HttpRequestMessage(
@@ -46,7 +58,7 @@ public sealed class DiscordNotifier
 
         try
         {
-            using var response = await _httpClient.SendAsync(request);
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
             if (response.IsSuccessStatusCode)
                 return;
 
@@ -60,5 +72,18 @@ public sealed class DiscordNotifier
         {
             _logger.LogWarning(ex, "Discord notification threw an exception.");
         }
+    }
+
+    private string? ResolvePresenceChannelId()
+    {
+        return _configuration["DiscordBot:ChannelId"];
+    }
+
+    private string? ResolveActivityChannelId()
+    {
+        var activityChannelId = _configuration["DiscordBot:ActivityChannelId"];
+        return string.IsNullOrWhiteSpace(activityChannelId)
+            ? _configuration["DiscordBot:ChannelId"]
+            : activityChannelId;
     }
 }

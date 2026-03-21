@@ -50,7 +50,8 @@ var connectionString = NormalizeConnectionString(rawConnStr);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
-builder.Services.AddHttpClient<DiscordNotifier>();
+builder.Services.AddHttpClient<IDiscordNotifier, DiscordNotifier>();
+builder.Services.AddHostedService<ServerOfflineMonitor>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured");
@@ -118,9 +119,6 @@ app.UseAuthorization();
 
 var serverApiKey = builder.Configuration["ServerApiKey"]
     ?? throw new InvalidOperationException("ServerApiKey is not configured");
-
-// Server is considered online if heartbeat (or presence) was seen recently.
-const int serverOnlineWindowSeconds = 150;
 
 string CreateUserToken(User user)
 {
@@ -211,8 +209,7 @@ app.MapGet("/api/servers", async (AppDbContext db) =>
 
     var servers = dbServers.Select(server =>
     {
-        var isOnline = server.LastSeenUtc.HasValue
-            && (nowUtc - server.LastSeenUtc.Value).TotalSeconds <= serverOnlineWindowSeconds;
+        var isOnline = ServerLiveness.IsOnline(server.LastSeenUtc, nowUtc);
 
         return new
         {
@@ -289,7 +286,7 @@ app.MapPost("/api/server/{id}/presence", async (
     int id,
     PresenceEventRequest request,
     AppDbContext db,
-    DiscordNotifier discordNotifier) =>
+    IDiscordNotifier discordNotifier) =>
 {
     var username = (request.Username ?? string.Empty).Trim();
     if (string.IsNullOrWhiteSpace(username))

@@ -34,6 +34,7 @@ Set these values in `appsettings.json` (or `appsettings.Development.json` for lo
 | `ServerApiKey` | Shared secret that game servers use to call state endpoints |
 | `DiscordBot:Token` | Optional Discord bot token for join/leave notifications |
 | `DiscordBot:ChannelId` | Optional Discord channel ID to post notifications into |
+| `DiscordBot:ActivityChannelId` | Optional Discord channel ID for server offline alerts; falls back to `ChannelId` |
 
 ## Auth
 
