@@ -350,20 +350,42 @@ app.MapGet("/api/server/{id}/leaderboard", async (int id, AppDbContext db) =>
     if (!await db.GameServers.AnyAsync(server => server.Id == id))
         return Results.NotFound(new { error = "Server not found" });
 
-    var leaderboard = await db.LeaderboardEntries
+    var leaderboardEntries = await db.LeaderboardEntries
         .Where(entry => entry.ServerId == id)
         .OrderByDescending(entry => entry.TotalGold)
         .ThenByDescending(entry => entry.VaultGold)
         .ThenBy(entry => entry.UserId)
-        .Select(entry => new
+        .ToListAsync();
+
+    var parsedUserIds = leaderboardEntries
+        .Select(entry => int.TryParse(entry.UserId, out var parsedId) ? parsedId : (int?)null)
+        .Where(idValue => idValue.HasValue)
+        .Select(idValue => idValue!.Value)
+        .Distinct()
+        .ToArray();
+
+    var usernamesById = await db.Users
+        .Where(user => parsedUserIds.Contains(user.Id))
+        .ToDictionaryAsync(user => user.Id, user => user.Username);
+
+    var leaderboard = leaderboardEntries.Select(entry =>
+    {
+        var captainName = entry.UserId;
+        if (int.TryParse(entry.UserId, out var parsedId) &&
+            usernamesById.TryGetValue(parsedId, out var username))
         {
-            entry.UserId,
+            captainName = username;
+        }
+
+        return new
+        {
+            CaptainName = captainName,
             entry.InventoryGold,
             entry.VaultGold,
             entry.TotalGold,
             entry.UpdatedAt
-        })
-        .ToListAsync();
+        };
+    });
 
     return Results.Ok(leaderboard);
 }).AddEndpointFilter(ServerAuthFilter);

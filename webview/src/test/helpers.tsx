@@ -5,13 +5,14 @@ import { makePortState } from "./fixtures";
 import type { PortState } from "../types";
 import type { Mock } from "vitest";
 
-type Tab = "guide" | "quests" | "leaderboard" | "ship_crew" | "ship_status" | "market" | "shipyard" | "vault" | "creative";
+type Tab = "guide" | "quests" | "leaderboard" | "stats" | "ship_crew" | "ship_status" | "market" | "shipyard" | "vault" | "creative";
 
 const TAB_LABELS: Record<Tab, string> = {
   ship_status: "Ship Status",
   ship_crew: "Crew",
   guide: "Scarlett",
   quests: "Quests",
+  stats: "Stats",
   leaderboard: "Leaderboard",
   market: "Market",
   shipyard: "Shipyard",
@@ -81,11 +82,15 @@ export function renderApp(overridesOrOptions?: Partial<PortState> | RenderAppOpt
   }
 
   if (tab) {
-    if (tab === "leaderboard") {
+    if (tab === "leaderboard" || tab === "stats") {
+      const modeName = tab === "leaderboard" ? "Leaderboard mode" : "Stats mode";
       const modeButton = screen.getByRole("tab", { name: "Leaderboard mode" });
-      if (modeButton.getAttribute("aria-selected") !== "true") {
+      const resolvedModeButton = tab === "leaderboard"
+        ? modeButton
+        : screen.getByRole("tab", { name: modeName });
+      if (resolvedModeButton.getAttribute("aria-selected") !== "true") {
         act(() => {
-          modeButton.click();
+          resolvedModeButton.click();
         });
       }
     } else if (["market", "shipyard", "vault", "creative"].includes(tab)) {

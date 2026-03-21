@@ -296,11 +296,11 @@ describe("GuideTab", () => {
       expect(screen.getByText(/spend yer resources before headin' into danger/)).toBeInTheDocument();
     });
 
-    it("navigates leaderboard → trophies", () => {
+    it("navigates leaderboard → gold ranking explanation", () => {
       const { container } = renderGuide();
       clickAndSkip("How does the leaderboard work?", container);
-      clickAndSkip("How do I get trophies?", container);
-      expect(screen.getByText(/sinkin' other players/)).toBeInTheDocument();
+      clickAndSkip("How do I climb the board?", container);
+      expect(screen.getByText(/The hall counts both what ye carry and what ye've hidden away/)).toBeInTheDocument();
     });
 
     it("navigates ports → features", () => {

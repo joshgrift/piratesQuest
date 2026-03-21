@@ -12,12 +12,13 @@ import { QuestsTab } from "./tabs/QuestsTab";
 import { buildTavernConversationTree } from "./tabs/TavernTab";
 import { ShipCrewTab, buildCrewConversationTree } from "./tabs/ShipCrewTab";
 import { LeaderboardTab } from "./tabs/LeaderboardTab";
+import { StatsTab } from "./tabs/StatsTab";
 import { ShipStatusWidget } from "./components/ShipStatusWidget";
 import { QuestStatusWidget } from "./components/QuestStatusWidget";
 import { CharacterConversationOverlay } from "./components/CharacterConversationOverlay";
 
 type PortTab = "market" | "shipyard" | "vault" | "creative";
-type PanelMode = "ship" | "quests" | "crew" | "port" | "leaderboard";
+type PanelMode = "ship" | "quests" | "crew" | "port" | "stats" | "leaderboard";
 type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
 type ConversationSource = "tavern" | "crew";
 
@@ -30,6 +31,7 @@ const SHIP_ICON = `${BASE}icons/flat/caravel.svg`;
 const QUESTS_ICON = `${BASE}icons/flat/tied-scroll.svg`;
 const CREW_ICON = `${BASE}icons/flat/bandana.svg`;
 const PORT_ICON = `${BASE}icons/flat/anchor.svg`;
+const STATS_ICON = `${BASE}icons/flat/sextant.svg`;
 const LEADERBOARD_ICON = `${BASE}icons/flat/pirate-hat.svg`;
 
 function findQuestForNpc(state: PortState, characterId: string) {
@@ -257,6 +259,8 @@ export default function App() {
       ? "quests"
       : activePanelMode === "crew"
         ? "crew"
+    : activePanelMode === "stats"
+      ? "stats"
     : activePanelMode === "leaderboard"
       ? "Hall of Captains"
       : "ship";
@@ -323,6 +327,17 @@ export default function App() {
           title="Crew"
         >
           <img className="rail-mode-icon" src={CREW_ICON} alt="" />
+        </button>
+        <button
+          className={`rail-mode-btn ${activePanelMode === "stats" ? "active" : ""}`}
+          onClick={() => handleModeSelect("stats")}
+          type="button"
+          role="tab"
+          aria-selected={activePanelMode === "stats"}
+          aria-label="Stats mode"
+          title="Stats"
+        >
+          <img className="rail-mode-icon" src={STATS_ICON} alt="" />
         </button>
         <button
           className={`rail-mode-btn ${activePanelMode === "leaderboard" ? "active" : ""}`}
@@ -392,8 +407,10 @@ export default function App() {
                 onOpenConversation={(characterId) => openConversation("crew", characterId)}
                 activeConversationCharacterId={activeConversation?.source === "crew" ? activeConversation.characterId : null}
               />
+            ) : activePanelMode === "stats" ? (
+              <StatsTab state={portState} />
             ) : activePanelMode === "leaderboard" ? (
-              <LeaderboardTab entries={portState.leaderboard} />
+              <LeaderboardTab entries={portState.leaderboard} playerName={portState.playerName} />
             ) : activePortTab === "market" ? (
               <MarketTab
                 state={portState}

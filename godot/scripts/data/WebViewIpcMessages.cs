@@ -44,9 +44,10 @@ public record HudStateDto
 }
 
 public record LeaderboardEntryDto(
-  string Nickname,
-  int Trophies,
-  bool IsLocal
+  string CaptainName,
+  int InventoryGold,
+  int VaultGold,
+  int TotalGold
 );
 
 /// <summary>

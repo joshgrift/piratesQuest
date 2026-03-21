@@ -17,6 +17,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
       { label: "How do quests work?", next: "quests_intro" },
       { label: "What if I'm overburdened?", next: "overburdened" },
       { label: "How does the leaderboard work?", next: "leaderboard" },
+      { label: "What does the stats panel show?", next: "stats_panel" },
       { label: "What happens when I die?", next: "death" },
       { label: "How do panel modes work?", next: "webview_sections" },
       { label: "What can I do at ports?", next: "ports" },
@@ -308,20 +309,44 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
 
   // ── Leaderboard ──
   leaderboard: {
-    text: "Use the trophy button on the panel rail, captain. That's Leaderboard mode, and it ranks every captain on the server by Trophy count.",
+    text: "Tap the trophy button on the rail, captain. The Hall of Captains ranks every sailor on the server by total gold: coin in yer hold plus coin in yer vault.",
     responses: [
-      { label: "How do I get trophies?", next: "leaderboard_trophies" },
+      { label: "How do I climb the board?", next: "leaderboard_trophies" },
       { label: "So trophy button means rankings?", next: "leaderboard_right" },
       { label: "Ask about something else", next: "root" },
     ],
   },
   leaderboard_right: {
-    text: "Aye, dead right. Trophy for rankings, ship for crew and status, anchor for port business.",
+    text: "Aye, dead right. Trophy for rankings, ship for crew and status, anchor for port business. The hall updates from the server every few minutes, so fortunes roll in waves.",
     responses: [{ label: "What else can I learn?", next: "root" }],
   },
   leaderboard_trophies: {
-    text: "Trophies are earned through glory \u2014 sinkin' other players, completin' challenges, and provin' yer worth on the high seas. The more ye have, the higher ye climb.\n\nFair warning though: when ye die, ye lose half yer trophies just like everything else. So stay alive if ye want to stay on top!",
-    responses: [{ label: "I'll aim for the top! What else?", next: "root" }],
+    text: "Simple: stack gold. Trade smart, finish quests, raid the sea, then stash coin in yer vault before trouble finds ye. The hall counts both what ye carry and what ye've hidden away.\n\nQuick quiz, captain: what two places count toward yer ranking?",
+    responses: [
+      { label: "Inventory and vault", next: "leaderboard_quiz_right" },
+      { label: "Only the vault", next: "leaderboard_quiz_wrong" },
+      { label: "Only what I'm carrying", next: "leaderboard_quiz_wrong" },
+    ],
+  },
+  leaderboard_quiz_right: {
+    text: "Sharp eye! Yer hold coin and vault coin both count. Rich captains keep one hand on profit and the other on safekeepin'.",
+    responses: [{ label: "Back to lessons", next: "root" }],
+  },
+  leaderboard_quiz_wrong: {
+    text: "Not quite, matey. The hall counts both. A captain with a fat vault and an empty hold can still outrank a reckless sailor flashin' loose coin on deck.",
+    responses: [{ label: "Back to lessons", next: "root" }],
+  },
+
+  stats_panel: {
+    text: "Tap the sextant on the rail and ye'll open the Stats panel. That's yer lifetime ledger: port calls, gold earned, ships sunk, cargo moved, and the biggest milestones in yer pirate career.",
+    responses: [
+      { label: "So it's my whole pirate history?", next: "stats_panel_right" },
+      { label: "Ask about something else", next: "root" },
+    ],
+  },
+  stats_panel_right: {
+    text: "Aye. The sextant keeps the long view. Trophy shows who's ahead right now. Stats shows how ye got there.",
+    responses: [{ label: "What else can I learn?", next: "root" }],
   },
 
   // ── Death ──
@@ -342,9 +367,10 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
 
   // ── Ports ──
   webview_sections: {
-    text: "New layout, captain: one command panel with three rail buttons. Ship for ship tools, anchor for port services, trophy for leaderboard.",
+    text: "New layout, captain: one command panel with five rail buttons. Ship for ship tools, scroll for quests, bandana for crew, sextant for lifetime stats, anchor for port services, and trophy for leaderboard glory.",
     responses: [
       { label: "Which button is locked at sea?", next: "webview_quiz" },
+      { label: "What does the sextant do?", next: "stats_panel" },
       { label: "What can I manage while at sea?", next: "webview_ship" },
       { label: "What stays port-only?", next: "webview_port_only" },
       { label: "Ask about something else", next: "root" },
@@ -355,6 +381,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     responses: [
       { label: "Anchor / Port", next: "webview_quiz_right" },
       { label: "Ship", next: "webview_quiz_wrong" },
+      { label: "Sextant / Stats", next: "webview_quiz_wrong" },
       { label: "Trophy / Leaderboard", next: "webview_quiz_wrong" },
     ],
   },
@@ -367,7 +394,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
     responses: [{ label: "Got it. What else?", next: "root" }],
   },
   webview_ship: {
-    text: "At sea ye can use Ship mode for Scarlett, crew, and ship status. Leaderboard mode stays open too, so ye can watch rivals live.",
+    text: "At sea ye can use ship, quests, crew, stats, and leaderboard panels. Only the anchor waits for dock, so ye can still study progress and rivals while the waves are kickin'.",
     responses: [
       { label: "So what can't I do at sea?", next: "webview_port_only" },
       { label: "Ask about something else", next: "root" },

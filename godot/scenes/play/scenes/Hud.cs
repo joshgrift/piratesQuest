@@ -14,6 +14,7 @@ public partial class Hud : Control
   private bool _webViewLoaded = false;
   private Player _player = null;
   private Port _currentPort = null;
+  private LeaderboardEntryDto[] _leaderboardEntries = [];
 
   private static readonly JsonSerializerOptions _jsonOpts = new()
   {
@@ -76,6 +77,12 @@ public partial class Hud : Control
     GD.Print($"HUD connected to Player {_player.Name}");
 
     OnStateChange();
+  }
+
+  public void SetLeaderboard(LeaderboardEntryDto[] entries)
+  {
+    _leaderboardEntries = entries ?? [];
+    CallDeferred(MethodName.OnStateChange);
   }
 
   private void OnInventoryChanged(InventoryItemType itemType, int newAmount, int change)
@@ -233,6 +240,7 @@ public partial class Hud : Control
         IsInPort = false,
         PortName = "",
         ItemsForSale = [],
+        Leaderboard = _leaderboardEntries,
       };
 
     var portSnapshot = _currentPort.ExportHudSnapshot();
@@ -244,6 +252,7 @@ public partial class Hud : Control
       Tavern = portSnapshot.Tavern ?? new TavernStateDto { Characters = [] },
       Crew = state.Crew ?? new CrewStateDto(),
       Vault = BuildVaultStateForPort(state.Vault, portSnapshot.PortName),
+      Leaderboard = _leaderboardEntries,
     };
   }
 

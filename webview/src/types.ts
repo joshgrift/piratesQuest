@@ -31,9 +31,10 @@ export interface PortState {
 }
 
 export interface LeaderboardEntry {
-  nickname: string;
-  trophies: number;
-  isLocal: boolean;
+  captainName: string;
+  inventoryGold: number;
+  vaultGold: number;
+  totalGold: number;
 }
 
 export interface QuestHudState {

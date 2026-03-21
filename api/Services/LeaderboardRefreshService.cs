@@ -11,7 +11,7 @@ namespace PiratesQuest.Server.Services;
 /// </summary>
 public sealed class LeaderboardRefreshService : BackgroundService
 {
-    private static readonly TimeSpan RefreshInterval = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan RefreshInterval = TimeSpan.FromMinutes(1);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<LeaderboardRefreshService> _logger;
