@@ -10,7 +10,9 @@ export const SCARLETT_CHARACTER: TavernCharacter = {
   statChanges: [],
 };
 
-export function buildScarlettDialogue(hasAvailableQuest: boolean): Record<string, ConversationNode> {
+export function buildScarlettDialogue(
+  hasAvailableQuest: boolean,
+): Record<string, ConversationNode> {
   return {
     root: {
       text: "Ahoy, captain. What can I help ye with today?",
@@ -18,22 +20,28 @@ export function buildScarlettDialogue(hasAvailableQuest: boolean): Record<string
         { label: "I have some questions about ports.", next: "ports_intro" },
         { label: "How do I finish quests?", next: "quests_turnin_root" },
         { label: "Teach me about sailing and combat.", next: "sailing_intro" },
-        { label: "How do I grow stronger out here?", next: "progression_intro" },
+        {
+          label: "How do I grow stronger out here?",
+          next: "progression_intro",
+        },
         { label: "Explain resources and trading.", next: "trade_intro" },
         { label: "What if I sink or get overloaded?", next: "danger_intro" },
-        { label: "If I impress ye, do I earn a smile too?", next: "flirt_intro" },
+        {
+          label: "If I impress you, do I at least get a smile?",
+          next: "flirt_intro",
+        },
       ],
     },
 
     quests_turnin_root: {
-      text: "Most jobs are two beats: finish the checklist, then sail back into the quest giver's port to wrap it up. My first lesson is the exception. The moment ye complete it, it closes on the spot.",
+      text: "Most quests have two parts: finish the checklist, then come back to the quest giver's port to wrap it up.",
       responses: [
         { label: "Quiz me on that.", next: "quests_turnin_quiz" },
         { label: "Back to the main menu.", next: "root" },
       ],
     },
     quests_turnin_quiz: {
-      text: "Right then, captain. If Gideon gives ye a job and every task is green, what finishes the quest?",
+      text: "Right then, captain. If Gideon gives you a quest and every objective is green, what actually finishes it?",
       responses: [
         { label: "Docking back at Saint Johns.", next: "quests_turnin_right" },
         { label: "Just opening the Quests tab.", next: "quests_turnin_wrong" },
@@ -41,58 +49,61 @@ export function buildScarlettDialogue(hasAvailableQuest: boolean): Record<string
       ],
     },
     quests_turnin_right: {
-      text: "Aye, that's it. Cross back into the right port and the job settles immediately.",
+      text: "Exactly. Return to the right port and it closes right away.",
       responses: [{ label: "Back to the main menu.", next: "root" }],
     },
     quests_turnin_wrong: {
-      text: "Not quite. Finish the steps first, then make port where the giver lives. That's what closes most jobs now.",
+      text: "Not quite. Finish the steps first, then return to the port where the quest giver is. That's what closes most quests.",
       responses: [{ label: "Back to the main menu.", next: "root" }],
     },
 
     ports_intro: {
-      text: "Ports are where ye reset the voyage. Sell cargo, buy supplies, patch the hull, and sort the ship before ye cast off again. What part do ye want?",
+      text: "Ports are your reset button. Sell cargo, buy supplies, patch the hull, and get organized before you head back out. What part do you want to go over?",
       responses: [
-        { label: "What should I handle first when I dock?", next: "ports_basics" },
-        { label: "Explain the shipyard, components, and stats.", next: "ports_shipyard" },
+        {
+          label: "What should I handle first when I dock?",
+          next: "ports_basics",
+        },
+        {
+          label: "Explain the shipyard, components, and stats.",
+          next: "ports_shipyard",
+        },
         { label: "What about the market and the vault?", next: "ports_market" },
-        { label: "How do tavern crew and quest talks fit in?", next: "ports_people" },
+        {
+          label: "How do tavern crew and quest talks fit in?",
+          next: "ports_people",
+        },
       ],
     },
     ports_basics: {
-      text: "First, check whether ye're hurt, broke, or stuffed with cargo. Then sell what ye don't need, repair if the hull took a beating, and make sure ye leave with coin and cannonballs instead of regrets.",
+      text: "First check whether you're damaged, broke, or carrying way too much junk. Then sell what you don't need, repair if the hull got chewed up, and leave with coin and cannonballs instead of a bad feeling.",
       responses: [
         { label: "Tell me about the shipyard.", next: "ports_shipyard" },
         { label: "And the market and vault?", next: "ports_market" },
       ],
     },
     ports_shipyard: {
-      text: "The shipyard is for repairs and upgrades. Components change ship stats like speed, cargo space, damage, and collection power. The Stats panel shows the final numbers after all yer gear and crew bonuses are counted together.",
+      text: "The shipyard is for repairs and upgrades. Components change stats like speed, cargo space, damage, and gathering power. The Stats panel shows the final result after your gear and crew bonuses are all added together.",
       responses: [
         { label: "How do I pick good upgrades?", next: "ports_upgrades" },
         { label: "What about the market and vault?", next: "ports_market" },
       ],
     },
     ports_upgrades: {
-      text: "Think in roles. More cargo helps trading runs, stronger damage and range help fights, and harvesting tools help gathering trips. Ye've only got so many slots, so build the ship for the job ye plan to do next.",
-      responses: [
-        { label: "Back to port questions.", next: "ports_intro" },
-      ],
+      text: "Think in roles. More cargo helps trading runs, stronger damage and range help in fights, and harvesting tools help gathering trips. You only have so many slots, so build for the job you're about to do, not the imaginary perfect ship in your head.",
+      responses: [{ label: "Back to port questions.", next: "ports_intro" }],
     },
     ports_market: {
-      text: "The market is where ye buy low and sell high. The vault is where ye stash valuables for safer keeping. If ye're heading into trouble, storing coin and spare goods before ye sail is a sharp captain's habit.",
-      responses: [
-        { label: "Back to port questions.", next: "ports_intro" },
-      ],
+      text: "The market is where you buy low and sell high. The vault is where you stash valuables so one bad trip doesn't ruin your whole evening. If you're about to do something risky, bank the good stuff first.",
+      responses: [{ label: "Back to port questions.", next: "ports_intro" }],
     },
     ports_people: {
-      text: "Ports are also where ye gather knowledge. Taverns bring ye recruits, quest givers, and local gossip. The questline should nudge ye toward what matters first, and the folk in port help fill in the rest.",
-      responses: [
-        { label: "Back to port questions.", next: "ports_intro" },
-      ],
+      text: "Ports are also where you get context. Taverns give you recruits, quest givers, and the kind of local gossip that sounds useless right up until it's very useful. The questline points you at the basics, and the people in port fill in the gaps.",
+      responses: [{ label: "Back to port questions.", next: "ports_intro" }],
     },
 
     sailing_intro: {
-      text: "At sea, momentum matters. A heavy ship handles worse, so plan turns early and don't charge into a bad lane unless ye mean it. Which lesson do ye want first?",
+      text: "At sea, momentum matters. A heavy ship handles worse, so plan turns early and don't charge into a bad angle unless you really mean it. Which part do you want first?",
       responses: [
         { label: "Give me the sailing basics.", next: "sailing_basics" },
         { label: "How does combat work?", next: "combat_basics" },
@@ -101,14 +112,14 @@ export function buildScarlettDialogue(hasAvailableQuest: boolean): Record<string
       ],
     },
     sailing_basics: {
-      text: "W drives ye forward, S reins the ship in, and A or D swings the bow. Cargo weight matters too. When the hold gets too full, the ship feels sluggish and tight turns get riskier.",
+      text: "W moves you forward, S slows you down, and A or D turns the ship. Cargo weight matters too. When the hold gets too full, the ship feels sluggish and tight turns start feeling like bad ideas.",
       responses: [
         { label: "How does combat work?", next: "combat_basics" },
         { label: "Any survival advice?", next: "sailing_survival" },
       ],
     },
     combat_basics: {
-      text: "Q fires port side and E fires starboard. Every volley spends cannonballs, so keep the hold stocked. If a fight turns ugly, remember that ports are safety and pride won't plug a leaking hull.",
+      text: "Q fires the left side and E fires the right. Every volley costs cannonballs, so keep some in the hold. If a fight starts going badly, remember that ports are safe and ego does not repair hull damage.",
       responses: [
         { label: "Any survival advice?", next: "sailing_survival" },
         { label: "Remind me about cannon controls.", next: "combat_controls" },
@@ -116,71 +127,77 @@ export function buildScarlettDialogue(hasAvailableQuest: boolean): Record<string
       ],
     },
     combat_controls: {
-      text: "Q is port, left side. E is starboard, right side. Keep that straight and ye'll waste fewer volleys lookin' foolish broadside to the wrong horizon.",
-      responses: [
-        { label: "Back to sea lessons.", next: "sailing_intro" },
-      ],
+      text: "Q is port, the left side. E is starboard, the right side. Get that wrong once and you'll remember forever, mostly because it feels embarrassing.",
+      responses: [{ label: "Back to sea lessons.", next: "sailing_intro" }],
     },
     sailing_survival: {
-      text: "Don't sail blind. Watch hull health, keep enough goods for repairs, and avoid staying overburdened before a dangerous run. Smart captains win plenty of fights by choosing when not to take one.",
-      responses: [
-        { label: "Back to sea lessons.", next: "sailing_intro" },
-      ],
+      text: "Don't sail blind. Watch your hull, keep enough goods for repairs, and don't start a dangerous run while already overloaded. A lot of smart wins come from saying 'not this fight' and leaving.",
+      responses: [{ label: "Back to sea lessons.", next: "sailing_intro" }],
     },
 
     trade_intro: {
-      text: "Trade and gathering keep the whole voyage afloat. Goods pay for upgrades, repairs, cannonballs, and whatever glory ye can afford. Which part do ye want?",
+      text: "Trade and gathering keep everything else running. Goods pay for upgrades, repairs, cannonballs, and every other bad decision you want to fund. What do you want to know?",
       responses: [
         { label: "How does trading work between ports?", next: "trade_routes" },
         { label: "What are resources actually for?", next: "trade_resources" },
         { label: "How do I gather faster?", next: "trade_collecting" },
-        { label: "What does the stats panel help me read?", next: "trade_stats" },
+        {
+          label: "What does the stats panel help me read?",
+          next: "trade_stats",
+        },
       ],
     },
     trade_routes: {
-      text: "Buy where prices are low, haul where prices are rich, and sell with enough cargo room left to stay nimble. Profit sounds glamorous till a fat hold gets ye cornered in the wrong waters.",
+      text: "Buy where prices are low, haul to a port where prices are better, and try not to leave yourself so loaded that you handle like a brick. Profit feels great right up until a full cargo hold gets you trapped somewhere stupid.",
       responses: [
         { label: "What are resources actually for?", next: "trade_resources" },
         { label: "How do I gather faster?", next: "trade_collecting" },
       ],
     },
     trade_resources: {
-      text: "Wood and Fish keep repairs flowing. Iron and Coin feed upgrades. Tea is a fine trade good, and cannonballs keep ye from negotiating with empty guns. Every haul should support the next run somehow.",
+      text: "Wood and Fish help with repairs. Iron and Coin feed upgrades. Tea is a solid trade good, and cannonballs keep your arguments persuasive. Ideally every haul helps set up the next one.",
       responses: [
         { label: "How do I gather faster?", next: "trade_collecting" },
         { label: "Back to trade questions.", next: "trade_intro" },
       ],
     },
     trade_collecting: {
-      text: "Look for the red harvest circles out in the world, then sail close enough for the collection marker to show itself. Hold position while it fills and pays out. Gathering tools help, but a full hold will still choke the run short.",
+      text: "Look for the red harvest circles in the world, then sail close enough for the collection marker to appear. Hold position while it fills and pays out. Gathering tools help, but a full hold will still cut the trip short.",
       responses: [
-        { label: "What does the stats panel help me read?", next: "trade_stats" },
+        {
+          label: "What does the stats panel help me read?",
+          next: "trade_stats",
+        },
         { label: "Back to trade questions.", next: "trade_intro" },
       ],
     },
     trade_stats: {
-      text: "The Stats panel is the ship's truth-teller. Use it to see whether crew, components, and upgrades are actually pushing the numbers ye care about instead of just sounding fancy in the shop.",
-      responses: [
-        { label: "Back to trade questions.", next: "trade_intro" },
-      ],
+      text: "The Stats panel is where you check whether your build is actually doing something. It's useful for separating 'this sounds cool' from 'this is measurably better.'",
+      responses: [{ label: "Back to trade questions.", next: "trade_intro" }],
     },
 
     progression_intro: {
-      text: "Progress comes from three things: quests that unlock systems, crew and gear that sharpen the ship, and smart voyages that bring home more than they risk. Which part do ye want me to break down?",
+      text: "Progress mostly comes from three things: quests that unlock systems, crew and gear that improve the ship, and smart trips that bring back more than they risk. Which part do you want me to break down?",
       responses: [
         { label: "Tell me about quests.", next: "quests_intro" },
         { label: "How do crew and ship growth work?", next: "crew_intro" },
-        { label: "What happens if I sink or want to track progress?", next: "progress_tracking" },
+        {
+          label: "What happens if I sink or want to track progress?",
+          next: "progress_tracking",
+        },
         { label: "How do ship class upgrades fit in?", next: "ship_tiers" },
       ],
     },
     quests_intro: {
       text: hasAvailableQuest
-        ? "Quests are the cleanest way to learn the ropes. I've got a starter job ready for ye, and finishing it opens more of the game."
-        : "Quests teach systems, unlock features, and push ye toward the next thing worth learnin'. Most jobs also expect ye to sail back into the giver's port once the checklist is done.",
+        ? "Quests are the easiest way to learn the game. I have a starter job ready, and finishing it unlocks more of the port."
+        : "Quests teach systems, unlock features, and point you at the next useful thing to learn. Most of them also expect you to return to the giver's port once the checklist is done.",
       responses: hasAvailableQuest
         ? [
-            { label: "Give me that starter job.", action: "accept_scarlett_quest" },
+            {
+              label: "Give me that starter job.",
+              action: "accept_scarlett_quest",
+            },
             { label: "What does it unlock?", next: "quests_unlocks" },
             { label: "How do turn-ins work?", next: "quests_turnin_root" },
           ]
@@ -190,120 +207,149 @@ export function buildScarlettDialogue(hasAvailableQuest: boolean): Record<string
           ],
     },
     quests_unlocks: {
-      text: "A quest might unlock a feature, a new lead, or just point ye toward the next useful habit. The important bit is this: the questline should teach the essentials, and I fill in the details when ye need a refresher.",
+      text: "A quest might unlock a feature, a new lead, or just a better habit. The important part is that the questline teaches the essentials, and I'm here for the follow-up questions the UI doesn't answer.",
       responses: [
         { label: "Back to progression topics.", next: "progression_intro" },
       ],
     },
     quest_accept_success: {
-      text: "Good. Quest accepted. Check the Quests tab, follow the steps, and come back if ye want the finer points explained.",
+      text: "Nice. Quest accepted. Check the Quests tab, follow the steps, and come back if you want help with any of it.",
       responses: [
         { label: "Back to progression topics.", next: "progression_intro" },
       ],
     },
     quests_already_started: {
-      text: "That lesson's already underway, captain. Open the Quests tab and it'll show ye what's active, what's finished, and what still needs doing.",
+      text: "You're already working on that one. Open the Quests tab and it'll show what's active, what's finished, and what's left.",
       responses: [
         { label: "Back to progression topics.", next: "progression_intro" },
       ],
     },
     crew_intro: {
-      text: "Crew add bonuses and give ye specialists to build around. Hire people who match the voyage ye want, then check the Crew panel and Stats panel to see how the whole ship changes once everyone's aboard.",
+      text: "Crew give bonuses and let you specialize. Hire people who match the kind of trip you want to run, then check the Crew and Stats panels to see what actually changed.",
       responses: [
         { label: "How do ship class upgrades fit in?", next: "ship_tiers" },
         { label: "Back to progression topics.", next: "progression_intro" },
       ],
     },
     ship_tiers: {
-      text: "Ship class upgrades are bigger commitments than components. They change the hull itself, usually giving ye room for more gear and a stronger long-term build. Make sure yer money flow can support the jump before ye buy it.",
+      text: "Ship class upgrades are a bigger commitment than components. They change the hull itself and usually give you room for more gear. Make sure your income can support the jump before you buy one and then immediately regret it.",
       responses: [
         { label: "Back to progression topics.", next: "progression_intro" },
       ],
     },
     progress_tracking: {
-      text: "If ye sink, bad planning gets expensive in a hurry, so don't carry more risk than the run is worth. For the long view, the Stats panel and Hall of Captains help ye see how the ship and the captain are growin' over time.",
+      text: "If you sink, bad planning gets expensive fast, so don't risk more than the trip is worth. For long-term progress, the Stats panel and Hall of Captains help you see how your ship and your captain are improving over time.",
       responses: [
         { label: "Back to progression topics.", next: "progression_intro" },
       ],
     },
 
     danger_intro: {
-      text: "That's the part captains ignore till the sea teaches it the hard way. Weight, damage, and greed all punish sloppy planning. What do ye want spelled out?",
+      text: "This is the part people ignore until the game smacks them with it. Weight, damage, and greed all punish sloppy planning. What do you want spelled out?",
       responses: [
-        { label: "What happens when I'm overburdened?", next: "danger_overburdened" },
-        { label: "What should I remember before risky runs?", next: "danger_preparation" },
+        {
+          label: "What happens when I'm overburdened?",
+          next: "danger_overburdened",
+        },
+        {
+          label: "What should I remember before risky runs?",
+          next: "danger_preparation",
+        },
         { label: "What happens when I die?", next: "danger_death" },
       ],
     },
     danger_overburdened: {
-      text: "An overloaded ship handles worse, turns slower, and gives trouble more chances to catch up. If a run might turn violent, don't leave port already sailing like a brick in the tide.",
+      text: "An overloaded ship handles worse, turns slower, and gives problems more time to catch up to you. If a run might get dangerous, don't leave port already sailing like a refrigerator.",
       responses: [
         { label: "What happens when I die?", next: "danger_death" },
         { label: "Back to danger questions.", next: "danger_intro" },
       ],
     },
     danger_preparation: {
-      text: "Before a risky run, patch the hull, stock cannonballs, carry repair goods, and stash what ye can't bear to lose. Most disasters start back in port with a captain who said, 'eh, good enough.'",
+      text: "Before a risky run, patch the hull, stock cannonballs, carry repair goods, and stash anything you really don't want to lose. Most disasters start back in port with someone saying, 'eh, this is probably fine.'",
       responses: [
         { label: "What happens when I die?", next: "danger_death" },
         { label: "Back to danger questions.", next: "danger_intro" },
       ],
     },
     danger_death: {
-      text: "Sinking is expensive because the sea collects her debt in gear and momentum. That's why smart captains use the vault, think about what they're carrying, and only risk what the voyage can justify.",
-      responses: [
-        { label: "Back to danger questions.", next: "danger_intro" },
-      ],
+      text: "Sinking is expensive because you lose gear, time, and momentum all at once. That's why smart players use the vault, pay attention to what they're carrying, and only risk what the trip can justify.",
+      responses: [{ label: "Back to danger questions.", next: "danger_intro" }],
     },
 
     flirt_intro: {
-      text: "Well now, bold of ye. Keep talking, captain. Just know I admire a pirate with charm and sense in equal measure.",
+      text: "Bold opener. Keep going. I like confidence as long as it comes with at least one good decision.",
       responses: [
-        { label: "Your smile could calm a storm, Scarlett.", next: "flirt_smooth" },
-        { label: "I'd sail through cannon fire just to hear ye laugh.", next: "flirt_confident" },
-        { label: "Steal my heart if ye must, just leave me enough for rum.", next: "flirt_playful" },
+        {
+          label: "You have a dangerous amount of confidence, Scarlett.",
+          next: "flirt_smooth",
+        },
+        {
+          label: "I'd like to hear you laugh when I'm not sinking.",
+          next: "flirt_confident",
+        },
+        {
+          label: "So this is the part where I'm supposed to be charming?",
+          next: "flirt_playful",
+        },
       ],
     },
     flirt_smooth: {
-      text: "Mmm. Smooth as polished teak. But sweet talk alone won't keep a ship afloat, so impress me with a little sense too.",
+      text: "That's pretty smooth. But charm without common sense is how people end up underwater, so I'd like both.",
       responses: [
-        { label: "Then tell me the smart plan, and I'll follow it.", next: "flirt_advice" },
-        { label: "Maybe ye just like hearin' me try.", next: "flirt_tease" },
+        {
+          label: "Then tell me the smart plan and I'll follow it.",
+          next: "flirt_advice",
+        },
+        { label: "Maybe you just like hearing me try.", next: "flirt_tease" },
       ],
     },
     flirt_confident: {
-      text: "Reckless and romantic. Dangerous blend. I like a pirate with backbone, but I'd like him better if he remembered to stock cannonballs first.",
+      text: "Reckless and kind of sweet. Dangerous mix. I like confidence, but I like stocked cannonballs more.",
       responses: [
-        { label: "So what's the smart move before a fight?", next: "flirt_advice" },
-        { label: "Then save me a seat and watch me work.", next: "flirt_tease" },
+        {
+          label: "So what's the smart move before a fight?",
+          next: "flirt_advice",
+        },
+        {
+          label: "Then save me a seat and watch me work.",
+          next: "flirt_tease",
+        },
       ],
     },
     flirt_playful: {
-      text: "Cheeky too? Careful, captain. I might start expectin' both profits and poetry whenever ye dock.",
+      text: "A little, yes. Be careful or I'll start expecting decent timing and decent banter every time you dock.",
       responses: [
-        { label: "Then give me a lesson worth rememberin'.", next: "flirt_advice" },
-        { label: "I'll return with better loot and better lines.", next: "flirt_tease" },
+        {
+          label: "Then give me a lesson worth remembering.",
+          next: "flirt_advice",
+        },
+        {
+          label: "I'll return with better loot and better lines.",
+          next: "flirt_tease",
+        },
       ],
     },
     flirt_advice: {
-      text: "Before ye chase glory, stash valuables, patch the hull, and sail with purpose. Smart, prepared, and a little dangerous? That's a far better look than sinkin' pretty.",
+      text: "Before you go chasing glory, stash your valuables, patch the hull, and sail with a plan. Smart, prepared, and a little dangerous looks a lot better than dramatic and sunk.",
       responses: [
         { label: "Now that sounds like approval.", next: "flirt_end" },
-        { label: "I'll handle business first and come back charming later.", next: "flirt_end" },
+        {
+          label: "I'll handle business first and come back charming later.",
+          next: "flirt_end",
+        },
       ],
     },
     flirt_tease: {
-      text: "Ha. Maybe I do. But if ye come back empty-handed and half-sunk, I'll laugh at the wreck before I praise the line.",
+      text: "Maybe. But if you come back empty-handed and half-sunk, I'm laughing first and complimenting you second.",
       responses: [
         { label: "Cruel. I adore it.", next: "flirt_end" },
         { label: "Then I'll return with profit and proof.", next: "flirt_end" },
       ],
     },
     flirt_end: {
-      text: "That's more like it. Keep yer crew alive, keep yer plans tighter than yer swagger, and maybe next time ye dock I'll save ye a smile meant just for you.",
-      responses: [
-        { label: "Ask another question.", next: "root" },
-      ],
+      text: "Better. Keep your crew alive, keep your plans tighter than your swagger, and maybe next time I dock I'll look genuinely impressed.",
+      responses: [{ label: "Ask another question.", next: "root" }],
     },
   };
 }

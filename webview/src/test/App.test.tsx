@@ -69,4 +69,41 @@ describe("App", () => {
     expect(getByTestId("ship-status-component-slots")).toHaveTextContent("2/4");
     expect(getByTestId("ship-status-crew-slots")).toHaveTextContent("2/3");
   });
+
+  it("marks completed quest widget steps with the complete styling hook", () => {
+    const { container, getByText } = renderApp({
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett-first-quest",
+          title: "Scarlett's Starter Run",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character1.png",
+          giverPortName: "Tortuga",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          description: "A short tutorial quest.",
+          completionText: "Nicely done.",
+          isReadyToTurnIn: false,
+          unlocks: [],
+          steps: [
+            { label: "Buy 1 Tea", currentValue: 1, requiredValue: 1, isComplete: true },
+            { label: "Sell 1 Fish", currentValue: 0, requiredValue: 1, isComplete: false },
+          ],
+        },
+        all: [],
+        completedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    const completedRow = getByText("Buy 1 Tea").closest(".quest-status-row");
+    const completedLabel = container.querySelector(".quest-status-row.complete .quest-status-row-label");
+    const completedValue = container.querySelector(".quest-status-row.complete .quest-status-row-value");
+
+    expect(completedRow).toHaveClass("complete");
+    expect(completedLabel).toHaveTextContent("Buy 1 Tea");
+    expect(completedValue).toHaveTextContent("1/1");
+  });
 });

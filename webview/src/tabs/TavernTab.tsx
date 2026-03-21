@@ -26,7 +26,7 @@ export function buildTavernConversationTree(
   if (!tree.root) {
     return {
       root: {
-        text: `Name's ${character.name}. Say what you need, Captain.`,
+        text: `I'm ${character.name}. Say what you need, Captain.`,
         responses: [{ label: "Leave", next: "root" }],
       },
     };
@@ -34,7 +34,7 @@ export function buildTavernConversationTree(
 
   if (!tree.hire_offer) {
     tree.hire_offer = {
-      text: "If we're to sail together, say the word plain.",
+      text: "I'm interested, is that an offer I hear?",
       responses: [
         { label: "Join my crew.", action: "hire" },
         { label: "Not today.", next: "root" },
@@ -51,7 +51,7 @@ export function buildTavernConversationTree(
 
   if (!tree.hire_success) {
     tree.hire_success = {
-      text: "Yes. I'll be ready at the dock.",
+      text: "Alright. I'll meet you at the dock.",
       responses: [{ label: "Back", next: "root" }],
     };
   }
@@ -75,12 +75,12 @@ export function buildTavernConversationTree(
     tree.quest_offer = {
       text: `${availableQuest.description}\n\n${describeQuestUnlocks(availableQuest.unlocks)}`,
       responses: [
-        { label: "I'll take the job.", action: "accept_quest" },
+        { label: "Alright, I'm in.", action: "accept_quest" },
         { label: "Maybe later.", next: "root" },
       ],
     };
     tree.quest_accept_success = {
-      text: "Good. Then stop talking and start proving yourself.",
+      text: "Perfect. Go do the job, then come back with a story that's at least a little embarrassing.",
       responses: [{ label: "Back", next: "root" }],
     };
   }

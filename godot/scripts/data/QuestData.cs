@@ -108,8 +108,8 @@ public static class QuestData
       GiverName = "Scarlett",
       TurnInMode = QuestTurnInMode.AutoCompleteWhenObjectivesMet,
       CanAcceptFromQuestLog = true,
-      Description = "Sail to any port and dock there once. Pull your ship into the harbor interaction ring until the port panel opens. Any successful dock counts.",
-      CompletionText = "You've got your sea legs. Ports can now trade properly and folks will finally talk to ye.",
+      Description = "Scarlett wants proof that you can actually pull into a harbor without turning it into a scene. Sail to any port and dock once. Just move into the harbor interaction ring until the port panel opens.",
+      CompletionText = "Nice. You made it into port cleanly. You can talk to me in the crew panel one the ride side of your screen anytime. Check the Quests panel for your next quest!",
       Unlocks = [FeatureUnlock.SellGoods, FeatureUnlock.TavernTalk],
       Steps =
       [
@@ -129,8 +129,8 @@ public static class QuestData
       GiverName = "Governor Caspian Vale",
       GiverPortName = "Haven",
       PrerequisiteQuestIds = ["scarlett_sail_to_port"],
-      Description = "Find the red harvest circles out in the world and sail close enough for the collection marker to appear. Stay near each spot until it pays out, then collect 1 Wood, 1 Iron, 1 Fish, and 1 Tea.",
-      CompletionText = "You've shown you can supply yourself. Buying goods is now unlocked.",
+      Description = "Governor Caspian wants to know whether you're useful or just enthusiastic. Find the red harvest circles in the world, get close enough for the collection marker to appear, and bring back 1 Wood, 1 Iron, 1 Fish, and 1 Tea.",
+      CompletionText = "That'll do. You proved you can supply yourself without immediately becoming someone else's problem. Buying goods is now unlocked.",
       Unlocks = [FeatureUnlock.BuyGoods],
       Steps = CoreTradeGoods.Select(itemType => new QuestStepDefinition
       {
@@ -148,8 +148,8 @@ public static class QuestData
       GiverName = "Gideon Gearlock",
       GiverPortName = "Saint Johns",
       PrerequisiteQuestIds = ["harvest_for_someone"],
-      Description = "Buy each core trade good at a port, then sell each one somewhere else for a profit. Losses do not count, so watch the prices. Finish the lesson by earning 100 gold total.",
-      CompletionText = "Now you're thinking like a merchant. Ship components are unlocked.",
+      Description = "Gideon wants you to stop guessing and start trading on purpose. Buy each core trade good at a port, then sell each one somewhere else for a profit. Losses don't count, so yes, the prices actually matter. Finish by earning 100 gold total.",
+      CompletionText = "Better. Now you're trading with your head instead of your feelings. Ship components are unlocked.",
       Unlocks = [FeatureUnlock.ShipyardComponents],
       Steps =
       [
@@ -182,9 +182,9 @@ public static class QuestData
       GiverNpcId = "elder-bertram",
       GiverName = "Elder Bertram",
       GiverPortName = "Saint Johns",
-      PrerequisiteQuestIds = ["trade_for_merchant"],
-      Description = "Visit the shipyard, buy extra components, and equip at least 2 of them at the same time. This quest checks what is currently equipped, not just what you own.",
-      CompletionText = "Your ship's ready for bigger hulls. Ship class upgrades are unlocked.",
+      PrerequisiteQuestIds = ["scarlett_sail_to_port"],
+      Description = "Elder Bertram is tired of captains calling a bare deck a build. Visit the shipyard, buy extra components, and equip at least 2 of them at the same time. This checks what you're actively using, not what you're hoarding.",
+      CompletionText = "Much better. Your ship finally looks like someone made decisions on purpose. Ship class upgrades are unlocked.",
       Unlocks = [FeatureUnlock.ShipTierUpgrades],
       Steps =
       [
@@ -203,9 +203,9 @@ public static class QuestData
       GiverNpcId = "dorian-blackwake",
       GiverName = "Dorian Blackwake",
       GiverPortName = "Krakenfall",
-      PrerequisiteQuestIds = ["beef_up_your_ship"],
-      Description = "Sink 5 ships with your cannons. Q fires your port side and E fires your starboard side, so line up broadside shots and finish enemy ships before they can escape.",
-      CompletionText = "You've earned somewhere safe to stash your spoils. Vault access is unlocked.",
+      PrerequisiteQuestIds = ["scarlett_sail_to_port"],
+      Description = "Dorian doesn't care about your potential. He cares whether you can finish a fight. Sink 5 ships with your cannons. Q fires your port side and E fires your starboard side, so line up your broadsides and don't let enemy ships limp away.",
+      CompletionText = "That got people's attention. You now have access to a vault, which is great, because eventually someone will try to return the favor.",
       Unlocks = [FeatureUnlock.Vault],
       Steps =
       [

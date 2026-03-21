@@ -50,8 +50,8 @@ export function QuestStatusWidget({
         <div className="quest-status-checklist">
           {activeQuest.steps.map((step) => (
             <div key={step.label} className={`quest-status-row ${step.isComplete ? "complete" : ""}`}>
-              <span>{step.label}</span>
-              <strong>
+              <span className="quest-status-row-label">{step.label}</span>
+              <strong className="quest-status-row-value">
                 {step.currentValue}/{step.requiredValue}
               </strong>
             </div>

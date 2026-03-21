@@ -12,8 +12,8 @@ function QuestCard({
 }) {
   const turnInHint = quest.isReadyToTurnIn
     ? quest.giverPortName
-      ? `Return to ${quest.giverPortName} to finish this quest.`
-      : `Return to ${quest.giverName} to finish this quest.`
+      ? `Head back to ${quest.giverPortName} to wrap this one up.`
+      : `Go talk to ${quest.giverName} to wrap this one up.`
     : null;
 
   return (
@@ -67,7 +67,7 @@ export function QuestsTab({ state }: { state: PortState }) {
         <div className="card quest-card">
           <div className="quest-card-title">No Active Quest</div>
           <div className="quest-card-desc">
-            No job is currently in progress. Check the available list below for leads.
+            Nothing is active right now. Check the list below if you want a new lead.
           </div>
         </div>
       )}
@@ -80,8 +80,8 @@ export function QuestsTab({ state }: { state: PortState }) {
           const canAcceptHere = quest.canAcceptFromQuestLog;
           const canRevealGiver = quest.revealGiverInQuestLog;
           const helperText = canRevealGiver
-            ? `Talk to ${quest.giverName}${quest.giverPortName ? ` at ${quest.giverPortName}` : ""} to accept this quest.`
-            : "The way to begin this quest is still a mystery. Keep exploring and talking to people.";
+            ? `Talk to ${quest.giverName}${quest.giverPortName ? ` at ${quest.giverPortName}` : ""} to start this quest.`
+            : "You haven't figured out how this one starts yet. Keep exploring and keep talking to people.";
 
           return (
             <QuestCard
@@ -109,7 +109,7 @@ export function QuestsTab({ state }: { state: PortState }) {
         <div className="card quest-card">
           <div className="quest-card-title">No Available Quests</div>
           <div className="quest-card-desc">
-            Nothing new is unlocked right now. Finish active work or keep poking around the world.
+            Nothing new is unlocked right now. Finish what you're doing or wander around until someone gives you a quest.
           </div>
         </div>
       )}

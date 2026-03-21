@@ -390,6 +390,13 @@ img {
   color: #d5ffd8;
 }
 
+.quest-status-row.complete .quest-status-row-label,
+.quest-status-row.complete .quest-status-row-value {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: rgba(213, 255, 216, 0.9);
+}
+
 .quest-status-more {
   font-size: 12px;
   line-height: 1.35;
