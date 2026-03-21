@@ -7,7 +7,6 @@ import { BASE } from "./utils/helpers";
 import { MarketTab } from "./tabs/MarketTab";
 import { ShipyardTab } from "./tabs/ShipyardTab";
 import { VaultTab } from "./tabs/VaultTab";
-import { GuideTab } from "./tabs/GuideTab";
 import { CreativeTab } from "./tabs/CreativeTab";
 import { QuestsTab } from "./tabs/QuestsTab";
 import { buildTavernConversationTree } from "./tabs/TavernTab";
@@ -17,9 +16,8 @@ import { ShipStatusWidget } from "./components/ShipStatusWidget";
 import { QuestStatusWidget } from "./components/QuestStatusWidget";
 import { CharacterConversationOverlay } from "./components/CharacterConversationOverlay";
 
-type ShipTab = "guide" | "quests" | "ship_crew" | "ship_status";
 type PortTab = "market" | "shipyard" | "vault" | "creative";
-type PanelMode = "ship" | "port" | "leaderboard";
+type PanelMode = "ship" | "quests" | "crew" | "port" | "leaderboard";
 type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
 type ConversationSource = "tavern" | "crew";
 
@@ -28,7 +26,9 @@ interface ActiveConversation {
   characterId: string;
 }
 
-const SHIP_ICON = `${BASE}icons/flat/ship-wheel.svg`;
+const SHIP_ICON = `${BASE}icons/flat/caravel.svg`;
+const QUESTS_ICON = `${BASE}icons/flat/tied-scroll.svg`;
+const CREW_ICON = `${BASE}icons/flat/bandana.svg`;
 const PORT_ICON = `${BASE}icons/flat/anchor.svg`;
 const LEADERBOARD_ICON = `${BASE}icons/flat/pirate-hat.svg`;
 
@@ -36,16 +36,11 @@ function findQuestForNpc(state: PortState, characterId: string) {
   return state.quests.available.find((quest) => quest.giverNpcId === characterId) ?? null;
 }
 
-function findScarlettQuest(state: PortState) {
-  return findQuestForNpc(state, "scarlett");
-}
-
 export default function App() {
   useInputCapture();
 
   const [portState, setPortState] = useState<PortState | null>(null);
   const [activePanelMode, setActivePanelMode] = useState<PanelMode | null>("ship");
-  const [activeShipTab, setActiveShipTab] = useState<ShipTab>("guide");
   const [activePortTab, setActivePortTab] = useState<PortTab>("market");
   const [activeConversation, setActiveConversation] = useState<ActiveConversation | null>(null);
   const prevIsInPortRef = useRef<boolean | null>(null);
@@ -66,7 +61,6 @@ export default function App() {
       // Godot calls closePort when undocking, so we force local state
       // to sea mode even before the next updateState payload arrives.
       setPortState((prev) => (prev ? { ...prev, isInPort: false } : prev));
-      setActiveShipTab("guide");
     };
 
     window.updateState = (data: PortState) => {
@@ -259,9 +253,13 @@ export default function App() {
   const isInPort = !!portState?.isInPort;
   const panelTitle = activePanelMode === "port"
     ? (portState?.portName ?? "Port")
+    : activePanelMode === "quests"
+      ? "quests"
+      : activePanelMode === "crew"
+        ? "crew"
     : activePanelMode === "leaderboard"
       ? "Hall of Captains"
-      : "Ship Operations";
+      : "ship";
 
   const handleModeSelect = (mode: PanelMode) => {
     if (mode === "port" && !isInPort) return;
@@ -274,8 +272,7 @@ export default function App() {
         state={portState}
         panelOpen={activePanelMode !== null}
         onOpenQuests={() => {
-          setActivePanelMode("ship");
-          setActiveShipTab("quests");
+          setActivePanelMode("quests");
           setActiveConversation(null);
         }}
       />
@@ -306,6 +303,28 @@ export default function App() {
           <img className="rail-mode-icon" src={SHIP_ICON} alt="" />
         </button>
         <button
+          className={`rail-mode-btn ${activePanelMode === "quests" ? "active" : ""}`}
+          onClick={() => handleModeSelect("quests")}
+          type="button"
+          role="tab"
+          aria-selected={activePanelMode === "quests"}
+          aria-label="Quests mode"
+          title="Quests"
+        >
+          <img className="rail-mode-icon" src={QUESTS_ICON} alt="" />
+        </button>
+        <button
+          className={`rail-mode-btn ${activePanelMode === "crew" ? "active" : ""}`}
+          onClick={() => handleModeSelect("crew")}
+          type="button"
+          role="tab"
+          aria-selected={activePanelMode === "crew"}
+          aria-label="Crew mode"
+          title="Crew"
+        >
+          <img className="rail-mode-icon" src={CREW_ICON} alt="" />
+        </button>
+        <button
           className={`rail-mode-btn ${activePanelMode === "leaderboard" ? "active" : ""}`}
           onClick={() => handleModeSelect("leaderboard")}
           type="button"
@@ -323,66 +342,35 @@ export default function App() {
           <div className="port-name">{panelTitle}</div>
         </div>
 
-        {activePanelMode !== null && activePanelMode !== "leaderboard" && (
+        {activePanelMode === "port" && (
           <div className="tab-bar">
-            {activePanelMode === "ship" ? (
-              <>
-                <button
-                  className={`tab-btn ${activeShipTab === "guide" ? "active" : ""}`}
-                  onClick={() => setActiveShipTab("guide")}
-                >
-                  Scarlett
-                </button>
-                <button
-                  className={`tab-btn ${activeShipTab === "quests" ? "active" : ""}`}
-                  onClick={() => setActiveShipTab("quests")}
-                >
-                  Quests
-                </button>
-                <button
-                  className={`tab-btn ${activeShipTab === "ship_crew" ? "active" : ""}`}
-                  onClick={() => setActiveShipTab("ship_crew")}
-                >
-                  Crew
-                </button>
-                <button
-                  className={`tab-btn ${activeShipTab === "ship_status" ? "active" : ""}`}
-                  onClick={() => setActiveShipTab("ship_status")}
-                >
-                  Ship Status
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  className={`tab-btn ${activePortTab === "market" ? "active" : ""}`}
-                  onClick={() => setActivePortTab("market")}
-                >
-                  Market
-                </button>
-                <button
-                  className={`tab-btn ${activePortTab === "shipyard" ? "active" : ""}`}
-                  onClick={() => setActivePortTab("shipyard")}
-                >
-                  Shipyard
-                </button>
-                {hasUnlockedFeature("Vault") && (
-                  <button
-                    className={`tab-btn vault-tab-btn ${activePortTab === "vault" ? "active" : ""}`}
-                    onClick={() => setActivePortTab("vault")}
-                  >
-                    Vault
-                  </button>
-                )}
-                {portState?.isCreative && portState?.isInPort && (
-                  <button
-                    className={`tab-btn creative-tab-btn ${activePortTab === "creative" ? "active" : ""}`}
-                    onClick={() => setActivePortTab("creative")}
-                  >
-                    Creative
-                  </button>
-                )}
-              </>
+            <button
+              className={`tab-btn ${activePortTab === "market" ? "active" : ""}`}
+              onClick={() => setActivePortTab("market")}
+            >
+              Market
+            </button>
+            <button
+              className={`tab-btn ${activePortTab === "shipyard" ? "active" : ""}`}
+              onClick={() => setActivePortTab("shipyard")}
+            >
+              Shipyard
+            </button>
+            {hasUnlockedFeature("Vault") && (
+              <button
+                className={`tab-btn vault-tab-btn ${activePortTab === "vault" ? "active" : ""}`}
+                onClick={() => setActivePortTab("vault")}
+              >
+                Vault
+              </button>
+            )}
+            {portState?.isCreative && portState?.isInPort && (
+              <button
+                className={`tab-btn creative-tab-btn ${activePortTab === "creative" ? "active" : ""}`}
+                onClick={() => setActivePortTab("creative")}
+              >
+                Creative
+              </button>
             )}
           </div>
         )}
@@ -390,40 +378,20 @@ export default function App() {
         {portState && (
           <div className="tab-content">
             {activePanelMode === "ship" ? (
-              activeShipTab === "guide" ? (
-                <GuideTab
-                  quests={portState.quests}
-                  onAcceptScarlettQuest={() => {
-                    const scarlettQuest = findScarlettQuest(portState);
-                    if (!scarlettQuest) return;
-                    sendIpc({ action: "accept_quest", questId: scarlettQuest.id, characterId: "scarlett" });
-                  }}
-                />
-              ) : activeShipTab === "quests" ? (
-                <QuestsTab state={portState} />
-              ) : activeShipTab === "ship_status" ? (
-                <ShipyardTab
-                  state={portState}
-                  isInPort={portState.isInPort}
-                  showForSale={false}
-                  showShipUpgrade={false}
-                />
-              ) : activeShipTab === "ship_crew" ? (
-                <ShipCrewTab
-                  state={portState}
-                  onOpenConversation={(characterId) => openConversation("crew", characterId)}
-                  activeConversationCharacterId={activeConversation?.source === "crew" ? activeConversation.characterId : null}
-                />
-              ) : (
-                <GuideTab
-                  quests={portState.quests}
-                  onAcceptScarlettQuest={() => {
-                    const scarlettQuest = findScarlettQuest(portState);
-                    if (!scarlettQuest) return;
-                    sendIpc({ action: "accept_quest", questId: scarlettQuest.id, characterId: "scarlett" });
-                  }}
-                />
-              )
+              <ShipyardTab
+                state={portState}
+                isInPort={portState.isInPort}
+                showForSale={false}
+                showShipUpgrade={false}
+              />
+            ) : activePanelMode === "quests" ? (
+              <QuestsTab state={portState} />
+            ) : activePanelMode === "crew" ? (
+              <ShipCrewTab
+                state={portState}
+                onOpenConversation={(characterId) => openConversation("crew", characterId)}
+                activeConversationCharacterId={activeConversation?.source === "crew" ? activeConversation.characterId : null}
+              />
             ) : activePanelMode === "leaderboard" ? (
               <LeaderboardTab entries={portState.leaderboard} />
             ) : activePortTab === "market" ? (
