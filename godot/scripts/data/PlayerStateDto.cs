@@ -11,6 +11,7 @@ public class PlayerStateDto
   public bool IsDead { get; set; }
   public int ShipTier { get; set; }
   public List<string> HiredCrewCharacterIds { get; set; } = [];
+  public PlayerProgressDto Progress { get; set; } = new();
 
   /// <summary>Null when the player hasn't built a vault yet.</summary>
   public VaultDto Vault { get; set; }

@@ -52,6 +52,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   public string LastSyncedStateJson { get; set; }
 
   public readonly PlayerStats Stats = new();
+  public PlayerProgress Progress { get; } = new();
   public System.Collections.Generic.List<OwnedComponent> OwnedComponents = [];
 
   // ── Ship Tier ──────────────────────────────────────────────────────
@@ -187,6 +188,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   public override void _Ready()
   {
     Health = MaxHealth;
+    Progress.RecordShipTierReached(ShipTier);
 
     // Only enable the camera for the player we control
     var camera = GetNodeOrNull<Camera3D>("CameraPivot/Camera3D");
@@ -378,6 +380,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     // Use one cannonball from inventory
     UpdateInventory(InventoryItemType.CannonBall, -1);
+    Progress.RecordCannonballShot();
+    ReevaluateQuestProgress();
 
     // Start the cooldown timer
     _cannonReadySignalEmitted = false;
@@ -564,6 +568,31 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     GD.Print($"health = {Health}");
   }
 
+  [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true)]
+  public void TakeDamageFrom(int amount, string attackerPlayerId)
+  {
+    if (!IsMultiplayerAuthority()) return;
+
+    if (State == PlayerState.Dead) return;
+    if (IsInPort) return;
+
+    if (!string.IsNullOrWhiteSpace(attackerPlayerId) && !string.Equals(attackerPlayerId, Name, StringComparison.Ordinal))
+      NotifyAttacker(attackerPlayerId, MethodName.ReportShipHit);
+
+    Health -= amount;
+    if (Health <= 0)
+    {
+      if (!string.IsNullOrWhiteSpace(attackerPlayerId) && !string.Equals(attackerPlayerId, Name, StringComparison.Ordinal))
+        NotifyAttacker(attackerPlayerId, MethodName.ReportShipSunk);
+      OnDeath();
+    }
+    else
+    {
+      EmitSignal(SignalName.HealthUpdate, Health);
+    }
+    GD.Print($"health = {Health}");
+  }
+
   /// <summary>
   /// Called by Port when this player enters or exits the docking area.
   /// </summary>
@@ -726,7 +755,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     });
 
     GD.Print($"{Name} purchased component {Component.name} (auto-equipped: {canEquipNow})");
+    Progress.RecordComponentBought(Component.name, canEquipNow);
     UpdatePlayerStats();
+    ReevaluateQuestProgress();
   }
 
   public int GetTotalEquippedComponents()
@@ -836,7 +867,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       return false;
 
     HiredCrewCharacterIds.Add(characterId);
+    Progress.RecordCrewHired(characterId);
     UpdatePlayerStats();
+    ReevaluateQuestProgress();
     GD.Print($"{Name}: Hired tavern crew '{characterId}'");
     return true;
   }
@@ -881,10 +914,15 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       return false;
     }
 
+    int spentCoins = 0;
     foreach (var item in cost)
     {
       UpdateInventory(item.Key, -item.Value);
+      if (item.Key == InventoryItemType.Coin)
+        spentCoins += item.Value;
     }
+    if (spentCoins > 0)
+      Progress.RecordMoneySpent(spentCoins);
     return true;
   }
 
@@ -906,7 +944,14 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       default:
         break;
     }
-    return UpdateInventory(item, Mathf.RoundToInt(total));
+    int collectedAmount = Mathf.RoundToInt(total);
+    bool ok = UpdateInventory(item, collectedAmount);
+    if (ok)
+    {
+      Progress.RecordItemCollected(item, collectedAmount);
+      ReevaluateQuestProgress();
+    }
+    return ok;
   }
 
   public bool BulkCollect(Dictionary<InventoryItemType, int> items)
@@ -1025,6 +1070,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       Crew = ExportCrewForHud(),
       Vault = ExportVaultForHud(),
       Leaderboard = [],
+      Quests = Progress.ExportHudState(GetTotalEquippedComponents()),
+      ServerStateJson = JsonSerializer.Serialize(SerializeState()),
     };
   }
 
@@ -1174,6 +1221,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     ApplyShipTier();
     _lastAppliedShipTier = ShipTier;
     UpdatePlayerStats();
+    Progress.RecordShipTierReached(ShipTier);
+    ReevaluateQuestProgress();
     GD.Print($"{Name}: Upgraded ship to tier {ShipTier} ({tierData.Name})");
     return true;
   }
@@ -1203,6 +1252,95 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     // Clear the flag after a short delay so BodyExited from the collision
     // swap doesn't cause the port to emit a spurious ShipDeparted signal.
     GetTree().CreateTimer(0.1f).Timeout += () => IsSwappingShipTier = false;
+  }
+
+  public bool IsFeatureUnlocked(FeatureUnlock feature)
+  {
+    return Progress.IsFeatureUnlocked(feature);
+  }
+
+  public void RecordPortVisit(string portName)
+  {
+    Progress.RecordPortVisited(portName);
+    ReevaluateQuestProgress();
+  }
+
+  public void RecordNpcTalkedTo(string characterId)
+  {
+    Progress.RecordNpcTalkedTo(characterId);
+    ReevaluateQuestProgress();
+  }
+
+  public bool AcceptQuest(string questId, string characterId)
+  {
+    if (!Progress.CanAcceptQuest(questId, characterId))
+      return false;
+
+    Progress.ResetForNewQuest(questId, characterId);
+    ReevaluateQuestProgress();
+    return true;
+  }
+
+  public void ReevaluateQuestProgress()
+  {
+    Progress.ReevaluateQuestProgress(GetTotalEquippedComponents());
+  }
+
+  public bool ForceCompleteQuest(string questId = null)
+  {
+    return Progress.ForceCompleteQuest(questId);
+  }
+
+  public bool ForceUncompleteQuest(string questId)
+  {
+    return Progress.ForceUncompleteQuest(questId);
+  }
+
+  public bool ForceSetActiveQuest(string questId)
+  {
+    bool ok = Progress.ForceSetActiveQuest(questId);
+    if (ok)
+      ReevaluateQuestProgress();
+
+    return ok;
+  }
+
+  [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true)]
+  public void ReportShipHit()
+  {
+    if (!IsMultiplayerAuthority()) return;
+    Progress.RecordShipHit();
+    ReevaluateQuestProgress();
+  }
+
+  [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true)]
+  public void ReportShipSunk()
+  {
+    if (!IsMultiplayerAuthority()) return;
+    Progress.RecordShipSunk();
+    ReevaluateQuestProgress();
+  }
+
+  private void NotifyAttacker(string attackerPlayerId, StringName methodName)
+  {
+    if (string.IsNullOrWhiteSpace(attackerPlayerId))
+      return;
+
+    var parent = GetParent();
+    if (parent == null)
+      return;
+
+    foreach (var child in parent.GetChildren())
+    {
+      if (child is not Player player)
+        continue;
+
+      if (!string.Equals(player.Name, attackerPlayerId, StringComparison.Ordinal))
+        continue;
+
+      player.Rpc(methodName);
+      return;
+    }
   }
 
   // ── Vault Operations ──────────────────────────────────────────────
@@ -1453,7 +1591,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       Health = Health,
       Position = [GlobalPosition.X, GlobalPosition.Y, GlobalPosition.Z],
       IsDead = State == PlayerState.Dead,
-      ShipTier = ShipTier
+      ShipTier = ShipTier,
+      Progress = Progress.ToDto()
     };
 
     var inventory = _inventory.GetAll();
@@ -1490,6 +1629,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   public void ApplyState(PlayerStateDto dto)
   {
+    Progress.LoadFromDto(dto?.Progress);
+
     foreach (var kvp in dto.Inventory)
     {
       if (Enum.TryParse<InventoryItemType>(kvp.Key, out var itemType))
@@ -1544,6 +1685,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     ApplyShipTier();
     _lastAppliedShipTier = ShipTier;
     UpdatePlayerStats();
+    Progress.RecordShipTierReached(ShipTier);
 
     // Restore vault state
     if (dto.Vault != null)
@@ -1572,6 +1714,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       EmitSignal(SignalName.HealthUpdate, Health);
       GlobalPosition = new Vector3(dto.Position[0], dto.Position[1], dto.Position[2]);
     }
+
+    ReevaluateQuestProgress();
   }
 
   /// <summary>

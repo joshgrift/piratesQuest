@@ -5,12 +5,13 @@ import { makePortState } from "./fixtures";
 import type { PortState } from "../types";
 import type { Mock } from "vitest";
 
-type Tab = "guide" | "leaderboard" | "ship_crew" | "ship_status" | "market" | "shipyard" | "vault" | "creative";
+type Tab = "guide" | "quests" | "leaderboard" | "ship_crew" | "ship_status" | "market" | "shipyard" | "vault" | "creative";
 
 const TAB_LABELS: Record<Tab, string> = {
   ship_status: "Ship Status",
   ship_crew: "Crew",
   guide: "Scarlett",
+  quests: "Quests",
   leaderboard: "Leaderboard",
   market: "Market",
   shipyard: "Shipyard",

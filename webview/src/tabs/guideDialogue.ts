@@ -14,6 +14,7 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
       { label: "How do I collect resources?", next: "collecting" },
       { label: "How do ship upgrades work?", next: "upgrades" },
       { label: "How do I upgrade my ship class?", next: "ship_tiers" },
+      { label: "How do quests work?", next: "quests_intro" },
       { label: "What if I'm overburdened?", next: "overburdened" },
       { label: "How does the leaderboard work?", next: "leaderboard" },
       { label: "What happens when I die?", next: "death" },
@@ -23,6 +24,39 @@ export const GUIDE_DIALOGUE: Record<string, ConversationNode> = {
       { label: "How does the vault work?", next: "vault" },
       { label: "If I win a duel, can I win a smile too?", next: "flirt" },
     ],
+  },
+
+  // ── Quests ──
+  quests_intro: {
+    text: "Quests are how the world opens up around ye. Some are training jobs, some branch off, some stand alone. Ye can carry more than one at a time, and the Quests tab shows both active work and any unlocked leads.",
+    responses: [
+      { label: "Do you have a quest for me?", next: "quests_scarlett_offer" },
+      { label: "What do quests unlock?", next: "quests_unlocks" },
+      { label: "Ask about something else", next: "root" },
+    ],
+  },
+  quests_scarlett_offer: {
+    text: "Aye. First lesson's simple: accept my job and make port. Do that, and sellin' goods plus tavern chatter open up for ye.",
+    responses: [
+      { label: "I'm in. Give me the quest.", action: "accept_scarlett_quest" },
+      { label: "What does it unlock again?", next: "quests_unlocks" },
+      { label: "Maybe later.", next: "root" },
+    ],
+  },
+  quests_unlocks: {
+    text: "Some quests unlock features, some unlock other quests, and some just tell a tale. Not every lead will name the quest giver either, so if the log stays coy, keep talkin' to folk and nosin' around.",
+    responses: [
+      { label: "Right. Start me on the first one.", next: "quests_scarlett_offer" },
+      { label: "Ask about something else", next: "root" },
+    ],
+  },
+  quest_accept_success: {
+    text: "Good. Quest accepted. If ye're already docked, the sea might count that lesson instantly. Check the Quests tab and keep movin'.",
+    responses: [{ label: "Back to the guide", next: "root" }],
+  },
+  quests_already_started: {
+    text: "That lead's already in motion, captain. Check the Quests tab to see all active jobs, unlocked leads, and which ones still need a bit of sleuthin'.",
+    responses: [{ label: "Back to the guide", next: "root" }],
   },
 
   // ── Flirting ──

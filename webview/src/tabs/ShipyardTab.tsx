@@ -15,6 +15,9 @@ export function ShipyardTab({
   showForSale?: boolean;
   showShipUpgrade?: boolean;
 }) {
+  const buyUnlocked = state.quests.unlockedFeatures.includes("BuyGoods");
+  const componentsUnlocked = state.quests.unlockedFeatures.includes("ShipyardComponents");
+  const shipTiersUnlocked = state.quests.unlockedFeatures.includes("ShipTierUpgrades");
   const equippedCount = state.ownedComponents.filter((c) => c.isEquipped).length;
   const canEquipMore = equippedCount < state.componentCapacity;
   const lockReason = "Port required: dock before changing loadout or buying upgrades.";
@@ -135,7 +138,7 @@ export function ShipyardTab({
                 <div className="repair-row">
                   <button
                     className="repair-btn repair-btn-gold"
-                    disabled={!isInPort || maxBuyHeal <= 0}
+                    disabled={!isInPort || maxBuyHeal <= 0 || !buyUnlocked}
                     onClick={async () => {
                       const items: { type: string; quantity: number }[] = [];
                       if (woodToBuy > 0) items.push({ type: "Wood", quantity: woodToBuy });
@@ -145,7 +148,13 @@ export function ShipyardTab({
                       }
                       sendIpc({ action: "heal" });
                     }}
-                    title={!isInPort ? "Port required: buy and repair while docked." : undefined}
+                    title={
+                      !isInPort
+                        ? "Port required: buy and repair while docked."
+                        : !buyUnlocked
+                          ? "Complete Harvest For Someone to unlock buying goods."
+                          : undefined
+                    }
                   >
                     Buy & Repair
                   </button>
@@ -178,13 +187,17 @@ export function ShipyardTab({
       {/* Ship Upgrade */}
       {showShipUpgrade && state.shipTiers && state.shipTiers.length > 0 && (
         <>
-          <div className="section-title">Ship Class</div>
-          <ShipUpgradeCard
-            currentTier={state.shipTier ?? 0}
-            tiers={state.shipTiers}
-            inventory={state.inventory}
-            canUpgrade={isInPort}
-          />
+          {shipTiersUnlocked && (
+            <>
+              <div className="section-title">Ship Class</div>
+              <ShipUpgradeCard
+                currentTier={state.shipTier ?? 0}
+                tiers={state.shipTiers}
+                inventory={state.inventory}
+                canUpgrade={isInPort}
+              />
+            </>
+          )}
         </>
       )}
 
@@ -213,94 +226,98 @@ export function ShipyardTab({
         </div>
       </div>
 
-      <div className="section-sep" />
-
-      {/* Equipped Components */}
-      <div className="section-title">Equipped Components</div>
-      <div className="capacity-bar">
-        <span>Slots:</span>
-        <div className="capacity-slots">
-          {Array.from({ length: state.componentCapacity }).map((_, i) => (
-            <div
-              key={i}
-              className={`slot ${i < equippedCount ? "filled" : ""}`}
-            />
-          ))}
-        </div>
-        <span>
-          {equippedCount}/{state.componentCapacity}
-        </span>
-      </div>
-
-      {equipped.length === 0 ? (
-        <div className="empty-state mb-12">No components equipped</div>
-      ) : (
-        equipped.map(({ count, data }) => (
-          <ComponentCard
-            key={data.name}
-            component={data}
-            count={count}
-              actionLabel="Unequip"
-              actionClass="unequip"
-              disableAllActions={!isInPort}
-              lockReason={lockReason}
-              onAction={() =>
-                sendIpc({ action: "unequip_component", name: data.name })
-              }
-            inventory={state.inventory}
-            stats={state.stats}
-          />
-        ))
-      )}
-
-      {/* Owned but not equipped */}
-      {ownedUnequipped.length > 0 && (
+      {componentsUnlocked && (
         <>
           <div className="section-sep" />
-          <div className="section-title">Owned Components</div>
-          {ownedUnequipped.map(({ count, data }) => (
-            <ComponentCard
-              key={data.name}
-              component={data}
-              count={count}
-              actionLabel="Equip"
-              actionClass="equip"
-              disabled={!canEquipMore}
-              disableAllActions={!isInPort}
-              lockReason={lockReason}
-              onAction={() =>
-                sendIpc({ action: "equip_component", name: data.name })
-              }
-              inventory={state.inventory}
-              stats={state.stats}
-            />
-          ))}
-        </>
-      )}
 
-      {/* Components for sale */}
-      {showForSale && forSale.length > 0 && (
-        <>
-          <div className="section-sep" />
-          <div className="section-title">Available Components</div>
-          {forSale.map((comp) => (
-            <ComponentCard
-              key={comp.name}
-              component={comp}
-              actionLabel="Buy"
-              actionClass="buy"
-              disabled={!canAfford(comp.cost)}
-              disableAllActions={!isInPort}
-              lockReason={lockReason}
-              showCost
-              onAction={() =>
-                sendIpc({ action: "purchase_component", name: comp.name })
-              }
-              inventory={state.inventory}
-              stats={state.stats}
-              itemsForSale={state.itemsForSale}
-            />
-          ))}
+          {/* Equipped Components */}
+          <div className="section-title">Equipped Components</div>
+          <div className="capacity-bar">
+            <span>Slots:</span>
+            <div className="capacity-slots">
+              {Array.from({ length: state.componentCapacity }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`slot ${i < equippedCount ? "filled" : ""}`}
+                />
+              ))}
+            </div>
+            <span>
+              {equippedCount}/{state.componentCapacity}
+            </span>
+          </div>
+
+          {equipped.length === 0 ? (
+            <div className="empty-state mb-12">No components equipped</div>
+          ) : (
+            equipped.map(({ count, data }) => (
+              <ComponentCard
+                key={data.name}
+                component={data}
+                count={count}
+                actionLabel="Unequip"
+                actionClass="unequip"
+                disableAllActions={!isInPort || !componentsUnlocked}
+                lockReason={lockReason}
+                onAction={() =>
+                  sendIpc({ action: "unequip_component", name: data.name })
+                }
+                inventory={state.inventory}
+                stats={state.stats}
+              />
+            ))
+          )}
+
+          {/* Owned but not equipped */}
+          {ownedUnequipped.length > 0 && (
+            <>
+              <div className="section-sep" />
+              <div className="section-title">Owned Components</div>
+              {ownedUnequipped.map(({ count, data }) => (
+                <ComponentCard
+                  key={data.name}
+                  component={data}
+                  count={count}
+                  actionLabel="Equip"
+                  actionClass="equip"
+                  disabled={!canEquipMore}
+                  disableAllActions={!isInPort || !componentsUnlocked}
+                  lockReason={lockReason}
+                  onAction={() =>
+                    sendIpc({ action: "equip_component", name: data.name })
+                  }
+                  inventory={state.inventory}
+                  stats={state.stats}
+                />
+              ))}
+            </>
+          )}
+
+          {/* Components for sale */}
+          {showForSale && forSale.length > 0 && (
+            <>
+              <div className="section-sep" />
+              <div className="section-title">Available Components</div>
+              {forSale.map((comp) => (
+                <ComponentCard
+                  key={comp.name}
+                  component={comp}
+                  actionLabel="Buy"
+                  actionClass="buy"
+                  disabled={!canAfford(comp.cost)}
+                  disableAllActions={!isInPort}
+                  lockReason={lockReason}
+                  showCost
+                  onAction={() =>
+                    sendIpc({ action: "purchase_component", name: comp.name })
+                  }
+                  inventory={state.inventory}
+                  stats={state.stats}
+                  itemsForSale={state.itemsForSale}
+                />
+              ))}
+            </>
+          )}
         </>
       )}
 

@@ -9,6 +9,11 @@ const GOLD_STEP_AMOUNTS = [10, 100, 1000] as const;
 
 export function CreativeTab({ state }: { state: PortState }) {
   const [flashItem, setFlashItem] = useState<string | null>(null);
+  const firstActiveQuest = state.quests.active;
+  const firstAvailableQuest = state.quests.available[0] ?? null;
+  const [selectedQuestId, setSelectedQuestId] = useState<string>(
+    firstActiveQuest?.id ?? firstAvailableQuest?.id ?? state.quests.all[0]?.id ?? "",
+  );
 
   const flash = (key: string) => {
     setFlashItem(key);
@@ -29,6 +34,10 @@ export function CreativeTab({ state }: { state: PortState }) {
 
   const healthPct = state.maxHealth > 0 ? (state.health / state.maxHealth) * 100 : 0;
   const healthHue = Math.round((healthPct / 100) * 120);
+  const selectedQuest = state.quests.all.find((quest) => quest.id === selectedQuestId) ?? null;
+  const selectedQuestCompleted = selectedQuest ? state.quests.completedIds.includes(selectedQuest.id) : false;
+  const selectedQuestIsActive = selectedQuest?.id === state.quests.active?.id;
+  const selectedQuestIsPrimaryActive = firstActiveQuest?.id === selectedQuest?.id;
 
   return (
     <>
@@ -152,6 +161,73 @@ export function CreativeTab({ state }: { state: PortState }) {
 
       <div className="section-sep" />
 
+      <div className="section-title">Quests</div>
+      <div className="card">
+        {state.quests.all.length > 0 ? (
+          <>
+            <div className="creative-components-info">
+              <span>
+                Active: <strong>{firstActiveQuest?.title ?? "None"}</strong>
+              </span>
+            </div>
+            <select
+              className="creative-quest-select"
+              value={selectedQuestId}
+              onChange={(event) => setSelectedQuestId(event.target.value)}
+              size={1}
+            >
+              {state.quests.all.map((quest) => {
+                const isCompleted = state.quests.completedIds.includes(quest.id);
+                const isActive = state.quests.active?.id === quest.id;
+                return (
+                  <option key={quest.id} value={quest.id}>
+                    {quest.title}
+                    {isActive ? " (Active)" : isCompleted ? " (Completed)" : ""}
+                  </option>
+                );
+              })}
+            </select>
+            {selectedQuest && (
+              <div className="creative-vault-detail-sub">
+                {selectedQuest.steps.filter((step) => step.isComplete).length}
+                {" / "}
+                {selectedQuest.steps.length} steps complete
+                {selectedQuestCompleted ? " • completed" : ""}
+                {selectedQuestIsActive ? " • active" : ""}
+                {selectedQuestIsPrimaryActive ? " • primary" : ""}
+              </div>
+            )}
+            <button
+              className="creative-preset-btn"
+              disabled={!selectedQuestId}
+              onClick={() => sendIpc({ action: "set_active_quest", questId: selectedQuestId })}
+            >
+              Set Selected Active Quest
+            </button>
+            <button
+              className="creative-preset-btn"
+              disabled={!selectedQuestId}
+              onClick={() => sendIpc({ action: "complete_quest", questId: selectedQuestId })}
+            >
+              Complete Selected Quest
+            </button>
+            <button
+              className="creative-danger-btn"
+              disabled={!selectedQuestId}
+              onClick={() => sendIpc({ action: "uncomplete_quest", questId: selectedQuestId })}
+            >
+              Uncomplete Selected Quest
+            </button>
+          </>
+        ) : (
+          <div className="creative-components-info">
+            <span className="empty-state">No active quest</span>
+          </div>
+        )}
+      </div>
+
+      <div className="section-sep" />
+
       <div className="section-title">Ship Tier</div>
       <div className="card">
         <div className="creative-vault-buttons">
@@ -261,36 +337,23 @@ export function CreativeTab({ state }: { state: PortState }) {
 
       <div className="section-sep" />
 
-      <DebugStatePanel state={state} />
+      <DebugStatePanel serverStateJson={state.serverStateJson} />
     </>
   );
 }
 
 // ── Debug State Panel ─────────────────────────────────────────────────
 
-function buildServerState(state: PortState) {
-  return {
-    Inventory: { ...state.inventory },
-    Components: state.ownedComponents.map((c) => ({
-      Name: c.name,
-      IsEquipped: c.isEquipped,
-    })),
-    Health: state.health,
-    Vault: state.vault
-      ? {
-          PortName: state.vault.portName,
-          Level: state.vault.level,
-          Items: { ...state.vault.items },
-        }
-      : null,
-  };
-}
-
-function DebugStatePanel({ state }: { state: PortState }) {
+function DebugStatePanel({ serverStateJson }: { serverStateJson: string }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const serverState = buildServerState(state);
-  const json = JSON.stringify(serverState, null, 2);
+  const json = (() => {
+    try {
+      return JSON.stringify(JSON.parse(serverStateJson), null, 2);
+    } catch {
+      return serverStateJson || "{}";
+    }
+  })();
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(json).then(() => {

@@ -88,6 +88,7 @@ public partial class Hud : Control
     if (_player == null || player.Name != _player.Name) return;
     GD.Print($"Player {player.Name} entered port {port.PortName}");
 
+    _player.RecordPortVisit(port.PortName);
     _currentPort = port;
     CallDeferred(MethodName.OnStateChange);
   }
@@ -215,6 +216,7 @@ public partial class Hud : Control
     }
 
     handler(msg, _player, _currentPort);
+    CallDeferred(MethodName.OnStateChange);
   }
 
   // BuildHUDState is a pure composer over child snapshots.

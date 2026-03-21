@@ -1,8 +1,15 @@
+import type { QuestHudState } from "../types";
 import { BASE } from "../utils/helpers";
 import { ConversationPanel } from "../components/ConversationPanel";
 import { GUIDE_DIALOGUE } from "./guideDialogue";
 
-export function GuideTab() {
+export function GuideTab({
+  quests,
+  onAcceptScarlettQuest,
+}: {
+  quests: QuestHudState;
+  onAcceptScarlettQuest: () => void;
+}) {
   return (
     <ConversationPanel
       tree={GUIDE_DIALOGUE}
@@ -12,6 +19,13 @@ export function GuideTab() {
       classNamePrefix="guide"
       initialNodeId="root"
       instantNodeIds={["root"]}
+      onAction={(actionId) => {
+        if (actionId !== "accept_scarlett_quest") return;
+        const scarlettQuest = quests.available.find((quest) => quest.giverNpcId === "scarlett");
+        if (!scarlettQuest) return "quests_already_started";
+        onAcceptScarlettQuest();
+        return "quest_accept_success";
+      }}
     />
   );
 }

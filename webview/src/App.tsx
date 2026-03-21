@@ -9,13 +9,15 @@ import { ShipyardTab } from "./tabs/ShipyardTab";
 import { VaultTab } from "./tabs/VaultTab";
 import { GuideTab } from "./tabs/GuideTab";
 import { CreativeTab } from "./tabs/CreativeTab";
+import { QuestsTab } from "./tabs/QuestsTab";
 import { buildTavernConversationTree } from "./tabs/TavernTab";
 import { ShipCrewTab, buildCrewConversationTree } from "./tabs/ShipCrewTab";
 import { LeaderboardTab } from "./tabs/LeaderboardTab";
 import { ShipStatusWidget } from "./components/ShipStatusWidget";
+import { QuestStatusWidget } from "./components/QuestStatusWidget";
 import { CharacterConversationOverlay } from "./components/CharacterConversationOverlay";
 
-type ShipTab = "guide" | "ship_crew" | "ship_status";
+type ShipTab = "guide" | "quests" | "ship_crew" | "ship_status";
 type PortTab = "market" | "shipyard" | "vault" | "creative";
 type PanelMode = "ship" | "port" | "leaderboard";
 type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
@@ -30,6 +32,14 @@ const SHIP_ICON = `${BASE}icons/flat/ship-wheel.svg`;
 const PORT_ICON = `${BASE}icons/flat/anchor.svg`;
 const LEADERBOARD_ICON = `${BASE}icons/flat/pirate-hat.svg`;
 
+function findQuestForNpc(state: PortState, characterId: string) {
+  return state.quests.available.find((quest) => quest.giverNpcId === characterId) ?? null;
+}
+
+function findScarlettQuest(state: PortState) {
+  return findQuestForNpc(state, "scarlett");
+}
+
 export default function App() {
   useInputCapture();
 
@@ -40,6 +50,10 @@ export default function App() {
   const [activeConversation, setActiveConversation] = useState<ActiveConversation | null>(null);
   const prevIsInPortRef = useRef<boolean | null>(null);
   const prePortPanelModeRef = useRef<PanelMode | null>("ship");
+  const lastTalkedCharacterIdRef = useRef<string | null>(null);
+
+  const hasUnlockedFeature = (feature: string): boolean =>
+    portState?.quests.unlockedFeatures.includes(feature) ?? false;
 
   useEffect(() => {
     window.openPort = (data: PortState) => {
@@ -151,6 +165,17 @@ export default function App() {
     }
   }, [activeConversation, portState]);
 
+  useEffect(() => {
+    if (!activeConversation) {
+      lastTalkedCharacterIdRef.current = null;
+      return;
+    }
+
+    if (lastTalkedCharacterIdRef.current === activeConversation.characterId) return;
+    lastTalkedCharacterIdRef.current = activeConversation.characterId;
+    sendIpc({ action: "talk_to_npc", characterId: activeConversation.characterId });
+  }, [activeConversation]);
+
   const openConversation = (source: ConversationSource, characterId: string) => {
     setActiveConversation((prev) => {
       if (prev?.source === source && prev.characterId === characterId) return prev;
@@ -165,7 +190,8 @@ export default function App() {
       const character = portState.tavern.characters.find((c) => c.id === activeConversation.characterId);
       if (!character) return null;
 
-      const tree = buildTavernConversationTree(character);
+      const availableQuest = findQuestForNpc(portState, character.id);
+      const tree = buildTavernConversationTree(character, availableQuest);
 
       return {
         speakerName: character.name,
@@ -193,6 +219,15 @@ export default function App() {
               default:
                 return "root";
             }
+          }
+
+          if (actionId === "accept_quest" && availableQuest) {
+            sendIpc({
+              action: "accept_quest",
+              questId: availableQuest.id,
+              characterId: character.id,
+            });
+            return "quest_accept_success";
           }
 
           return;
@@ -235,6 +270,15 @@ export default function App() {
 
   return (
     <>
+      <QuestStatusWidget
+        state={portState}
+        panelOpen={activePanelMode !== null}
+        onOpenQuests={() => {
+          setActivePanelMode("ship");
+          setActiveShipTab("quests");
+          setActiveConversation(null);
+        }}
+      />
       <ShipStatusWidget state={portState} panelOpen={activePanelMode !== null} />
 
       <div className={`mode-rail ${activePanelMode === null ? "collapsed" : ""}`} role="tablist" aria-label="Panel mode">
@@ -290,6 +334,12 @@ export default function App() {
                   Scarlett
                 </button>
                 <button
+                  className={`tab-btn ${activeShipTab === "quests" ? "active" : ""}`}
+                  onClick={() => setActiveShipTab("quests")}
+                >
+                  Quests
+                </button>
+                <button
                   className={`tab-btn ${activeShipTab === "ship_crew" ? "active" : ""}`}
                   onClick={() => setActiveShipTab("ship_crew")}
                 >
@@ -316,12 +366,14 @@ export default function App() {
                 >
                   Shipyard
                 </button>
-                <button
-                  className={`tab-btn vault-tab-btn ${activePortTab === "vault" ? "active" : ""}`}
-                  onClick={() => setActivePortTab("vault")}
-                >
-                  Vault
-                </button>
+                {hasUnlockedFeature("Vault") && (
+                  <button
+                    className={`tab-btn vault-tab-btn ${activePortTab === "vault" ? "active" : ""}`}
+                    onClick={() => setActivePortTab("vault")}
+                  >
+                    Vault
+                  </button>
+                )}
                 {portState?.isCreative && portState?.isInPort && (
                   <button
                     className={`tab-btn creative-tab-btn ${activePortTab === "creative" ? "active" : ""}`}
@@ -339,7 +391,16 @@ export default function App() {
           <div className="tab-content">
             {activePanelMode === "ship" ? (
               activeShipTab === "guide" ? (
-                <GuideTab />
+                <GuideTab
+                  quests={portState.quests}
+                  onAcceptScarlettQuest={() => {
+                    const scarlettQuest = findScarlettQuest(portState);
+                    if (!scarlettQuest) return;
+                    sendIpc({ action: "accept_quest", questId: scarlettQuest.id, characterId: "scarlett" });
+                  }}
+                />
+              ) : activeShipTab === "quests" ? (
+                <QuestsTab state={portState} />
               ) : activeShipTab === "ship_status" ? (
                 <ShipyardTab
                   state={portState}
@@ -354,7 +415,14 @@ export default function App() {
                   activeConversationCharacterId={activeConversation?.source === "crew" ? activeConversation.characterId : null}
                 />
               ) : (
-                <GuideTab />
+                <GuideTab
+                  quests={portState.quests}
+                  onAcceptScarlettQuest={() => {
+                    const scarlettQuest = findScarlettQuest(portState);
+                    if (!scarlettQuest) return;
+                    sendIpc({ action: "accept_quest", questId: scarlettQuest.id, characterId: "scarlett" });
+                  }}
+                />
               )
             ) : activePanelMode === "leaderboard" ? (
               <LeaderboardTab entries={portState.leaderboard} />
@@ -366,7 +434,7 @@ export default function App() {
               />
             ) : activePortTab === "shipyard" ? (
               <ShipyardTab state={portState} isInPort={portState.isInPort} />
-            ) : activePortTab === "vault" ? (
+            ) : activePortTab === "vault" && hasUnlockedFeature("Vault") ? (
               portState.isInPort ? (
                 <VaultTab state={portState} />
               ) : (

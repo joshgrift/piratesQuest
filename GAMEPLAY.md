@@ -16,6 +16,8 @@ Each port has its own **player-driven economy** with different items available a
 
 Characters at ports offer quests with unique rewards — artifacts, resources, components, or crew. Quests can also be discovered during other quests or through world activities. Characters don't just hand out tasks; they share information about the world and what's currently happening, pointing you toward opportunity (or danger).
 
+Early progression is guided by a linear starter quest chain. You accept one quest at a time, complete its checklist, and unlock more of the port UI as you go. In the current alpha flow, quests unlock selling, tavern conversations, buying goods, ship components, ship class upgrades, and finally the vault.
+
 ### Combat
 
 Fire your cannons (left with Q, right with E) at enemy ships — player or AI. Combat consumes cannonballs from your inventory and has a 2-second cooldown between shots. Different types of cannonballs provide different effects, and upgrading your ship unlocks more cannons and new attack options. Taking on powerful targets often requires teaming up with other players.

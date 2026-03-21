@@ -117,6 +117,21 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
       hiredCharacterIds: [],
       characters: [],
     },
+    quests: {
+      available: [],
+      active: null,
+      all: [],
+      completedIds: [],
+      unlockedFeatures: [
+        "SellGoods",
+        "TavernTalk",
+        "BuyGoods",
+        "ShipyardComponents",
+        "ShipTierUpgrades",
+        "Vault",
+      ],
+    },
+    serverStateJson: "{}",
     leaderboard: [
       { nickname: "Captain Flint", trophies: 42, isLocal: false },
       { nickname: "You", trophies: 18, isLocal: true },
