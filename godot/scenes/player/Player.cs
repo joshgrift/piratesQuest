@@ -114,6 +114,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   // True while this ship is inside a port docking area.
   // We use this to disable incoming damage in safe zones.
   [Export] public bool IsInPort { get; private set; } = false;
+  public string CurrentPortName { get; private set; }
   // True for a brief window after ApplyShipTier() swaps collision shapes.
   // Prevents a spurious ShipDeparted signal while the physics engine catches up.
   public bool IsSwappingShipTier { get; private set; } = false;
@@ -599,6 +600,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   public void SetInPort(bool value)
   {
     IsInPort = value;
+  }
+
+  public void SetCurrentPort(string portName)
+  {
+    CurrentPortName = string.IsNullOrWhiteSpace(portName) ? null : portName;
   }
 
   public void OnDeath()
@@ -1261,8 +1267,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   public void RecordPortVisit(string portName)
   {
+    SetCurrentPort(portName);
     Progress.RecordPortVisited(portName);
-    ReevaluateQuestProgress();
+    ReevaluateQuestProgress(portName);
   }
 
   public void RecordNpcTalkedTo(string characterId)
@@ -1281,9 +1288,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     return true;
   }
 
-  public void ReevaluateQuestProgress()
+  public void ReevaluateQuestProgress(string currentPortName = null)
   {
-    Progress.ReevaluateQuestProgress(GetTotalEquippedComponents());
+    Progress.ReevaluateQuestProgress(GetTotalEquippedComponents(), currentPortName ?? CurrentPortName);
   }
 
   public bool ForceCompleteQuest(string questId = null)

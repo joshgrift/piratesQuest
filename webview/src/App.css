@@ -397,6 +397,99 @@ img {
   text-align: left;
 }
 
+.npc-comment-toast-wrap {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 32px));
+  pointer-events: auto;
+  z-index: 1100;
+  animation: npc-comment-toast-in 0.24s ease;
+}
+
+.npc-comment-toast {
+  position: relative;
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px 18px 14px 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(239, 196, 116, 0.55);
+  background:
+    linear-gradient(145deg, rgba(20, 33, 48, 0.97), rgba(52, 30, 16, 0.96)),
+    radial-gradient(circle at 18% 18%, rgba(118, 183, 232, 0.2), transparent 34%),
+    radial-gradient(circle at 84% 78%, rgba(239, 196, 116, 0.2), transparent 40%);
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 1px rgba(255, 232, 183, 0.12);
+  cursor: pointer;
+  outline: none;
+}
+
+.npc-comment-toast:focus-visible {
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 1px rgba(255, 232, 183, 0.12),
+    0 0 0 2px rgba(130, 188, 237, 0.65);
+}
+
+.npc-comment-toast-portrait {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(242, 201, 120, 0.68);
+  box-shadow: 0 0 18px rgba(114, 180, 228, 0.35), 0 10px 18px rgba(0, 0, 0, 0.38);
+}
+
+.npc-comment-toast-copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.npc-comment-toast-name {
+  font-family: "New Rocker", cursive;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: #ffe0a7;
+}
+
+.npc-comment-toast-message {
+  color: rgba(242, 235, 220, 0.96);
+  line-height: 1.45;
+  font-size: 1rem;
+}
+
+.npc-comment-toast-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(10, 18, 26, 0.55);
+  color: rgba(255, 232, 183, 0.92);
+  font-family: "Texturina", serif;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+@keyframes npc-comment-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 .ship-status-widget {
   position: fixed;
   left: var(--status-widget-gap);
@@ -3622,6 +3715,14 @@ img {
 .quest-history,
 .quest-lock-card {
   color: rgba(241, 233, 215, 0.86);
+}
+
+.quest-helper--turnin {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(112, 197, 239, 0.34);
+  background: rgba(18, 45, 61, 0.5);
+  color: #cfeeff;
 }
 
 .quest-accept-btn {

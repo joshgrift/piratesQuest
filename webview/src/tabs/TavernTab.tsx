@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { ConversationTree } from "../components/ConversationPanel";
 import type { PortState, QuestSummary, TavernCharacter } from "../types";
 import { BASE } from "../utils/helpers";
+import { describeQuestUnlocks } from "../utils/questUnlocks";
 import { getDialogueForCharacter } from "./tavernData";
 
 interface TavernTabProps {
@@ -72,7 +73,7 @@ export function buildTavernConversationTree(
   if (availableQuest?.giverNpcId === character.id) {
     tree.root.responses.unshift({ label: `Ask about: ${availableQuest.title}`, next: "quest_offer" });
     tree.quest_offer = {
-      text: `${availableQuest.description}\n\nFinish it and you'll unlock: ${availableQuest.unlocks.join(", ")}.`,
+      text: `${availableQuest.description}\n\n${describeQuestUnlocks(availableQuest.unlocks)}`,
       responses: [
         { label: "I'll take the job.", action: "accept_quest" },
         { label: "Maybe later.", next: "root" },

@@ -32,6 +32,7 @@ public class PlayerProgressDto
   public PlayerProgressSnapshotDto Lifetime { get; set; } = new();
   public PlayerProgressSnapshotDto SinceQuestStart { get; set; } = new();
   public string CurrentQuestId { get; set; }
+  public bool CurrentQuestObjectivesComplete { get; set; }
   public List<string> CompletedQuestIds { get; set; } = [];
   public List<string> UnlockedFeatures { get; set; } = [];
   public string AcceptedQuestNpcId { get; set; }

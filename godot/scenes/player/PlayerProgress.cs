@@ -17,11 +17,13 @@ public class PlayerProgress
   private readonly HashSet<string> _unlockedFeatures = new(StringComparer.Ordinal);
   private string _currentQuestId;
   private string _acceptedQuestNpcId;
+  private bool _currentQuestObjectivesComplete;
 
   public ProgressSnapshot Lifetime => _lifetime;
   public ProgressSnapshot SinceQuestStart => _sinceQuestStart;
   public string CurrentQuestId => _currentQuestId;
   public string AcceptedQuestNpcId => _acceptedQuestNpcId;
+  public bool CurrentQuestObjectivesComplete => _currentQuestObjectivesComplete;
   public IReadOnlyList<string> CompletedQuestIds => _completedQuestIds;
   public IReadOnlyCollection<string> UnlockedFeatures => _unlockedFeatures;
 
@@ -32,6 +34,7 @@ public class PlayerProgress
 
     _currentQuestId = questId;
     _acceptedQuestNpcId = npcId ?? "";
+    _currentQuestObjectivesComplete = false;
     _sinceQuestStart.Reset();
   }
 
@@ -149,7 +152,7 @@ public class PlayerProgress
     return string.Equals(quest.GiverNpcId, npcId, StringComparison.Ordinal);
   }
 
-  public bool ReevaluateQuestProgress(int equippedComponentCount)
+  public bool ReevaluateQuestProgress(int equippedComponentCount, string currentPortName = null)
   {
     var quest = QuestData.GetQuest(_currentQuestId);
     if (quest == null)
@@ -157,6 +160,20 @@ public class PlayerProgress
 
     bool isComplete = quest.Steps.All(step => GetMetricValue(_sinceQuestStart, step, equippedComponentCount) >= step.RequiredValue);
     if (!isComplete)
+    {
+      _currentQuestObjectivesComplete = false;
+      return false;
+    }
+
+    if (quest.TurnInMode == QuestTurnInMode.AutoCompleteWhenObjectivesMet)
+    {
+      CompleteQuest(quest);
+      return true;
+    }
+
+    _currentQuestObjectivesComplete = true;
+
+    if (!CanTurnInQuestAtPort(quest, currentPortName))
       return false;
 
     CompleteQuest(quest);
@@ -188,6 +205,7 @@ public class PlayerProgress
     {
       _currentQuestId = null;
       _acceptedQuestNpcId = null;
+      _currentQuestObjectivesComplete = false;
       _sinceQuestStart.Reset();
     }
 
@@ -204,6 +222,7 @@ public class PlayerProgress
     _completedQuestIds.RemoveAll(id => string.Equals(id, quest.Id, StringComparison.Ordinal));
     _currentQuestId = quest.Id;
     _acceptedQuestNpcId = "creative";
+    _currentQuestObjectivesComplete = false;
     _sinceQuestStart.Reset();
     RebuildUnlockedFeatures();
     return true;
@@ -238,6 +257,7 @@ public class PlayerProgress
       Lifetime = _lifetime.ToDto(),
       SinceQuestStart = _sinceQuestStart.ToDto(),
       CurrentQuestId = _currentQuestId,
+      CurrentQuestObjectivesComplete = _currentQuestObjectivesComplete,
       CompletedQuestIds = _completedQuestIds.ToList(),
       UnlockedFeatures = _unlockedFeatures.OrderBy(x => x, StringComparer.Ordinal).ToList(),
       AcceptedQuestNpcId = _acceptedQuestNpcId,
@@ -249,6 +269,7 @@ public class PlayerProgress
     _lifetime.LoadFromDto(dto?.Lifetime);
     _currentQuestId = QuestData.GetQuest(dto?.CurrentQuestId) != null ? dto.CurrentQuestId : null;
     _acceptedQuestNpcId = _currentQuestId != null ? dto?.AcceptedQuestNpcId : null;
+    _currentQuestObjectivesComplete = _currentQuestId != null && (dto?.CurrentQuestObjectivesComplete ?? false);
     _sinceQuestStart.LoadFromDto(dto?.SinceQuestStart);
 
     _completedQuestIds.Clear();
@@ -276,22 +297,25 @@ public class PlayerProgress
     {
       _currentQuestId = null;
       _acceptedQuestNpcId = null;
+      _currentQuestObjectivesComplete = false;
       _sinceQuestStart.Reset();
     }
   }
 
-  private static QuestSummaryDto BuildSummary(QuestDefinition quest, ProgressSnapshot source, int equippedComponentCount)
+  private static QuestSummaryDto BuildSummaryCore(QuestDefinition quest, ProgressSnapshot source, int equippedComponentCount)
   {
     return new QuestSummaryDto(
       quest.Id,
       quest.Title,
       quest.GiverNpcId,
       quest.GiverName,
+      QuestData.GetQuestGiverPortrait(quest.GiverNpcId),
       quest.GiverPortName,
       quest.RevealGiverInQuestLog,
       quest.CanAcceptFromQuestLog,
       quest.Description,
       quest.CompletionText,
+      false,
       quest.Unlocks.Select(x => x.ToString()).ToArray(),
       quest.Steps.Select(step =>
       {
@@ -304,6 +328,17 @@ public class PlayerProgress
         );
       }).ToArray()
     );
+  }
+
+  private QuestSummaryDto BuildSummary(QuestDefinition quest, ProgressSnapshot source, int equippedComponentCount)
+  {
+    var summary = BuildSummaryCore(quest, source, equippedComponentCount);
+
+    return summary with
+    {
+      IsReadyToTurnIn = string.Equals(_currentQuestId, quest.Id, StringComparison.Ordinal)
+        && _currentQuestObjectivesComplete,
+    };
   }
 
   private static int GetMetricValue(ProgressSnapshot snapshot, QuestStepDefinition step, int equippedComponentCount)
@@ -332,6 +367,14 @@ public class PlayerProgress
       foreach (var unlock in quest.Unlocks)
         _unlockedFeatures.Add(unlock.ToString());
     }
+  }
+
+  private static bool CanTurnInQuestAtPort(QuestDefinition quest, string currentPortName)
+  {
+    if (quest == null || string.IsNullOrWhiteSpace(currentPortName))
+      return false;
+
+    return string.Equals(quest.GiverPortName, currentPortName, StringComparison.OrdinalIgnoreCase);
   }
 
   private bool HasActiveQuest()

@@ -17,6 +17,7 @@ import { buildScarlettDialogue, SCARLETT_CHARACTER } from "./tabs/guideDialogue"
 import { ShipStatusWidget } from "./components/ShipStatusWidget";
 import { QuestStatusWidget } from "./components/QuestStatusWidget";
 import { CharacterConversationOverlay } from "./components/CharacterConversationOverlay";
+import { NpcCommentToast, type NpcCommentToastData } from "./components/NpcCommentToast";
 
 type PortTab = "market" | "shipyard" | "vault" | "creative";
 type PanelMode = "ship" | "quests" | "crew" | "port" | "stats" | "leaderboard";
@@ -39,6 +40,19 @@ function findQuestForNpc(state: PortState, characterId: string) {
   return state.quests.available.find((quest) => quest.giverNpcId === characterId) ?? null;
 }
 
+function buildQuestCompletionComment(state: PortState, questId: string): NpcCommentToastData | null {
+  const quest = state.quests.all.find((entry) => entry.id === questId);
+  if (!quest) return null;
+
+  return {
+    id: `quest-complete-${quest.id}`,
+    portraitSrc: `${BASE}images/characters/${quest.giverPortrait}`,
+    portraitAlt: quest.giverName,
+    name: quest.giverName,
+    message: quest.completionText,
+  };
+}
+
 export default function App() {
   useInputCapture();
 
@@ -46,7 +60,9 @@ export default function App() {
   const [activePanelMode, setActivePanelMode] = useState<PanelMode | null>("ship");
   const [activePortTab, setActivePortTab] = useState<PortTab>("market");
   const [activeConversation, setActiveConversation] = useState<ActiveConversation | null>(null);
+  const [npcCommentQueue, setNpcCommentQueue] = useState<NpcCommentToastData[]>([]);
   const prevIsInPortRef = useRef<boolean | null>(null);
+  const prevCompletedQuestIdsRef = useRef<string[] | null>(null);
   const prePortPanelModeRef = useRef<PanelMode | null>("ship");
   const lastTalkedCharacterIdRef = useRef<string | null>(null);
 
@@ -174,6 +190,24 @@ export default function App() {
     lastTalkedCharacterIdRef.current = activeConversation.characterId;
     sendIpc({ action: "talk_to_npc", characterId: activeConversation.characterId });
   }, [activeConversation]);
+
+  useEffect(() => {
+    const completedIds = portState?.quests.completedIds ?? [];
+    const previousIds = prevCompletedQuestIdsRef.current;
+    prevCompletedQuestIdsRef.current = completedIds;
+
+    if (!portState || previousIds === null) return;
+
+    const previousIdSet = new Set(previousIds);
+    const newComments = completedIds
+      .filter((questId) => !previousIdSet.has(questId))
+      .map((questId) => buildQuestCompletionComment(portState, questId))
+      .filter((comment): comment is NpcCommentToastData => comment !== null);
+
+    if (newComments.length === 0) return;
+
+    setNpcCommentQueue((current) => [...current, ...newComments]);
+  }, [portState]);
 
   const openConversation = (source: ConversationSource, characterId: string) => {
     setActiveConversation((prev) => {
@@ -485,6 +519,11 @@ export default function App() {
           onClose={() => setActiveConversation(null)}
         />
       )}
+
+      <NpcCommentToast
+        comment={npcCommentQueue[0] ?? null}
+        onDismiss={() => setNpcCommentQueue((current) => current.slice(1))}
+      />
     </>
   );
 }

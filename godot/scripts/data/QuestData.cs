@@ -26,6 +26,12 @@ public enum QuestMetricKind
   ShipsSunk,
 }
 
+public enum QuestTurnInMode
+{
+  AutoCompleteWhenObjectivesMet,
+  CompleteWhenEnteringGiverPort,
+}
+
 public class QuestStepDefinition
 {
   public string Label { get; init; } = "";
@@ -43,6 +49,7 @@ public class QuestDefinition
   public string GiverPortName { get; init; } = "";
   public string Description { get; init; } = "";
   public string CompletionText { get; init; } = "";
+  public QuestTurnInMode TurnInMode { get; init; } = QuestTurnInMode.CompleteWhenEnteringGiverPort;
   public string[] PrerequisiteQuestIds { get; init; } = [];
   public bool RevealGiverInQuestLog { get; init; } = true;
   public bool CanAcceptFromQuestLog { get; init; }
@@ -62,11 +69,13 @@ public record QuestSummaryDto(
   string Title,
   string GiverNpcId,
   string GiverName,
+  string GiverPortrait,
   string GiverPortName,
   bool RevealGiverInQuestLog,
   bool CanAcceptFromQuestLog,
   string Description,
   string CompletionText,
+  bool IsReadyToTurnIn,
   string[] Unlocks,
   QuestStepProgressDto[] Steps
 );
@@ -97,15 +106,16 @@ public static class QuestData
       Title = "Sail to Port",
       GiverNpcId = "scarlett",
       GiverName = "Scarlett",
+      TurnInMode = QuestTurnInMode.AutoCompleteWhenObjectivesMet,
       CanAcceptFromQuestLog = true,
-      Description = "Accept Scarlett's first job and make port. Any successful dock counts.",
+      Description = "Sail to any port and dock there once. Pull your ship into the harbor interaction ring until the port panel opens. Any successful dock counts.",
       CompletionText = "You've got your sea legs. Ports can now trade properly and folks will finally talk to ye.",
       Unlocks = [FeatureUnlock.SellGoods, FeatureUnlock.TavernTalk],
       Steps =
       [
         new QuestStepDefinition
         {
-          Label = "Dock at a port",
+          Label = "Dock at any port",
           Metric = QuestMetricKind.PortsVisitedCount,
           RequiredValue = 1,
         },
@@ -119,12 +129,12 @@ public static class QuestData
       GiverName = "Governor Caspian Vale",
       GiverPortName = "Haven",
       PrerequisiteQuestIds = ["scarlett_sail_to_port"],
-      Description = "Bring proof that you can gather the basics: wood, iron, fish, and tea.",
+      Description = "Find the red harvest circles out in the world and sail close enough for the collection marker to appear. Stay near each spot until it pays out, then collect 1 Wood, 1 Iron, 1 Fish, and 1 Tea.",
       CompletionText = "You've shown you can supply yourself. Buying goods is now unlocked.",
       Unlocks = [FeatureUnlock.BuyGoods],
       Steps = CoreTradeGoods.Select(itemType => new QuestStepDefinition
       {
-        Label = $"Collect {itemType}",
+        Label = $"Collect 1 {itemType}",
         Metric = QuestMetricKind.ItemsCollected,
         ItemType = itemType,
         RequiredValue = 1,
@@ -138,7 +148,7 @@ public static class QuestData
       GiverName = "Gideon Gearlock",
       GiverPortName = "Saint Johns",
       PrerequisiteQuestIds = ["harvest_for_someone"],
-      Description = "Buy and sell every core trade good for profit, then earn 100 gold total.",
+      Description = "Buy each core trade good at a port, then sell each one somewhere else for a profit. Losses do not count, so watch the prices. Finish the lesson by earning 100 gold total.",
       CompletionText = "Now you're thinking like a merchant. Ship components are unlocked.",
       Unlocks = [FeatureUnlock.ShipyardComponents],
       Steps =
@@ -173,7 +183,7 @@ public static class QuestData
       GiverName = "Elder Bertram",
       GiverPortName = "Saint Johns",
       PrerequisiteQuestIds = ["trade_for_merchant"],
-      Description = "Equip more than one component and prove your ship can handle the extra iron.",
+      Description = "Visit the shipyard, buy extra components, and equip at least 2 of them at the same time. This quest checks what is currently equipped, not just what you own.",
       CompletionText = "Your ship's ready for bigger hulls. Ship class upgrades are unlocked.",
       Unlocks = [FeatureUnlock.ShipTierUpgrades],
       Steps =
@@ -194,7 +204,7 @@ public static class QuestData
       GiverName = "Dorian Blackwake",
       GiverPortName = "Krakenfall",
       PrerequisiteQuestIds = ["beef_up_your_ship"],
-      Description = "Sink five ships and bring back the kind of story taverns remember.",
+      Description = "Sink 5 ships with your cannons. Q fires your port side and E fires your starboard side, so line up broadside shots and finish enemy ships before they can escape.",
       CompletionText = "You've earned somewhere safe to stash your spoils. Vault access is unlocked.",
       Unlocks = [FeatureUnlock.Vault],
       Steps =
@@ -219,6 +229,14 @@ public static class QuestData
 
     _questsById.TryGetValue(questId, out var quest);
     return quest;
+  }
+
+  public static string GetQuestGiverPortrait(string npcId)
+  {
+    if (string.Equals(npcId, "scarlett", StringComparison.Ordinal))
+      return "character2.png";
+
+    return TavernData.GetCharacterById(npcId)?.Portrait ?? "";
   }
 
   public static QuestDefinition[] GetAvailableQuests(IEnumerable<string> completedQuestIds, string currentQuestId)

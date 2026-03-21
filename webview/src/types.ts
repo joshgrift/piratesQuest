@@ -50,11 +50,13 @@ export interface QuestSummary {
   title: string;
   giverNpcId: string;
   giverName: string;
+  giverPortrait: string;
   giverPortName: string;
   revealGiverInQuestLog: boolean;
   canAcceptFromQuestLog: boolean;
   description: string;
   completionText: string;
+  isReadyToTurnIn: boolean;
   unlocks: string[];
   steps: QuestStepProgress[];
 }

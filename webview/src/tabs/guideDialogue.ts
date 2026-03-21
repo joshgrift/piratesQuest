@@ -16,12 +16,37 @@ export function buildScarlettDialogue(hasAvailableQuest: boolean): Record<string
       text: "Ahoy, captain. What can I help ye with today?",
       responses: [
         { label: "I have some questions about ports.", next: "ports_intro" },
+        { label: "How do I finish quests?", next: "quests_turnin_root" },
         { label: "Teach me about sailing and combat.", next: "sailing_intro" },
         { label: "How do I grow stronger out here?", next: "progression_intro" },
         { label: "Explain resources and trading.", next: "trade_intro" },
         { label: "What if I sink or get overloaded?", next: "danger_intro" },
         { label: "If I impress ye, do I earn a smile too?", next: "flirt_intro" },
       ],
+    },
+
+    quests_turnin_root: {
+      text: "Most jobs are two beats: finish the checklist, then sail back into the quest giver's port to wrap it up. My first lesson is the exception. The moment ye complete it, it closes on the spot.",
+      responses: [
+        { label: "Quiz me on that.", next: "quests_turnin_quiz" },
+        { label: "Back to the main menu.", next: "root" },
+      ],
+    },
+    quests_turnin_quiz: {
+      text: "Right then, captain. If Gideon gives ye a job and every task is green, what finishes the quest?",
+      responses: [
+        { label: "Docking back at Saint Johns.", next: "quests_turnin_right" },
+        { label: "Just opening the Quests tab.", next: "quests_turnin_wrong" },
+        { label: "Talking to any random sailor.", next: "quests_turnin_wrong" },
+      ],
+    },
+    quests_turnin_right: {
+      text: "Aye, that's it. Cross back into the right port and the job settles immediately.",
+      responses: [{ label: "Back to the main menu.", next: "root" }],
+    },
+    quests_turnin_wrong: {
+      text: "Not quite. Finish the steps first, then make port where the giver lives. That's what closes most jobs now.",
+      responses: [{ label: "Back to the main menu.", next: "root" }],
     },
 
     ports_intro: {
@@ -127,7 +152,7 @@ export function buildScarlettDialogue(hasAvailableQuest: boolean): Record<string
       ],
     },
     trade_collecting: {
-      text: "Sail into collection spots and let the crew work, but don't forget the ship build behind it. Gathering tools and cargo upgrades matter, and a full hold cuts the run short no matter how rich the node is.",
+      text: "Look for the red harvest circles out in the world, then sail close enough for the collection marker to show itself. Hold position while it fills and pays out. Gathering tools help, but a full hold will still choke the run short.",
       responses: [
         { label: "What does the stats panel help me read?", next: "trade_stats" },
         { label: "Back to trade questions.", next: "trade_intro" },
@@ -152,14 +177,16 @@ export function buildScarlettDialogue(hasAvailableQuest: boolean): Record<string
     quests_intro: {
       text: hasAvailableQuest
         ? "Quests are the cleanest way to learn the ropes. I've got a starter job ready for ye, and finishing it opens more of the game."
-        : "Quests teach systems, unlock features, and push ye toward the next thing worth learnin'. If the log looks quiet, check what you've already started or finished in the Quests tab.",
+        : "Quests teach systems, unlock features, and push ye toward the next thing worth learnin'. Most jobs also expect ye to sail back into the giver's port once the checklist is done.",
       responses: hasAvailableQuest
         ? [
             { label: "Give me that starter job.", action: "accept_scarlett_quest" },
             { label: "What does it unlock?", next: "quests_unlocks" },
+            { label: "How do turn-ins work?", next: "quests_turnin_root" },
           ]
         : [
             { label: "What do quests usually unlock?", next: "quests_unlocks" },
+            { label: "How do turn-ins work?", next: "quests_turnin_root" },
           ],
     },
     quests_unlocks: {

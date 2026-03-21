@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { sendIpc } from "../utils/ipc";
+import { describeQuestUnlocks } from "../utils/questUnlocks";
 import type { PortState, QuestSummary } from "../types";
 
 function QuestCard({
@@ -9,6 +10,12 @@ function QuestCard({
   quest: QuestSummary;
   action?: ReactNode;
 }) {
+  const turnInHint = quest.isReadyToTurnIn
+    ? quest.giverPortName
+      ? `Return to ${quest.giverPortName} to finish this quest.`
+      : `Return to ${quest.giverName} to finish this quest.`
+    : null;
+
   return (
     <div className="card quest-card">
       <div className="quest-card-header">
@@ -25,6 +32,8 @@ function QuestCard({
 
       <div className="quest-card-desc">{quest.description}</div>
 
+      {turnInHint && <div className="quest-helper quest-helper--turnin">{turnInHint}</div>}
+
       <div className="quest-steps">
         {quest.steps.map((step) => (
           <div key={step.label} className={`quest-step ${step.isComplete ? "complete" : ""}`}>
@@ -37,7 +46,7 @@ function QuestCard({
       </div>
 
       <div className="quest-rewards">
-        Unlocks: {quest.unlocks.length > 0 ? quest.unlocks.join(", ") : "Nothing yet"}
+        {describeQuestUnlocks(quest.unlocks)}
       </div>
 
       {action}

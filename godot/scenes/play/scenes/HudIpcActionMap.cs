@@ -65,7 +65,7 @@ public static class HudIpcActionMap
       if (ok)
       {
         player.Progress.RecordItemBought(type, req.Quantity, totalCost);
-        player.ReevaluateQuestProgress();
+        player.ReevaluateQuestProgress(currentPort?.PortName);
       }
     }
   }
@@ -95,7 +95,7 @@ public static class HudIpcActionMap
       if (ok)
       {
         player.Progress.RecordItemSold(type, req.Quantity, totalRevenue);
-        player.ReevaluateQuestProgress();
+        player.ReevaluateQuestProgress(currentPort?.PortName);
       }
     }
   }
@@ -116,7 +116,7 @@ public static class HudIpcActionMap
     var component = GameData.Components.FirstOrDefault(c => c.name == message.Name);
     if (component == null) return;
     player.EquipComponent(component);
-    player.ReevaluateQuestProgress();
+    player.ReevaluateQuestProgress(currentPort?.PortName);
   }
 
   private static void HandleUnequipComponent(UnequipComponentMessage message, Player player, Port currentPort)
@@ -126,7 +126,7 @@ public static class HudIpcActionMap
     var component = GameData.Components.FirstOrDefault(c => c.name == message.Name);
     if (component == null) return;
     player.UnEquipComponent(component);
-    player.ReevaluateQuestProgress();
+    player.ReevaluateQuestProgress(currentPort?.PortName);
   }
 
   private static void HandleHeal(Player player, Port currentPort)
@@ -262,8 +262,6 @@ public static class HudIpcActionMap
   {
     if (message == null) return;
     bool ok = player.AcceptQuest(message.QuestId, message.CharacterId);
-    if (ok && currentPort != null)
-      player.RecordPortVisit(currentPort.PortName);
     GD.Print(ok
       ? $"HUD: Accepted quest '{message.QuestId}' from '{message.CharacterId}'"
       : $"HUD: Accept quest failed for '{message.QuestId}'");

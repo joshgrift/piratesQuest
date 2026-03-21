@@ -18,6 +18,11 @@ export function QuestStatusWidget({
   const completedSteps = activeQuest.steps.filter((step) => step.isComplete).length;
   const totalSteps = Math.max(1, activeQuest.steps.length);
   const progressPct = Math.round((completedSteps / totalSteps) * 100);
+  const helperText = activeQuest.isReadyToTurnIn
+    ? activeQuest.giverPortName
+      ? `Return to ${activeQuest.giverPortName}`
+      : `Return to ${activeQuest.giverName}`
+    : `${completedSteps}/${totalSteps} steps`;
 
   return (
     <aside
@@ -37,7 +42,7 @@ export function QuestStatusWidget({
             <div className="quest-status-kicker">Active Quest</div>
             <div className="quest-status-title">{activeQuest.title}</div>
             <div className="quest-status-meta">
-              {completedSteps}/{totalSteps} steps • {progressPct}%
+              {helperText} • {progressPct}%
             </div>
           </div>
         </div>

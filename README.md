@@ -140,16 +140,17 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 
 ## ROADMAP
 ### Alpha 7 - Quests
-- [ ] Quests
+- [x] Quests
   - [x] Better Quest tab into panel and each card needs improvement
-  - [ ] Animations and celebrations when a quest is complete
-  - [ ] More instructions when getting a quest
+  - [x] Animations and celebrations when a quest is complete
+  - [x] More instructions when getting a quest
 - [x] Hall of captains should display the total money earned based on the api looping through the entire db
-- [ ] Rework scarlett to be intrusive and then act like a crew member
+- [x] Rework scarlett to be intrusive and then act like a crew member
 - [x] Better Mono Repo control
 - [x] Stats Panel
-- [ ] All player messages should not sound like pirates
 - [ ] Fix communications
+  - [ ] All player messages should not sound like pirates
+- [ ] Add intrusitve scarlett messages
 - [ ] Map?
 
 ### Alpha 8 - AI Update
