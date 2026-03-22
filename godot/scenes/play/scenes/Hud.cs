@@ -55,6 +55,17 @@ public partial class Hud : Control
 
   public void SetPlayer(Player player)
   {
+    // Safety check: the HUD is for the local ship only.
+    if (player == null || !player.IsMultiplayerAuthority())
+    {
+      return;
+    }
+
+    if (_player != null)
+    {
+      _player.InventoryChanged -= OnInventoryChanged;
+    }
+
     _player = player;
 
     _player.InventoryChanged += OnInventoryChanged;

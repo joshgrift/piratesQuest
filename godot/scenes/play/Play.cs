@@ -322,6 +322,14 @@ public partial class Play : Node3D
 
   private void ConnectHud(Player player)
   {
+    // The HUD should only ever talk to the player owned by this client.
+    // Remote player instances still spawn locally for replication/visibility,
+    // but forwarding UI input to them makes the real local ship stop responding.
+    if (!player.IsMultiplayerAuthority())
+    {
+      return;
+    }
+
     _hud.SetPlayer(player);
   }
 
