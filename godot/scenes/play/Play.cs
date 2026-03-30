@@ -48,6 +48,17 @@ public partial class Play : Node3D
       ReturnToMenu();
       // Mark the input as handled so other nodes don't react to the same Esc press.
       GetViewport().SetInputAsHandled();
+      return;
+    }
+
+    // K toggles Godot's built-in collision debug overlay.
+    // This is the same style of collision visualization you get from the editor's
+    // debug tools, so it's handy for checking ship and island collision in-game.
+    if (@event.IsActionPressed("toggle_collision_debug"))
+    {
+      GetTree().DebugCollisionsHint = !GetTree().DebugCollisionsHint;
+      GD.Print($"Collision debug is now {(GetTree().DebugCollisionsHint ? "ON" : "OFF")}");
+      GetViewport().SetInputAsHandled();
     }
   }
 

@@ -41,6 +41,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   private bool _actionMoveRight;
   private bool _actionFireLeft;
   private bool _actionFireRight;
+  private bool _actionToggleCollisionDebugHeld;
 
   // Ship recoil/rocking effect when firing
   private float _recoilRoll = 0.0f;
@@ -361,7 +362,33 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       case "d": _actionMoveRight   = pressed; break;
       case "q": _actionFireLeft    = pressed; break;
       case "e": _actionFireRight   = pressed; break;
+      case "k":
+        HandleCollisionDebugToggleInput(pressed);
+        break;
     }
+  }
+
+  /// <summary>
+  /// Toggles Godot's built-in collision debug overlay once per key press.
+  /// Browsers fire repeated keydown events while a key is held, so we track
+  /// whether K is already down and only toggle on the first press.
+  /// </summary>
+  private void HandleCollisionDebugToggleInput(bool pressed)
+  {
+    if (pressed)
+    {
+      if (_actionToggleCollisionDebugHeld)
+      {
+        return;
+      }
+
+      _actionToggleCollisionDebugHeld = true;
+      GetTree().DebugCollisionsHint = !GetTree().DebugCollisionsHint;
+      GD.Print($"Collision debug is now {(GetTree().DebugCollisionsHint ? "ON" : "OFF")}");
+      return;
+    }
+
+    _actionToggleCollisionDebugHeld = false;
   }
 
   /// <summary>
@@ -1794,8 +1821,21 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     float time = Time.GetTicksMsec() / 1000.0f;
     Vector3 pos = GlobalPosition;
 
-    // Get the ship's forward direction (Z axis in local space)
-    Vector3 forwardDir = Transform.Basis.Z;
+    // Sample waves using the ship's heading projected onto the water plane.
+    // If we use the already-pitched forward vector, the bow/stern sample points
+    // drift as the ship tilts, which can make the buoyancy feel like it's
+    // pulling from the wrong axis.
+    Vector3 forwardDir = GlobalTransform.Basis.Z;
+    forwardDir.Y = 0.0f;
+
+    if (forwardDir.LengthSquared() <= Mathf.Epsilon)
+    {
+      forwardDir = Vector3.Forward;
+    }
+    else
+    {
+      forwardDir = forwardDir.Normalized();
+    }
 
     // Calculate sampling points at bow (front) and stern (back)
     Vector3 bowPos = pos + forwardDir * (ShipLength / 2.0f);

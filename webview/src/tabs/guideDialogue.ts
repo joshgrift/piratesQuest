@@ -21,6 +21,7 @@ export function buildScarlettDialogue(
         { label: "I have some questions about ports.", next: "ports_intro" },
         { label: "How do I finish quests?", next: "quests_turnin_root" },
         { label: "Teach me about sailing and combat.", next: "sailing_intro" },
+        { label: "What are those AI ships doing out there?", next: "ai_ships_intro" },
         {
           label: "How do I grow stronger out here?",
           next: "progression_intro",
@@ -143,6 +144,30 @@ export function buildScarlettDialogue(
     sailing_survival: {
       text: "Don't sail blind. Watch your hull, keep enough goods for repairs, and don't start a dangerous run while already overloaded. A lot of smart wins come from saying 'not this fight' and leaving.",
       responses: [{ label: "Back to sea lessons.", next: "sailing_intro" }],
+    },
+
+    ai_ships_intro: {
+      text: "Those are sea rogues, captain. They roam, watch for nearby ships, and try to swing into broadside range. They do not care about quests, and they do not call a port safe just because you do.",
+      responses: [
+        { label: "Quiz me on that.", next: "ai_ships_quiz" },
+        { label: "Back to the main menu.", next: "root" },
+      ],
+    },
+    ai_ships_quiz: {
+      text: "Say a raider follows you right up to the harbor mouth. What should you assume?",
+      responses: [
+        { label: "The port aura makes it harmless too.", next: "ai_ships_wrong" },
+        { label: "It might still shoot if it has the angle.", next: "ai_ships_right" },
+        { label: "It will stop because AI ships collect resources instead.", next: "ai_ships_wrong" },
+      ],
+    },
+    ai_ships_right: {
+      text: "Aye. Player ports are safe for captains, not a holy oath for every rogue hull on the sea. Keep your angle tidy.",
+      responses: [{ label: "Back to the main menu.", next: "root" }],
+    },
+    ai_ships_wrong: {
+      text: "Not this time. AI ships ignore the port truce, so treat them like danger until you've actually shaken them or sunk them.",
+      responses: [{ label: "Back to the main menu.", next: "root" }],
     },
 
     trade_intro: {

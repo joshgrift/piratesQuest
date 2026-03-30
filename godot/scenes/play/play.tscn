@@ -296,7 +296,6 @@ script = ExtResource("6_1phcp")
 [node name="Terrain" type="Node3D" parent="."]
 
 [node name="Islands" type="Node3D" parent="Terrain"]
-visible = false
 
 [node name="Island1" parent="Terrain/Islands" instance=ExtResource("17_blg3p")]
 transform = Transform3D(-0.94672793, 0, 0.32203448, 0, 1, 0, -0.32203448, 0, -0.94672793, -83.996056, 0, -103.360825)
@@ -319,7 +318,6 @@ SubdivisionDepth = 4
 MaxTerrainTriangles = 1500
 
 [node name="Terrain" type="Node3D" parent="Terrain"]
-visible = false
 
 [node name="TerrainBlock" parent="Terrain/Terrain" instance=ExtResource("7_damvd")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -88.63736, -2, 150.87448)
