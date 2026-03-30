@@ -18,6 +18,10 @@ public partial class Port : Node3D, IIntractable
 
   public override void _Ready()
   {
+    // AI ships use this group to find nearby ports for awareness and
+    // future behaviors like patrol routes or trade runs.
+    AddToGroup("ports");
+
     DockingArea.InteractionArea.BodyEntered += OnBodyEntered;
     DockingArea.InteractionArea.BodyExited += OnBodyExited;
   }

@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3 uid="uid://c8c63pod53w2l"]
+[gd_scene load_steps=41 format=3 uid="uid://c8c63pod53w2l"]
 
 [ext_resource type="Script" uid="uid://cie1vrfri8q8x" path="res://scenes/play/Play.cs" id="1_j5m8q"]
 [ext_resource type="Material" uid="uid://75rdt22mc6g" path="res://art/sky/day_sky.tres" id="1_octoo"]
@@ -13,7 +13,9 @@
 [ext_resource type="Script" uid="uid://b81r8qngpan6y" path="res://scripts/resources/ShopItemData.cs" id="10_10igl"]
 [ext_resource type="PackedScene" uid="uid://c8kmjcwtu8yx2" path="res://scenes/play/scenes/islands/island_small.tscn" id="11_qysfa"]
 [ext_resource type="PackedScene" uid="uid://b0sq51fam11u" path="res://scenes/play/scenes/islands/island_template.tscn" id="13_gcg6u"]
+[ext_resource type="PackedScene" uid="uid://dn2535sbiok71" path="res://art/terrain.glb" id="13_l2oi0"]
 [ext_resource type="PackedScene" uid="uid://bn2xm3qs47h8j" path="res://scenes/play/scenes/islands/island_custom_decorated.tscn" id="17_blg3p"]
+[ext_resource type="Material" uid="uid://8ml6o8kd3xou" path="res://scenes/play/water_material.tres" id="water_material"]
 [ext_resource type="FastNoiseLite" path="res://scenes/play/water_noise.tres" id="water_noise"]
 [ext_resource type="Shader" uid="uid://dhyjhwyepmfco" path="res://scenes/play/water.gdshader" id="water_shader"]
 
@@ -48,12 +50,75 @@ seamless = true
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
 shader = ExtResource("water_shader")
-shader_parameter/noise_img = SubResource("NoiseTexture2D_water")
-shader_parameter/wave_height = 3.0
-shader_parameter/wave_speed = 0.005
-shader_parameter/water_color = Color(0.1, 0.55, 0.95, 1)
-shader_parameter/wave_color = Color(0.45, 0.75, 1, 1)
-shader_parameter/normal_strength = 0.8
+shader_parameter/gale_strength = 0.8
+shader_parameter/wind_direction = Vector3(1, 0, 0.25)
+shader_parameter/ocean_waves_gradient = SubResource("NoiseTexture2D_water")
+shader_parameter/smoothness = 0.82
+shader_parameter/metallic = 0.0
+shader_parameter/base_opacity = 0.97
+shader_parameter/shallows_opacity = 0.65
+shader_parameter/shallow_color = Color(0.25, 0.64, 0.68, 1)
+shader_parameter/deep_color = Color(0.06, 0.34, 0.58, 1)
+shader_parameter/very_deep_color = Color(0.03, 0.12, 0.24, 1)
+shader_parameter/deep_height = 1.25
+shader_parameter/very_deep_height = 4.5
+shader_parameter/maximum_depth = 15.0
+shader_parameter/enable_normals = false
+shader_parameter/normal_texture = SubResource("NoiseTexture2D_water")
+shader_parameter/normal_offset = Vector2(0, 0)
+shader_parameter/normal_tiling = 4.0
+shader_parameter/normal_intensity = 1.0
+shader_parameter/normal_pan_speed = 1.0
+shader_parameter/normal_noise_tiling = 0.2
+shader_parameter/normal_noise_intensity = 0.23
+shader_parameter/enable_fresnel_fade = false
+shader_parameter/fade_distance = 1.0
+shader_parameter/fade_power = 0.0
+shader_parameter/enable_shore_wave_foam = true
+shader_parameter/enable_shore_animation = true
+shader_parameter/animation_offset = 0
+shader_parameter/shore_wave_speed = 0.02
+shader_parameter/shore_wave_return_amount = 0.7
+shader_parameter/shore_wave_tickness = 0.12
+shader_parameter/shore_edge_opacity = 0.18
+shader_parameter/shore_wave_color_tint = Color(0.85, 0.95, 1, 1)
+shader_parameter/shore_edge_tickness = 0.2
+shader_parameter/shore_edge_noise_scale = 1.5
+shader_parameter/shore_lap_fade_out_speed = 1.0
+shader_parameter/shore_lap_fade_in_speed = 3.0
+shader_parameter/shore_foam_noise_scale = 12
+shader_parameter/shore_foam_noise_texture = SubResource("NoiseTexture2D_water")
+shader_parameter/enable_shore_foam = true
+shader_parameter/shore_small_foam_opacity = 0.72
+shader_parameter/shore_small_foam_tiling = 2.5
+shader_parameter/shore_foam_color_tint = Color(0.9, 0.97, 1, 1)
+shader_parameter/enable_global_foam = true
+shader_parameter/noise_texture = SubResource("NoiseTexture2D_water")
+shader_parameter/enable_top_scrolling_texture = true
+shader_parameter/top_scrolling_direction = Vector2(0.02, -0.015)
+shader_parameter/scrolling_texture = SubResource("NoiseTexture2D_water")
+shader_parameter/scrolling_texture_tiling = Vector2(1.8, 1.8)
+shader_parameter/scrolling_texture_tint = Color(0.2, 0.78, 0.92, 1)
+shader_parameter/scrolling_texture_opacity = 0.18
+shader_parameter/enable_ocean_waves = true
+shader_parameter/ocean_wave_height = 3.0
+shader_parameter/ocean_wave_speed = 0.01
+shader_parameter/ocean_foam_amount = 0.55
+shader_parameter/ocean_foam_opacity = 0.32
+shader_parameter/ocean_wave_frequency = 1.25
+shader_parameter/ocean_breakup_tiling = 10
+shader_parameter/enable_caustics = false
+shader_parameter/caustics_use_voronoi_noise = false
+shader_parameter/caustics_intensity = 0.5
+shader_parameter/caustics_color = Color(1, 1, 1, 1)
+shader_parameter/caustics_flipbook = SubResource("NoiseTexture2D_water")
+shader_parameter/caustics_speed = 1.0
+shader_parameter/caustics_scale = 1
+shader_parameter/enable_distortion = false
+shader_parameter/distortion_speed = 0.5
+shader_parameter/distortion_direction = Vector2(1, 1)
+shader_parameter/distortion_size = 0.1
+shader_parameter/distortion_strength = 0.5
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_water"]
 material = SubResource("ShaderMaterial_water")
@@ -160,9 +225,10 @@ ItemType = 2
 SellPrice = 0
 metadata/_custom_type_script = "uid://b81r8qngpan6y"
 
-[node name="Play" type="Node3D" node_paths=PackedStringArray("_playerSpawner", "_projectileSpawner", "_deadPlayerSpawner", "playerContainer", "_freeCam", "_hud")]
+[node name="Play" type="Node3D" node_paths=PackedStringArray("_playerSpawner", "_aiShipSpawner", "_projectileSpawner", "_deadPlayerSpawner", "playerContainer", "_freeCam", "_hud")]
 script = ExtResource("1_j5m8q")
 _playerSpawner = NodePath("SpawnPoint/MultiplayerSpawner")
+_aiShipSpawner = NodePath("AiShips/MultiplayerSpawner")
 _projectileSpawner = NodePath("Projectiles/ProjectileSpawner")
 _deadPlayerSpawner = NodePath("DeadPlayerSpawner")
 playerContainer = NodePath("SpawnPoint")
@@ -192,11 +258,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3, 0)
 shape = SubResource("BoxShape3D_0xm2m")
 
 [node name="WaterPlane" type="MeshInstance3D" parent="Ground"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.041433334, -2.0922003, 0.020057678)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.041433334, -0.5901871, 0.020057678)
+material_override = ExtResource("water_material")
 mesh = SubResource("PlaneMesh_water")
 
 [node name="Sand" type="MeshInstance3D" parent="Ground"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3, 0)
+visible = false
 mesh = SubResource("BoxMesh_mric1")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
@@ -207,6 +275,12 @@ shadow_enabled = true
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="SpawnPoint"]
 _spawnable_scenes = PackedStringArray("uid://cumwy7ox3pa0b")
+spawn_path = NodePath("..")
+
+[node name="AiShips" type="Node3D" parent="."]
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="AiShips"]
+_spawnable_scenes = PackedStringArray("res://scenes/ai_ship/ai_ship.tscn")
 spawn_path = NodePath("..")
 
 [node name="Projectiles" type="Node3D" parent="."]
@@ -222,6 +296,7 @@ script = ExtResource("6_1phcp")
 [node name="Terrain" type="Node3D" parent="."]
 
 [node name="Islands" type="Node3D" parent="Terrain"]
+visible = false
 
 [node name="Island1" parent="Terrain/Islands" instance=ExtResource("17_blg3p")]
 transform = Transform3D(-0.94672793, 0, 0.32203448, 0, 1, 0, -0.32203448, 0, -0.94672793, -83.996056, 0, -103.360825)
@@ -244,6 +319,7 @@ SubdivisionDepth = 4
 MaxTerrainTriangles = 1500
 
 [node name="Terrain" type="Node3D" parent="Terrain"]
+visible = false
 
 [node name="TerrainBlock" parent="Terrain/Terrain" instance=ExtResource("7_damvd")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -88.63736, -2, 150.87448)
@@ -641,3 +717,6 @@ spawn_path = NodePath("../DeadPlayers")
 [node name="Island" parent="." instance=ExtResource("13_gcg6u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 112.73312, -2.8584723, -12.521217)
 MaxTerrainTriangles = 1500
+
+[node name="terrain" parent="." instance=ExtResource("13_l2oi0")]
+transform = Transform3D(100, 0, 0, 0, 100, 0, 0, 0, 100, 0, -22, 0)

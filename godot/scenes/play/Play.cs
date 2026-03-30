@@ -5,6 +5,7 @@ using System.Text.Json;
 using Godot;
 using PiratesQuest.Data;
 using System.Collections.Generic;
+using GodotDictionary = Godot.Collections.Dictionary;
 
 public partial class Play : Node3D
 {
@@ -13,6 +14,7 @@ public partial class Play : Node3D
   private const int DefaultServerPlayerMax = 8;
 
   [Export] private MultiplayerSpawner _playerSpawner;
+  [Export] private MultiplayerSpawner _aiShipSpawner;
   [Export] private MultiplayerSpawner _projectileSpawner;
   [Export] private MultiplayerSpawner _deadPlayerSpawner;
   [Export] private Node3D playerContainer;
@@ -20,6 +22,7 @@ public partial class Play : Node3D
   [Export] private Hud _hud;
 
   private PackedScene _playerScene = GD.Load<PackedScene>("res://scenes/player/player.tscn");
+  private PackedScene _aiShipScene = GD.Load<PackedScene>("res://scenes/ai_ship/ai_ship.tscn");
   private PackedScene _cannonBallScene = GD.Load<PackedScene>("res://scenes/cannon_ball/cannon_ball.tscn");
   private PackedScene _deadPlayerScene = GD.Load<PackedScene>("res://scenes/dead_player/dead_player.tscn");
   private readonly Dictionary<long, string> _peerUsernames = new();
@@ -62,6 +65,7 @@ public partial class Play : Node3D
   public override void _Ready()
   {
     _playerSpawner.SpawnFunction = new Callable(this, MethodName.PlayerSpawnHandler);
+    _aiShipSpawner.SpawnFunction = new Callable(this, MethodName.AiShipSpawnHandler);
     _projectileSpawner.SpawnFunction = new Callable(this, MethodName.ProjectileSpawnHandler);
     _deadPlayerSpawner.SpawnFunction = new Callable(this, MethodName.DeadPlayerSpawnHandler);
 
@@ -83,6 +87,7 @@ public partial class Play : Node3D
 
       StartServerHeartbeatIfNeeded();
       StartLeaderboardSyncIfNeeded();
+      CallDeferred(MethodName.SpawnInitialAiShips);
 
       // Activate free camera in server mode
       if (Configuration.IsDesignatedServerMode() && _freeCam != null)
@@ -288,6 +293,20 @@ public partial class Play : Node3D
     return player;
   }
 
+  private AiShip AiShipSpawnHandler(Variant data)
+  {
+    var dict = data.AsGodotDictionary();
+    var aiShip = _aiShipScene.Instantiate<AiShip>();
+
+    aiShip.ProjectileSpawner = GetNode<MultiplayerSpawner>("Projectiles/ProjectileSpawner");
+    aiShip.DeadPlayerSpawner = _deadPlayerSpawner;
+    aiShip.SetMultiplayerAuthority(1);
+    aiShip.Synchronizer?.SetMultiplayerAuthority(1);
+    aiShip.ConfigureFromSpawnData(dict);
+
+    return aiShip;
+  }
+
   private void HandleDeath(Player player)
   {
     // Hide the player while they wait to respawn
@@ -318,6 +337,32 @@ public partial class Play : Node3D
   {
     _playerSpawner.Spawn(peerId);
     GD.Print($"Requested spawn for peer {peerId}");
+  }
+
+  private void SpawnInitialAiShips()
+  {
+    if (!Multiplayer.IsServer())
+      return;
+
+    // First slice: a few raiders in open water so the sea feels alive.
+    // Later we can replace this with data-driven spawn tables.
+    SpawnAiShip("ai_ship_raider_1", new Vector3(-130, 2, 25), 0.2f);
+    SpawnAiShip("ai_ship_raider_2", new Vector3(140, 2, 110), -1.4f);
+    SpawnAiShip("ai_ship_raider_3", new Vector3(45, 2, -155), 2.4f);
+  }
+
+  private void SpawnAiShip(string name, Vector3 position, float yawRadians)
+  {
+    var spawnData = new GodotDictionary
+    {
+      ["name"] = name,
+      ["definitionId"] = "raider",
+      ["displayName"] = "Raider",
+      ["position"] = position,
+      ["rotation"] = new Vector3(0.0f, yawRadians, 0.0f)
+    };
+
+    _aiShipSpawner.Spawn(spawnData);
   }
 
   private void ConnectHud(Player player)

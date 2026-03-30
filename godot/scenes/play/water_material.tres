@@ -1,0 +1,77 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://8ml6o8kd3xou"]
+
+[ext_resource type="Shader" uid="uid://dhyjhwyepmfco" path="res://scenes/play/water.gdshader" id="1_water_shader"]
+[ext_resource type="Texture2D" path="res://scenes/play/water_noise_texture.tres" id="2_water_noise_texture"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_water_shader")
+shader_parameter/gale_strength = 0.8
+shader_parameter/wind_direction = Vector3(1, 0, 0.25)
+shader_parameter/ocean_waves_gradient = ExtResource("2_water_noise_texture")
+shader_parameter/smoothness = 0.82
+shader_parameter/metallic = 0.0
+shader_parameter/base_opacity = 0.96
+shader_parameter/shallows_opacity = 0.65
+shader_parameter/shallow_color = Color(0.25, 0.64, 0.68, 1)
+shader_parameter/deep_color = Color(0.06, 0.34, 0.58, 1)
+shader_parameter/very_deep_color = Color(0.03, 0.12, 0.24, 1)
+shader_parameter/deep_height = 1.25
+shader_parameter/very_deep_height = 4.5
+shader_parameter/maximum_depth = 15.0
+shader_parameter/enable_normals = false
+shader_parameter/normal_texture = ExtResource("2_water_noise_texture")
+shader_parameter/normal_offset = Vector2(0, 0)
+shader_parameter/normal_tiling = 4.0
+shader_parameter/normal_intensity = 1.0
+shader_parameter/normal_pan_speed = 1.0
+shader_parameter/normal_noise_tiling = 0.2
+shader_parameter/normal_noise_intensity = 0.23
+shader_parameter/enable_fresnel_fade = false
+shader_parameter/fade_distance = 1.0
+shader_parameter/fade_power = 0.0
+shader_parameter/enable_shore_wave_foam = true
+shader_parameter/enable_shore_animation = true
+shader_parameter/animation_offset = 0
+shader_parameter/shore_wave_speed = 0.02
+shader_parameter/shore_wave_return_amount = 0.7
+shader_parameter/shore_wave_tickness = 0.12
+shader_parameter/shore_edge_opacity = 0.18
+shader_parameter/shore_wave_color_tint = Color(0.85, 0.95, 1, 1)
+shader_parameter/shore_edge_tickness = 0.2
+shader_parameter/shore_edge_noise_scale = 1.5
+shader_parameter/shore_lap_fade_out_speed = 1.0
+shader_parameter/shore_lap_fade_in_speed = 3.0
+shader_parameter/shore_foam_noise_scale = 12
+shader_parameter/shore_foam_noise_texture = ExtResource("2_water_noise_texture")
+shader_parameter/enable_shore_foam = true
+shader_parameter/shore_small_foam_opacity = 0.72
+shader_parameter/shore_small_foam_tiling = 2.5
+shader_parameter/shore_foam_color_tint = Color(0.9, 0.97, 1, 1)
+shader_parameter/enable_global_foam = true
+shader_parameter/noise_texture = ExtResource("2_water_noise_texture")
+shader_parameter/enable_top_scrolling_texture = true
+shader_parameter/top_scrolling_direction = Vector2(0.01, -0.0075)
+shader_parameter/scrolling_texture = ExtResource("2_water_noise_texture")
+shader_parameter/scrolling_texture_tiling = Vector2(1.8, 1.8)
+shader_parameter/scrolling_texture_tint = Color(0.2, 0.78, 0.92, 1)
+shader_parameter/scrolling_texture_opacity = 0.18
+shader_parameter/enable_ocean_waves = true
+shader_parameter/ocean_wave_height = 3.0
+shader_parameter/ocean_wave_speed = 0.01
+shader_parameter/ocean_foam_amount = 0.55
+shader_parameter/ocean_foam_opacity = 0.32
+shader_parameter/ocean_wave_frequency = 1.25
+shader_parameter/ocean_breakup_tiling = 10
+shader_parameter/enable_caustics = false
+shader_parameter/caustics_use_voronoi_noise = false
+shader_parameter/caustics_intensity = 0.5
+shader_parameter/caustics_color = Color(1, 1, 1, 1)
+shader_parameter/caustics_flipbook = ExtResource("2_water_noise_texture")
+shader_parameter/caustics_speed = 0.5
+shader_parameter/caustics_scale = 1
+shader_parameter/enable_distortion = false
+shader_parameter/distortion_speed = 0.2
+shader_parameter/distortion_direction = Vector2(1, 1)
+shader_parameter/distortion_size = 0.1
+shader_parameter/distortion_strength = 0.5

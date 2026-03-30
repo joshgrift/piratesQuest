@@ -1,0 +1,7 @@
+[gd_resource type="NoiseTexture2D" format=3]
+
+[ext_resource type="FastNoiseLite" path="res://scenes/play/water_noise.tres" id="1_water_noise"]
+
+[resource]
+noise = ExtResource("1_water_noise")
+seamless = true

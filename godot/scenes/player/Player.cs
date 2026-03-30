@@ -140,6 +140,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   [ExportGroup("Water Physics")]
   [Export] public FastNoiseLite WaterNoiseResource { get; set; }
   [Export] public MeshInstance3D WaterPlane { get; set; }
+  // These values are fallback defaults for buoyancy if we can't read the
+  // shader material for some reason.
   [Export] public float WaveHeight { get; set; } = 3.0f;
   [Export] public float WaveSpeed { get; set; } = 0.05f;
   [Export] public float WaterNoiseScale { get; set; } = 0.002f;
@@ -188,6 +190,10 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   public override void _Ready()
   {
+    // Groups make it easier for AI ships and other world systems to
+    // discover active players without hard-coding scene paths.
+    AddToGroup("players");
+
     Health = MaxHealth;
     Progress.RecordShipTierReached(ShipTier);
 
@@ -1802,7 +1808,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     // Update vertical position to sit on water surface
     float planeY = WaterPlane?.GlobalPosition.Y ?? 0.0f;
-    float targetY = heightAvg + planeY + VerticalOffset - 0.5f;
+    // The new shader already recenters its displacement around the water plane,
+    // so we no longer need the old hard-coded sink offset here.
+    float targetY = heightAvg + planeY + VerticalOffset;
 
     // Smoothly interpolate to target Y position
     Vector3 currentPos = GlobalPosition;
@@ -1833,19 +1841,83 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   /// <summary>
   /// Calculates water height at a specific world position.
-  /// This matches the shader's vertex displacement calculation.
+  /// This matches the Synty-style water shader's vertex displacement.
+  ///
+  /// The shader samples a texture in water-plane UV space, pans that sample in
+  /// the wind direction over time, then recenters the mesh by subtracting
+  /// half the configured wave height. We mirror that here so the ship bobs on
+  /// the rendered surface instead of drifting through it.
   /// </summary>
   private float GetWaterHeight(Vector3 worldPos, float time)
   {
-    // Convert world position to UV coordinates matching the shader
-    float sampleX = (worldPos.X * WaterNoiseScale) + (time * WaveSpeed);
-    float sampleZ = (worldPos.Z * WaterNoiseScale);
+    if (WaterPlane?.Mesh is not PlaneMesh waterMesh)
+    {
+      // Fall back to the older noise sampling if the water plane changes shape.
+      float sampleX = (worldPos.X * WaterNoiseScale) + (time * WaveSpeed);
+      float sampleZ = worldPos.Z * WaterNoiseScale;
+      float fallbackNoise = WaterNoiseResource.GetNoise2D(sampleX * 100.0f, sampleZ * 100.0f);
+      return ((fallbackNoise + 1.0f) / 2.0f) * WaveHeight;
+    }
 
-    // Sample the noise (multiply by 100 for proper scale)
-    float noiseVal = WaterNoiseResource.GetNoise2D(sampleX * 100.0f, sampleZ * 100.0f);
+    var shaderMaterial = WaterPlane.GetActiveMaterial(0) as ShaderMaterial;
 
-    // Normalize from [-1, 1] to [0, 1] and scale by wave height
-    return ((noiseVal + 1.0f) / 2.0f) * WaveHeight;
+    float shaderWaveHeight = GetShaderFloat(shaderMaterial, "ocean_wave_height", WaveHeight);
+    float shaderWaveSpeed = GetShaderFloat(shaderMaterial, "ocean_wave_speed", WaveSpeed);
+    float shaderWaveFrequency = GetShaderFloat(shaderMaterial, "ocean_wave_frequency", 1.0f);
+    float galeStrength = GetShaderFloat(shaderMaterial, "gale_strength", 0.8f);
+    Vector3 windDirection3D = GetShaderVector3(shaderMaterial, "wind_direction", Vector3.Right);
+
+    // Convert the world point into the local water-plane space, then into the
+    // same 0..1 UV range the shader uses.
+    Vector3 localPos = WaterPlane.ToLocal(worldPos);
+    Vector2 waterSize = waterMesh.Size;
+    Vector2 uv = new(
+      (localPos.X / waterSize.X) + 0.5f,
+      (localPos.Z / waterSize.Y) + 0.5f
+    );
+
+    Vector2 windDirection = new(windDirection3D.X, windDirection3D.Z);
+    if (windDirection.LengthSquared() <= Mathf.Epsilon)
+    {
+      windDirection = Vector2.Right;
+    }
+    else
+    {
+      windDirection = windDirection.Normalized();
+    }
+
+    Vector2 panUv = uv + (windDirection * (time * shaderWaveSpeed));
+    float noiseVal = WaterNoiseResource.GetNoise2D(
+      panUv.X * shaderWaveFrequency * 100.0f,
+      panUv.Y * shaderWaveFrequency * 100.0f
+    );
+
+    float normalizedNoise = (noiseVal + 1.0f) / 2.0f;
+    float displacedHeight = shaderWaveHeight * normalizedNoise * (galeStrength * 1.5f);
+    return displacedHeight - (shaderWaveHeight / 2.0f);
+  }
+
+  /// <summary>
+  /// Reads a float shader parameter and falls back to a default if the material
+  /// or parameter is missing. This keeps buoyancy resilient in editor tweaks.
+  /// </summary>
+  private static float GetShaderFloat(ShaderMaterial material, string parameterName, float fallback)
+  {
+    if (material == null) return fallback;
+
+    Variant value = material.GetShaderParameter(parameterName);
+    return value.VariantType == Variant.Type.Nil ? fallback : value.AsSingle();
+  }
+
+  /// <summary>
+  /// Reads a Vector3 shader parameter with a simple fallback.
+  /// </summary>
+  private static Vector3 GetShaderVector3(ShaderMaterial material, string parameterName, Vector3 fallback)
+  {
+    if (material == null) return fallback;
+
+    Variant value = material.GetShaderParameter(parameterName);
+    return value.VariantType == Variant.Type.Nil ? fallback : value.AsVector3();
   }
 
   /// <summary>
