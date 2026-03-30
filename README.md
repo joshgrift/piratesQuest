@@ -143,12 +143,45 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 - [ ] Map?
 - [ ] Polish and Stability
 - [ ] New Terrain
+- [ ] Bugs
+  - [ ] "Ride side of your screen" - from scarlett
+- [ ] Windows UI not loading
+- [ ] Make money sound played everywhere
+- [ ] Quest UI
+  - [ ] Make it more obvious who to talk to get the quest
+  - [ ] You shouldn't see the details of a quest until you accept the quest
+  - [ ] More obvious when you complete the quest
+  - [ ] Sometimes the UI doesn't show up when you complete the quest
+  - [ ] You should be able to cancel quests
+  - [ ] Make it clear in the UI you can only have on active quest
+  - [ ] Soft lock the combat quest (sometimes the quests have requirements)
+- [ ] Tutorial show you how to move your UI
+- [ ] Flexible turn Speed when slow or fast
+- [ ] Quest UI should be easier to hide? (dismiss button)
+- [ ] Too Tedius to make someone join your crew
+- [ ] Show who is online in leaderboard
+- [ ] Hitting rocks is glitchy
+- [ ] Tea icon is smaller then fish icon when collecting
+- [ ] Can't arbitrage any resources
+- [ ] Would it be nice if camera turned with the ship?
+- [ ] "Can’t buy in port, only sell" - should make it more clear what's going on
+- [ ] Educate the player on safe zone, or the cannonball shot shouldn't do damage
+- [ ] Pin Recipe or something?
+- [ ] Red port circles (and yellow resource circles) sometimes disappear, or take a while to appear
+- [ ] Lock Characters behind quests
+- [ ] Sell buttons are backwards
 
 ### Alpha 9 - AI Update
 - [ ] AI ships
 
 ### Alpha 10 - World Update
 - [ ] Proper terrain with awesome islands and a large Island
+  - [ ] https://www.youtube.com/watch?v=D9lBhr5gq2s
+  - [ ] https://em-games-dev.itch.io/godot-low-poly-island-terrain-generator
+  - [ ] https://brokenvector.itch.io/low-poly-rock-pack
+  - [ ] https://www.youtube.com/watch?v=xeAES3sc3ck
+- [ ] water?
+  - [ ] https://godotshaders.com/shader/synty-core-drop-in-water-shader/
 - [ ] More characters, Quests, and a bunch of content
 
 ### Planned
@@ -193,3 +226,6 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
   - This helps balance the best harvesting spots, encourages diversifying where you harvest, and encourages return logins to get the resources you need.
 - [ ] add weather/wind mechanic with variably wind speeds
    - [ ] affecting sailing speed based on corresponding wind and ship direction,
+- [ ] UI to show you where a port is and directions 
+- [ ] Shooting direction is still frustrating
+- [ ] See how much items cost while you are sailing?
