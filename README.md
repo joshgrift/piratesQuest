@@ -176,6 +176,12 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 
 ### Alpha 10 - World Update
 - [ ] Proper terrain with awesome islands and a large Island
+  - [ ] https://www.youtube.com/watch?v=D9lBhr5gq2s
+  - [ ] https://em-games-dev.itch.io/godot-low-poly-island-terrain-generator
+  - [ ] https://brokenvector.itch.io/low-poly-rock-pack
+  - [ ] https://www.youtube.com/watch?v=xeAES3sc3ck
+- [ ] water?
+  - [ ] https://godotshaders.com/shader/synty-core-drop-in-water-shader/
 - [ ] More characters, Quests, and a bunch of content
 
 ### Planned
