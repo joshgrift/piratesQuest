@@ -3,8 +3,6 @@
 [ext_resource type="Script" path="res://scenes/ai_ship/AiShip.cs" id="1"]
 [ext_resource type="PackedScene" path="res://art/kenny_pirate/ship-pirate-small.glb" id="2"]
 [ext_resource type="PackedScene" path="res://art/kenny_pirate/cannon.glb" id="3"]
-[ext_resource type="FastNoiseLite" path="res://scenes/play/water_noise.tres" id="4"]
-
 [sub_resource type="SceneReplicationConfig" id="1"]
 properties/0/path = NodePath(".:position")
 properties/0/spawn = true
@@ -26,7 +24,7 @@ properties/4/replication_mode = 1
 height = 6.0
 radius = 3.4
 
-[node name="AiShip" type="CharacterBody3D" node_paths=PackedStringArray("CannonPivotLeft", "CannonPivotRight", "Synchronizer", "ForwardRay", "ForwardLeftRay", "ForwardRightRay")]
+[node name="AiShip" type="CharacterBody3D" node_paths=PackedStringArray("CannonPivotLeft", "CannonPivotRight", "Synchronizer", "ForwardRay", "ForwardLeftRay", "ForwardRightRay", "VisualRoot")]
 collision_mask = 5
 script = ExtResource("1")
 CannonPivotLeft = NodePath("CannonLeft")
@@ -35,7 +33,7 @@ Synchronizer = NodePath("MultiplayerSynchronizer")
 ForwardRay = NodePath("ForwardRay")
 ForwardLeftRay = NodePath("ForwardLeftRay")
 ForwardRightRay = NodePath("ForwardRightRay")
-WaterNoiseResource = ExtResource("4")
+VisualRoot = NodePath("VisualRoot")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("1")
@@ -44,13 +42,15 @@ replication_config = SubResource("1")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
 shape = SubResource("2")
 
-[node name="ShipVisual" parent="." instance=ExtResource("2")]
+[node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="ShipVisual" parent="VisualRoot" instance=ExtResource("2")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, -2.0243583, 0)
 
-[node name="LeftCannon" parent="." instance=ExtResource("3")]
+[node name="LeftCannon" parent="VisualRoot" instance=ExtResource("3")]
 transform = Transform3D(0.009721321, 0, 0.99995273, 0, 1, 0, -0.99995273, 0, 0.009721321, 1.4321022, 0, 0.5068867)
 
-[node name="RightCannon" parent="." instance=ExtResource("3")]
+[node name="RightCannon" parent="VisualRoot" instance=ExtResource("3")]
 transform = Transform3D(0.017906236, 0, -0.99983966, 0, 1, 0, 0.99983966, 0, 0.017906236, -1.5286508, 0, 0.5838313)
 
 [node name="CannonLeft" type="Node3D" parent="."]

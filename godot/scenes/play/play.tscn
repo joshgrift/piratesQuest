@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3 uid="uid://c8c63pod53w2l"]
+[gd_scene load_steps=33 format=3 uid="uid://c8c63pod53w2l"]
 
 [ext_resource type="Script" uid="uid://cie1vrfri8q8x" path="res://scenes/play/Play.cs" id="1_j5m8q"]
 [ext_resource type="Material" uid="uid://75rdt22mc6g" path="res://art/sky/day_sky.tres" id="1_octoo"]
@@ -32,6 +32,14 @@ fog_height = 400.0
 adjustment_brightness = 1.05
 adjustment_contrast = 1.15
 adjustment_saturation = 1.25
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a0nu5"]
+transparency = 1
+albedo_color = Color(1, 0, 0, 0.6862745)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_bjecb"]
+material = SubResource("StandardMaterial3D_a0nu5")
+size = Vector2(2000, 2000)
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_water"]
 noise = ExtResource("water_noise")
@@ -230,6 +238,11 @@ grow_vertical = 1
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_1eoep")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+visible = false
+mesh = SubResource("PlaneMesh_bjecb")
+skeleton = NodePath("../WaterPlane")
 
 [node name="WaterPlane" type="MeshInstance3D" parent="."]
 material_override = ExtResource("water_material")

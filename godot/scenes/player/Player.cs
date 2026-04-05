@@ -134,21 +134,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   [Export] public MultiplayerSpawner ProjectileSpawner;
   [Export] public MultiplayerSpawner DeadPlayerSpawner;
   [Export] public Timer AutoHealTimer;
+  [Export] public Node3D VisualRoot { get; set; }
 
   [Export] private AudioStreamPlayer3D _cannonSoundPlayer;
-
-  // Water Physics Properties
-  [ExportGroup("Water Physics")]
-  [Export] public FastNoiseLite WaterNoiseResource { get; set; }
-  [Export] public MeshInstance3D WaterPlane { get; set; }
-  // These values are fallback defaults for buoyancy if we can't read the
-  // shader material for some reason.
-  [Export] public float WaveHeight { get; set; } = 3.0f;
-  [Export] public float WaveSpeed { get; set; } = 0.05f;
-  [Export] public float WaterNoiseScale { get; set; } = 0.002f;
-  [Export] public float ShipLength { get; set; } = 10.0f;
-  [Export] public float VerticalOffset { get; set; } = -0.2f;
-  [Export] public float WaterSmoothSpeed { get; set; } = 8.0f;
 
   [Export]
   public int TrophyCount
@@ -156,6 +144,17 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     get => _inventory.GetItemCount(InventoryItemType.Trophy);
     set => _inventory.SetItem(InventoryItemType.Trophy, value);
   }
+
+  // Water Physics Properties
+  [ExportGroup("Water Physics")]
+  [Export] public NodePath WaterPlanePath { get; set; } = new("/root/Play/WaterPlane");
+  [Export] public MeshInstance3D WaterPlane { get; set; }
+  [Export] public float ShipLength { get; set; } = 10.0f;
+  [Export] public float VisualBobStrength { get; set; } = 0.35f;
+  [Export] public float WaterSmoothSpeed { get; set; } = 8.0f;
+  [Export] public bool ShowWaterDebug { get; set; } = false;
+
+
 
   // Simple movement state
   private float _currentSpeed = 0.0f;       // Current forward/backward speed
@@ -177,6 +176,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   // Track whether we're currently playing the creaking sound
   // This prevents us from starting the sound over and over every frame
   private bool _isCreakingPlaying = false;
+  private Node3D _waterDebugRoot;
+  private MeshInstance3D _bowWaterDebug;
+  private MeshInstance3D _sternWaterDebug;
+  private MeshInstance3D _centerWaterDebug;
+  private MeshInstance3D _averageWaterDebug;
 
   // Name tag shown above remote players when nearby
   private Label3D _nameLabel;
@@ -221,19 +225,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       AddChild(syncTimer);
     }
 
-    // Try to find water plane if not set
-    if (WaterPlane == null)
-    {
-      WaterPlane = GetNodeOrNull<MeshInstance3D>("/root/Play/Ground/WaterPlane");
-      if (WaterPlane != null)
-      {
-        GD.Print($"{Name}: Found WaterPlane at absolute path");
-      }
-      else
-      {
-        GD.PrintErr($"{Name}: Could not find WaterPlane!");
-      }
-    }
+    ResolveWaterPlane();
 
     // Apply ship tier visuals (collision + mesh) for the starting tier
     ApplyShipTier();
@@ -357,11 +349,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     switch (key)
     {
       case "w": _actionMoveForward = pressed; break;
-      case "s": _actionMoveBack    = pressed; break;
-      case "a": _actionMoveLeft    = pressed; break;
-      case "d": _actionMoveRight   = pressed; break;
-      case "q": _actionFireLeft    = pressed; break;
-      case "e": _actionFireRight   = pressed; break;
+      case "s": _actionMoveBack = pressed; break;
+      case "a": _actionMoveLeft = pressed; break;
+      case "d": _actionMoveRight = pressed; break;
+      case "q": _actionFireLeft = pressed; break;
+      case "e": _actionFireRight = pressed; break;
       case "k":
         HandleCollisionDebugToggleInput(pressed);
         break;
@@ -1810,154 +1802,149 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   /// </summary>
   private void ApplyWaterPhysics(float delta)
   {
-    // Skip if water physics is not configured
-    if (WaterNoiseResource == null || WaterPlane == null)
+    ResolveWaterPlane();
+
+    if (!ShipWaterPhysics.TrySample(
+      WaterPlane,
+      GlobalPosition,
+      GlobalTransform.Basis.Z,
+      ShipLength,
+      Time.GetTicksMsec() / 1000.0f,
+      out ShipWaterPhysics.Sample waterSample
+    ))
     {
-      GD.PrintErr($"Water physics not configured! NoiseResource: {WaterNoiseResource != null}, WaterPlane: {WaterPlane != null}");
+      GD.PrintErr($"Water physics not configured! WaterPlane: {WaterPlane != null}");
       return;
     }
 
-    // Get current game time in seconds
-    float time = Time.GetTicksMsec() / 1000.0f;
-    Vector3 pos = GlobalPosition;
-
-    // Sample waves using the ship's heading projected onto the water plane.
-    // If we use the already-pitched forward vector, the bow/stern sample points
-    // drift as the ship tilts, which can make the buoyancy feel like it's
-    // pulling from the wrong axis.
-    Vector3 forwardDir = GlobalTransform.Basis.Z;
-    forwardDir.Y = 0.0f;
-
-    if (forwardDir.LengthSquared() <= Mathf.Epsilon)
-    {
-      forwardDir = Vector3.Forward;
-    }
-    else
-    {
-      forwardDir = forwardDir.Normalized();
-    }
-
-    // Calculate sampling points at bow (front) and stern (back)
-    Vector3 bowPos = pos + forwardDir * (ShipLength / 2.0f);
-    Vector3 sternPos = pos - forwardDir * (ShipLength / 2.0f);
-
-    // Sample water heights at bow and stern
-    float heightBow = GetWaterHeight(bowPos, time);
-    float heightStern = GetWaterHeight(sternPos, time);
-    float heightAvg = (heightBow + heightStern) / 2.0f;
-
-    // Update vertical position to sit on water surface
-    float planeY = WaterPlane?.GlobalPosition.Y ?? 0.0f;
-    // The new shader already recenters its displacement around the water plane,
-    // so we no longer need the old hard-coded sink offset here.
-    float targetY = heightAvg + planeY + VerticalOffset;
-
-    // Smoothly interpolate to target Y position
     Vector3 currentPos = GlobalPosition;
-    currentPos.Y = Mathf.Lerp(currentPos.Y, targetY, delta * WaterSmoothSpeed);
+    // Gameplay root always sits exactly on the average waterline.
+    currentPos.Y = waterSample.RootWaterlineY;
     GlobalPosition = currentPos;
-
-    // Update pitch rotation based on wave slope
-    float heightDiff = heightBow - heightStern;
-    float targetPitch = -Mathf.Atan2(heightDiff, ShipLength);
 
     // Add extra pitch from acceleration / braking so the ship leans
     // slightly forward/backward when its speed changes aggressively.
-    float combinedTargetPitch = targetPitch + _accelerationPitch;
+    float combinedTargetPitch = waterSample.TargetPitch + _accelerationPitch;
 
-    // Calculate roll (bank) based on turning and add recoil rocking
     float maxRollAngle = Mathf.DegToRad(5.0f); // Maximum 5 degrees of roll
     float targetRoll = _currentTurnInput * maxRollAngle + _recoilRoll;
 
-    // Smoothly interpolate rotation
-    Vector3 rotation = Rotation;
-    rotation.X = Mathf.LerpAngle(rotation.X, combinedTargetPitch, delta * WaterSmoothSpeed);
-    rotation.Z = Mathf.LerpAngle(rotation.Z, targetRoll, delta * WaterSmoothSpeed * 0.3f); // Slow, subtle banking
-    Rotation = rotation;
+    // Keep the gameplay root upright so collision stays predictable.
+    Vector3 rootRotation = Rotation;
+    rootRotation.X = 0.0f;
+    rootRotation.Z = 0.0f;
+    Rotation = rootRotation;
+
+    ApplyVisualWaterMotion(combinedTargetPitch, targetRoll, waterSample.VisualBobOffsetY, delta);
+    UpdateWaterDebug(waterSample);
 
     // Decay the recoil rocking over time so the ship returns to normal
     _recoilRoll = Mathf.Lerp(_recoilRoll, 0.0f, delta * RecoilDecaySpeed);
   }
 
-  /// <summary>
-  /// Calculates water height at a specific world position.
-  /// This matches the Synty-style water shader's vertex displacement.
-  ///
-  /// The shader samples a texture in water-plane UV space, pans that sample in
-  /// the wind direction over time, then recenters the mesh by subtracting
-  /// half the configured wave height. We mirror that here so the ship bobs on
-  /// the rendered surface instead of drifting through it.
-  /// </summary>
-  private float GetWaterHeight(Vector3 worldPos, float time)
+  private void ResolveWaterPlane()
   {
-    if (WaterPlane?.Mesh is not PlaneMesh waterMesh)
-    {
-      // Fall back to the older noise sampling if the water plane changes shape.
-      float sampleX = (worldPos.X * WaterNoiseScale) + (time * WaveSpeed);
-      float sampleZ = worldPos.Z * WaterNoiseScale;
-      float fallbackNoise = WaterNoiseResource.GetNoise2D(sampleX * 100.0f, sampleZ * 100.0f);
-      return ((fallbackNoise + 1.0f) / 2.0f) * WaveHeight;
-    }
+    if (WaterPlane != null)
+      return;
 
-    var shaderMaterial = WaterPlane.GetActiveMaterial(0) as ShaderMaterial;
+    // Let the scene choose the water plane through the inspector instead of
+    // hard-coding one layout here.
+    if (!WaterPlanePath.IsEmpty)
+      WaterPlane = GetNodeOrNull<MeshInstance3D>(WaterPlanePath);
 
-    float shaderWaveHeight = GetShaderFloat(shaderMaterial, "ocean_wave_height", WaveHeight);
-    float shaderWaveSpeed = GetShaderFloat(shaderMaterial, "ocean_wave_speed", WaveSpeed);
-    float shaderWaveFrequency = GetShaderFloat(shaderMaterial, "ocean_wave_frequency", 1.0f);
-    float galeStrength = GetShaderFloat(shaderMaterial, "gale_strength", 0.8f);
-    Vector3 windDirection3D = GetShaderVector3(shaderMaterial, "wind_direction", Vector3.Right);
-
-    // Convert the world point into the local water-plane space, then into the
-    // same 0..1 UV range the shader uses.
-    Vector3 localPos = WaterPlane.ToLocal(worldPos);
-    Vector2 waterSize = waterMesh.Size;
-    Vector2 uv = new(
-      (localPos.X / waterSize.X) + 0.5f,
-      (localPos.Z / waterSize.Y) + 0.5f
-    );
-
-    Vector2 windDirection = new(windDirection3D.X, windDirection3D.Z);
-    if (windDirection.LengthSquared() <= Mathf.Epsilon)
-    {
-      windDirection = Vector2.Right;
-    }
-    else
-    {
-      windDirection = windDirection.Normalized();
-    }
-
-    Vector2 panUv = uv + (windDirection * (time * shaderWaveSpeed));
-    float noiseVal = WaterNoiseResource.GetNoise2D(
-      panUv.X * shaderWaveFrequency * 100.0f,
-      panUv.Y * shaderWaveFrequency * 100.0f
-    );
-
-    float normalizedNoise = (noiseVal + 1.0f) / 2.0f;
-    float displacedHeight = shaderWaveHeight * normalizedNoise * (galeStrength * 1.5f);
-    return displacedHeight - (shaderWaveHeight / 2.0f);
+    // Fallback: search the current scene tree for a mesh named WaterPlane.
+    if (WaterPlane == null)
+      WaterPlane = GetTree().CurrentScene?.FindChild("WaterPlane", true, false) as MeshInstance3D;
   }
 
-  /// <summary>
-  /// Reads a float shader parameter and falls back to a default if the material
-  /// or parameter is missing. This keeps buoyancy resilient in editor tweaks.
-  /// </summary>
-  private static float GetShaderFloat(ShaderMaterial material, string parameterName, float fallback)
+  private void ApplyVisualWaterMotion(float targetPitch, float targetRoll, float bobOffsetY, float delta)
   {
-    if (material == null) return fallback;
+    if (VisualRoot == null)
+    {
+      return;
+    }
 
-    Variant value = material.GetShaderParameter(parameterName);
-    return value.VariantType == Variant.Type.Nil ? fallback : value.AsSingle();
+    Vector3 visualPosition = VisualRoot.Position;
+    visualPosition.Y = Mathf.Lerp(
+      visualPosition.Y,
+      bobOffsetY * VisualBobStrength,
+      delta * WaterSmoothSpeed
+    );
+    VisualRoot.Position = visualPosition;
+
+    Vector3 visualRotation = VisualRoot.Rotation;
+    visualRotation.X = Mathf.LerpAngle(visualRotation.X, targetPitch, delta * WaterSmoothSpeed);
+    visualRotation.Z = Mathf.LerpAngle(visualRotation.Z, targetRoll, delta * WaterSmoothSpeed * 0.3f);
+    VisualRoot.Rotation = visualRotation;
   }
 
-  /// <summary>
-  /// Reads a Vector3 shader parameter with a simple fallback.
-  /// </summary>
-  private static Vector3 GetShaderVector3(ShaderMaterial material, string parameterName, Vector3 fallback)
+  private void UpdateWaterDebug(ShipWaterPhysics.Sample waterSample)
   {
-    if (material == null) return fallback;
+    EnsureWaterDebugNodes();
+    if (_waterDebugRoot == null)
+      return;
 
-    Variant value = material.GetShaderParameter(parameterName);
-    return value.VariantType == Variant.Type.Nil ? fallback : value.AsVector3();
+    _waterDebugRoot.Visible = ShowWaterDebug;
+    if (!ShowWaterDebug)
+      return;
+
+    SetDebugMarkerPosition(_bowWaterDebug, waterSample.BowWorldPosition, waterSample.PlaneY + waterSample.BowWaterY);
+    SetDebugMarkerPosition(_sternWaterDebug, waterSample.SternWorldPosition, waterSample.PlaneY + waterSample.SternWaterY);
+    SetDebugMarkerPosition(_centerWaterDebug, waterSample.CenterWorldPosition, waterSample.PlaneY + waterSample.CenterWaterY);
+    SetDebugMarkerPosition(_averageWaterDebug, waterSample.CenterWorldPosition, waterSample.RootWaterlineY);
+  }
+
+  private void EnsureWaterDebugNodes()
+  {
+    if (_waterDebugRoot != null)
+      return;
+
+    _waterDebugRoot = new Node3D
+    {
+      Name = "WaterDebugRoot",
+      TopLevel = true,
+      Visible = false
+    };
+    AddChild(_waterDebugRoot);
+
+    _bowWaterDebug = CreateWaterDebugMarker("BowWaterDebug", new Color(0.9f, 0.3f, 0.3f));
+    _sternWaterDebug = CreateWaterDebugMarker("SternWaterDebug", new Color(0.3f, 0.7f, 1.0f));
+    _centerWaterDebug = CreateWaterDebugMarker("CenterWaterDebug", new Color(0.95f, 0.85f, 0.2f));
+    _averageWaterDebug = CreateWaterDebugMarker("AverageWaterDebug", new Color(0.3f, 1.0f, 0.4f));
+
+    _waterDebugRoot.AddChild(_bowWaterDebug);
+    _waterDebugRoot.AddChild(_sternWaterDebug);
+    _waterDebugRoot.AddChild(_centerWaterDebug);
+    _waterDebugRoot.AddChild(_averageWaterDebug);
+  }
+
+  private static MeshInstance3D CreateWaterDebugMarker(string name, Color color)
+  {
+    var material = new StandardMaterial3D
+    {
+      AlbedoColor = color,
+      ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
+    };
+
+    return new MeshInstance3D
+    {
+      Name = name,
+      Mesh = new SphereMesh
+      {
+        Radius = 0.35f,
+        Height = 0.7f
+      },
+      MaterialOverride = material,
+      CastShadow = GeometryInstance3D.ShadowCastingSetting.Off
+    };
+  }
+
+  private static void SetDebugMarkerPosition(Node3D marker, Vector3 sampleWorldPosition, float sampleWaterY)
+  {
+    if (marker == null)
+      return;
+
+    marker.GlobalPosition = new Vector3(sampleWorldPosition.X, sampleWaterY, sampleWorldPosition.Z);
   }
 
   /// <summary>
