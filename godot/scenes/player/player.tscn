@@ -44,6 +44,7 @@ CannonPivotRight = NodePath("CannonRight")
 AutoHealTimer = NodePath("AutoHealTimer")
 VisualRoot = NodePath("VisualRoot")
 _cannonSoundPlayer = NodePath("CannonFireSound")
+VisualBobStrength = 0.25
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_i3pqv")
