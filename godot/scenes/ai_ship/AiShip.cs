@@ -20,7 +20,6 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
   [ExportGroup("Water Physics")]
   [Export] public NodePath WaterPlanePath { get; set; } = new("/root/Play/WaterPlane");
-  [Export] public MeshInstance3D WaterPlane { get; set; }
   [Export] public float ShipLength { get; set; } = 10.0f;
   [Export] public float VisualBobStrength { get; set; } = 0.35f;
   [Export] public float WaterSmoothSpeed { get; set; } = 7.0f;
@@ -49,11 +48,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
   private float _fireCooldownRemaining = 0.0f;
   private float _stuckTimer = 0.0f;
   private bool _isSinking = false;
-  private Node3D _waterDebugRoot;
-  private MeshInstance3D _bowWaterDebug;
-  private MeshInstance3D _sternWaterDebug;
-  private MeshInstance3D _centerWaterDebug;
-  private MeshInstance3D _averageWaterDebug;
+  private FloatingBody3D _floatingBody;
 
   private const float RecoilRollAmount = 0.32f;
   private const float RecoilDecaySpeed = 2.4f;
@@ -65,7 +60,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
     _rng.Randomize();
     _lastPosition = GlobalPosition;
 
-    ResolveWaterPlane();
+    _floatingBody = new FloatingBody3D(this);
   }
 
   /// <summary>
@@ -338,134 +333,19 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
   private void ApplyWaterPhysics(float delta)
   {
-    ResolveWaterPlane();
-
-    if (!ShipWaterPhysics.TrySample(
-      WaterPlane,
-      GlobalPosition,
-      GlobalTransform.Basis.Z,
+    if (!_floatingBody.Apply(
+      VisualRoot,
+      WaterPlanePath,
       ShipLength,
-      Time.GetTicksMsec() / 1000.0f,
-      out ShipWaterPhysics.Sample waterSample
+      VisualBobStrength,
+      WaterSmoothSpeed,
+      ShowWaterDebug,
+      _accelerationPitch,
+      _currentTurnInput * Mathf.DegToRad(4.0f) + _recoilRoll,
+      delta
     ))
       return;
 
-    Vector3 currentPos = GlobalPosition;
-    currentPos.Y = waterSample.RootWaterlineY;
-    GlobalPosition = currentPos;
-
-    float combinedTargetPitch = waterSample.TargetPitch + _accelerationPitch;
-    float maxRollAngle = Mathf.DegToRad(4.0f);
-    float targetRoll = _currentTurnInput * maxRollAngle + _recoilRoll;
-
-    Vector3 rootRotation = Rotation;
-    rootRotation.X = 0.0f;
-    rootRotation.Z = 0.0f;
-    Rotation = rootRotation;
-
-    ApplyVisualWaterMotion(combinedTargetPitch, targetRoll, waterSample.VisualBobOffsetY, delta);
-    UpdateWaterDebug(waterSample);
-
     _recoilRoll = Mathf.Lerp(_recoilRoll, 0.0f, delta * RecoilDecaySpeed);
-  }
-
-  private void ResolveWaterPlane()
-  {
-    if (WaterPlane != null)
-      return;
-
-    if (!WaterPlanePath.IsEmpty)
-      WaterPlane = GetNodeOrNull<MeshInstance3D>(WaterPlanePath);
-
-    if (WaterPlane == null)
-      WaterPlane = GetTree().CurrentScene?.FindChild("WaterPlane", true, false) as MeshInstance3D;
-  }
-
-  private void ApplyVisualWaterMotion(float targetPitch, float targetRoll, float bobOffsetY, float delta)
-  {
-    if (VisualRoot == null)
-      return;
-
-    Vector3 visualPosition = VisualRoot.Position;
-    visualPosition.Y = Mathf.Lerp(
-      visualPosition.Y,
-      bobOffsetY * VisualBobStrength,
-      delta * WaterSmoothSpeed
-    );
-    VisualRoot.Position = visualPosition;
-
-    Vector3 visualRotation = VisualRoot.Rotation;
-    visualRotation.X = Mathf.LerpAngle(visualRotation.X, targetPitch, delta * WaterSmoothSpeed);
-    visualRotation.Z = Mathf.LerpAngle(visualRotation.Z, targetRoll, delta * WaterSmoothSpeed * 0.3f);
-    VisualRoot.Rotation = visualRotation;
-  }
-
-  private void UpdateWaterDebug(ShipWaterPhysics.Sample waterSample)
-  {
-    EnsureWaterDebugNodes();
-    if (_waterDebugRoot == null)
-      return;
-
-    _waterDebugRoot.Visible = ShowWaterDebug;
-    if (!ShowWaterDebug)
-      return;
-
-    SetDebugMarkerPosition(_bowWaterDebug, waterSample.BowWorldPosition, waterSample.PlaneY + waterSample.BowWaterY);
-    SetDebugMarkerPosition(_sternWaterDebug, waterSample.SternWorldPosition, waterSample.PlaneY + waterSample.SternWaterY);
-    SetDebugMarkerPosition(_centerWaterDebug, waterSample.CenterWorldPosition, waterSample.PlaneY + waterSample.CenterWaterY);
-    SetDebugMarkerPosition(_averageWaterDebug, waterSample.CenterWorldPosition, waterSample.RootWaterlineY);
-  }
-
-  private void EnsureWaterDebugNodes()
-  {
-    if (_waterDebugRoot != null)
-      return;
-
-    _waterDebugRoot = new Node3D
-    {
-      Name = "WaterDebugRoot",
-      TopLevel = true,
-      Visible = false
-    };
-    AddChild(_waterDebugRoot);
-
-    _bowWaterDebug = CreateWaterDebugMarker("BowWaterDebug", new Color(0.9f, 0.3f, 0.3f));
-    _sternWaterDebug = CreateWaterDebugMarker("SternWaterDebug", new Color(0.3f, 0.7f, 1.0f));
-    _centerWaterDebug = CreateWaterDebugMarker("CenterWaterDebug", new Color(0.95f, 0.85f, 0.2f));
-    _averageWaterDebug = CreateWaterDebugMarker("AverageWaterDebug", new Color(0.3f, 1.0f, 0.4f));
-
-    _waterDebugRoot.AddChild(_bowWaterDebug);
-    _waterDebugRoot.AddChild(_sternWaterDebug);
-    _waterDebugRoot.AddChild(_centerWaterDebug);
-    _waterDebugRoot.AddChild(_averageWaterDebug);
-  }
-
-  private static MeshInstance3D CreateWaterDebugMarker(string name, Color color)
-  {
-    var material = new StandardMaterial3D
-    {
-      AlbedoColor = color,
-      ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
-    };
-
-    return new MeshInstance3D
-    {
-      Name = name,
-      Mesh = new SphereMesh
-      {
-        Radius = 0.35f,
-        Height = 0.7f
-      },
-      MaterialOverride = material,
-      CastShadow = GeometryInstance3D.ShadowCastingSetting.Off
-    };
-  }
-
-  private static void SetDebugMarkerPosition(Node3D marker, Vector3 sampleWorldPosition, float sampleWaterY)
-  {
-    if (marker == null)
-      return;
-
-    marker.GlobalPosition = new Vector3(sampleWorldPosition.X, sampleWaterY, sampleWorldPosition.Z);
   }
 }
