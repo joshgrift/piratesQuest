@@ -112,7 +112,7 @@ shader_parameter/distortion_strength = 0.5
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_water"]
 material = SubResource("ShaderMaterial_water")
-size = Vector2(1000, 1000)
+size = Vector2(3000, 3000)
 subdivide_width = 500
 subdivide_depth = 500
 center_offset = Vector3(0, 0, 1)
@@ -237,7 +237,7 @@ mesh = SubResource("PlaneMesh_water")
 skeleton = NodePath("")
 
 [node name="terrain" parent="." instance=ExtResource("13_l2oi0")]
-transform = Transform3D(100, 0, 0, 0, 100, 0, 0, 0, 100, 0, -22, 0)
+transform = Transform3D(100, 0, 0, 0, 100, 0, 0, 0, 100, -0.21119308, -21.768326, -0.23013306)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.98419565, 0.11311606, -0.13624913, 0, 0.7694, 0.63876736, 0.17708494, -0.628672, 0.75724006, 0, 125, 0)
@@ -265,60 +265,91 @@ spawn_path = NodePath("..")
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 176.38995, 0)
 script = ExtResource("6_1phcp")
 
-[node name="Interactables" type="Node3D" parent="."]
+[node name="Ports" type="Node3D" parent="."]
+transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 387.91293, 0.9999962, -276.7504)
 
-[node name="Collection Point" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -97.426765, 1, 149.76895)
-ResourceType = 1
-
-[node name="Collection Point2" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -118.85174, 1, 62.026474)
-ResourceType = 2
-
-[node name="Collection Point3" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -24.849796, 1.0000153, -141.58194)
-ResourceType = 2
-
-[node name="Collection Point4" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 32.089653, 1, -14.146969)
-ResourceType = 2
-
-[node name="Collection Point5" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 100.42023, 1, 86.23701)
-ResourceType = 2
-
-[node name="Collection Point6" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 180.98868, 1, -156.15079)
-ResourceType = 2
-
-[node name="CollectionPoint" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 312.1313, 0.9999962, 99.66588)
-
-[node name="CollectionPoint4" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 234.00935, 0.99998474, 35.94434)
-
-[node name="CollectionPoint3" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -69.83989, 1, 202.40106)
-
-[node name="CollectionPoint2" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(0.25, 0, 0, 0, 1, 0, 0, 0, 0.25, 82.4159, 0.9999962, -108.994804)
-ResourceType = 3
-CollectionSpeed = 4.0
-
-[node name="StJohns" parent="Interactables" instance=ExtResource("9_4dfl3")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -10.906729, 1, 137.57451)
+[node name="StJohns" parent="Ports" instance=ExtResource("9_4dfl3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -817.19165, 0, 725.55945)
 PortName = "Saint Johns"
 ItemsForSale = Array[Object]([SubResource("Resource_a0nu5"), SubResource("Resource_bjecb"), SubResource("Resource_10igl"), SubResource("Resource_q6imw"), SubResource("Resource_qysfa"), SubResource("Resource_4dfl3")])
 
-[node name="KrakenFall" parent="Interactables" instance=ExtResource("9_4dfl3")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -70.155815, 1, -79.702034)
+[node name="Rusthook Point" parent="Ports" instance=ExtResource("9_4dfl3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -537.41644, 0, -584.61957)
+PortName = "Rusthook Point"
+ItemsForSale = Array[Object]([SubResource("Resource_a0nu5"), SubResource("Resource_bjecb"), SubResource("Resource_10igl"), SubResource("Resource_q6imw"), SubResource("Resource_qysfa"), SubResource("Resource_4dfl3")])
+
+[node name="Shard Bay" parent="Ports" instance=ExtResource("9_4dfl3")]
+PortName = "Shard Bay"
+ItemsForSale = Array[Object]([SubResource("Resource_a0nu5"), SubResource("Resource_bjecb"), SubResource("Resource_10igl"), SubResource("Resource_q6imw"), SubResource("Resource_qysfa"), SubResource("Resource_4dfl3")])
+
+[node name="KrakenFall" parent="Ports" instance=ExtResource("9_4dfl3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1136.0494, 3.8146973e-06, 1363.7982)
 PortName = "Krakenfall"
 ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_3sgb2"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l"), SubResource("Resource_blg3p")])
 
-[node name="Haven" parent="Interactables" instance=ExtResource("9_4dfl3")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 261.76956, 1.0000019, -1.1106873)
-PortName = "Haven"
+[node name="Tidefall Island" parent="Ports" instance=ExtResource("9_4dfl3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1718.8503, 3.8146973e-06, 1650.5708)
+PortName = "Tidefall Island"
+ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_3sgb2"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l"), SubResource("Resource_blg3p")])
+
+[node name="Haven Harbour" parent="Ports" instance=ExtResource("9_4dfl3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1575.8247, -5.531311e-05, -501.3526)
+PortName = "Haven Harbour"
 ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_mfrq5"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l"), SubResource("Resource_ha3kl")])
+
+[node name="Pebblehook Bay" parent="Ports" instance=ExtResource("9_4dfl3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1993.1433, -5.531311e-05, -142.9267)
+PortName = "Pebblehook Bay"
+ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_mfrq5"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l"), SubResource("Resource_ha3kl")])
+
+[node name="Spire Harbour" parent="Ports" instance=ExtResource("9_4dfl3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 320.998, -5.531311e-05, 1130.5662)
+PortName = "Spire Harbour"
+ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_mfrq5"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l"), SubResource("Resource_ha3kl")])
+
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="Collection Point" parent="Interactables" instance=ExtResource("6_ccytq")]
+transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 117.137184, 1, -298.0738)
+ResourceType = 1
+
+[node name="Collection Point7" parent="Interactables" instance=ExtResource("6_ccytq")]
+transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 497.68756, 1, -427.6233)
+ResourceType = 1
+
+[node name="Collection Point2" parent="Interactables" instance=ExtResource("6_ccytq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -406.69543, 1, -30.297668)
+ResourceType = 2
+
+[node name="Collection Point3" parent="Interactables" instance=ExtResource("6_ccytq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 108.74692, 1.0000763, 254.70633)
+ResourceType = 2
+
+[node name="Collection Point4" parent="Interactables" instance=ExtResource("6_ccytq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.010506, 1.000061, -514.71564)
+ResourceType = 2
+
+[node name="Collection Point5" parent="Interactables" instance=ExtResource("6_ccytq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -473.66302, 1.000061, 369.44034)
+ResourceType = 2
+
+[node name="Collection Point6" parent="Interactables" instance=ExtResource("6_ccytq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 376.21707, 0.99993896, -26.176758)
+ResourceType = 2
+
+[node name="CollectionPoint" parent="Interactables" instance=ExtResource("6_ccytq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -383.99268, 0.9999962, -291.30908)
+
+[node name="CollectionPoint4" parent="Interactables" instance=ExtResource("6_ccytq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 433.9519, 0.99998474, 212.63913)
+
+[node name="CollectionPoint3" parent="Interactables" instance=ExtResource("6_ccytq")]
+transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -614.4065, 1, -467.57925)
+
+[node name="CollectionPoint2" parent="Interactables" instance=ExtResource("6_ccytq")]
+transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -608.0874, 0.9999962, 215.16774)
+ResourceType = 3
+CollectionSpeed = 4.0
 
 [node name="DeadPlayerSpawner" type="MultiplayerSpawner" parent="."]
 spawn_path = NodePath("../DeadPlayers")
