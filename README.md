@@ -125,6 +125,14 @@ npm run build
 
 The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`.
 
+## Importing Terrain
+- Open the blender terrain.blend file
+  - Terrain was created from this tutorial: https://www.youtube.com/watch?v=D9lBhr5gq2s
+  - add -col to the object if you want collision enabled
+- Edit terrain
+- Export .glb file in /godot/art
+- Go into Godot file browser, right click and select "reimport"
+
 ## Third Party
 - [GoDot](https://godotengine.org/)
 - [godot_wry](https://github.com/doceazedo/godot_wry) (native WebView for Godot)
@@ -136,6 +144,8 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
   - [JCSounds](https://jcsounds.itch.io/piratesfxvol1)
 - Icons
   - [Game-icons.net](https://game-icons.net/tags/pirate.html)
+- Shaders
+  - [Synty Drop in Shader](https://godotshaders.com/shader/synty-core-drop-in-water-shader/)
 
 
 ## ROADMAP
@@ -180,8 +190,6 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
   - [ ] https://em-games-dev.itch.io/godot-low-poly-island-terrain-generator
   - [ ] https://brokenvector.itch.io/low-poly-rock-pack
   - [ ] https://www.youtube.com/watch?v=xeAES3sc3ck
-- [ ] water?
-  - [ ] https://godotshaders.com/shader/synty-core-drop-in-water-shader/
 - [ ] More characters, Quests, and a bunch of content
 
 ### Planned
