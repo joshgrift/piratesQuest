@@ -166,6 +166,7 @@ img {
   justify-content: center;
   align-items: center;
   position: relative;
+  left: 0;
   width: 52px;
   height: 52px;
   padding: 0;
@@ -181,6 +182,10 @@ img {
     inset 0 0 0 1px rgba(247, 221, 162, 0.2),
     inset 0 -8px 12px rgba(0, 0, 0, 0.28);
   opacity: 0.95;
+}
+
+.rail-mode-btn--bounce {
+  animation: rail-mode-bounce 0.28s cubic-bezier(0.22, 1, 0.36, 1) 0s 1;
 }
 
 .rail-mode-icon {
@@ -216,6 +221,16 @@ img {
   transform: scaleY(0.4);
   transform-origin: center;
   transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+@keyframes rail-mode-bounce {
+  0%, 100% {
+    left: 0;
+  }
+
+  50% {
+    left: -6px;
+  }
 }
 
 .rail-mode-btn:hover:not(:disabled) {
@@ -4616,6 +4631,108 @@ img {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr);
   gap: 16px;
+}
+
+.message-log-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.message-log-hero,
+.message-log-empty {
+  padding: 16px 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(235, 191, 110, 0.22);
+  background:
+    linear-gradient(150deg, rgba(11, 28, 44, 0.88), rgba(43, 25, 14, 0.86)),
+    radial-gradient(circle at top left, rgba(115, 181, 228, 0.12), transparent 35%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 230, 179, 0.04),
+    0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.message-log-kicker {
+  color: #8ec8ee;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.message-log-title,
+.message-log-empty-title {
+  margin-top: 8px;
+  font-family: "New Rocker", cursive;
+  font-size: 26px;
+  line-height: 1.05;
+  color: #ffe4a9;
+}
+
+.message-log-subtitle,
+.message-log-empty p {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #d6e5f1;
+  max-width: 58ch;
+}
+
+.message-log-list {
+  display: grid;
+  gap: 12px;
+}
+
+.message-log-entry {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(232, 189, 108, 0.18);
+  background:
+    linear-gradient(155deg, rgba(12, 27, 42, 0.88), rgba(40, 24, 16, 0.84));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 232, 183, 0.03),
+    0 10px 22px rgba(0, 0, 0, 0.18);
+}
+
+.message-log-entry-portrait {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  object-fit: cover;
+}
+
+.message-log-entry-copy {
+  min-width: 0;
+}
+
+.message-log-entry-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.message-log-entry-name {
+  font-family: "New Rocker", cursive;
+  font-size: 20px;
+  color: #ffe3a7;
+}
+
+.message-log-entry-time {
+  flex-shrink: 0;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8fbde0;
+}
+
+.message-log-entry-message {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #e5edf4;
 }
 
 .stats-panel {

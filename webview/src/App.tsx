@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import "./App.css";
 import type { PortState } from "./types";
 import { sendIpc } from "./utils/ipc";
@@ -8,6 +8,7 @@ import { CreativePanel } from "./tabs/CreativePanel";
 import { QuestsPanel } from "./tabs/QuestsPanel";
 import { LeaderboardPanel } from "./tabs/LeaderboardPanel";
 import { StatsPanel } from "./tabs/StatsPanel";
+import { MessageLogPanel } from "./tabs/MessageLogPanel";
 import { SCARLETT_CHARACTER_ID, getFirePrompt, getRandomTalkPhrase } from "./tabs/tavernHelpers";
 import { ShipStatusWidget } from "./components/ShipStatusWidget";
 import { QuestStatusWidget } from "./components/QuestStatusWidget";
@@ -16,7 +17,16 @@ import type { QuestSummary, TavernCharacter } from "./types";
 import { PortPanel, type PortPanelTab } from "./panels/PortPanel";
 import { ShipPanel } from "./panels/ShipPanel";
 
-type PanelId = "ship" | "quests" | "port" | "creative" | "stats" | "leaderboard";
+type PanelId = "ship" | "quests" | "port" | "creative" | "stats" | "leaderboard" | "log";
+
+interface MessageLogEntry {
+  id: string;
+  portraitSrc: string;
+  portraitAlt: string;
+  name: string;
+  message: string;
+  receivedAt: number;
+}
 
 const SHIP_ICON = `${BASE}icons/flat/caravel.svg`;
 const QUESTS_ICON = `${BASE}icons/flat/tied-scroll.svg`;
@@ -24,7 +34,9 @@ const PORT_ICON = `${BASE}icons/flat/anchor.svg`;
 const CREATIVE_ICON = `${BASE}icons/flat/pirate-skull.svg`;
 const STATS_ICON = `${BASE}icons/flat/sextant.svg`;
 const LEADERBOARD_ICON = `${BASE}icons/flat/pirate-hat.svg`;
+const LOG_ICON = `${BASE}icons/flat/bandana.svg`;
 const SEA_CHART_IMAGE = `${BASE}images/map.png`;
+const MAX_MESSAGE_LOG_ENTRIES = 40;
 
 function findQuestForNpc(state: PortState, characterId: string): QuestSummary | null {
   return state.quests.available.find((quest) => quest.giverNpcId === characterId && !hasText(quest.rewardCrewNpcId)) ?? null;
@@ -109,6 +121,9 @@ export default function App() {
   const [activePortPanelTab, setActivePortPanelTab] = useState<PortPanelTab>("market");
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [npcCommentQueue, setNpcCommentQueue] = useState<NpcCommentToastData[]>([]);
+  const [messageLogEntries, setMessageLogEntries] = useState<MessageLogEntry[]>([]);
+  const [hasUnreadMessageLog, setHasUnreadMessageLog] = useState(false);
+  const [messageLogBounceToken, setMessageLogBounceToken] = useState(0);
   const prevIsInPortRef = useRef<boolean | null>(null);
   const prevActiveQuestIdRef = useRef<string | null>(null);
   const previousPanelBeforeDockRef = useRef<PanelId | null>("ship");
@@ -155,6 +170,15 @@ export default function App() {
     }
   }, [portState?.isInPort, activePanel]);
 
+  const dismissCurrentPopup = useCallback(() => {
+    if (npcCommentQueue.length === 0) return;
+    if (activePanel !== "log") {
+      setHasUnreadMessageLog(true);
+      setMessageLogBounceToken((current) => current + 1);
+    }
+    setNpcCommentQueue((current) => current.slice(1));
+  }, [activePanel, npcCommentQueue.length]);
+
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (isTypingInInput()) return;
@@ -177,7 +201,7 @@ export default function App() {
 
       if (npcCommentQueue.length > 0) {
         e.preventDefault();
-        setNpcCommentQueue((current) => current.slice(1));
+        dismissCurrentPopup();
         return;
       }
 
@@ -191,7 +215,7 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [activePanel, isMapOpen, npcCommentQueue.length]);
+  }, [activePanel, dismissCurrentPopup, isMapOpen, npcCommentQueue.length]);
 
   const handleFireCharacter = (characterId: string) => {
     if (!portState) return;
@@ -202,6 +226,34 @@ export default function App() {
 
   const enqueuePopup = (popup: NpcCommentToastData) => {
     setNpcCommentQueue((current) => [...current, popup]);
+    setMessageLogEntries((current) => [
+      {
+        id: popup.id,
+        portraitSrc: popup.portraitSrc,
+        portraitAlt: popup.portraitAlt,
+        name: popup.name,
+        message: popup.message,
+        receivedAt: Date.now(),
+      },
+      ...current,
+    ].slice(0, MAX_MESSAGE_LOG_ENTRIES));
+  };
+
+  const enqueuePopups = (popups: NpcCommentToastData[]) => {
+    if (popups.length === 0) return;
+
+    setNpcCommentQueue((current) => [...current, ...popups]);
+    setMessageLogEntries((current) => [
+      ...popups.map((popup) => ({
+        id: popup.id,
+        portraitSrc: popup.portraitSrc,
+        portraitAlt: popup.portraitAlt,
+        name: popup.name,
+        message: popup.message,
+        receivedAt: Date.now(),
+      })),
+      ...current,
+    ].slice(0, MAX_MESSAGE_LOG_ENTRIES));
   };
 
   const findCharacterById = (characterId: string): TavernCharacter | null => {
@@ -342,7 +394,7 @@ export default function App() {
 
     if (newComments.length === 0) return;
 
-    setNpcCommentQueue((current) => [...current, ...newComments]);
+    enqueuePopups(newComments);
   }, [portState]);
 
   useEffect(() => {
@@ -356,8 +408,14 @@ export default function App() {
     const acceptedComment = buildQuestAcceptedComment(activeQuest);
     if (!acceptedComment) return;
 
-    setNpcCommentQueue((current) => [...current, acceptedComment]);
+    enqueuePopup(acceptedComment);
   }, [portState]);
+
+  useEffect(() => {
+    if (activePanel === "log") {
+      setHasUnreadMessageLog(false);
+    }
+  }, [activePanel]);
 
   const panelClass = ["port-panel", activePanel === null ? "hidden" : ""].filter(Boolean).join(" ");
   const isInPort = !!portState?.isInPort;
@@ -369,6 +427,8 @@ export default function App() {
       ? "quests"
     : activePanel === "stats"
       ? "stats"
+    : activePanel === "log"
+      ? "Ship Log"
     : activePanel === "leaderboard"
       ? "Hall of Captains"
       : "ship";
@@ -432,6 +492,18 @@ export default function App() {
           title="Quests"
         >
           <img className="rail-mode-icon" src={QUESTS_ICON} alt="" />
+        </button>
+        <button
+          key={`ship-log-${messageLogBounceToken}`}
+          className={`rail-mode-btn ${activePanel === "log" ? "active" : ""} ${hasUnreadMessageLog ? "rail-mode-btn--bounce" : ""}`}
+          onClick={() => handlePanelSelect("log")}
+          type="button"
+          role="tab"
+          aria-selected={activePanel === "log"}
+          aria-label="Ship log mode"
+          title="Ship Log"
+        >
+          <img className="rail-mode-icon" src={LOG_ICON} alt="" />
         </button>
         {portState?.isCreative && (
           <button
@@ -499,6 +571,8 @@ export default function App() {
                 <QuestsPanel state={portState} />
               ) : activePanel === "stats" ? (
                 <StatsPanel state={portState} />
+              ) : activePanel === "log" ? (
+                <MessageLogPanel entries={messageLogEntries} />
               ) : activePanel === "leaderboard" ? (
                 <LeaderboardPanel entries={portState.leaderboard} playerName={portState.playerName} />
               ) : activePanel === "creative" && portState.isCreative ? (
@@ -520,7 +594,7 @@ export default function App() {
       <NpcCommentToast
         comment={npcCommentQueue[0] ?? null}
         queueCount={npcCommentQueue.length}
-        onDismiss={() => setNpcCommentQueue((current) => current.slice(1))}
+        onDismiss={dismissCurrentPopup}
       />
     </>
   );

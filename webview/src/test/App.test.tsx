@@ -376,4 +376,76 @@ describe("App", () => {
     expect(screen.queryByText(/Press W, A, S, or D/i)).not.toBeInTheDocument();
     expect(screen.getByText("Nice work. You made it back to harbor.")).toBeInTheDocument();
   });
+
+  it("stores dismissed NPC messages in the ship log", () => {
+    renderApp({
+      isInPort: false,
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett_learn_to_sail",
+          title: "Learn to Sail",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character2.png",
+          giverPortName: "",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          canCancel: false,
+          acceptedText: "Welcome to the Seas! Press W, A, S, or D and make the ship answer.",
+          description: "Move the ship once.",
+          completionText: "",
+          unlocks: [],
+          steps: [],
+        },
+        all: [],
+        completedIds: [],
+        recentlyCompletedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /close message from scarlett/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /ship log mode/i }));
+
+    expect(screen.getByText("Recent messages from the crew and harbors")).toBeInTheDocument();
+    expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
+  });
+
+  it("bounces the ship log button after a toast disappears until the log is opened", () => {
+    renderApp({
+      isInPort: false,
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett_learn_to_sail",
+          title: "Learn to Sail",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character2.png",
+          giverPortName: "",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          canCancel: false,
+          acceptedText: "Welcome to the Seas! Press W, A, S, or D and make the ship answer.",
+          description: "Move the ship once.",
+          completionText: "",
+          unlocks: [],
+          steps: [],
+        },
+        all: [],
+        completedIds: [],
+        recentlyCompletedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    expect(screen.getByRole("tab", { name: /ship log mode/i })).not.toHaveClass("rail-mode-btn--bounce");
+
+    fireEvent.click(screen.getByRole("button", { name: /close message from scarlett/i }));
+    expect(screen.getByRole("tab", { name: /ship log mode/i })).toHaveClass("rail-mode-btn--bounce");
+
+    fireEvent.click(screen.getByRole("tab", { name: /ship log mode/i }));
+    expect(screen.getByRole("tab", { name: /ship log mode/i })).not.toHaveClass("rail-mode-btn--bounce");
+  });
 });
