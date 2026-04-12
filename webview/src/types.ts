@@ -54,15 +54,18 @@ export interface QuestSummary {
   giverPortName: string;
   revealGiverInQuestLog: boolean;
   canAcceptFromQuestLog: boolean;
+  offerText?: string;
+  acceptedText?: string;
   description: string;
   completionText: string;
-  isReadyToTurnIn: boolean;
   unlocks: string[];
   steps: QuestStepProgress[];
 }
 
 export interface QuestStepProgress {
   label: string;
+  preStepPopupText?: string | null;
+  postStepPopupText?: string | null;
   currentValue: number;
   requiredValue: number;
   isComplete: boolean;
@@ -112,6 +115,9 @@ export interface TavernCharacter {
   /** Filename in /images/characters/ */
   portrait: string;
   hireable: boolean;
+  talkPhrases: string[];
+  hireText?: string;
+  fireText?: string;
   statChanges: StatChange[];
 }
 

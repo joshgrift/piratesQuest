@@ -80,6 +80,9 @@ public partial class Port : Node3D, IIntractable
         c.Role,
         c.Portrait,
         c.Hireable,
+        c.TalkPhrases,
+        c.HireText,
+        c.FireText,
         c.StatChanges.Select(sc => new StatChangeDto(
           sc.Stat.ToString(),
           sc.Modifier.ToString(),

@@ -17,13 +17,11 @@ public class PlayerProgress
   private readonly HashSet<string> _unlockedFeatures = new(StringComparer.Ordinal);
   private string _currentQuestId;
   private string _acceptedQuestNpcId;
-  private bool _currentQuestObjectivesComplete;
 
   public ProgressSnapshot Lifetime => _lifetime;
   public ProgressSnapshot SinceQuestStart => _sinceQuestStart;
   public string CurrentQuestId => _currentQuestId;
   public string AcceptedQuestNpcId => _acceptedQuestNpcId;
-  public bool CurrentQuestObjectivesComplete => _currentQuestObjectivesComplete;
   public IReadOnlyList<string> CompletedQuestIds => _completedQuestIds;
   public IReadOnlyCollection<string> UnlockedFeatures => _unlockedFeatures;
 
@@ -34,7 +32,6 @@ public class PlayerProgress
 
     _currentQuestId = questId;
     _acceptedQuestNpcId = npcId ?? "";
-    _currentQuestObjectivesComplete = false;
     _sinceQuestStart.Reset();
   }
 
@@ -105,6 +102,20 @@ public class PlayerProgress
       _sinceQuestStart.CannonballsShot += amount;
   }
 
+  public void RecordShipMovementInput()
+  {
+    _lifetime.ShipMovementInputs += 1;
+    if (HasActiveQuest())
+      _sinceQuestStart.ShipMovementInputs += 1;
+  }
+
+  public void RecordCameraDrag()
+  {
+    _lifetime.CameraDrags += 1;
+    if (HasActiveQuest())
+      _sinceQuestStart.CameraDrags += 1;
+  }
+
   public void RecordShipHit()
   {
     _lifetime.ShipsHit += 1;
@@ -152,7 +163,15 @@ public class PlayerProgress
     return string.Equals(quest.GiverNpcId, npcId, StringComparison.Ordinal);
   }
 
-  public bool ReevaluateQuestProgress(int equippedComponentCount, string currentPortName = null)
+  public void EnsureAutoAcceptedQuestActive()
+  {
+    if (HasActiveQuest())
+      return;
+
+    TryAutoAcceptNextQuest();
+  }
+
+  public bool ReevaluateQuestProgress(int equippedComponentCount)
   {
     var quest = QuestData.GetQuest(_currentQuestId);
     if (quest == null)
@@ -160,20 +179,6 @@ public class PlayerProgress
 
     bool isComplete = quest.Steps.All(step => GetMetricValue(_sinceQuestStart, step, equippedComponentCount) >= step.RequiredValue);
     if (!isComplete)
-    {
-      _currentQuestObjectivesComplete = false;
-      return false;
-    }
-
-    if (quest.TurnInMode == QuestTurnInMode.AutoCompleteWhenObjectivesMet)
-    {
-      CompleteQuest(quest);
-      return true;
-    }
-
-    _currentQuestObjectivesComplete = true;
-
-    if (!CanTurnInQuestAtPort(quest, currentPortName))
       return false;
 
     CompleteQuest(quest);
@@ -205,7 +210,6 @@ public class PlayerProgress
     {
       _currentQuestId = null;
       _acceptedQuestNpcId = null;
-      _currentQuestObjectivesComplete = false;
       _sinceQuestStart.Reset();
     }
 
@@ -222,7 +226,6 @@ public class PlayerProgress
     _completedQuestIds.RemoveAll(id => string.Equals(id, quest.Id, StringComparison.Ordinal));
     _currentQuestId = quest.Id;
     _acceptedQuestNpcId = "creative";
-    _currentQuestObjectivesComplete = false;
     _sinceQuestStart.Reset();
     RebuildUnlockedFeatures();
     return true;
@@ -257,7 +260,6 @@ public class PlayerProgress
       Lifetime = _lifetime.ToDto(),
       SinceQuestStart = _sinceQuestStart.ToDto(),
       CurrentQuestId = _currentQuestId,
-      CurrentQuestObjectivesComplete = _currentQuestObjectivesComplete,
       CompletedQuestIds = _completedQuestIds.ToList(),
       UnlockedFeatures = _unlockedFeatures.OrderBy(x => x, StringComparer.Ordinal).ToList(),
       AcceptedQuestNpcId = _acceptedQuestNpcId,
@@ -269,7 +271,6 @@ public class PlayerProgress
     _lifetime.LoadFromDto(dto?.Lifetime);
     _currentQuestId = QuestData.GetQuest(dto?.CurrentQuestId) != null ? dto.CurrentQuestId : null;
     _acceptedQuestNpcId = _currentQuestId != null ? dto?.AcceptedQuestNpcId : null;
-    _currentQuestObjectivesComplete = _currentQuestId != null && (dto?.CurrentQuestObjectivesComplete ?? false);
     _sinceQuestStart.LoadFromDto(dto?.SinceQuestStart);
 
     _completedQuestIds.Clear();
@@ -283,6 +284,10 @@ public class PlayerProgress
     RebuildUnlockedFeatures();
     foreach (var feature in dto?.UnlockedFeatures ?? [])
       _unlockedFeatures.Add(feature);
+
+    // New players should begin with the first auto-accept tutorial quest
+    // already active, but without any special UI popup logic.
+    EnsureAutoAcceptedQuestActive();
   }
 
   private void CompleteQuest(QuestDefinition quest)
@@ -297,9 +302,24 @@ public class PlayerProgress
     {
       _currentQuestId = null;
       _acceptedQuestNpcId = null;
-      _currentQuestObjectivesComplete = false;
       _sinceQuestStart.Reset();
     }
+
+    TryAutoAcceptNextQuest();
+  }
+
+  private void TryAutoAcceptNextQuest()
+  {
+    if (HasActiveQuest())
+      return;
+
+    var nextQuest = GetAvailableQuests()
+      .FirstOrDefault(quest => quest.AutoAcceptWhenAvailable);
+
+    if (nextQuest == null)
+      return;
+
+    ResetForNewQuest(nextQuest.Id, nextQuest.GiverNpcId);
   }
 
   private static QuestSummaryDto BuildSummaryCore(QuestDefinition quest, ProgressSnapshot source, int equippedComponentCount)
@@ -313,15 +333,18 @@ public class PlayerProgress
       quest.GiverPortName,
       quest.RevealGiverInQuestLog,
       quest.CanAcceptFromQuestLog,
-      quest.Description,
-      quest.CompletionText,
-      false,
+      quest.OfferText ?? "",
+      quest.AcceptedText ?? "",
+      quest.Description ?? "",
+      quest.CompletionText ?? "",
       quest.Unlocks.Select(x => x.ToString()).ToArray(),
       quest.Steps.Select(step =>
       {
         int currentValue = GetMetricValue(source, step, equippedComponentCount);
         return new QuestStepProgressDto(
           step.Label,
+          step.PreStepPopupText ?? "",
+          step.PostStepPopupText ?? "",
           Math.Min(currentValue, step.RequiredValue),
           step.RequiredValue,
           currentValue >= step.RequiredValue
@@ -332,13 +355,7 @@ public class PlayerProgress
 
   private QuestSummaryDto BuildSummary(QuestDefinition quest, ProgressSnapshot source, int equippedComponentCount)
   {
-    var summary = BuildSummaryCore(quest, source, equippedComponentCount);
-
-    return summary with
-    {
-      IsReadyToTurnIn = string.Equals(_currentQuestId, quest.Id, StringComparison.Ordinal)
-        && _currentQuestObjectivesComplete,
-    };
+    return BuildSummaryCore(quest, source, equippedComponentCount);
   }
 
   private static int GetMetricValue(ProgressSnapshot snapshot, QuestStepDefinition step, int equippedComponentCount)
@@ -346,6 +363,9 @@ public class PlayerProgress
     return step.Metric switch
     {
       QuestMetricKind.PortsVisitedCount => snapshot.PortsVisitedCount,
+      QuestMetricKind.ShipMovementInputs => snapshot.ShipMovementInputs,
+      QuestMetricKind.CameraDrags => snapshot.CameraDrags,
+      QuestMetricKind.CannonballsShot => snapshot.CannonballsShot,
       QuestMetricKind.ItemsCollected => snapshot.GetDictValue(snapshot.ItemsCollected, step.ItemType),
       QuestMetricKind.ItemsBought => snapshot.GetDictValue(snapshot.ItemsBought, step.ItemType),
       QuestMetricKind.ItemsSold => snapshot.GetDictValue(snapshot.ItemsSold, step.ItemType),
@@ -369,14 +389,6 @@ public class PlayerProgress
     }
   }
 
-  private static bool CanTurnInQuestAtPort(QuestDefinition quest, string currentPortName)
-  {
-    if (quest == null || string.IsNullOrWhiteSpace(currentPortName))
-      return false;
-
-    return string.Equals(quest.GiverPortName, currentPortName, StringComparison.OrdinalIgnoreCase);
-  }
-
   private bool HasActiveQuest()
   {
     return !string.IsNullOrWhiteSpace(_currentQuestId);
@@ -395,7 +407,9 @@ public class PlayerProgress
     public readonly HashSet<string> HiredCrewIds = new(StringComparer.Ordinal);
     public readonly HashSet<string> TalkedToNpcIds = new(StringComparer.Ordinal);
 
+    public int ShipMovementInputs { get; set; }
     public int PortsVisitedCount { get; set; }
+    public int CameraDrags { get; set; }
     public int CannonballsShot { get; set; }
     public int ShipsHit { get; set; }
     public int ShipsSunk { get; set; }
@@ -415,7 +429,9 @@ public class PlayerProgress
       BoughtComponentNames.Clear();
       HiredCrewIds.Clear();
       TalkedToNpcIds.Clear();
+      ShipMovementInputs = 0;
       PortsVisitedCount = 0;
+      CameraDrags = 0;
       CannonballsShot = 0;
       ShipsHit = 0;
       ShipsSunk = 0;
@@ -520,8 +536,10 @@ public class PlayerProgress
         SoldProfit = new Dictionary<string, int>(SoldProfit, StringComparer.Ordinal),
         AverageAcquisitionCostByItem = new Dictionary<string, float>(AverageAcquisitionCostByItem, StringComparer.Ordinal),
         QuantityAcquiredForCostByItem = new Dictionary<string, int>(QuantityAcquiredForCostByItem, StringComparer.Ordinal),
+        ShipMovementInputs = ShipMovementInputs,
         PortsVisitedCount = PortsVisitedCount,
         PortsVisited = PortsVisited.OrderBy(x => x, StringComparer.Ordinal).ToList(),
+        CameraDrags = CameraDrags,
         CannonballsShot = CannonballsShot,
         ShipsHit = ShipsHit,
         ShipsSunk = ShipsSunk,
@@ -546,9 +564,11 @@ public class PlayerProgress
       Copy(dto.SoldProfit, SoldProfit);
       Copy(dto.AverageAcquisitionCostByItem, AverageAcquisitionCostByItem);
       Copy(dto.QuantityAcquiredForCostByItem, QuantityAcquiredForCostByItem);
+      ShipMovementInputs = dto.ShipMovementInputs;
       PortsVisitedCount = dto.PortsVisitedCount;
       foreach (var port in dto.PortsVisited ?? [])
         PortsVisited.Add(port);
+      CameraDrags = dto.CameraDrags;
       CannonballsShot = dto.CannonballsShot;
       ShipsHit = dto.ShipsHit;
       ShipsSunk = dto.ShipsSunk;

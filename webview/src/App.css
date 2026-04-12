@@ -470,6 +470,43 @@ img {
   font-size: 1rem;
 }
 
+.npc-comment-toast-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.npc-comment-toast-action {
+  border: 1px solid rgba(236, 197, 121, 0.34);
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-family: "Texturina", serif;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.npc-comment-toast-action:hover {
+  transform: translateY(-1px);
+}
+
+.npc-comment-toast-action--primary {
+  background: linear-gradient(135deg, rgba(238, 194, 109, 0.94), rgba(204, 132, 49, 0.95));
+  color: #1f130b;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.28);
+}
+
+.npc-comment-toast-action--secondary {
+  background: rgba(15, 28, 39, 0.72);
+  color: #f5e3bf;
+}
+
+.npc-comment-toast-action--danger {
+  background: linear-gradient(135deg, rgba(163, 54, 39, 0.94), rgba(114, 24, 20, 0.95));
+  color: #fff0ea;
+}
+
 .npc-comment-toast-close {
   position: absolute;
   top: 10px;
@@ -3065,6 +3102,112 @@ img {
   background: rgba(107, 223, 107, 0.15);
   color: #8ff08f;
   border: 1px solid rgba(107, 223, 107, 0.35);
+}
+
+.npc-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.npc-card {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(236, 196, 116, 0.22);
+  background:
+    linear-gradient(160deg, rgba(20, 33, 47, 0.96), rgba(53, 29, 16, 0.92)),
+    radial-gradient(circle at 15% 15%, rgba(116, 182, 229, 0.18), transparent 38%);
+  box-shadow:
+    0 16px 28px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 229, 172, 0.08);
+}
+
+.npc-card-portrait {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(242, 201, 120, 0.68);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.28);
+}
+
+.npc-card-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.npc-card-name {
+  font-family: "New Rocker", cursive;
+  font-size: 1.2rem;
+  color: #f1ddb8;
+}
+
+.npc-card-role {
+  font-size: 0.72rem;
+  color: #9fb3c7;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.npc-card-impact {
+  border-top: 1px solid rgba(236, 196, 116, 0.14);
+  padding-top: 10px;
+}
+
+.npc-card-impact-list {
+  display: grid;
+  gap: 6px;
+}
+
+.npc-card-impact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #e8dcc5;
+  font-size: 0.92rem;
+}
+
+.npc-card-impact-empty {
+  color: #c1b39a;
+  font-size: 0.9rem;
+}
+
+.npc-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.npc-card-action-btn {
+  border: 1px solid rgba(236, 196, 116, 0.26);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(15, 27, 37, 0.74);
+  color: #f6e5bf;
+  font-family: "Texturina", serif;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.npc-card-action-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(236, 196, 116, 0.46);
+}
+
+.npc-card-action-btn--quest {
+  background: rgba(89, 56, 19, 0.86);
+}
+
+.npc-card-action-btn--talk {
+  background: rgba(24, 51, 72, 0.78);
+}
+
+.npc-card-action-btn--danger {
+  background: rgba(108, 32, 24, 0.82);
 }
 
 .tavern-stats-card {

@@ -8,14 +8,16 @@ type TradeMode = "buy" | "sell";
 
 interface MarketTabProps {
   state: PortState;
-  onOpenConversation: (characterId: string) => void;
-  activeConversationCharacterId?: string | null;
+  onTalkToCharacter: (characterId: string) => void;
+  onHireCharacter: (characterId: string) => void;
+  onQuestForCharacter: (characterId: string) => void;
 }
 
 export function MarketTab({
   state,
-  onOpenConversation,
-  activeConversationCharacterId,
+  onTalkToCharacter,
+  onHireCharacter,
+  onQuestForCharacter,
 }: MarketTabProps) {
   const coins = state.inventory["Coin"] ?? 0;
   const buyUnlocked = state.quests.unlockedFeatures.includes("BuyGoods");
@@ -105,8 +107,9 @@ export function MarketTab({
           <h3 className="market-people-title">People in Port</h3>
           <TavernTab
             state={state}
-            onOpenConversation={onOpenConversation}
-            activeConversationCharacterId={activeConversationCharacterId}
+            onTalk={onTalkToCharacter}
+            onHire={onHireCharacter}
+            onQuest={onQuestForCharacter}
           />
         </section>
       )}

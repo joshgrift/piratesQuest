@@ -92,6 +92,9 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
           role: "Merchant Broker",
           portrait: "character8.png",
           hireable: true,
+          talkPhrases: ["Mind the margins."],
+          hireText: "Give me a berth and I will sharpen your prices.",
+          fireText: "Very well. Keep your own books.",
           statChanges: [{ stat: "SellPriceBonus", modifier: "Additive", value: 0.005 }],
         },
         {
@@ -100,6 +103,9 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
           role: "Powder Runner",
           portrait: "character7.png",
           hireable: true,
+          talkPhrases: ["Dry powder, quick hands."],
+          hireText: "Say the word and I am aboard.",
+          fireText: "I will find another deck for my powder tricks.",
           statChanges: [{ stat: "AttackRange", modifier: "Additive", value: 3 }],
         },
         {
@@ -108,6 +114,7 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
           role: "Rumor Broker",
           portrait: "character15.png",
           hireable: false,
+          talkPhrases: ["Rumors beat blind sailing."],
           statChanges: [],
         },
       ],

@@ -71,7 +71,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   // ── Tavern Crew ──────────────────────────────────────────────────
   // Crew hires persist in player state and affect real gameplay stats.
-  public System.Collections.Generic.List<string> HiredCrewCharacterIds { get; set; } = [];
+  public System.Collections.Generic.List<string> HiredCrewCharacterIds { get; set; } = [TavernData.ScarlettId];
 
   // Capacities per vault level (index 0 = unused, 1-5 = levels)
   public static readonly int[] VaultItemCapacity = [0, 500, 1000, 2000, 4000, 6000];
@@ -343,10 +343,22 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (!IsMultiplayerAuthority()) return;
     switch (key)
     {
-      case "w": _actionMoveForward = pressed; break;
-      case "s": _actionMoveBack = pressed; break;
-      case "a": _actionMoveLeft = pressed; break;
-      case "d": _actionMoveRight = pressed; break;
+      case "w":
+        _actionMoveForward = pressed;
+        if (pressed) RecordShipMovementInput();
+        break;
+      case "s":
+        _actionMoveBack = pressed;
+        if (pressed) RecordShipMovementInput();
+        break;
+      case "a":
+        _actionMoveLeft = pressed;
+        if (pressed) RecordShipMovementInput();
+        break;
+      case "d":
+        _actionMoveRight = pressed;
+        if (pressed) RecordShipMovementInput();
+        break;
       case "q": _actionFireLeft = pressed; break;
       case "e": _actionFireRight = pressed; break;
       case "k":
@@ -873,8 +885,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (ShipTier >= 0 && ShipTier < GameData.ShipTiers.Length)
       componentSlots = GameData.ShipTiers[ShipTier].ComponentSlots;
 
-    // Crew grows with ship size: 4/6/8 component slots => 2/3/4 crew slots.
-    return Math.Max(1, componentSlots / 2);
+    // Crew grows with ship size: 4/6/8 component slots => 3/4/5 crew slots.
+    // Scarlett takes one berth by default, so everyone gets one extra slot.
+    return Math.Max(2, (componentSlots / 2) + 1);
   }
 
   public bool HireCrew(string characterId, string currentPortName)
@@ -902,6 +915,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   public bool FireCrew(string characterId)
   {
+    if (string.Equals(characterId, TavernData.ScarlettId, StringComparison.Ordinal))
+      return false;
+
     bool removed = HiredCrewCharacterIds.Remove(characterId);
     if (!removed)
       return false;
@@ -1183,6 +1199,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
           hiredCharacter.Role,
           hiredCharacter.Portrait,
           hiredCharacter.Hireable,
+          hiredCharacter.TalkPhrases,
+          hiredCharacter.HireText,
+          hiredCharacter.FireText,
           hiredCharacter.StatChanges.Select(sc => new StatChangeDto(
             sc.Stat.ToString(),
             sc.Modifier.ToString(),
@@ -1289,7 +1308,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   {
     SetCurrentPort(portName);
     Progress.RecordPortVisited(portName);
-    ReevaluateQuestProgress(portName);
+    ReevaluateQuestProgress();
   }
 
   public void RecordNpcTalkedTo(string characterId)
@@ -1308,9 +1327,21 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     return true;
   }
 
-  public void ReevaluateQuestProgress(string currentPortName = null)
+  public void ReevaluateQuestProgress()
   {
-    Progress.ReevaluateQuestProgress(GetTotalEquippedComponents(), currentPortName ?? CurrentPortName);
+    Progress.ReevaluateQuestProgress(GetTotalEquippedComponents());
+  }
+
+  public void RecordCameraDrag()
+  {
+    Progress.RecordCameraDrag();
+    ReevaluateQuestProgress();
+  }
+
+  public void RecordShipMovementInput()
+  {
+    Progress.RecordShipMovementInput();
+    ReevaluateQuestProgress();
   }
 
   public bool ForceCompleteQuest(string questId = null)
@@ -1555,7 +1586,19 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       int peerId = GetMultiplayerAuthority();
       RpcId(peerId, MethodName.ReceiveState, stateJson);
       GD.Print($"{Name}: Sent saved state to client (peer {peerId})");
+      return;
     }
+
+    // First-time players do not have saved state yet, so we initialize
+    // their default progression on the authoritative player and send that
+    // fresh state down to the client like a normal load.
+    Progress.EnsureAutoAcceptedQuestActive();
+    var newPlayerStateJson = JsonSerializer.Serialize(SerializeState());
+    LastSyncedStateJson = newPlayerStateJson;
+
+    int newPlayerPeerId = GetMultiplayerAuthority();
+    RpcId(newPlayerPeerId, MethodName.ReceiveState, newPlayerStateJson);
+    GD.Print($"{Name}: Sent initialized state to new client (peer {newPlayerPeerId})");
   }
 
   /// <summary>

@@ -2,6 +2,10 @@ import { useState, type ReactNode } from "react";
 import { describeQuestUnlocks } from "../utils/questUnlocks";
 import type { PortState, QuestSummary } from "../types";
 
+function hasText(value: string | null | undefined): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
 function QuestCard({
   quest,
   action,
@@ -30,12 +34,6 @@ function QuestCard({
     );
   }
 
-  const turnInHint = quest.isReadyToTurnIn
-    ? quest.giverPortName
-      ? `Head back to ${quest.giverPortName} to wrap this one up.`
-      : `Go talk to ${quest.giverName} to wrap this one up.`
-    : null;
-
   return (
     <div className="card quest-card">
       <div className="quest-card-header">
@@ -63,9 +61,9 @@ function QuestCard({
           : "Unknown lead"}
       </div>
 
-      <div className="quest-card-desc">{quest.description}</div>
-
-      {turnInHint && <div className="quest-helper quest-helper--turnin">{turnInHint}</div>}
+      {hasText(quest.description) && (
+        <div className="quest-card-desc">{quest.description}</div>
+      )}
 
       <div className="quest-steps">
         {quest.steps.map((step) => (

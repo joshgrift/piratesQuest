@@ -65,7 +65,7 @@ public static class HudIpcActionMap
       if (ok)
       {
         player.Progress.RecordItemBought(type, req.Quantity, totalCost);
-        player.ReevaluateQuestProgress(currentPort?.PortName);
+        player.ReevaluateQuestProgress();
       }
     }
   }
@@ -95,7 +95,7 @@ public static class HudIpcActionMap
       if (ok)
       {
         player.Progress.RecordItemSold(type, req.Quantity, totalRevenue);
-        player.ReevaluateQuestProgress(currentPort?.PortName);
+        player.ReevaluateQuestProgress();
       }
     }
   }
@@ -116,7 +116,7 @@ public static class HudIpcActionMap
     var component = GameData.Components.FirstOrDefault(c => c.name == message.Name);
     if (component == null) return;
     player.EquipComponent(component);
-    player.ReevaluateQuestProgress(currentPort?.PortName);
+    player.ReevaluateQuestProgress();
   }
 
   private static void HandleUnequipComponent(UnequipComponentMessage message, Player player, Port currentPort)
@@ -126,7 +126,7 @@ public static class HudIpcActionMap
     var component = GameData.Components.FirstOrDefault(c => c.name == message.Name);
     if (component == null) return;
     player.UnEquipComponent(component);
-    player.ReevaluateQuestProgress(currentPort?.PortName);
+    player.ReevaluateQuestProgress();
   }
 
   private static void HandleHeal(Player player, Port currentPort)
@@ -404,6 +404,8 @@ public static class HudIpcActionMap
   {
     if (message == null) return;
     GetCameraPivot(player)?.HandleCameraRotate(message.DeltaX, message.DeltaY);
+    if (!Mathf.IsZeroApprox(message.DeltaX) || !Mathf.IsZeroApprox(message.DeltaY))
+      player.RecordCameraDrag();
   }
 
   private static void HandleInputCameraZoom(InputCameraZoomMessage message, Player player)

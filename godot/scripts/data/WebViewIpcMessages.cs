@@ -78,6 +78,9 @@ public record TavernCharacterDto(
   string Role,
   string Portrait,
   bool Hireable,
+  string[] TalkPhrases,
+  string HireText,
+  string FireText,
   StatChangeDto[] StatChanges
 );
 

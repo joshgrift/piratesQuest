@@ -7,11 +7,9 @@ describe("TavernTab", () => {
   it("sends hire IPC when hiring a character", async () => {
     const { ipcSpy } = renderApp({ tab: "market" });
 
-    fireEvent.click(screen.getByRole("button", { name: /Gideon Gearlock/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Ask about ship work\./ }));
-    fireEvent.click(await screen.findByRole("button", { name: /What would you do on my deck\?/ }));
-    fireEvent.click(await screen.findByRole("button", { name: /Would you join my crew\?/ }));
-    fireEvent.click(await screen.findByRole("button", { name: /Join my crew\./ }));
+    const hireButtons = screen.getAllByRole("button", { name: "Hire" });
+    fireEvent.click(hireButtons[0] as HTMLElement);
+    fireEvent.click(await screen.findByRole("button", { name: "Hire" }));
 
     const actions = getIpcMessages(ipcSpy) as { action: string; characterId?: string }[];
     expect(actions).toContainEqual({
@@ -37,6 +35,9 @@ describe("TavernTab", () => {
               role: "Merchant Broker",
               portrait: "character8.png",
               hireable: true,
+              talkPhrases: ["Mind the spread."],
+              hireText: "Give me a bunk.",
+              fireText: "Then keep your own books.",
               statChanges: [{ stat: "SellPriceBonus", modifier: "Additive", value: 0.005 }],
             },
             {
@@ -45,6 +46,9 @@ describe("TavernTab", () => {
               role: "Powder Runner",
               portrait: "character7.png",
               hireable: true,
+              talkPhrases: ["Keep powder dry."],
+              hireText: "I can help the guns sing.",
+              fireText: "I will take my thunder elsewhere.",
               statChanges: [{ stat: "AttackRange", modifier: "Additive", value: 3 }],
             },
             {
@@ -53,6 +57,9 @@ describe("TavernTab", () => {
               role: "Retired Shipwright",
               portrait: "character17.png",
               hireable: true,
+              talkPhrases: ["Strong planks save lives."],
+              hireText: "Keep your word and I will keep your hull alive.",
+              fireText: "Understood.",
               statChanges: [{ stat: "ShipHullStrength", modifier: "Additive", value: 12 }],
             },
           ],
@@ -60,31 +67,26 @@ describe("TavernTab", () => {
       },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /Elder Bertram/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Ask about ship work\./ }));
-    fireEvent.click(await screen.findByRole("button", { name: /What would change on the ship\?/ }));
-    fireEvent.click(await screen.findByRole("button", { name: /Would you join my crew\?/ }));
-    fireEvent.click(await screen.findByRole("button", { name: /Join my crew\./ }));
+    fireEvent.click(screen.getByRole("button", { name: "Hire" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Hire" }));
 
     const actions = getIpcMessages(ipcSpy) as { action: string }[];
     expect(actions.find((a) => a.action === "hire_character")).toBeUndefined();
   });
 
-  it("hides hireability status in the roster until conversation", () => {
+  it("shows tavern action buttons directly on the roster", () => {
     renderApp({ tab: "market" });
 
-    expect(screen.queryByText("Talk")).not.toBeInTheDocument();
-    expect(screen.queryByText("Hire")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Talk").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Hire").length).toBeGreaterThan(0);
   });
 
-  it("reveals non-hireable result only after talking", async () => {
+  it("lets you talk to a non-hireable tavern character", async () => {
     renderApp({ tab: "market" });
 
-    fireEvent.click(screen.getByRole("button", { name: /Valora Rumwhisper/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Ask about ship work\./ }));
-    fireEvent.click(await screen.findByRole("button", { name: /Would you sail with me at all\?/ }));
-    fireEvent.click(await screen.findByRole("button", { name: /Would you join my crew\?/ }));
+    const talkButtons = screen.getAllByRole("button", { name: "Talk" });
+    fireEvent.click(talkButtons[talkButtons.length - 1] as HTMLElement);
 
-    expect(await screen.findByText(/i stay where stories wash ashore/i)).toBeInTheDocument();
+    expect(await screen.findByText(/rumors beat blind sailing|buy a rumor/i)).toBeInTheDocument();
   });
 });

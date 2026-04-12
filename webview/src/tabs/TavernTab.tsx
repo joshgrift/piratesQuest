@@ -1,97 +1,19 @@
 import { useMemo } from "react";
-import type { ConversationTree } from "../components/ConversationPanel";
-import type { PortState, QuestSummary, TavernCharacter } from "../types";
+import type { PortState, QuestSummary } from "../types";
 import { BASE } from "../utils/helpers";
-import { describeQuestUnlocks } from "../utils/questUnlocks";
-import { getDialogueForCharacter } from "./tavernData";
 
 interface TavernTabProps {
   state: PortState;
-  onOpenConversation: (characterId: string) => void;
-  activeConversationCharacterId?: string | null;
-}
-
-export function buildTavernConversationTree(
-  character: TavernCharacter,
-  availableQuest: QuestSummary | null,
-): ConversationTree {
-  const baseTree = getDialogueForCharacter(character);
-  const tree = Object.fromEntries(
-    Object.entries(baseTree).map(([nodeId, node]) => [
-      nodeId,
-      { ...node, responses: [...node.responses] },
-    ]),
-  );
-
-  if (!tree.root) {
-    return {
-      root: {
-        text: `I'm ${character.name}. Say what you need, Captain.`,
-        responses: [{ label: "Leave", next: "root" }],
-      },
-    };
-  }
-
-  if (!tree.hire_offer) {
-    tree.hire_offer = {
-      text: "I'm interested, is that an offer I hear?",
-      responses: [
-        { label: "Join my crew.", action: "hire" },
-        { label: "Not today.", next: "root" },
-      ],
-    };
-  }
-
-  if (!tree.not_hireable) {
-    tree.not_hireable = {
-      text: "No, Captain. I stay ashore.",
-      responses: [{ label: "Back", next: "root" }],
-    };
-  }
-
-  if (!tree.hire_success) {
-    tree.hire_success = {
-      text: "Alright. I'll meet you at the dock.",
-      responses: [{ label: "Back", next: "root" }],
-    };
-  }
-
-  if (!tree.hire_blocked) {
-    tree.hire_blocked = {
-      text: "No bunk left. Make room first.",
-      responses: [{ label: "Back", next: "root" }],
-    };
-  }
-
-  if (!tree.already_hired) {
-    tree.already_hired = {
-      text: "Already aboard, Captain.",
-      responses: [{ label: "Back", next: "root" }],
-    };
-  }
-
-  if (availableQuest?.giverNpcId === character.id) {
-    tree.root.responses.unshift({ label: `Ask about: ${availableQuest.title}`, next: "quest_offer" });
-    tree.quest_offer = {
-      text: `${availableQuest.description}\n\n${describeQuestUnlocks(availableQuest.unlocks)}`,
-      responses: [
-        { label: "Alright, I'm in.", action: "accept_quest" },
-        { label: "Maybe later.", next: "root" },
-      ],
-    };
-    tree.quest_accept_success = {
-      text: "Perfect. Go do the job, then come back with a story that's at least a little embarrassing.",
-      responses: [{ label: "Back", next: "root" }],
-    };
-  }
-
-  return tree;
+  onTalk: (characterId: string) => void;
+  onHire: (characterId: string) => void;
+  onQuest: (characterId: string) => void;
 }
 
 export function TavernTab({
   state,
-  onOpenConversation,
-  activeConversationCharacterId,
+  onTalk,
+  onHire,
+  onQuest,
 }: TavernTabProps) {
   const hiredSet = useMemo(
     () => new Set(state.crew.hiredCharacterIds),
@@ -108,30 +30,47 @@ export function TavernTab({
     return <div className="empty-state">No new tavern recruits at this port right now.</div>;
   }
 
+  const questByNpcId = new Map<string, QuestSummary>();
+  for (const quest of state.quests.available) {
+    if (!questByNpcId.has(quest.giverNpcId)) {
+      questByNpcId.set(quest.giverNpcId, quest);
+    }
+  }
+
   return (
-    <div className="tavern-layout">
-      <div className="tavern-roster">
+    <div className="npc-card-grid">
         {visibleCharacters.map((character) => {
-          const isTalking = activeConversationCharacterId === character.id;
+          const availableQuest = questByNpcId.get(character.id) ?? null;
 
           return (
-            <button
-              key={character.id}
-              className={`tavern-character-tile ${isTalking ? "active" : ""}`}
-              onClick={() => onOpenConversation(character.id)}
-            >
+            <article key={character.id} className="card npc-card npc-card--tavern">
               <img
-                className="tavern-chat-portrait tavern-character-tile-portrait"
+                className="npc-card-portrait"
                 src={`${BASE}images/characters/${character.portrait}`}
                 alt={character.name}
               />
-              <span className="tavern-character-tile-main">
-                <span className="tavern-character-name">{character.name}</span>
-              </span>
-            </button>
+              <div className="npc-card-copy">
+                <div className="npc-card-name">{character.name}</div>
+                <div className="npc-card-role">{character.role}</div>
+              </div>
+              <div className="npc-card-actions">
+                {character.hireable && (
+                  <button type="button" className="npc-card-action-btn" onClick={() => onHire(character.id)}>
+                    Hire
+                  </button>
+                )}
+                {availableQuest && (
+                  <button type="button" className="npc-card-action-btn npc-card-action-btn--quest" onClick={() => onQuest(character.id)}>
+                    Accept Quest
+                  </button>
+                )}
+                <button type="button" className="npc-card-action-btn npc-card-action-btn--talk" onClick={() => onTalk(character.id)}>
+                  Talk
+                </button>
+              </div>
+            </article>
           );
         })}
-      </div>
     </div>
   );
 }

@@ -1,11 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { getIpcMessages, renderApp } from "../test/helpers";
-
-function skipTypingIfNeeded() {
-  const skipButton = screen.queryByRole("button", { name: "Skip Typing" });
-  if (skipButton) fireEvent.click(skipButton);
-}
 
 describe("ShipCrewTab", () => {
   it("sends fire IPC from Ship > Crew tab", async () => {
@@ -22,6 +17,9 @@ describe("ShipCrewTab", () => {
               role: "Broken Cannoneer",
               portrait: "character31.png",
               hireable: true,
+              talkPhrases: ["Decide, then commit."],
+              hireText: "Good. Give me powder, space, and silence.",
+              fireText: "Fine. The sea still remembers who taught your gunners.",
               statChanges: [{ stat: "AttackDamage", modifier: "Additive", value: 5 }],
             },
           ],
@@ -32,9 +30,10 @@ describe("ShipCrewTab", () => {
       },
     });
 
-    fireEvent.click(await screen.findByRole("button", { name: /Dorian Blackwake/ }));
-    skipTypingIfNeeded();
-    fireEvent.click(await screen.findByRole("button", { name: /Stand down at next port\./ }));
+    const card = screen.getByText("Dorian Blackwake").closest(".npc-card") as HTMLElement | null;
+    expect(card).not.toBeNull();
+    fireEvent.click(within(card as HTMLElement).getByRole("button", { name: "Fire" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Fire" }));
 
     const actions = getIpcMessages(ipcSpy) as { action: string; characterId?: string }[];
     expect(actions).toContainEqual({

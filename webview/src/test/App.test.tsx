@@ -86,7 +86,6 @@ describe("App", () => {
           canAcceptFromQuestLog: true,
           description: "A short tutorial quest.",
           completionText: "Nicely done.",
-          isReadyToTurnIn: false,
           unlocks: [],
           steps: [
             { label: "Buy 1 Tea", currentValue: 1, requiredValue: 1, isComplete: true },
@@ -108,14 +107,43 @@ describe("App", () => {
     expect(completedValue).toHaveTextContent("1/1");
   });
 
-  it("auto-opens Scarlett's onboarding and accepts her starter quest at sea", () => {
+  it("shows AcceptedText when a quest is already active from auto-accept", () => {
+    renderApp({
+      isInPort: false,
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett_learn_to_sail",
+          title: "Learn to Sail",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character2.png",
+          giverPortName: "",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          acceptedText: "Welcome to the Seas! Press W, A, S, or D and make the ship answer.",
+          description: "Move the ship once.",
+          completionText: "",
+          unlocks: [],
+          steps: [],
+        },
+        all: [],
+        completedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
+  });
+
+  it("does not auto-open Scarlett onboarding or auto-accept her quest at sea", () => {
     const { ipcSpy } = renderApp({
       isInPort: false,
       quests: {
         available: [
           {
-            id: "scarlett_sail_to_port",
-            title: "Sail to Port",
+            id: "scarlett_learn_to_sail",
+            title: "Learn to Sail",
             giverNpcId: "scarlett",
             giverName: "Scarlett",
             giverPortrait: "character2.png",
@@ -124,7 +152,6 @@ describe("App", () => {
             canAcceptFromQuestLog: true,
             description: "Dock once.",
             completionText: "Nicely done.",
-            isReadyToTurnIn: false,
             unlocks: ["SellGoods", "TavernTalk"],
             steps: [],
           },
@@ -136,13 +163,12 @@ describe("App", () => {
       },
     });
 
-    expect(screen.getByText(/top-left Quests button/i)).toBeInTheDocument();
-    expect(screen.queryByRole("dialog", { name: "Scarlett conversation" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/top-left Quests button/i)).not.toBeInTheDocument();
 
     const actions = getIpcMessages(ipcSpy) as { action: string; questId?: string; characterId?: string }[];
-    expect(actions).toContainEqual({
+    expect(actions).not.toContainEqual({
       action: "accept_quest",
-      questId: "scarlett_sail_to_port",
+      questId: "scarlett_learn_to_sail",
       characterId: "scarlett",
     });
   });
