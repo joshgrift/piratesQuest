@@ -13,7 +13,7 @@ function displayCaptainName(value: string | null | undefined) {
   return trimmed.length > 0 ? trimmed : "Unknown Captain";
 }
 
-export function LeaderboardTab({
+export function LeaderboardPanel({
   entries,
   playerName,
 }: {
@@ -114,3 +114,5 @@ export function LeaderboardTab({
     </>
   );
 }
+
+export const LeaderboardTab = LeaderboardPanel;

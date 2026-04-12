@@ -2361,6 +2361,73 @@ img {
   white-space: nowrap;
 }
 
+.ship-stat-list {
+  display: grid;
+  gap: 8px;
+}
+
+.ship-stat-list-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ship-stat-list-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ship-stat-impact {
+  font-size: 11px;
+  color: #9fd3a0;
+  line-height: 1.35;
+}
+
+.ship-stat-formula {
+  display: grid;
+  justify-content: flex-end;
+  gap: 2px;
+  text-align: right;
+  color: #9fd3a0;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.ship-stat-formula-line,
+.ship-stat-formula-result {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.ship-stat-formula-base,
+.ship-stat-formula-equals,
+.ship-stat-formula-final {
+  color: #e0d5c0;
+  font-family: monospace;
+}
+
+.ship-stat-formula-part {
+  color: #9fd3a0;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.ship-stat-formula-base,
+.ship-stat-formula-equals {
+  font-size: 12px;
+}
+
+.ship-stat-formula-final {
+  font-size: 13px;
+}
+
 /* ── Empty State ──────────────────────────────────────────────────── */
 
 .empty-state {
@@ -3121,6 +3188,37 @@ img {
   font-weight: 700;
 }
 
+.ship-crew-summary-divider {
+  height: 1px;
+  margin: 10px 0 12px;
+  background: linear-gradient(90deg, rgba(236, 196, 116, 0.04), rgba(236, 196, 116, 0.3), rgba(118, 186, 233, 0.18), rgba(236, 196, 116, 0.04));
+}
+
+.ship-crew-summary-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.ship-crew-summary-title {
+  font-family: "New Rocker", cursive;
+  font-size: 14px;
+  color: #f1ddb8;
+  letter-spacing: 0.03em;
+}
+
+.ship-crew-summary-note {
+  font-size: 11px;
+  color: #8b9ab5;
+}
+
+.ship-crew-stats-grid {
+  gap: 6px 10px;
+}
+
 .tavern-crew-help {
   margin-top: 8px;
   font-size: 11px;
@@ -3260,6 +3358,12 @@ img {
   gap: 14px;
 }
 
+.npc-card-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
 .npc-card {
   display: grid;
   gap: 12px;
@@ -3275,6 +3379,17 @@ img {
     inset 0 0 0 1px rgba(255, 229, 172, 0.08);
 }
 
+.npc-card-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.npc-card-main {
+  min-width: 0;
+}
+
 .npc-card-portrait {
   width: 88px;
   height: 88px;
@@ -3286,7 +3401,8 @@ img {
 
 .npc-card-copy {
   display: grid;
-  gap: 4px;
+  gap: 2px;
+  min-width: 0;
 }
 
 .npc-card-name {
@@ -3305,6 +3421,12 @@ img {
 .npc-card-impact {
   border-top: 1px solid rgba(236, 196, 116, 0.14);
   padding-top: 10px;
+}
+
+.npc-card-impact--inline {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 2px;
 }
 
 .npc-card-impact-list {
@@ -3365,6 +3487,64 @@ img {
 
 .npc-card-action-btn--danger {
   background: rgba(108, 32, 24, 0.82);
+}
+
+.npc-card--list {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 18px;
+}
+
+.npc-card-portrait--compact {
+  width: 64px;
+  height: 64px;
+  border-width: 2px;
+}
+
+.npc-card--list .npc-card-name {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.npc-card--list .npc-card-role {
+  font-size: 0.64rem;
+}
+
+.npc-card--list .npc-card-impact-list {
+  gap: 4px;
+}
+
+.npc-card--list .npc-card-impact-row {
+  font-size: 0.82rem;
+}
+
+.npc-card--list .npc-card-impact-empty {
+  font-size: 0.8rem;
+}
+
+.npc-card--list .npc-card-actions {
+  justify-content: flex-end;
+  align-self: center;
+  gap: 6px;
+}
+
+.npc-card--list .npc-card-action-btn {
+  padding: 6px 10px;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 720px) {
+  .npc-card--list {
+    grid-template-columns: 1fr;
+  }
+
+  .npc-card--list .npc-card-actions {
+    justify-content: flex-start;
+    align-self: start;
+  }
 }
 
 .tavern-stats-card {
@@ -3967,14 +4147,19 @@ img {
   gap: 14px;
 }
 
+.quest-card--completed {
+  gap: 8px;
+  padding: 14px 16px;
+}
+
 .quest-card--collapsed {
   gap: 0;
   padding: 0;
 }
 
 .quest-card-header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: start;
 }
@@ -3999,6 +4184,23 @@ img {
 .quest-card-giver {
   color: rgba(228, 221, 202, 0.76);
   text-align: right;
+  white-space: nowrap;
+}
+
+.quest-card--completed .quest-card-header {
+  align-items: center;
+}
+
+.quest-card--completed .quest-card-kicker {
+  font-size: 0.72rem;
+}
+
+.quest-card--completed .quest-card-title {
+  font-size: 1rem;
+}
+
+.quest-card--completed .quest-card-giver {
+  font-size: 0.92rem;
 }
 
 .quest-card-toggle {

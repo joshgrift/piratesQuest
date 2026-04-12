@@ -171,16 +171,13 @@ export function MarketTab({
                 <div className="qty-stepper">
                   {mode === "sell" ? (
                     <>
-                      {([100, 50, 5] as const).map((n) => (
-                        <button
-                          key={n}
-                          className="qty-btn"
-                          disabled={qty + n > max}
-                          onClick={() => setQty(item.type, Math.min(max, qty + n))}
-                        >
-                          -{n}
-                        </button>
-                      ))}
+                      <button
+                        className="qty-btn qty-btn-reset"
+                        disabled={qty <= 0}
+                        onClick={() => setQty(item.type, 0)}
+                      >
+                        ×
+                      </button>
                       <button
                         className="qty-btn"
                         disabled={qty <= 0}
@@ -196,19 +193,22 @@ export function MarketTab({
                       >
                         +
                       </button>
+                      {([5, 50, 100] as const).map((n) => (
+                        <button
+                          key={n}
+                          className="qty-btn"
+                          disabled={qty + n > max}
+                          onClick={() => setQty(item.type, Math.min(max, qty + n))}
+                        >
+                          +{n}
+                        </button>
+                      ))}
                       <button
                         className="qty-btn qty-btn-all"
                         disabled={qty >= max}
                         onClick={() => setQty(item.type, max)}
                       >
                         All
-                      </button>
-                      <button
-                        className="qty-btn qty-btn-reset"
-                        disabled={qty <= 0}
-                        onClick={() => setQty(item.type, 0)}
-                      >
-                        ×
                       </button>
                     </>
                   ) : (

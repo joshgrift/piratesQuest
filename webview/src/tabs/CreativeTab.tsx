@@ -7,7 +7,7 @@ const ITEM_TYPES = ["Coin", "Wood", "Iron", "Fish", "Tea", "CannonBall", "Trophy
 const STEP_AMOUNTS = [1, 50, 100] as const;
 const GOLD_STEP_AMOUNTS = [10, 100, 1000] as const;
 
-export function CreativeTab({ state }: { state: PortState }) {
+export function CreativePanel({ state }: { state: PortState }) {
   const [flashItem, setFlashItem] = useState<string | null>(null);
   const firstActiveQuest = state.quests.active;
   const firstAvailableQuest = state.quests.available[0] ?? null;
@@ -341,6 +341,8 @@ export function CreativeTab({ state }: { state: PortState }) {
     </>
   );
 }
+
+export const CreativeTab = CreativePanel;
 
 // ── Debug State Panel ─────────────────────────────────────────────────
 

@@ -4,26 +4,22 @@ import type { PortState } from "./types";
 import { sendIpc } from "./utils/ipc";
 import { useInputCapture } from "./hooks/useInputCapture";
 import { BASE } from "./utils/helpers";
-import { MarketTab } from "./tabs/MarketTab";
-import { ShipyardTab } from "./tabs/ShipyardTab";
-import { VaultTab } from "./tabs/VaultTab";
-import { CreativeTab } from "./tabs/CreativeTab";
-import { QuestsTab } from "./tabs/QuestsTab";
-import { ShipCrewTab } from "./tabs/ShipCrewTab";
-import { LeaderboardTab } from "./tabs/LeaderboardTab";
-import { StatsTab } from "./tabs/StatsTab";
+import { CreativePanel } from "./tabs/CreativeTab";
+import { QuestsPanel } from "./tabs/QuestsTab";
+import { LeaderboardPanel } from "./tabs/LeaderboardTab";
+import { StatsPanel } from "./tabs/StatsTab";
 import { SCARLETT_CHARACTER_ID, getFirePrompt, getRandomTalkPhrase } from "./tabs/tavernHelpers";
 import { ShipStatusWidget } from "./components/ShipStatusWidget";
 import { QuestStatusWidget } from "./components/QuestStatusWidget";
 import { NpcCommentToast, type NpcCommentToastData } from "./components/NpcCommentToast";
 import type { QuestSummary, TavernCharacter } from "./types";
+import { PortPanel, type PortPanelTab } from "./panels/PortPanel";
+import { ShipPanel } from "./panels/ShipPanel";
 
-type PortTab = "market" | "shipyard" | "vault";
-type PanelMode = "ship" | "quests" | "crew" | "port" | "creative" | "stats" | "leaderboard";
+type PanelId = "ship" | "quests" | "port" | "creative" | "stats" | "leaderboard";
 
 const SHIP_ICON = `${BASE}icons/flat/caravel.svg`;
 const QUESTS_ICON = `${BASE}icons/flat/tied-scroll.svg`;
-const CREW_ICON = `${BASE}icons/flat/bandana.svg`;
 const PORT_ICON = `${BASE}icons/flat/anchor.svg`;
 const CREATIVE_ICON = `${BASE}icons/flat/pirate-skull.svg`;
 const STATS_ICON = `${BASE}icons/flat/sextant.svg`;
@@ -109,13 +105,13 @@ export default function App() {
   useInputCapture();
 
   const [portState, setPortState] = useState<PortState | null>(null);
-  const [activePanelMode, setActivePanelMode] = useState<PanelMode | null>("ship");
-  const [activePortTab, setActivePortTab] = useState<PortTab>("market");
+  const [activePanel, setActivePanel] = useState<PanelId | null>("ship");
+  const [activePortPanelTab, setActivePortPanelTab] = useState<PortPanelTab>("market");
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [npcCommentQueue, setNpcCommentQueue] = useState<NpcCommentToastData[]>([]);
   const prevIsInPortRef = useRef<boolean | null>(null);
   const prevActiveQuestIdRef = useRef<string | null>(null);
-  const prePortPanelModeRef = useRef<PanelMode | null>("ship");
+  const previousPanelBeforeDockRef = useRef<PanelId | null>("ship");
 
   const hasUnlockedFeature = (feature: string): boolean =>
     portState?.quests.unlockedFeatures.includes(feature) ?? false;
@@ -145,19 +141,19 @@ export default function App() {
     const prevIsInPort = prevIsInPortRef.current;
     prevIsInPortRef.current = isInPort;
 
-    // Auto-open Port mode only on sea -> port transition.
+    // Auto-open the Port panel only on sea -> port transition.
     if (isInPort && prevIsInPort !== true) {
-      prePortPanelModeRef.current = activePanelMode;
-      setActivePanelMode("port");
+      previousPanelBeforeDockRef.current = activePanel;
+      setActivePanel("port");
       return;
     }
 
-    // Leaving port restores the panel mode we had before docking
+    // Leaving port restores the panel we had before docking
     // (including hidden state if the panel was collapsed).
     if (!isInPort && prevIsInPort === true) {
-      setActivePanelMode(prePortPanelModeRef.current);
+      setActivePanel(previousPanelBeforeDockRef.current);
     }
-  }, [portState?.isInPort, activePanelMode]);
+  }, [portState?.isInPort, activePanel]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -185,9 +181,9 @@ export default function App() {
         return;
       }
 
-      if (activePanelMode !== null) {
+      if (activePanel !== null) {
         e.preventDefault();
-        setActivePanelMode(null);
+        setActivePanel(null);
       }
     }
 
@@ -195,7 +191,7 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [activePanelMode, isMapOpen, npcCommentQueue.length]);
+  }, [activePanel, isMapOpen, npcCommentQueue.length]);
 
   const handleFireCharacter = (characterId: string) => {
     if (!portState) return;
@@ -363,25 +359,23 @@ export default function App() {
     setNpcCommentQueue((current) => [...current, acceptedComment]);
   }, [portState]);
 
-  const panelClass = ["port-panel", activePanelMode === null ? "hidden" : ""].filter(Boolean).join(" ");
+  const panelClass = ["port-panel", activePanel === null ? "hidden" : ""].filter(Boolean).join(" ");
   const isInPort = !!portState?.isInPort;
-  const panelTitle = activePanelMode === "port"
+  const panelTitle = activePanel === "port"
     ? (portState?.portName ?? "Port")
-    : activePanelMode === "creative"
+    : activePanel === "creative"
       ? "Creative"
-    : activePanelMode === "quests"
+    : activePanel === "quests"
       ? "quests"
-      : activePanelMode === "crew"
-        ? "crew"
-    : activePanelMode === "stats"
+    : activePanel === "stats"
       ? "stats"
-    : activePanelMode === "leaderboard"
+    : activePanel === "leaderboard"
       ? "Hall of Captains"
       : "ship";
 
-  const handleModeSelect = (mode: PanelMode) => {
-    if (mode === "port" && !isInPort) return;
-    setActivePanelMode((prev) => (prev === mode ? null : mode));
+  const handlePanelSelect = (panel: PanelId) => {
+    if (panel === "port" && !isInPort) return;
+    setActivePanel((prev) => (prev === panel ? null : panel));
   };
 
   return (
@@ -397,20 +391,20 @@ export default function App() {
 
       <QuestStatusWidget
         state={portState}
-        panelOpen={activePanelMode !== null}
+        panelOpen={activePanel !== null}
         onOpenQuests={() => {
-          setActivePanelMode("quests");
+          setActivePanel("quests");
         }}
       />
-      <ShipStatusWidget state={portState} panelOpen={activePanelMode !== null} />
+      <ShipStatusWidget state={portState} panelOpen={activePanel !== null} />
 
-      <div className={`mode-rail ${activePanelMode === null ? "collapsed" : ""}`} role="tablist" aria-label="Panel mode">
+      <div className={`mode-rail ${activePanel === null ? "collapsed" : ""}`} role="tablist" aria-label="Panel mode">
         <button
-          className={`rail-mode-btn ${activePanelMode === "port" ? "active" : ""}`}
-          onClick={() => handleModeSelect("port")}
+          className={`rail-mode-btn ${activePanel === "port" ? "active" : ""}`}
+          onClick={() => handlePanelSelect("port")}
           type="button"
           role="tab"
-          aria-selected={activePanelMode === "port"}
+          aria-selected={activePanel === "port"}
           aria-label="Port mode"
           title={isInPort ? "Port" : "Port mode is only available while docked."}
           disabled={!isInPort}
@@ -418,45 +412,34 @@ export default function App() {
           <img className="rail-mode-icon" src={PORT_ICON} alt="" />
         </button>
         <button
-          className={`rail-mode-btn ${activePanelMode === "ship" ? "active" : ""}`}
-          onClick={() => handleModeSelect("ship")}
+          className={`rail-mode-btn ${activePanel === "ship" ? "active" : ""}`}
+          onClick={() => handlePanelSelect("ship")}
           type="button"
           role="tab"
-          aria-selected={activePanelMode === "ship"}
+          aria-selected={activePanel === "ship"}
           aria-label="Ship mode"
           title="Ship"
         >
           <img className="rail-mode-icon" src={SHIP_ICON} alt="" />
         </button>
         <button
-          className={`rail-mode-btn ${activePanelMode === "quests" ? "active" : ""}`}
-          onClick={() => handleModeSelect("quests")}
+          className={`rail-mode-btn ${activePanel === "quests" ? "active" : ""}`}
+          onClick={() => handlePanelSelect("quests")}
           type="button"
           role="tab"
-          aria-selected={activePanelMode === "quests"}
+          aria-selected={activePanel === "quests"}
           aria-label="Quests mode"
           title="Quests"
         >
           <img className="rail-mode-icon" src={QUESTS_ICON} alt="" />
         </button>
-        <button
-          className={`rail-mode-btn ${activePanelMode === "crew" ? "active" : ""}`}
-          onClick={() => handleModeSelect("crew")}
-          type="button"
-          role="tab"
-          aria-selected={activePanelMode === "crew"}
-          aria-label="Crew mode"
-          title="Crew"
-        >
-          <img className="rail-mode-icon" src={CREW_ICON} alt="" />
-        </button>
         {portState?.isCreative && (
           <button
-            className={`rail-mode-btn ${activePanelMode === "creative" ? "active" : ""}`}
-            onClick={() => handleModeSelect("creative")}
+            className={`rail-mode-btn ${activePanel === "creative" ? "active" : ""}`}
+            onClick={() => handlePanelSelect("creative")}
             type="button"
             role="tab"
-            aria-selected={activePanelMode === "creative"}
+            aria-selected={activePanel === "creative"}
             aria-label="Creative mode"
             title="Creative"
           >
@@ -464,22 +447,22 @@ export default function App() {
           </button>
         )}
         <button
-          className={`rail-mode-btn ${activePanelMode === "stats" ? "active" : ""}`}
-          onClick={() => handleModeSelect("stats")}
+          className={`rail-mode-btn ${activePanel === "stats" ? "active" : ""}`}
+          onClick={() => handlePanelSelect("stats")}
           type="button"
           role="tab"
-          aria-selected={activePanelMode === "stats"}
+          aria-selected={activePanel === "stats"}
           aria-label="Stats mode"
           title="Stats"
         >
           <img className="rail-mode-icon" src={STATS_ICON} alt="" />
         </button>
         <button
-          className={`rail-mode-btn ${activePanelMode === "leaderboard" ? "active" : ""}`}
-          onClick={() => handleModeSelect("leaderboard")}
+          className={`rail-mode-btn ${activePanel === "leaderboard" ? "active" : ""}`}
+          onClick={() => handlePanelSelect("leaderboard")}
           type="button"
           role="tab"
-          aria-selected={activePanelMode === "leaderboard"}
+          aria-selected={activePanel === "leaderboard"}
           aria-label="Leaderboard mode"
           title="Leaderboard"
         >
@@ -492,74 +475,39 @@ export default function App() {
           <div className="port-name">{panelTitle}</div>
         </div>
 
-        {activePanelMode === "port" && (
-          <div className="tab-bar">
-            <button
-              className={`tab-btn ${activePortTab === "market" ? "active" : ""}`}
-              onClick={() => setActivePortTab("market")}
-            >
-              Market
-            </button>
-            <button
-              className={`tab-btn ${activePortTab === "shipyard" ? "active" : ""}`}
-              onClick={() => setActivePortTab("shipyard")}
-            >
-              Shipyard
-            </button>
-            {hasUnlockedFeature("Vault") && (
-              <button
-                className={`tab-btn vault-tab-btn ${activePortTab === "vault" ? "active" : ""}`}
-                onClick={() => setActivePortTab("vault")}
-              >
-                Vault
-              </button>
-            )}
-          </div>
-        )}
-
         {portState && (
-          <div className="tab-content">
-            {activePanelMode === "ship" ? (
-              <ShipyardTab
-                state={portState}
-                isInPort={portState.isInPort}
-                showForSale={false}
-                showShipUpgrade={false}
-              />
-            ) : activePanelMode === "quests" ? (
-              <QuestsTab state={portState} />
-            ) : activePanelMode === "crew" ? (
-              <ShipCrewTab
-                state={portState}
-                onTalk={openTalkPopup}
-                onFire={openFirePopup}
-                onQuest={openQuestPopup}
-              />
-            ) : activePanelMode === "stats" ? (
-              <StatsTab state={portState} />
-            ) : activePanelMode === "leaderboard" ? (
-              <LeaderboardTab entries={portState.leaderboard} playerName={portState.playerName} />
-            ) : activePanelMode === "creative" && portState.isCreative ? (
-              <CreativeTab state={portState} />
-            ) : activePortTab === "market" ? (
-              <MarketTab
-                state={portState}
-                onTalkToCharacter={openTalkPopup}
-                onHireCharacter={openHirePopup}
-                onQuestForCharacter={openQuestPopup}
-              />
-            ) : activePortTab === "shipyard" ? (
-              <ShipyardTab state={portState} isInPort={portState.isInPort} />
-            ) : activePortTab === "vault" && hasUnlockedFeature("Vault") ? (
-              portState.isInPort ? (
-                <VaultTab state={portState} />
+          activePanel === "port" ? (
+            <PortPanel
+              state={portState}
+              activeTab={activePortPanelTab}
+              onSelectTab={setActivePortPanelTab}
+              hasUnlockedFeature={hasUnlockedFeature}
+              onTalkToCharacter={openTalkPopup}
+              onHireCharacter={openHirePopup}
+              onQuestForCharacter={openQuestPopup}
+            />
+          ) : (
+            <div className="tab-content">
+              {activePanel === "ship" ? (
+                <ShipPanel
+                  state={portState}
+                  onTalkToCrewmate={openTalkPopup}
+                  onFireCrewmate={openFirePopup}
+                  onQuestForCrewmate={openQuestPopup}
+                />
+              ) : activePanel === "quests" ? (
+                <QuestsPanel state={portState} />
+              ) : activePanel === "stats" ? (
+                <StatsPanel state={portState} />
+              ) : activePanel === "leaderboard" ? (
+                <LeaderboardPanel entries={portState.leaderboard} playerName={portState.playerName} />
+              ) : activePanel === "creative" && portState.isCreative ? (
+                <CreativePanel state={portState} />
               ) : (
-                <div className="empty-state">Dock at a port to access the vault.</div>
-              )
-            ) : (
-              <div className="empty-state">Port services are unavailable while at sea.</div>
-            )}
-          </div>
+                <div className="empty-state">Waiting for ship data from Godot...</div>
+              )}
+            </div>
+          )
         )}
 
         {!portState && (

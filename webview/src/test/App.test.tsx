@@ -53,8 +53,10 @@ describe("App", () => {
     });
 
     expect(getByTestId("ship-status-player")).toHaveTextContent("Scarlet Jack");
-    expect(getByTestId("ship-status-health")).toHaveTextContent("77 / 120");
-    expect(getByTestId("ship-status-cannonballs")).toHaveTextContent("19 balls");
+    expect(getByTestId("ship-status-cannonballs")).toHaveTextContent("19");
+
+    fireEvent.click(screen.getByRole("button", { name: "Show ship indicator details" }));
+    expect(screen.getByText("77 / 120")).toBeInTheDocument();
   });
 
   it("shows cooling cannon state and overburdened warning", () => {
@@ -64,12 +66,15 @@ describe("App", () => {
       isOverburdened: true,
     });
 
-    expect(getByTestId("ship-status-cannon-state")).toHaveTextContent("Cooling 1.2s");
-    expect(getByTestId("ship-status-overburdened")).toHaveTextContent("Overburdened");
+    fireEvent.click(getByTestId("ship-status-cannon-state"));
+    expect(screen.getByText("Loading 1.2s")).toBeInTheDocument();
+
+    fireEvent.click(getByTestId("ship-status-overburdened"));
+    expect(screen.getByText("Burdened")).toBeInTheDocument();
   });
 
   it("shows component and crew slot usage", () => {
-    const { getByTestId } = renderApp({
+    renderApp({
       componentCapacity: 4,
       ownedComponents: [
         makeOwnedComponent({ name: "Hull", isEquipped: true }),
@@ -83,8 +88,9 @@ describe("App", () => {
       },
     });
 
-    expect(getByTestId("ship-status-component-slots")).toHaveTextContent("2/4");
-    expect(getByTestId("ship-status-crew-slots")).toHaveTextContent("2/3");
+    fireEvent.click(screen.getByRole("button", { name: "Show ship indicator details" }));
+    expect(screen.getByTestId("ship-status-component-slots")).toHaveAttribute("aria-label", "Component slots: 2/4");
+    expect(screen.getByTestId("ship-status-crew-slots")).toHaveAttribute("aria-label", "Crew slots: 2/3");
   });
 
   it("marks completed quest widget steps with the complete styling hook", () => {

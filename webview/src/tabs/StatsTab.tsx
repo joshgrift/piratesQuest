@@ -204,7 +204,7 @@ function buildHighlights(progress: ProgressSnapshot, completedQuestCount: number
   return highlights.slice(0, 4);
 }
 
-export function StatsTab({ state }: { state: PortState }) {
+export function StatsPanel({ state }: { state: PortState }) {
   const progressState = parseLifetimeProgress(state.serverStateJson);
   const progress = progressState.lifetime;
   const netWorth = progress.totalMoneyEarned - progress.totalMoneySpent;
@@ -353,3 +353,5 @@ export function StatsTab({ state }: { state: PortState }) {
     </div>
   );
 }
+
+export const StatsTab = StatsPanel;

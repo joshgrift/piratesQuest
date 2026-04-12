@@ -1,27 +1,14 @@
 import type { PortState, QuestSummary, TavernCharacter } from "../types";
 import { BASE, fmt, formatStatName } from "../utils/helpers";
+import { getCrewImpact } from "../utils/shipBonuses";
 import { SCARLETT_CHARACTER_ID } from "./tavernHelpers";
-
-function getCrewImpact(state: PortState): Record<string, number> {
-  const hired = new Set(state.crew.hiredCharacterIds);
-  const totals: Record<string, number> = {};
-
-  for (const character of state.crew.characters) {
-    if (!hired.has(character.id)) continue;
-    for (const change of character.statChanges) {
-      if (change.modifier !== "Additive") continue;
-      totals[change.stat] = (totals[change.stat] ?? 0) + change.value;
-    }
-  }
-
-  return totals;
-}
 
 interface ShipCrewTabProps {
   state: PortState;
   onTalk: (characterId: string) => void;
   onFire: (characterId: string) => void;
   onQuest: (characterId: string) => void;
+  showSummary?: boolean;
 }
 
 export function ShipCrewTab({
@@ -29,6 +16,7 @@ export function ShipCrewTab({
   onTalk,
   onFire,
   onQuest,
+  showSummary = true,
 }: ShipCrewTabProps) {
   const hiredSet = new Set(state.crew.hiredCharacterIds);
   const hiredCrew = state.crew.characters.filter((c) => hiredSet.has(c.id));
@@ -61,7 +49,7 @@ export function ShipCrewTab({
 
   return (
     <>
-      <div className="section-title">Crew Berths</div>
+      <div className="section-title">Crew</div>
       <div className="card">
         <div className="tavern-slots-row">
           <div className="capacity-slots">
@@ -73,28 +61,55 @@ export function ShipCrewTab({
             {hiredCrew.length}/{state.crew.crewSlots} Hired
           </div>
         </div>
+        {showSummary && (
+          <>
+            <div className="ship-crew-summary-divider" />
+            <div className="ship-crew-summary-head">
+              <div className="ship-crew-summary-title">Effective Ship Stats</div>
+              <div className="ship-crew-summary-note">Crew bonuses are shown in green.</div>
+            </div>
+            <div className="stats-grid ship-crew-stats-grid">
+              {Object.entries(state.stats).map(([stat, value]) => {
+                const bonus = impact[stat] ?? 0;
+                return (
+                  <div className="stat-row" key={stat}>
+                    <span className="stat-label">{formatStatName(stat)}</span>
+                    <span className="stat-value">
+                      {fmt(value)}
+                      {bonus !== 0 && <span className="stat-bonus">(+{fmt(bonus)})</span>}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       {hiredCrew.length === 0 ? (
         <div className="empty-state">No active crew yet. Hire crew in a port tavern.</div>
       ) : (
-          <div className="npc-card-grid npc-card-grid--crew">
+          <div className="npc-card-list">
             {hiredCrew.map((character) => {
               const availableQuest = questByNpcId.get(character.id) ?? null;
               const isScarlett = character.id === SCARLETT_CHARACTER_ID;
               return (
-                <article key={character.id} className="card npc-card npc-card--crew">
-                  <img
-                    className="npc-card-portrait"
-                    src={`${BASE}images/characters/${character.portrait}`}
-                    alt={character.name}
-                  />
-                  <div className="npc-card-copy">
-                    <div className="npc-card-name">{character.name}</div>
-                    <div className="npc-card-role">{character.role}</div>
-                  </div>
-                  <div className="npc-card-impact">
-                    {renderImpact(character)}
+                <article key={character.id} className="card npc-card npc-card--list npc-card--crew">
+                  <div className="npc-card-main">
+                    <div className="npc-card-identity">
+                      <img
+                        className="npc-card-portrait npc-card-portrait--compact"
+                        src={`${BASE}images/characters/${character.portrait}`}
+                        alt={character.name}
+                      />
+                      <div className="npc-card-copy">
+                        <div className="npc-card-name">{character.name}</div>
+                        <div className="npc-card-role">{character.role}</div>
+                        <div className="npc-card-impact npc-card-impact--inline">
+                          {renderImpact(character)}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div className="npc-card-actions">
                     {!isScarlett && (
@@ -116,24 +131,6 @@ export function ShipCrewTab({
             })}
           </div>
       )}
-
-      <div className="section-title">Effective Ship Stats</div>
-      <div className="card">
-        <div className="stats-grid">
-          {Object.entries(state.stats).map(([stat, value]) => {
-            const bonus = impact[stat] ?? 0;
-            return (
-              <div className="stat-row" key={stat}>
-                <span className="stat-label">{formatStatName(stat)}</span>
-                <span className="stat-value">
-                  {fmt(value)}
-                  {bonus !== 0 && <span className="stat-bonus"> (+{fmt(bonus)})</span>}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </>
   );
 }

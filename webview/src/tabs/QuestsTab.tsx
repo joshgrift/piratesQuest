@@ -30,12 +30,6 @@ function QuestCard({
         </div>
       </div>
 
-      <div className="quest-card-giver">
-        {quest.revealGiverInQuestLog
-          ? `${quest.giverName}${quest.giverPortName ? ` • ${quest.giverPortName}` : ""}`
-          : "Unknown lead"}
-      </div>
-
       {hasText(quest.description) && (
         <div className="quest-card-desc">{quest.description}</div>
       )}
@@ -62,18 +56,18 @@ function QuestCard({
 
 function CompletedQuestCard({ quest }: { quest: QuestSummary }) {
   return (
-    <div className="card quest-card">
+    <div className="card quest-card quest-card--completed">
       <div className="quest-card-header">
         <div className="quest-card-heading">
           <div className="quest-card-kicker">Completed Quest</div>
           <div className="quest-card-title">{quest.title}</div>
         </div>
-      </div>
 
-      <div className="quest-card-giver">
-        {quest.revealGiverInQuestLog
-          ? `${quest.giverName}${quest.giverPortName ? ` • ${quest.giverPortName}` : ""}`
-          : "Unknown lead"}
+        <div className="quest-card-giver">
+          {quest.revealGiverInQuestLog
+            ? `${quest.giverName}${quest.giverPortName ? ` • ${quest.giverPortName}` : ""}`
+            : "Unknown lead"}
+        </div>
       </div>
 
       {hasText(quest.description) && (
@@ -83,7 +77,7 @@ function CompletedQuestCard({ quest }: { quest: QuestSummary }) {
   );
 }
 
-export function QuestsTab({ state }: { state: PortState }) {
+export function QuestsPanel({ state }: { state: PortState }) {
   const { active, all, completedIds } = state.quests;
 
   const completedQuests = completedIds
@@ -135,3 +129,5 @@ export function QuestsTab({ state }: { state: PortState }) {
     </>
   );
 }
+
+export const QuestsTab = QuestsPanel;

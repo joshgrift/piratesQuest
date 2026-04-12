@@ -132,11 +132,43 @@ describe("QuestsTab", () => {
     });
 
     expect(screen.getByText("Done and Dusted")).toBeInTheDocument();
-    expect(screen.getByText("A completed quest should stay collapsed by default.")).toBeInTheDocument();
     expect(screen.getByText("Governor Caspian Vale • Haven")).toBeInTheDocument();
+    expect(screen.getByText("A completed quest should stay collapsed by default.")).toBeInTheDocument();
     expect(screen.queryByText("Turn it in")).not.toBeInTheDocument();
     expect(screen.queryByText(/Hide details/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Open to review the details/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the active quest giver only once", () => {
+    renderApp({
+      tab: "quests",
+      state: {
+        quests: {
+          available: [],
+          active: {
+            id: "active-quest",
+            title: "Current Orders",
+            giverNpcId: "scarlett",
+            giverName: "Scarlett",
+            giverPortrait: "character1.png",
+            giverPortName: "Tortuga",
+            revealGiverInQuestLog: true,
+            canAcceptFromQuestLog: true,
+            canCancel: true,
+            description: "Do the thing you're working on right now.",
+            completionText: "",
+            unlocks: [],
+            steps: [{ label: "Finish the job", currentValue: 0, requiredValue: 1, isComplete: false }],
+          },
+          all: [],
+          completedIds: [],
+          recentlyCompletedIds: [],
+          unlockedFeatures: [],
+        },
+      },
+    });
+
+    expect(screen.getAllByText("Scarlett • Tortuga")).toHaveLength(1);
   });
 
   it("tells the player to talk to port NPCs when no quest is active", () => {

@@ -5,7 +5,7 @@ import { getIpcMessages, renderApp } from "../test/helpers";
 describe("ShipCrewTab", () => {
   it("sends fire IPC from Ship > Crew tab", async () => {
     const { ipcSpy } = renderApp({
-      tab: "ship_crew",
+      tab: "ship_status",
       state: {
         crew: {
           crewSlots: 2,
@@ -33,7 +33,8 @@ describe("ShipCrewTab", () => {
     const card = screen.getByText("Dorian Blackwake").closest(".npc-card") as HTMLElement | null;
     expect(card).not.toBeNull();
     fireEvent.click(within(card as HTMLElement).getByRole("button", { name: "Fire" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Fire" }));
+    const confirmationDialog = await screen.findByRole("dialog", { name: "Dorian Blackwake conversation" });
+    fireEvent.click(within(confirmationDialog).getByRole("button", { name: "Fire" }));
 
     const actions = getIpcMessages(ipcSpy) as { action: string; characterId?: string }[];
     expect(actions).toContainEqual({
