@@ -1045,8 +1045,10 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     EmitSignal(SignalName.InventoryChanged, (int)item, _inventory.GetItemCount(item), amount);
 
-    if (item == InventoryItemType.Coin && amount > 0)
+    if (item == InventoryItemType.Coin && amount > 0 && IsMultiplayerAuthority())
     {
+      // Coin rewards are player-owned feedback, so only the local owning client
+      // should hear them. Without this check, replicated player nodes can all play it.
       var audioManager = GetNode<AudioManager>("/root/AudioManager");
       audioManager.PlaySound("res://art/sounds/jcsounds/Misc Sfx/sfx_coin_clink_01.wav", volumeDb: -5.0f);
     }
@@ -1391,6 +1393,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   private void PlayQuestCompleteSound()
   {
+    // Quest completion is also private feedback for the player who completed it.
+    // Only the multiplayer authority for this Player node should hear the sound.
+    if (!IsMultiplayerAuthority())
+      return;
+
     var audioManager = GetNodeOrNull<AudioManager>("/root/AudioManager");
     if (audioManager == null)
       return;
