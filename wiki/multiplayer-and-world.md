@@ -36,10 +36,6 @@ Common multiplayer situations:
 - **Compete** over trade routes and valuable opportunities
 - **Betray** when the reward seems worth the risk
 
-## Communication
-
-Communication happens through **emotes**, which keeps interactions quick and expressive without stopping the action.
-
 ## Safe Assumptions
 
 When you are at sea, assume:

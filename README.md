@@ -183,33 +183,29 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
   - [x] No soft locks
   - [x] Better descriptions and explanations
   - [x] Can complete quests without returning to port
-  - [ ] You should be able to cancel quests (that aren't auto accepted)
-  - [ ] Make it clear in the UI you can only have on active quest
+  - [x] You should be able to cancel quests (that aren't auto accepted)
 - [x] Simplified character interaction, easy to get quest
-- [ ] Added more information to tutorial
+- [x] Added more information to tutorial
 - [x] Added Wiki
-  - [ ] Menu button to access wiki
+  - [x] Menu button to access wiki
+- [x] Cannonballs bounce of ships in safe zones
 - [ ] AI ships
   - [ ] Fix shooting
 - [ ] Windows UI not loading
 - [ ] Money sound played everywhere
 - [ ] Red port circles (and yellow resource circles) sometimes disappear, or take a while to appear
-
 - [ ] Map?
-
 - [ ] Flexible turn Speed when slow or fast
-- [ ] Show who is online in leaderboard
-
 - [ ] Can't arbitrage any resources
-
 - [ ] Would it be nice if camera turned with the ship?
-- [ ] Educate the player on safe zone, or the cannonball shot shouldn't do damage
-
 - [ ] Lock Characters behind quests
-- [ ] Sell buttons are backwards
 
-### Alpha 9 - AI Update
-
+- [ ] UI Cleanup
+  - [ ] Sell buttons are backwards
+  - [ ] Merged Crew and ship tabs
+  - [ ] Cleaned up Quest Interface
+  - [ ] Clean up character cards
+  - [ ] Make it clear in the UI you can only have on active quest
 
 ### Alpha 10 - World Update
 - [ ] Proper terrain with awesome islands and a large Island

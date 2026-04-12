@@ -15,7 +15,6 @@ Quests do more than hand out rewards. They teach mechanics, guide early progress
 
 Characters at ports offer quests that can reward you with:
 
-- artifacts
 - resources
 - components
 - crew
@@ -65,6 +64,8 @@ General rules:
 
 - the early progression is linear
 - only one quest is active at a time during that flow
+- manually accepted quests can be canceled from the Quests panel if you want to back out
+- auto-start tutorial quests stay active until you finish them
 - completing quests unlocks more of the port UI
 
 ## Long-Term Role of Quests
@@ -73,4 +74,3 @@ Quests stay useful after the tutorial because they can provide:
 
 - long-term progression rewards
 - new crew
-- artifacts

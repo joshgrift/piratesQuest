@@ -34,7 +34,7 @@ AI pirates carry stolen loot and can sometimes provide rare resources.
 
 ### AI Fleets
 
-AI fleets are the highest-risk targets. They guard valuable cargo, including rare resources, components, and even artifacts.
+AI fleets are the highest-risk targets. They guard valuable cargo, including rare resources and components.
 
 Defeating a fleet usually requires cooperation.
 

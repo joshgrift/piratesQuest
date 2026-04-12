@@ -1,6 +1,6 @@
 ---
 title: Ships and Components
-summary: Reference for ship classes, component upgrades, crew, artifacts, and vault storage.
+summary: Reference for ship classes, component upgrades, crew, and vault storage.
 section: Ship Progression
 order: 30
 template: article
@@ -54,15 +54,17 @@ Pick upgrades based on what you are about to do.
 
 Because components are lost on death, do not carry more expensive gear than the trip is worth.
 
-## Artifacts
-
-Artifacts are powerful items that **persist through death**.
-
-They can be obtained as quest rewards and improve ship stats or provide unique effects.
-
 ## Crew
 
-Crew members provide special abilities or stat modifiers. You can find them at ports or hire them through quests.
+Crew members provide special abilities or stat modifiers.
+
+Important crew rules:
+
+- crew **survive death**
+- different crew can be found at different ports around the world
+- hiring the right crew helps shape what your ship is best at
+
+If you want stronger trading, gathering, or combat runs, check ports for crew that match that job.
 
 ## Vault Summary
 

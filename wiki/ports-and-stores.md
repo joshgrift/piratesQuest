@@ -13,7 +13,9 @@ Ports are the main hubs of Pirate's Quest. They are where you regroup, trade, re
 
 ## Ports Are Safe Zones
 
-You cannot take damage while docked at a port. That makes ports the best place to recover after a difficult run and the safest place to make decisions about money, cargo, and upgrades.
+You cannot take damage while docked at a port. Cannonballs that hit a docked ship bounce away instead of exploding.
+
+That makes ports the best place to recover after a difficult run and the safest place to make decisions about money, cargo, and upgrades.
 
 ## What You Can Do At a Port
 
