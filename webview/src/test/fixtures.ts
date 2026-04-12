@@ -129,6 +129,7 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
       active: null,
       all: [],
       completedIds: [],
+      recentlyCompletedIds: [],
       unlockedFeatures: [
         "SellGoods",
         "TavernTalk",

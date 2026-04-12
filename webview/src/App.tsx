@@ -68,6 +68,7 @@ function buildQuestCompletionComment(state: PortState, questId: string): NpcComm
     portraitAlt: quest.giverName,
     name: quest.giverName,
     message: quest.completionText,
+    celebrate: true,
   };
 }
 
@@ -91,7 +92,6 @@ export default function App() {
   const [activePortTab, setActivePortTab] = useState<PortTab>("market");
   const [npcCommentQueue, setNpcCommentQueue] = useState<NpcCommentToastData[]>([]);
   const prevIsInPortRef = useRef<boolean | null>(null);
-  const prevCompletedQuestIdsRef = useRef<string[] | null>(null);
   const prevActiveQuestIdRef = useRef<string | null>(null);
   const prePortPanelModeRef = useRef<PanelMode | null>("ship");
 
@@ -289,15 +289,9 @@ export default function App() {
   };
 
   useEffect(() => {
-    const completedIds = portState?.quests.completedIds ?? [];
-    const previousIds = prevCompletedQuestIdsRef.current;
-    prevCompletedQuestIdsRef.current = completedIds;
+    if (!portState) return;
 
-    if (!portState || previousIds === null) return;
-
-    const previousIdSet = new Set(previousIds);
-    const newComments = completedIds
-      .filter((questId) => !previousIdSet.has(questId))
+    const newComments = (portState.quests.recentlyCompletedIds ?? [])
       .map((questId) => buildQuestCompletionComment(portState, questId))
       .filter((comment): comment is NpcCommentToastData => comment !== null);
 
@@ -519,6 +513,7 @@ export default function App() {
 
       <NpcCommentToast
         comment={npcCommentQueue[0] ?? null}
+        queueCount={npcCommentQueue.length}
         onDismiss={() => setNpcCommentQueue((current) => current.slice(1))}
       />
     </>

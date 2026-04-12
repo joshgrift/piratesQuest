@@ -42,6 +42,7 @@ export interface QuestHudState {
   active: QuestSummary | null;
   all: QuestSummary[];
   completedIds: string[];
+  recentlyCompletedIds: string[];
   unlockedFeatures: string[];
 }
 

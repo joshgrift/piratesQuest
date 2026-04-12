@@ -94,6 +94,7 @@ describe("App", () => {
         },
         all: [],
         completedIds: [],
+        recentlyCompletedIds: [],
         unlockedFeatures: [],
       },
     });
@@ -129,6 +130,7 @@ describe("App", () => {
         },
         all: [],
         completedIds: [],
+        recentlyCompletedIds: [],
         unlockedFeatures: [],
       },
     });
@@ -159,6 +161,7 @@ describe("App", () => {
         active: null,
         all: [],
         completedIds: [],
+        recentlyCompletedIds: [],
         unlockedFeatures: [],
       },
     });

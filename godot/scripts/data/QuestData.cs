@@ -90,6 +90,7 @@ public record QuestHudStateDto
   public QuestSummaryDto Active { get; init; }
   public QuestSummaryDto[] All { get; init; } = [];
   public string[] CompletedIds { get; init; } = [];
+  public string[] RecentlyCompletedIds { get; init; } = [];
   public string[] UnlockedFeatures { get; init; } = [];
 }
 

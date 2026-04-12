@@ -1329,7 +1329,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   public void ReevaluateQuestProgress()
   {
-    Progress.ReevaluateQuestProgress(GetTotalEquippedComponents());
+    bool didCompleteQuest = Progress.ReevaluateQuestProgress(GetTotalEquippedComponents());
+    if (didCompleteQuest)
+      PlayQuestCompleteSound();
   }
 
   public void RecordCameraDrag()
@@ -1346,7 +1348,10 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   public bool ForceCompleteQuest(string questId = null)
   {
-    return Progress.ForceCompleteQuest(questId);
+    bool didCompleteQuest = Progress.ForceCompleteQuest(questId);
+    if (didCompleteQuest)
+      PlayQuestCompleteSound();
+    return didCompleteQuest;
   }
 
   public bool ForceUncompleteQuest(string questId)
@@ -1377,6 +1382,15 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (!IsMultiplayerAuthority()) return;
     Progress.RecordShipSunk();
     ReevaluateQuestProgress();
+  }
+
+  private void PlayQuestCompleteSound()
+  {
+    var audioManager = GetNodeOrNull<AudioManager>("/root/AudioManager");
+    if (audioManager == null)
+      return;
+
+    audioManager.PlaySound("res://art/sounds/success.wav", volumeDb: -3.0f);
   }
 
   private void NotifyAttacker(string attackerPlayerId, StringName methodName)

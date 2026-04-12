@@ -433,6 +433,33 @@ img {
     inset 0 0 0 1px rgba(255, 232, 183, 0.12);
   cursor: pointer;
   outline: none;
+  overflow: visible;
+}
+
+.npc-comment-toast--celebrate {
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, 0.48),
+    0 0 0 1px rgba(255, 221, 147, 0.34),
+    0 0 28px rgba(246, 198, 111, 0.26),
+    inset 0 0 0 1px rgba(255, 232, 183, 0.12);
+}
+
+.npc-comment-toast-confetti {
+  position: absolute;
+  inset: -30px 8px auto 8px;
+  height: 72px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.npc-comment-toast-confetti-piece {
+  position: absolute;
+  top: 24px;
+  width: 10px;
+  height: 18px;
+  border-radius: 3px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  animation: npc-comment-confetti-burst 1s ease-out forwards;
 }
 
 .npc-comment-toast:focus-visible {
@@ -468,6 +495,58 @@ img {
   color: rgba(242, 235, 220, 0.96);
   line-height: 1.45;
   font-size: 1rem;
+}
+
+.npc-comment-toast-queue {
+  display: grid;
+  gap: 7px;
+  margin-top: 6px;
+}
+
+.npc-comment-toast-queue-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.npc-comment-toast-queue-badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(132, 194, 248, 0.36);
+  background: rgba(26, 63, 95, 0.55);
+  color: #bfe3ff;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.npc-comment-toast-queue-timer {
+  color: rgba(255, 226, 170, 0.92);
+  font-size: 0.9rem;
+}
+
+.npc-comment-toast-progress {
+  position: relative;
+  overflow: hidden;
+  height: 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(239, 196, 116, 0.22);
+  background:
+    linear-gradient(180deg, rgba(8, 19, 28, 0.78), rgba(18, 33, 46, 0.74));
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.34);
+}
+
+.npc-comment-toast-progress-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  background:
+    linear-gradient(90deg, rgba(110, 190, 245, 0.9), rgba(246, 198, 111, 0.95));
+  box-shadow:
+    0 0 10px rgba(110, 190, 245, 0.24),
+    inset 0 0 0 1px rgba(255, 241, 205, 0.18);
 }
 
 .npc-comment-toast-actions {
@@ -532,6 +611,30 @@ img {
     opacity: 1;
     transform: translate(-50%, 0);
   }
+}
+
+@keyframes npc-comment-confetti-burst {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.7);
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-40px) translateX(var(--confetti-drift, 0px)) rotate(220deg) scale(1.05);
+  }
+}
+
+.npc-comment-toast-confetti-piece:nth-child(odd) {
+  --confetti-drift: -18px;
+}
+
+.npc-comment-toast-confetti-piece:nth-child(even) {
+  --confetti-drift: 18px;
 }
 
 .ship-status-widget {

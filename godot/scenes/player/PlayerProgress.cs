@@ -14,6 +14,7 @@ public class PlayerProgress
   private readonly ProgressSnapshot _lifetime = new();
   private readonly ProgressSnapshot _sinceQuestStart = new();
   private readonly List<string> _completedQuestIds = [];
+  private readonly List<string> _recentlyCompletedQuestIds = [];
   private readonly HashSet<string> _unlockedFeatures = new(StringComparer.Ordinal);
   private string _currentQuestId;
   private string _acceptedQuestNpcId;
@@ -233,7 +234,7 @@ public class PlayerProgress
 
   public QuestHudStateDto ExportHudState(int equippedComponentCount)
   {
-    return new QuestHudStateDto
+    var hudState = new QuestHudStateDto
     {
       Active = QuestData.GetQuest(_currentQuestId) is QuestDefinition activeQuest
         ? BuildSummary(activeQuest, _sinceQuestStart, equippedComponentCount)
@@ -249,8 +250,12 @@ public class PlayerProgress
         return BuildSummary(quest, source, equippedComponentCount);
       }).ToArray(),
       CompletedIds = _completedQuestIds.ToArray(),
+      RecentlyCompletedIds = _recentlyCompletedQuestIds.ToArray(),
       UnlockedFeatures = _unlockedFeatures.OrderBy(x => x, StringComparer.Ordinal).ToArray(),
     };
+
+    _recentlyCompletedQuestIds.Clear();
+    return hudState;
   }
 
   public PlayerProgressDto ToDto()
@@ -294,6 +299,8 @@ public class PlayerProgress
   {
     if (!_completedQuestIds.Contains(quest.Id))
       _completedQuestIds.Add(quest.Id);
+    if (!_recentlyCompletedQuestIds.Contains(quest.Id))
+      _recentlyCompletedQuestIds.Add(quest.Id);
 
     foreach (var unlock in quest.Unlocks)
       _unlockedFeatures.Add(unlock.ToString());
