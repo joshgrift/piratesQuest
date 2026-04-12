@@ -196,10 +196,9 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 - [ ] Fixed Windows UI not loading
 - [ ] AI ships
   - [ ] Fix shooting
-- [ ] Can't arbitrage any resources
-- [ ] Add another character & better space out characters
+- [x] Rebalanced trading, ports have specialties and it's based on map geography
+- [x] Add another character & better space out characters
 - [ ] Player should spawn in safe areas
-- [ ] early quests, we should skip the accepted text
 
 - [ ] UI Cleanup
   - [ ] Sell buttons are backwards
@@ -208,6 +207,7 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
   - [ ] Clean up character cards
   - [ ] Make it clear in the UI you can only have on active quest
   - [ ] If you press yes on a quest, it should just go away
+  - [ ] early quests, we should skip the accepted text
 
 ### Planned
 - [ ] In game map

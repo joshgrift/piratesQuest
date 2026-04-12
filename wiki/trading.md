@@ -64,6 +64,23 @@ Some goods are good trade cargo. Others matter because they help keep your ship 
 - Plan for the return trip if you can.
 - Keep enough resources to stay safe instead of spending everything on profit.
 
+## Distance And Profit
+
+Nearby trades can still make money, but the best margins usually come from longer sails.
+
+- Short routes are safer and faster.
+- Long routes usually pay better.
+- Expensive cargo is more painful to lose if another player catches you.
+
+That tradeoff is the point. A short hop can keep you afloat. A long haul is how you build a real bankroll.
+
+## Simple Route Examples
+
+- Buy `Wood` in western ports, then look for better wood prices in the east.
+- Buy `Iron` where mining is common, then carry it to remote ports that depend on imports.
+- Buy `Fish` in fishing towns, then sell it farther inland or across the map.
+- Buy `Tea` near Tidefall or Krakenfall, then bring it back to western or southern ports.
+
 ## Trading and Progression
 
 The early quests push you to trade on purpose. One of the main lessons is learning to buy core goods, sell them for profit, and build up a supply of gold.

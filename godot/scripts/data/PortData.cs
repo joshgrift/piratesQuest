@@ -59,123 +59,139 @@ public static class PortData
 
   private static readonly PortDefinition[] _ports =
   [
+    // Saint Johns is a lumber-heavy starter port on the western side of the map.
+    // It exports wood cheaply, but it pays a premium for tea hauled in from the northern tea region.
     new()
     {
       Id = "saint-johns",
       DisplayName = "Saint Johns",
       ItemsForSale =
       [
-        new() { ItemType = InventoryItemType.Wood, BuyPrice = 5, SellPrice = 4 },
-        new() { ItemType = InventoryItemType.Iron, BuyPrice = 10, SellPrice = 5 },
-        new() { ItemType = InventoryItemType.Fish, BuyPrice = 2, SellPrice = 0 },
-        new() { ItemType = InventoryItemType.Tea, BuyPrice = 10, SellPrice = 8 },
-        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 50, SellPrice = 40 },
+        new() { ItemType = InventoryItemType.Wood, BuyPrice = 4, SellPrice = 2 },
+        new() { ItemType = InventoryItemType.Iron, BuyPrice = 10, SellPrice = 8 },
+        new() { ItemType = InventoryItemType.Fish, BuyPrice = 5, SellPrice = 3 },
+        new() { ItemType = InventoryItemType.Tea, BuyPrice = 14, SellPrice = 11 },
+        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 51, SellPrice = 42 },
         new() { ItemType = InventoryItemType.Trophy, BuyPrice = 100000, SellPrice = 0 },
       ],
       CharacterIds = ["gideon-gearlock", "elder-bertram"],
     },
+    // Rusthook Point is a mining port in the southwest.
+    // Iron is a reliable export, and nearby demand is intentionally weaker than the distant routes.
     new()
     {
       Id = "rusthook-point",
       DisplayName = "Rusthook Point",
       ItemsForSale =
       [
-        new() { ItemType = InventoryItemType.Wood, BuyPrice = 5, SellPrice = 4 },
-        new() { ItemType = InventoryItemType.Iron, BuyPrice = 10, SellPrice = 5 },
-        new() { ItemType = InventoryItemType.Fish, BuyPrice = 2, SellPrice = 0 },
-        new() { ItemType = InventoryItemType.Tea, BuyPrice = 10, SellPrice = 8 },
-        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 50, SellPrice = 40 },
+        new() { ItemType = InventoryItemType.Wood, BuyPrice = 10, SellPrice = 8 },
+        new() { ItemType = InventoryItemType.Iron, BuyPrice = 6, SellPrice = 3 },
+        new() { ItemType = InventoryItemType.Fish, BuyPrice = 4, SellPrice = 2 },
+        new() { ItemType = InventoryItemType.Tea, BuyPrice = 10, SellPrice = 7 },
+        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 54, SellPrice = 45 },
         new() { ItemType = InventoryItemType.Trophy, BuyPrice = 100000, SellPrice = 0 },
       ],
       CharacterIds = ["tommy-fuse", "governor-caspian"],
     },
+    // Shard Bay sits close to the center, so its routes are convenient instead of exceptional.
+    // Fish are cheap here, while tea costs more because it has to be shipped in from the north.
     new()
     {
       Id = "shard-bay",
       DisplayName = "Shard Bay",
       ItemsForSale =
       [
-        new() { ItemType = InventoryItemType.Wood, BuyPrice = 5, SellPrice = 4 },
-        new() { ItemType = InventoryItemType.Iron, BuyPrice = 10, SellPrice = 5 },
-        new() { ItemType = InventoryItemType.Fish, BuyPrice = 2, SellPrice = 0 },
-        new() { ItemType = InventoryItemType.Tea, BuyPrice = 10, SellPrice = 8 },
-        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 50, SellPrice = 40 },
+        new() { ItemType = InventoryItemType.Wood, BuyPrice = 8, SellPrice = 6 },
+        new() { ItemType = InventoryItemType.Iron, BuyPrice = 12, SellPrice = 9 },
+        new() { ItemType = InventoryItemType.Fish, BuyPrice = 2, SellPrice = 1 },
+        new() { ItemType = InventoryItemType.Tea, BuyPrice = 11, SellPrice = 8 },
+        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 55, SellPrice = 46 },
         new() { ItemType = InventoryItemType.Trophy, BuyPrice = 100000, SellPrice = 0 },
       ],
       CharacterIds = ["dorian-blackwake", "elsie-drift"],
     },
+    // Krakenfall is one of the two ports nearest the tea fields.
+    // Tea should be easy to buy here, then worth carrying back across the map.
     new()
     {
       Id = "krakenfall",
       DisplayName = "Krakenfall",
       ItemsForSale =
       [
-        new() { ItemType = InventoryItemType.Wood, BuyPrice = 4, SellPrice = 3 },
-        new() { ItemType = InventoryItemType.Fish, BuyPrice = 2, SellPrice = 1 },
-        new() { ItemType = InventoryItemType.Iron, BuyPrice = 8, SellPrice = 5 },
-        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 50, SellPrice = 45 },
+        new() { ItemType = InventoryItemType.Wood, BuyPrice = 8, SellPrice = 6 },
+        new() { ItemType = InventoryItemType.Fish, BuyPrice = 7, SellPrice = 6 },
+        new() { ItemType = InventoryItemType.Iron, BuyPrice = 9, SellPrice = 6 },
+        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 44, SellPrice = 36 },
         new() { ItemType = InventoryItemType.Trophy, BuyPrice = 100000, SellPrice = 0 },
-        new() { ItemType = InventoryItemType.Tea, BuyPrice = 10, SellPrice = 8 },
+        new() { ItemType = InventoryItemType.Tea, BuyPrice = 7, SellPrice = 4 },
       ],
       CharacterIds = ["valora-rumwhisper", "harlan-bentbeam"],
     },
+    // Tidefall Island is the other port nearest the tea fields.
+    // It offers the cheapest tea and pays one of the best iron prices in the game.
     new()
     {
       Id = "tidefall-island",
       DisplayName = "Tidefall Island",
       ItemsForSale =
       [
-        new() { ItemType = InventoryItemType.Wood, BuyPrice = 4, SellPrice = 3 },
-        new() { ItemType = InventoryItemType.Fish, BuyPrice = 2, SellPrice = 1 },
-        new() { ItemType = InventoryItemType.Iron, BuyPrice = 8, SellPrice = 5 },
-        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 50, SellPrice = 45 },
+        new() { ItemType = InventoryItemType.Wood, BuyPrice = 4, SellPrice = 2 },
+        new() { ItemType = InventoryItemType.Fish, BuyPrice = 4, SellPrice = 2 },
+        new() { ItemType = InventoryItemType.Iron, BuyPrice = 13, SellPrice = 10 },
+        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 48, SellPrice = 39 },
         new() { ItemType = InventoryItemType.Trophy, BuyPrice = 100000, SellPrice = 0 },
-        new() { ItemType = InventoryItemType.Tea, BuyPrice = 10, SellPrice = 8 },
+        new() { ItemType = InventoryItemType.Tea, BuyPrice = 6, SellPrice = 4 },
       ],
       CharacterIds = ["merrick-ash", "rafael-tide"],
     },
+    // Haven Harbour is a southwestern industrial stop.
+    // It exports iron and fish, but its tea demand helps create valuable north-to-south runs.
     new()
     {
       Id = "haven-harbour",
       DisplayName = "Haven Harbour",
       ItemsForSale =
       [
-        new() { ItemType = InventoryItemType.Wood, BuyPrice = 4, SellPrice = 3 },
-        new() { ItemType = InventoryItemType.Fish, BuyPrice = 2, SellPrice = 1 },
-        new() { ItemType = InventoryItemType.Iron, BuyPrice = 8, SellPrice = 5 },
-        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 50, SellPrice = 45 },
+        new() { ItemType = InventoryItemType.Wood, BuyPrice = 10, SellPrice = 8 },
+        new() { ItemType = InventoryItemType.Fish, BuyPrice = 3, SellPrice = 1 },
+        new() { ItemType = InventoryItemType.Iron, BuyPrice = 6, SellPrice = 4 },
+        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 52, SellPrice = 44 },
         new() { ItemType = InventoryItemType.Trophy, BuyPrice = 100000, SellPrice = 0 },
-        new() { ItemType = InventoryItemType.Tea, BuyPrice = 10, SellPrice = 0 },
+        new() { ItemType = InventoryItemType.Tea, BuyPrice = 12, SellPrice = 10 },
       ],
       CharacterIds = ["silas-quill", "nera-quicksnap"],
     },
+    // Pebblehook Bay is far to the west, which makes it a strong destination for long-haul tea runs.
+    // Local fish and wood stay cheap, but imported luxury goods should sell much better here.
     new()
     {
       Id = "pebblehook-bay",
       DisplayName = "Pebblehook Bay",
       ItemsForSale =
       [
-        new() { ItemType = InventoryItemType.Wood, BuyPrice = 4, SellPrice = 3 },
+        new() { ItemType = InventoryItemType.Wood, BuyPrice = 5, SellPrice = 3 },
         new() { ItemType = InventoryItemType.Fish, BuyPrice = 2, SellPrice = 1 },
-        new() { ItemType = InventoryItemType.Iron, BuyPrice = 8, SellPrice = 5 },
-        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 50, SellPrice = 45 },
+        new() { ItemType = InventoryItemType.Iron, BuyPrice = 11, SellPrice = 8 },
+        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 54, SellPrice = 45 },
         new() { ItemType = InventoryItemType.Trophy, BuyPrice = 100000, SellPrice = 0 },
-        new() { ItemType = InventoryItemType.Tea, BuyPrice = 10, SellPrice = 0 },
+        new() { ItemType = InventoryItemType.Tea, BuyPrice = 14, SellPrice = 11 },
       ],
       CharacterIds = ["barnaby-jape"],
     },
+    // Spire Harbour sits far to the east, so it is a natural long-haul trade partner for western ports.
+    // It sells iron and ammunition cheaply, then pays well for western wood, fish, and imported tea.
     new()
     {
       Id = "spire-harbour",
       DisplayName = "Spire Harbour",
       ItemsForSale =
       [
-        new() { ItemType = InventoryItemType.Wood, BuyPrice = 4, SellPrice = 3 },
-        new() { ItemType = InventoryItemType.Fish, BuyPrice = 2, SellPrice = 1 },
-        new() { ItemType = InventoryItemType.Iron, BuyPrice = 8, SellPrice = 5 },
-        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 50, SellPrice = 45 },
+        new() { ItemType = InventoryItemType.Wood, BuyPrice = 11, SellPrice = 9 },
+        new() { ItemType = InventoryItemType.Fish, BuyPrice = 7, SellPrice = 5 },
+        new() { ItemType = InventoryItemType.Iron, BuyPrice = 7, SellPrice = 4 },
+        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 45, SellPrice = 37 },
         new() { ItemType = InventoryItemType.Trophy, BuyPrice = 100000, SellPrice = 0 },
-        new() { ItemType = InventoryItemType.Tea, BuyPrice = 10, SellPrice = 0 },
+        new() { ItemType = InventoryItemType.Tea, BuyPrice = 12, SellPrice = 9 },
       ],
       CharacterIds = ["vera-vane"],
     },
@@ -217,13 +233,14 @@ public static class PortData
       Hireable = true,
       TalkPhrases =
       [
-        "Trade routes reward patience. Nervous captains bleed coin faster than cannonballs.",
-        "Watch which ports run short after storms. The market usually tells you where to sail next.",
-        "Profit is mostly discipline wearing a nicer coat.",
-        "Never brag about one good sale. Markets punish vanity quickly.",
-        "If a port buys tea dearly, somebody nearby is tired, nervous, or both.",
-        "A captain who tracks prices stops calling luck a strategy.",
-        "Cargo space is only valuable when you fill it with intention.",
+        "Tea from Tidefall or Krakenfall sells beautifully in Saint Johns if you can keep your cargo dry.",
+        "Rusthook iron carried to Tidefall is not glamorous, but it is dependable, and dependable is how fortunes begin.",
+        "Wood bought in Saint Johns and sold in Spire Harbour is the sort of route disciplined captains repeat quietly.",
+        "Fish from Pebblehook or Shard Bay do very nicely in Krakenfall, assuming you arrive before the smell announces you.",
+        "Tea from Tidefall to Pebblehook is a longer sail, but the ledger forgives the distance rather handsomely.",
+        "If you leave Haven with cheap iron, aim for Tidefall. If you leave Tidefall with cheap tea, aim west.",
+        "Spire likes western timber more than western captains realize.",
+        "Shard Bay fish are common there and precious elsewhere. That difference is where your gold lives.",
         "Cheap goods are a promise. Good routes are the part that keeps the promise.",
         "Most fortunes begin with someone noticing the same numbers everyone else ignored.",
         "I like captains who understand that gold and timing are cousins.",
@@ -411,16 +428,16 @@ public static class PortData
       Hireable = false,
       TalkPhrases =
       [
-        "Privateers broke the peace first. Raiders merely improved the technique.",
-        "Dark fleet captains overcommit when reefs steal their escape routes.",
-        "Administration is mostly managing disasters before they become traditions.",
-        "Every harbor swears it is unique. Every harbor repeats the same mistakes.",
-        "A calm ledger is usually a sign that someone has stopped reporting honestly.",
-        "I do not dislike pirates. I dislike pirates who create paperwork.",
-        "Security improves the moment people believe someone is paying attention.",
-        "If merchants start smiling too much, inspect the tariffs.",
-        "Ports survive by routine. The dramatic captains only visit them.",
-        "I have found that courtesy and cannons both work better when prepared in advance.",
+        "Rusthook iron sold in Tidefall is the kind of route even a governor can admire: simple, legal, and profitable.",
+        "Haven Harbour's iron also travels well to Tidefall, though fewer captains seem organized enough to notice.",
+        "Saint Johns timber moved east to Spire keeps turning up in respectable ledgers, which is irritatingly efficient.",
+        "Pebblehook fish sold in Krakenfall have funded more repairs than some tax policies.",
+        "Tea from Krakenfall to Saint Johns pays well enough that I notice whenever captains stop running it.",
+        "Tea from Tidefall to Pebblehook is longer, riskier, and exactly the sort of route that rewards competent planning.",
+        "Spire Harbour pays western captains very kindly for wood, which suggests they are too busy buying elegance to chop their own.",
+        "Shard Bay's fish are cheap because they are everywhere there. They are not everywhere in the north.",
+        "A calm ledger is usually a sign that someone has stopped reporting honestly. A lively one often means someone found a route first.",
+        "I do not dislike pirates. I dislike pirates who discover profitable routes and then turn them into incidents.",
       ],
     },
     // Merrick is a no-nonsense lumberman who trusts work more than charm.
@@ -434,7 +451,7 @@ public static class PortData
       Hireable = true,
       TalkPhrases =
       [
-        "Wood runs go bad when people wander and call it teamwork.",
+        "Wood runs go bad when people wander and call it teamwork. Load up here or in Saint Johns, then sell at Spire if you want the trip to pay.",
         "Cut, stack, move. The trees don't care about excuses.",
         "A clean haul beats a loud one.",
         "Most axes fail in the hands before they fail at the edge.",
@@ -469,7 +486,7 @@ public static class PortData
       TalkPhrases =
       [
         "Read the current lines right and the hold fills itself.",
-        "Most crews fish where it's easy, then wonder why supper feels insulting.",
+        "Most crews fish where it's easy, then wonder why supper feels insulting. Fish from Shard Bay or Pebblehook fetch much better coin in Krakenfall.",
         "Charm helps, but timing lands the catch.",
         "The sea gives more to crews who arrive quietly and leave quickly.",
         "A net thrown badly is just a public confession.",
@@ -502,7 +519,7 @@ public static class PortData
       Hireable = true,
       TalkPhrases =
       [
-        "Stone rewards rhythm. Swing sloppy and the island laughs at you.",
+        "Stone rewards rhythm. Swing sloppy and the island laughs at you. And if you haul that iron north to Tidefall, the market laughs a lot less.",
         "Good mining looks patient right up until the hold starts filling fast.",
         "Iron comes easier when the crew stops fighting the rock.",
         "Every strike should have a reason. Noise is not a reason.",
@@ -572,14 +589,15 @@ public static class PortData
       TalkPhrases =
       [
         "I know I am not impressive yet. I am working on the yet part.",
-        "People keep saying I am not built for sea work. I would like to prove them tired.",
-        "I watch good crews a lot. It is easier than joining them.",
-        "One day I want to dock somewhere and not feel like I should apologize for taking up space.",
-        "Bullies are loud until you learn how small their ideas are.",
-        "I am not asking to be special. I am asking for a chance to get good.",
+        "People keep saying I am not built for sea work. I would like to prove them tired. The smart ones buy fish in Shard Bay, then head for Krakenfall before the hold starts to smell.",
+        "I watch good crews a lot. It is easier than joining them. Some of them buy tea up north and bring it all the way back to Saint Johns.",
+        "One captain told me Pebblehook pays even better for Tidefall tea, but only if you are brave enough for the longer sail.",
+        "I heard a crew in here bragging that Rusthook iron becomes real money the moment it reaches Tidefall.",
+        "The nicest merchants always seem to leave Saint Johns with wood and come back from Spire with heavier purses.",
+        "Nobody listens to deckhands much, so I hear things. Fish from Pebblehook sell well in Krakenfall too.",
+        "I am not asking to be special. I am asking for a chance to get good. Watching routes helps with that.",
         "I have practiced knots until my hands ached just so nobody can call me useless twice.",
         "Sometimes surviving long enough to try again is its own sort of victory.",
-        "I do not need praise. I just need a berth and a little trust.",
         "If I ever make it, I think I will be kinder than the people who laughed first.",
       ],
       HireText = "",
@@ -622,7 +640,7 @@ public static class PortData
       [
         "Scarlett always did love saving hopeless captains. I prefer studying how they break.",
         "Your ship has potential, which is another way of saying it disappoints me today.",
-        "I could help you, in the same way a storm helps a weak mast reveal itself.",
+        "I could help you, in the same way a storm helps a weak mast reveal itself. Buy tea in Saint Johns and sell it at Spire, why don't you.",
         "My sister thinks strength is kindness with a sword. How provincial.",
         "You only need a small adjustment to your hull. A very memorable one.",
         "I adore captains who trust the wrong woman twice.",

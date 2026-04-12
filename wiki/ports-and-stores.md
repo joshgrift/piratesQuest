@@ -38,6 +38,19 @@ The shop is where the trading loop happens.
 
 Because each port's economy is different, the shop is not just a convenience menu. It is one of the main gameplay systems.
 
+## Reading The Market
+
+Most ports have a small identity:
+
+- one or two goods they sell cheaply
+- one or two goods they pay extra for
+
+That means a good trade run usually starts with a question: "What is this port known for?"
+
+If wood is cheap in one town, that often means another port needs it more. If tea sells for a lot somewhere, that port is a good destination instead of a good place to buy.
+
+You do not need to memorize every price. Start by noticing patterns, then repeat the routes that feel reliable.
+
 ## Characters and Information
 
 Characters in port can offer quests, useful hints, and new progression steps.

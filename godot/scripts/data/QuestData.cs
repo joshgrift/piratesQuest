@@ -214,30 +214,30 @@ public static class QuestData
       CanAcceptFromQuestLog = true,
       AutoAcceptWhenAvailable = true,
       OfferText = null,
-      AcceptedText = "Gathering keeps you afloat, but trading makes you dangerous. Buy each core good somewhere cheap, sell each one for profit somewhere better, and earn 100 gold total while you're at it.",
-      Description = "Scarlett wants you trading on purpose instead of by accident. Buy each core trade good at a port, then sell each one somewhere else for a profit. Losses don't count, so yes, the prices actually matter. Finish by earning 100 gold total.",
+      AcceptedText = "Gathering keeps you afloat, but trading makes you dangerous. Buy iron at Rusthook Point or Haven Harbour, sell it up at Tidefall Island for a profit, and earn 100 gold total while you're at it.",
+      Description = "Scarlett wants one clean trade lesson instead of a dozen guesses. Buy iron somewhere cheap, then sell it at Tidefall Island for a profit. Rusthook Point and Haven Harbour are both good places to start. Finish by earning 100 gold total.",
       CompletionText = "Better. Now you're trading with your head instead of your feelings. Ship components are unlocked.",
       Unlocks = [FeatureUnlock.ShipyardComponents],
       Steps =
       [
-        ..CoreTradeGoods.Select(itemType => new QuestStepDefinition
+        new QuestStepDefinition
         {
-          Label = $"Buy {itemType}",
+          Label = "Buy Iron in Rusthook Point or Haven Harbour",
           Metric = QuestMetricKind.ItemsBought,
-          ItemType = itemType,
+          ItemType = InventoryItemType.Iron.ToString(),
           RequiredValue = 1,
-        }),
-        ..CoreTradeGoods.Select(itemType => new QuestStepDefinition
+        },
+        new QuestStepDefinition
         {
-          Label = $"Sell {itemType} for profit",
+          Label = "Sell Iron for profit at Tidefall Island",
+          PreStepPopupText = "Talking to characters in a port will drop hints about which routes are profitable. Try asking around to find out where resources are in demand.",
           Metric = QuestMetricKind.SoldProfit,
-          ItemType = itemType,
+          ItemType = InventoryItemType.Iron.ToString(),
           RequiredValue = 1,
-        }),
+        },
         new QuestStepDefinition
         {
           Label = "Earn 100 gold",
-          PreStepPopupText = "Keep trading until you've earned 100 gold total.",
           Metric = QuestMetricKind.TotalMoneyEarned,
           RequiredValue = 100,
         },
