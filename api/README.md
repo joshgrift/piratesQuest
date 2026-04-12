@@ -65,12 +65,24 @@ Game servers authenticate by sending the shared secret in the `X-Server-Key` hea
 | `DELETE` | `/api/management/server/{id}/state/{user}` | Admin | Clear one player's saved state on one server |
 | `POST` | `/api/server/{id}/presence` | Server key | Report a player join/leave event |
 | `POST` | `/api/server/{id}/heartbeat` | Server key | Persist server runtime info and liveness |
+| `GET` | `/wiki` | Public | Render the Markdown-based game help wiki |
+| `GET` | `/wiki/{slug}` | Public | Render one Markdown wiki page by slug |
 | `GET` | `/fragments/{spaId}` | Public | Serve a SPA from `fragments/{spaId}/` |
 | `GET` | `/` | Public | Landing page |
 
 ## Fragments
 
 Drop a pre-built SPA into `fragments/{name}/` with an `index.html` entry point. It will be served at `/fragments/{name}`. Static assets (JS, CSS) in the same directory are served automatically.
+
+## Wiki Content
+
+The API also serves a simple Markdown-based wiki at `/wiki`.
+
+- Source content lives in the repo root `wiki/` folder.
+- The API copies those files into its build output.
+- `GET /wiki` renders `wiki/index.md`.
+- `GET /wiki/{slug}` renders `wiki/{slug}.md`.
+- Internal Markdown links like `./trading.md` are rewritten to `/wiki/trading`.
 
 ## Testing (Containerized DB)
 

@@ -1,0 +1,75 @@
+[
+  {
+    "title": "Start Here",
+    "pages": [
+      {
+        "title": "Wiki Home",
+        "slug": "index",
+        "path": "index.md",
+        "order": 1
+      },
+      {
+        "title": "Getting Started",
+        "slug": "getting-started",
+        "path": "getting-started.md",
+        "order": 2
+      }
+    ]
+  },
+  {
+    "title": "Core Systems",
+    "pages": [
+      {
+        "title": "Trading",
+        "slug": "trading",
+        "path": "trading.md",
+        "order": 10
+      },
+      {
+        "title": "Ports and Stores",
+        "slug": "ports-and-stores",
+        "path": "ports-and-stores.md",
+        "order": 20
+      }
+    ]
+  },
+  {
+    "title": "Ship Progression",
+    "pages": [
+      {
+        "title": "Ships and Components",
+        "slug": "ships-and-components",
+        "path": "ships-and-components.md",
+        "order": 30
+      },
+      {
+        "title": "Quests and Unlocks",
+        "slug": "quests-and-unlocks",
+        "path": "quests-and-unlocks.md",
+        "order": 40
+      }
+    ]
+  },
+  {
+    "title": "Danger",
+    "pages": [
+      {
+        "title": "Combat and Death",
+        "slug": "combat-and-death",
+        "path": "combat-and-death.md",
+        "order": 50
+      }
+    ]
+  },
+  {
+    "title": "World",
+    "pages": [
+      {
+        "title": "Multiplayer and World",
+        "slug": "multiplayer-and-world",
+        "path": "multiplayer-and-world.md",
+        "order": 60
+      }
+    ]
+  }
+]

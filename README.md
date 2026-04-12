@@ -61,6 +61,28 @@ All scripts are in the repo root and run from there.
 | `manage.sh` | Admin CLI for the REST API. Manage users, game servers, roles, and game version. Requires `PQ_API_URL` and either `PQ_TOKEN` or a login. |
 | `admin/` | React/TypeScript admin panel that replaces most `manage.sh` usage. Build output is `api/wwwroot/admin/` and is served by the API at `/admin/`. |
 
+## Wiki Editing
+
+The in-game help guide now lives in the repo-root `wiki/` folder and is served by the API at `/wiki`.
+
+When a human or agent edits the wiki:
+
+- Treat `wiki/` as the canonical home for player-facing help content.
+- Prefer updating the relevant page in `wiki/` instead of adding long gameplay prose elsewhere.
+- Keep each page small, beginner-friendly, and focused on one topic.
+- Use the existing frontmatter fields on every page: `title`, `summary`, `section`, `order`, `template`, and `showToc`.
+- Keep `wiki/navigation.json` in sync when you add, rename, reorder, or remove pages.
+- Link between pages with normal Markdown links like `./trading.md`. The API rewrites those to `/wiki/...`.
+- If mechanics change, update the matching wiki page in the same change so the help guide stays accurate.
+- Use `GAMEPLAY.md` as a compact design overview, not as the place to preserve old tutorial dialogue or full wiki copy.
+
+Suggested workflow:
+
+1. Read the existing wiki page for the system you are changing.
+2. Update that page and `wiki/navigation.json` if needed.
+3. If the change affects high-level design, trim or refresh `GAMEPLAY.md` so it stays short and current.
+4. Build the API if you changed wiki-serving code, or at least verify the Markdown files remain valid and well-linked if the change is docs-only.
+
 ## Releasing
 - Update Version in Project Settings
 - Run `./build-game.sh`

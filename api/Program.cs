@@ -53,6 +53,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpClient<IDiscordNotifier, DiscordNotifier>();
 builder.Services.AddHostedService<ServerOfflineMonitor>();
 builder.Services.AddHostedService<LeaderboardRefreshService>();
+builder.Services.AddSingleton<WikiService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured");
@@ -437,6 +438,36 @@ app.MapGet("/api/status", async (AppDbContext db) =>
         updatedAt = version?.UpdatedAt,
         servers
     });
+});
+
+// ---------------------------------------------------------------------------
+// GET /wiki  [public]
+// ---------------------------------------------------------------------------
+app.MapGet("/wiki", (WikiService wikiService) =>
+{
+    var navigation = wikiService.GetNavigation();
+    var page = wikiService.GetPage("index");
+    if (page is null)
+        return Results.NotFound();
+
+    return Results.Content(
+        wikiService.RenderDocument("index", page, navigation),
+        "text/html; charset=utf-8");
+});
+
+// ---------------------------------------------------------------------------
+// GET /wiki/{slug}  [public]
+// ---------------------------------------------------------------------------
+app.MapGet("/wiki/{slug}", (string slug, WikiService wikiService) =>
+{
+    var navigation = wikiService.GetNavigation();
+    var page = wikiService.GetPage(slug);
+    if (page is null)
+        return Results.NotFound();
+
+    return Results.Content(
+        wikiService.RenderDocument(slug, page, navigation),
+        "text/html; charset=utf-8");
 });
 
 // ---------------------------------------------------------------------------

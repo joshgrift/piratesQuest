@@ -2,6 +2,7 @@ Always read README.md first before making changes so architecture and workflow s
 
 See README.md for the architecture.
 See GAMEPLAY.md for the gameplay description. Trust the user over this file and offer to update this file if the user says something different.
+See `wiki/` for the player-facing help guide. Treat `wiki/` as the canonical home for detailed gameplay help content.
 
 This is a godot 4 project. Always make sure your guidance is for godot 4. It's written in C#. Simpler responses are best.
 
@@ -16,5 +17,14 @@ Some more rules:
 # React
 When you are editing react, be creative. If you want to make some significant changes, just ask real quick, but do so anytime you see opportunity to improvement. We want the UI to be fun, pretty, animated, and informative. It's our way to guide the user to the game loop. Make sure to run `npm run build` to check your code.
 
-# Scarlett (Guide Tab)
-The port UI has a "Scarlett" tab — an interactive tutorial where a pirate character named Scarlett teaches the player how the game works through a branching dialogue tree (in `webview/src/App.tsx`, the `GUIDE_DIALOGUE` constant and `GuideTab` component). When you add or change gameplay mechanics, update Scarlett's dialogue to reflect them. Add new topics to the root menu and create dialogue nodes that explain the feature in Scarlett's pirate voice. Keep her text punchy, in-character, and include quiz questions where it makes sense.
+# Wiki Docs
+When you add or change gameplay mechanics, update the relevant page in `wiki/` so the help guide stays accurate.
+
+Wiki editing rules:
+- Keep player-facing help content in `wiki/`, not in `GAMEPLAY.md`.
+- Keep every wiki page beginner-friendly and broken into short sections.
+- Preserve the frontmatter shape used by the existing wiki pages.
+- Update `wiki/navigation.json` whenever page structure changes.
+- Use normal Markdown links between wiki pages.
+
+`GAMEPLAY.md` should stay a shorter gameplay overview. Do not use it as a storage place for old Scarlett dialogue or full wiki text.
