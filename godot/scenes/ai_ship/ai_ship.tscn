@@ -1,8 +1,9 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=5 format=3 uid="uid://c5dj8v6e55j02"]
 
-[ext_resource type="Script" path="res://scenes/ai_ship/AiShip.cs" id="1"]
-[ext_resource type="PackedScene" path="res://art/kenny_pirate/ship-pirate-small.glb" id="2"]
-[ext_resource type="PackedScene" path="res://art/kenny_pirate/cannon.glb" id="3"]
+[ext_resource type="Script" uid="uid://dfnj6tb6yhrsm" path="res://scenes/ai_ship/AiShip.cs" id="1"]
+[ext_resource type="PackedScene" uid="uid://jd6wcqv7ny4g" path="res://art/kenny_pirate/ship-pirate-small.glb" id="2"]
+[ext_resource type="PackedScene" uid="uid://du8tr0updheh4" path="res://art/kenny_pirate/cannon.glb" id="3"]
+
 [sub_resource type="SceneReplicationConfig" id="1"]
 properties/0/path = NodePath(".:position")
 properties/0/spawn = true
@@ -20,10 +21,6 @@ properties/4/path = NodePath(".:visible")
 properties/4/spawn = true
 properties/4/replication_mode = 1
 
-[sub_resource type="CylinderShape3D" id="2"]
-height = 6.0
-radius = 3.4
-
 [node name="AiShip" type="CharacterBody3D" node_paths=PackedStringArray("CannonPivotLeft", "CannonPivotRight", "Synchronizer", "ForwardRay", "ForwardLeftRay", "ForwardRightRay", "VisualRoot")]
 collision_mask = 5
 script = ExtResource("1")
@@ -38,14 +35,15 @@ VisualRoot = NodePath("VisualRoot")
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("1")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
-shape = SubResource("2")
+[node name="collision-tier1" type="CollisionPolygon3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -3.333, 4.2, -3.792)
+depth = 10.0
+polygon = PackedVector2Array(1.0824568, 3.1109843, 1.1123765, 7.9579754, 5.4706793, 7.9978685, 5.5006, 3.1109843, 3.2965147, -0.7386844)
 
 [node name="VisualRoot" type="Node3D" parent="."]
 
 [node name="ShipVisual" parent="VisualRoot" instance=ExtResource("2")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, -2.0243583, 0)
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, -1.4319806, 0)
 
 [node name="LeftCannon" parent="VisualRoot" instance=ExtResource("3")]
 transform = Transform3D(0.009721321, 0, 0.99995273, 0, 1, 0, -0.99995273, 0, 0.009721321, 1.4321022, 0, 0.5068867)
@@ -62,14 +60,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.239894, 0.6663635, 0.512530
 [node name="ForwardRay" type="RayCast3D" parent="."]
 target_position = Vector3(0, 0, -28)
 collision_mask = 4
-enabled = true
 
 [node name="ForwardLeftRay" type="RayCast3D" parent="."]
 target_position = Vector3(-16, 0, -24)
 collision_mask = 4
-enabled = true
 
 [node name="ForwardRightRay" type="RayCast3D" parent="."]
 target_position = Vector3(16, 0, -24)
 collision_mask = 4
-enabled = true

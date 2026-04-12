@@ -128,7 +128,7 @@ public static class QuestData
       [
         new QuestStepDefinition
         {
-          Label = "Move the ship once",
+          Label = "Move the ship once, with W, A, S, or D",
           Metric = QuestMetricKind.ShipMovementInputs,
           RequiredValue = 1,
         },
@@ -174,7 +174,7 @@ public static class QuestData
       [
         new QuestStepDefinition
         {
-          Label = "Fire your cannons once",
+          Label = "Fire your cannons with Q or E once",
           Metric = QuestMetricKind.CannonballsShot,
           RequiredValue = 1,
         },
@@ -198,7 +198,7 @@ public static class QuestData
       [
         new QuestStepDefinition
         {
-          Label = "Dock at any port",
+          Label = "Dock at any port. Look for a floating barrel",
           Metric = QuestMetricKind.PortsVisitedCount,
           RequiredValue = 1,
         },

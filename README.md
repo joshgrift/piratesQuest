@@ -199,7 +199,7 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
   - [ ] Spawning
 - [x] Rebalanced trading, ports have specialties and it's based on map geography
 - [x] Add another character & better space out characters
-- [ ] Player should spawn in safe areas
+- [x] Player should spawn in safe areas
 - [x] Deleted Trophies
 
 - [x] UI Cleanup

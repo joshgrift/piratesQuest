@@ -87,6 +87,12 @@ public partial class ProjectilePartial : RigidBody3D
     // Without this check, each client would deal damage separately = chaos!
     if (!Multiplayer.IsServer()) return;
 
+    // Cannonballs can spawn very close to the firing ship's collision.
+    // If we do not ignore that owner, AI ships can instantly hit themselves
+    // before the ball has actually cleared the hull.
+    if (IsShooter(body))
+      return;
+
     if (body is Player playerBody)
     {
       // Ports are safe zones. Instead of exploding on contact, the cannonball
@@ -121,6 +127,19 @@ public partial class ProjectilePartial : RigidBody3D
       // Remove the cannonball. CallDeferred waits until it's safe to delete.
       CallDeferred(MethodName.QueueFree);
     }
+  }
+
+  /// <summary>
+  /// Returns true when the collided body is the ship that fired this projectile.
+  /// We compare by node name because both players and AI ships pass their unique
+  /// scene node name into Launch(), and that value is already used as the projectile owner id.
+  /// </summary>
+  private bool IsShooter(Node body)
+  {
+    if (string.IsNullOrWhiteSpace(PlayerId) || body == null)
+      return false;
+
+    return string.Equals(body.Name, PlayerId, System.StringComparison.Ordinal);
   }
 
   /// <summary>
