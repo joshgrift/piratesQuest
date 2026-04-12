@@ -684,6 +684,53 @@ img {
     repeating-linear-gradient(0deg, transparent 0 10px, rgba(221, 183, 111, 0.09) 10px 11px);
 }
 
+.sea-chart {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: min(52rem, 92vw);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  z-index: 1300;
+}
+
+.sea-chart__panel {
+  position: relative;
+  width: 100%;
+  padding: 1.5rem 0 1.5rem 1.5rem;
+  transform: translateX(calc(-100% - 2rem));
+  transition: transform 220ms ease;
+}
+
+.sea-chart.open {
+  pointer-events: none;
+}
+
+.sea-chart.open .sea-chart__panel {
+  transform: translateX(0);
+}
+
+.sea-chart__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 50vh;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.35));
+}
+
+@media (max-width: 900px) {
+  .sea-chart {
+    width: 100vw;
+  }
+
+  .sea-chart__panel {
+    padding: 1rem 0 1rem 1rem;
+  }
+}
+
 .ship-status-header {
   position: relative;
   display: flex;

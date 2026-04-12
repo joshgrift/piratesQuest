@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { act, screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import { getIpcMessages, renderApp } from "./helpers";
 import { makeOwnedComponent, makePortState } from "./fixtures";
 
@@ -25,6 +25,18 @@ describe("App", () => {
     expect(ipcSpy).toHaveBeenCalledWith(
       JSON.stringify({ action: "ready" }),
     );
+  });
+
+  it("toggles the sea chart when Tab is pressed", () => {
+    renderApp();
+
+    expect(screen.getByAltText("World map of the sea").closest(".sea-chart")).not.toHaveClass("open");
+
+    fireEvent.keyDown(window, { key: "Tab" });
+    expect(screen.getByAltText("World map of the sea").closest(".sea-chart")).toHaveClass("open");
+
+    fireEvent.keyDown(window, { key: "Tab" });
+    expect(screen.getByAltText("World map of the sea").closest(".sea-chart")).not.toHaveClass("open");
   });
 
   it("shows the ship status widget with player, health, and cannonballs", () => {

@@ -188,7 +188,7 @@ public static class QuestData
       CanAcceptFromQuestLog = true,
       AutoAcceptWhenAvailable = true,
       OfferText = null,
-      AcceptedText = "A captain who can't arrive properly is just a floating apology. Find a harbor ring, glide in clean, and let the port panel open.",
+      AcceptedText = "A captain who can't arrive properly is just a floating apology. Press Tab to view the map, find a harbor, and set sail.",
       Description = "Scarlett wants proof that you can actually pull into a harbor without turning it into a scene. Sail to any port and dock once. Just move into the harbor interaction ring until the port panel opens.",
       CompletionText = "Nice. You're not just a menace to the sea, you can actually visit places.",
       Unlocks = [FeatureUnlock.SellGoods, FeatureUnlock.TavernTalk, FeatureUnlock.BuyGoods],

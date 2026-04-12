@@ -189,18 +189,17 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 - [x] Added Wiki
   - [x] Menu button to access wiki
 - [x] Cannonballs bounce of ships in safe zones
-- [ ] Fixed Windows UI not loading
 - [x] Money sound no longer played everywhere
+- [x] Lock Characters behind quests
 - [ ] Improved Interaction Points UX
   - [ ] Added boueys
   - [ ] Added floating highlight if the players next step requires them to visit it
-- [ ] Map?
+- [x] Added Map (Tab)
+- [ ] Fixed Windows UI not loading
 - [ ] AI ships
   - [ ] Fix shooting
-
 - [ ] Can't arbitrage any resources
-
-- [ ] Lock Characters behind quests
+- [ ] Add another character & better space out characters
 
 - [ ] UI Cleanup
   - [ ] Sell buttons are backwards

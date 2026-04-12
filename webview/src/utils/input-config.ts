@@ -64,5 +64,6 @@ export const INPUT_CONFIG = {
     ".conversation-thread-shell",
     ".conversation-thread-log",
     ".conversation-thread-controls",
+    ".sea-chart",
   ],
 } as const;

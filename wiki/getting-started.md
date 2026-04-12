@@ -69,3 +69,4 @@ Try this loop for your first few sessions:
 - Do not stay at sea with a badly damaged hull if you can avoid it.
 - Do not carry valuables you are not willing to lose.
 - Use ports often. They are part of the loop, not a pause from it.
+- Press `Tab` while sailing to open the sea chart. Press `Tab` again to hide it.

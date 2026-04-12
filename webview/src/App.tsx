@@ -28,6 +28,7 @@ const PORT_ICON = `${BASE}icons/flat/anchor.svg`;
 const CREATIVE_ICON = `${BASE}icons/flat/pirate-skull.svg`;
 const STATS_ICON = `${BASE}icons/flat/sextant.svg`;
 const LEADERBOARD_ICON = `${BASE}icons/flat/pirate-hat.svg`;
+const SEA_CHART_IMAGE = `${BASE}images/map.png`;
 
 function findQuestForNpc(state: PortState, characterId: string): QuestSummary | null {
   return state.quests.available.find((quest) => quest.giverNpcId === characterId && !hasText(quest.rewardCrewNpcId)) ?? null;
@@ -49,6 +50,17 @@ function isNextQuestStepTalkToNpc(state: PortState, character: TavernCharacter):
 
 function hasText(value: string | null | undefined): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function isTypingInInput(): boolean {
+  const el = document.activeElement;
+  if (!(el instanceof HTMLElement)) return false;
+
+  return (
+    el.tagName === "INPUT" ||
+    el.tagName === "TEXTAREA" ||
+    el.isContentEditable
+  );
 }
 
 function buildCharacterPopup(
@@ -99,6 +111,7 @@ export default function App() {
   const [portState, setPortState] = useState<PortState | null>(null);
   const [activePanelMode, setActivePanelMode] = useState<PanelMode | null>("ship");
   const [activePortTab, setActivePortTab] = useState<PortTab>("market");
+  const [isMapOpen, setIsMapOpen] = useState(false);
   const [npcCommentQueue, setNpcCommentQueue] = useState<NpcCommentToastData[]>([]);
   const prevIsInPortRef = useRef<boolean | null>(null);
   const prevActiveQuestIdRef = useRef<string | null>(null);
@@ -148,8 +161,23 @@ export default function App() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
+      if (isTypingInInput()) return;
+
+      if (e.key === "Tab") {
+        e.preventDefault();
+        if (e.repeat) return;
+        setIsMapOpen((current) => !current);
+        return;
+      }
+
       if (e.key !== "Escape") return;
       if (e.repeat) return;
+
+      if (isMapOpen) {
+        e.preventDefault();
+        setIsMapOpen(false);
+        return;
+      }
 
       if (npcCommentQueue.length > 0) {
         e.preventDefault();
@@ -167,7 +195,7 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [activePanelMode, npcCommentQueue.length]);
+  }, [activePanelMode, isMapOpen, npcCommentQueue.length]);
 
   const handleFireCharacter = (characterId: string) => {
     if (!portState) return;
@@ -358,6 +386,15 @@ export default function App() {
 
   return (
     <>
+      <aside
+        className={`sea-chart ${isMapOpen ? "open" : ""}`}
+        aria-hidden={!isMapOpen}
+      >
+        <div className="sea-chart__panel">
+          <img className="sea-chart__image" src={SEA_CHART_IMAGE} alt="World map of the sea" />
+        </div>
+      </aside>
+
       <QuestStatusWidget
         state={portState}
         panelOpen={activePanelMode !== null}
