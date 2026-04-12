@@ -17,6 +17,10 @@ using Godot;
 /// </summary>
 public partial class ProjectilePartial : RigidBody3D
 {
+  private const float SafeZoneBounceSpeedMultiplier = 0.8f;
+  private const float SafeZoneBounceUpwardSpeed = 2.5f;
+  private const float SafeZoneBounceSeparationDistance = 1.5f;
+
   public string PlayerId { get; private set; }
 
   [Export] public int Damage = 0;
@@ -85,6 +89,15 @@ public partial class ProjectilePartial : RigidBody3D
 
     if (body is Player playerBody)
     {
+      // Ports are safe zones. Instead of exploding on contact, the cannonball
+      // ricochets away so the protected player gets clear feedback that the hit
+      // did not count.
+      if (playerBody.IsInPort)
+      {
+        BounceOffSafeZonePlayer(playerBody);
+        return;
+      }
+
       playerBody.Rpc(Player.MethodName.TakeDamageFrom, Damage, PlayerId);
 
       // Spawn the explosion effect at the cannonball's current position.
@@ -108,6 +121,48 @@ public partial class ProjectilePartial : RigidBody3D
       // Remove the cannonball. CallDeferred waits until it's safe to delete.
       CallDeferred(MethodName.QueueFree);
     }
+  }
+
+  /// <summary>
+  /// Reflects the cannonball away from a protected player in a port safe zone.
+  /// We push it slightly outward after changing velocity so the Area3D does not
+  /// stay overlapped and immediately retrigger the same collision.
+  /// </summary>
+  private void BounceOffSafeZonePlayer(Player playerBody)
+  {
+    Vector3 bounceNormal = GlobalPosition - playerBody.GlobalPosition;
+    bounceNormal.Y = 0;
+
+    // If the centers line up perfectly, fall back to the opposite of the
+    // current travel direction so we still get a sensible bounce.
+    if (bounceNormal.LengthSquared() < 0.001f)
+    {
+      bounceNormal = -LinearVelocity;
+      bounceNormal.Y = 0;
+    }
+
+    bounceNormal = bounceNormal.Normalized();
+
+    Vector3 horizontalVelocity = LinearVelocity;
+    horizontalVelocity.Y = 0;
+
+    if (horizontalVelocity.LengthSquared() < 0.001f)
+      horizontalVelocity = bounceNormal * Speed;
+
+    Vector3 bouncedHorizontalVelocity = horizontalVelocity - (2.0f * horizontalVelocity.Dot(bounceNormal) * bounceNormal);
+
+    if (bouncedHorizontalVelocity.LengthSquared() < 0.001f)
+      bouncedHorizontalVelocity = bounceNormal * horizontalVelocity.Length();
+
+    bouncedHorizontalVelocity *= SafeZoneBounceSpeedMultiplier;
+
+    LinearVelocity = new Vector3(
+      bouncedHorizontalVelocity.X,
+      Mathf.Max(LinearVelocity.Y * 0.5f, SafeZoneBounceUpwardSpeed),
+      bouncedHorizontalVelocity.Z
+    );
+
+    GlobalPosition += bounceNormal * SafeZoneBounceSeparationDistance;
   }
 
   /// <summary>
