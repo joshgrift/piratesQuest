@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 
 export interface NpcCommentAction {
   label: string;
@@ -98,13 +98,33 @@ export function NpcCommentToast({
   return (
     <div className="npc-comment-toast-wrap" aria-live="polite">
       <div
-        className={`npc-comment-toast ${comment.celebrate ? "npc-comment-toast--celebrate" : ""}`}
+        className={[
+          "npc-comment-toast",
+          comment.celebrate ? "npc-comment-toast--celebrate" : "",
+          shouldAutoDismiss ? "npc-comment-toast--timed" : "",
+          hasQueuedFollowups ? "npc-comment-toast--stacked" : "",
+        ].filter(Boolean).join(" ")}
         role={hasActions ? "dialog" : "button"}
         tabIndex={hasActions ? -1 : 0}
         onClick={hasActions ? undefined : onDismiss}
         onKeyDown={handleKeyDown}
         aria-label={hasActions ? `${comment.name} conversation` : `Dismiss message from ${comment.name}`}
+        style={{ "--npc-comment-progress": countdownProgress } as CSSProperties}
       >
+        {hasQueuedFollowups && (
+          <>
+            <div className="npc-comment-toast-stack npc-comment-toast-stack--back" aria-hidden="true" />
+            <div className="npc-comment-toast-stack npc-comment-toast-stack--mid" aria-hidden="true" />
+          </>
+        )}
+        {shouldAutoDismiss && (
+          <>
+            <div className="npc-comment-toast-border-timer" aria-hidden="true">
+              <div className="npc-comment-toast-border-timer-fill" />
+            </div>
+            <div className="npc-comment-toast-background-timer" aria-hidden="true" />
+          </>
+        )}
         {comment.celebrate && (
           <div className="npc-comment-toast-confetti" aria-hidden="true">
             {CONFETTI_PIECES.map((piece, index) => (
@@ -142,29 +162,14 @@ export function NpcCommentToast({
         <div className="npc-comment-toast-copy">
           <div className="npc-comment-toast-name">{comment.name}</div>
           <div className="npc-comment-toast-message">{comment.message}</div>
-          {(hasQueuedFollowups || shouldAutoDismiss) && (
+          {hasQueuedFollowups && (
             <div className="npc-comment-toast-queue">
-              <div className="npc-comment-toast-queue-head">
-                {hasQueuedFollowups && (
-                  <span className="npc-comment-toast-queue-badge">
-                    {queueCount - 1} more
-                  </span>
-                )}
-                {shouldAutoDismiss && (
-                  <span className="npc-comment-toast-queue-timer">
-                    {hasQueuedFollowups ? "Next" : "Closes"} in{" "}
-                    {Math.max(1, Math.ceil(countdownProgress * (AUTO_DISMISS_DURATION_MS / 1000)))}s
-                  </span>
-                )}
-              </div>
-              {shouldAutoDismiss && (
-                <div className="npc-comment-toast-progress" aria-hidden="true">
-                  <div
-                    className="npc-comment-toast-progress-fill"
-                    style={{ transform: `scaleX(${countdownProgress})` }}
-                  />
-                </div>
-              )}
+              <span className="npc-comment-toast-queue-label">
+                Next up
+              </span>
+              <span className="npc-comment-toast-queue-badge" aria-label={`${queueCount - 1} more waiting`}>
+                +{queueCount - 1}
+              </span>
             </div>
           )}
           {hasActions && (

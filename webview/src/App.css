@@ -406,42 +406,147 @@ img {
 
 .npc-comment-toast-wrap {
   position: fixed;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
-  width: min(560px, calc(100vw - 32px));
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(460px, calc(100vw - 48px));
   pointer-events: auto;
   z-index: 1100;
-  animation: npc-comment-toast-in 0.24s ease;
 }
 
 .npc-comment-toast {
   position: relative;
+  --npc-comment-progress: 1;
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr);
-  gap: 14px;
-  align-items: center;
-  padding: 14px 18px 14px 14px;
-  border-radius: 22px;
-  border: 1px solid rgba(239, 196, 116, 0.55);
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 16px 18px 16px 14px;
+  border-radius: 26px;
+  border: 1px solid rgba(239, 196, 116, 0.32);
   background:
-    linear-gradient(145deg, rgba(20, 33, 48, 0.97), rgba(52, 30, 16, 0.96)),
-    radial-gradient(circle at 18% 18%, rgba(118, 183, 232, 0.2), transparent 34%),
-    radial-gradient(circle at 84% 78%, rgba(239, 196, 116, 0.2), transparent 40%);
+    linear-gradient(155deg, rgba(14, 29, 44, 0.97), rgba(56, 34, 18, 0.96)),
+    radial-gradient(circle at 18% 24%, rgba(118, 183, 232, 0.22), transparent 34%),
+    radial-gradient(circle at 88% 82%, rgba(239, 196, 116, 0.18), transparent 40%);
   box-shadow:
-    0 18px 34px rgba(0, 0, 0, 0.48),
-    inset 0 0 0 1px rgba(255, 232, 183, 0.12);
+    0 20px 42px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 232, 183, 0.12),
+    inset 0 16px 24px rgba(255, 234, 195, 0.03);
   cursor: pointer;
   outline: none;
+  overflow: hidden;
+  animation: npc-comment-toast-in 0.26s ease;
+}
+
+.npc-comment-toast--stacked {
   overflow: visible;
+}
+
+.npc-comment-toast-stack {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(155deg, rgba(16, 30, 44, 0.9), rgba(51, 31, 17, 0.88)),
+    radial-gradient(circle at 18% 24%, rgba(118, 183, 232, 0.16), transparent 34%),
+    radial-gradient(circle at 88% 82%, rgba(239, 196, 116, 0.14), transparent 40%);
+  border: 1px solid rgba(239, 196, 116, 0.18);
+  box-shadow:
+    0 18px 28px rgba(0, 0, 0, 0.22),
+    inset 0 0 0 1px rgba(255, 232, 183, 0.08);
+}
+
+.npc-comment-toast-stack--mid {
+  inset: 10px -10px -10px 10px;
+  opacity: 0.5;
+}
+
+.npc-comment-toast-stack--back {
+  inset: 20px -18px -18px 18px;
+  opacity: 0.28;
 }
 
 .npc-comment-toast--celebrate {
   box-shadow:
-    0 18px 34px rgba(0, 0, 0, 0.48),
+    0 20px 42px rgba(0, 0, 0, 0.5),
     0 0 0 1px rgba(255, 221, 147, 0.34),
     0 0 28px rgba(246, 198, 111, 0.26),
-    inset 0 0 0 1px rgba(255, 232, 183, 0.12);
+    inset 0 0 0 1px rgba(255, 232, 183, 0.12),
+    inset 0 16px 24px rgba(255, 234, 195, 0.03);
+}
+
+.npc-comment-toast--timed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255, 240, 204, 0.04), transparent 22%, transparent 82%, rgba(111, 210, 255, 0.05)),
+    repeating-linear-gradient(90deg, transparent 0 14px, rgba(255, 224, 162, 0.035) 14px 15px);
+  opacity: calc(0.12 + (var(--npc-comment-progress) * 0.18));
+}
+
+.npc-comment-toast-border-timer {
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  background: rgba(255, 229, 172, 0.08);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+.npc-comment-toast-border-timer-fill {
+  width: 100%;
+  height: 100%;
+  transform-origin: left center;
+  transform: scaleX(var(--npc-comment-progress));
+  background:
+    linear-gradient(90deg, rgba(118, 198, 244, 0.92), rgba(246, 198, 111, 0.98));
+  box-shadow:
+    0 0 20px rgba(111, 210, 255, 0.2),
+    0 0 24px rgba(246, 198, 111, 0.16);
+}
+
+.npc-comment-toast-background-timer {
+  position: absolute;
+  inset: 1px;
+  border-radius: calc(26px - 1px);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.npc-comment-toast-background-timer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(var(--npc-comment-progress));
+  background:
+    linear-gradient(90deg, rgba(105, 188, 237, 0.03), rgba(244, 196, 108, 0.08));
+  clip-path: polygon(0 0, 82% 0, 100% 100%, 0 100%);
+}
+
+.npc-comment-toast-background-timer::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  width: 32%;
+  right: calc((1 - var(--npc-comment-progress)) * 82%);
+  background: linear-gradient(90deg, transparent, rgba(255, 241, 205, 0.32), transparent);
+  transform: skewX(-20deg);
+  filter: blur(10px);
+  opacity: calc(0.18 + (var(--npc-comment-progress) * 0.2));
 }
 
 .npc-comment-toast-confetti {
@@ -464,31 +569,39 @@ img {
 
 .npc-comment-toast:focus-visible {
   box-shadow:
-    0 18px 34px rgba(0, 0, 0, 0.48),
+    0 20px 42px rgba(0, 0, 0, 0.5),
     inset 0 0 0 1px rgba(255, 232, 183, 0.12),
     0 0 0 2px rgba(130, 188, 237, 0.65);
 }
 
 .npc-comment-toast-portrait {
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
+  position: relative;
+  z-index: 1;
+  width: 78px;
+  height: 78px;
+  border-radius: 24px;
   object-fit: cover;
   border: 3px solid rgba(242, 201, 120, 0.68);
-  box-shadow: 0 0 18px rgba(114, 180, 228, 0.35), 0 10px 18px rgba(0, 0, 0, 0.38);
+  box-shadow:
+    0 0 18px rgba(114, 180, 228, 0.3),
+    0 10px 18px rgba(0, 0, 0, 0.38);
 }
 
 .npc-comment-toast-copy {
+  position: relative;
+  z-index: 1;
   display: grid;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
+  padding-top: 3px;
 }
 
 .npc-comment-toast-name {
   font-family: "New Rocker", cursive;
-  font-size: 1.4rem;
+  font-size: 1.28rem;
   line-height: 1;
   color: #ffe0a7;
+  letter-spacing: 0.02em;
 }
 
 .npc-comment-toast-message {
@@ -498,55 +611,37 @@ img {
 }
 
 .npc-comment-toast-queue {
-  display: grid;
-  gap: 7px;
-  margin-top: 6px;
-}
-
-.npc-comment-toast-queue-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
 }
 
-.npc-comment-toast-queue-badge {
-  padding: 3px 9px;
-  border-radius: 999px;
-  border: 1px solid rgba(132, 194, 248, 0.36);
-  background: rgba(26, 63, 95, 0.55);
-  color: #bfe3ff;
-  font-size: 0.82rem;
-  letter-spacing: 0.03em;
+.npc-comment-toast-queue-label {
+  color: rgba(255, 226, 170, 0.82);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.npc-comment-toast-queue-timer {
-  color: rgba(255, 226, 170, 0.92);
-  font-size: 0.9rem;
-}
-
-.npc-comment-toast-progress {
-  position: relative;
-  overflow: hidden;
-  height: 7px;
+.npc-comment-toast-queue-badge {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 999px;
-  border: 1px solid rgba(239, 196, 116, 0.22);
-  background:
-    linear-gradient(180deg, rgba(8, 19, 28, 0.78), rgba(18, 33, 46, 0.74));
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.34);
-}
-
-.npc-comment-toast-progress-fill {
-  position: absolute;
-  inset: 0;
-  transform-origin: left center;
-  background:
-    linear-gradient(90deg, rgba(110, 190, 245, 0.9), rgba(246, 198, 111, 0.95));
+  border: 1px solid rgba(132, 194, 248, 0.36);
+  background: rgba(20, 57, 88, 0.58);
+  color: #bfe3ff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   box-shadow:
-    0 0 10px rgba(110, 190, 245, 0.24),
-    inset 0 0 0 1px rgba(255, 241, 205, 0.18);
+    0 10px 18px rgba(0, 0, 0, 0.24),
+    inset 0 0 0 1px rgba(255, 244, 214, 0.08);
 }
 
 .npc-comment-toast-actions {
@@ -604,12 +699,12 @@ img {
 @keyframes npc-comment-toast-in {
   from {
     opacity: 0;
-    transform: translate(-50%, 18px);
+    transform: translateX(-18px) scale(0.985);
   }
 
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateX(0) scale(1);
   }
 }
 
@@ -635,6 +730,59 @@ img {
 
 .npc-comment-toast-confetti-piece:nth-child(even) {
   --confetti-drift: 18px;
+}
+
+@media (max-width: 900px) {
+  .npc-comment-toast-wrap {
+    left: 50%;
+    top: auto;
+    bottom: 24px;
+    transform: translateX(-50%);
+    width: min(440px, calc(100vw - 24px));
+  }
+
+  .npc-comment-toast {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px 16px 14px 12px;
+    border-radius: 22px;
+  }
+
+  .npc-comment-toast-stack--mid {
+    inset: 8px -8px -8px 8px;
+  }
+
+  .npc-comment-toast-stack--back {
+    inset: 14px -12px -12px 12px;
+  }
+
+  .npc-comment-toast-background-timer {
+    border-radius: calc(22px - 1px);
+  }
+
+  .npc-comment-toast-portrait {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+  }
+
+  .npc-comment-toast-name {
+    font-size: 1.1rem;
+  }
+
+  .npc-comment-toast-message {
+    font-size: 0.94rem;
+  }
+
+  .npc-comment-toast-queue-label {
+    font-size: 0.72rem;
+  }
+
+  .npc-comment-toast-queue-badge {
+    min-width: 30px;
+    height: 30px;
+    font-size: 0.82rem;
+  }
 }
 
 .ship-status-widget {
@@ -1626,13 +1774,6 @@ img {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #c8bda8;
-}
-
-.market-gold-header {
-  margin: 0 0 8px;
-  color: #eac689;
-  font-size: 13px;
-  font-weight: 700;
 }
 
 .mode-btn {

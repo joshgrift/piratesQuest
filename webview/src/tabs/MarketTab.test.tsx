@@ -429,9 +429,9 @@ describe("MarketTab", () => {
       expect(screen.getByRole("button", { name: "+" })).toBeDisabled();
     });
 
-    it("shows gold count in the header", () => {
+    it("does not repeat gold count inside the market tab", () => {
       renderMarket({ state: { inventory: { Coin: 999 } } });
-      expect(screen.getByText(/999 Gold/)).toBeInTheDocument();
+      expect(screen.queryByText(/999 Gold/)).not.toBeInTheDocument();
     });
   });
 

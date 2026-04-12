@@ -123,7 +123,7 @@ public static class QuestData
       OfferText = null,
       AcceptedText = "Welcome to the Seas! Press W, A, S, or D and make the ship answer. We start with the basics before the sea starts laughing at you.",
       Description = "Scarlett wants to see if you can actually control the ship. Move once with your sailing controls so she knows the helm is in working hands.",
-      CompletionText = "Good. The ship listens to you, which puts you ahead of some captains already.",
+      CompletionText = null,
       Steps =
       [
         new QuestStepDefinition
@@ -144,9 +144,9 @@ public static class QuestData
       CanAcceptFromQuestLog = true,
       AutoAcceptWhenAvailable = true,
       OfferText = null,
-      AcceptedText = "Click and drag the camera once. A captain who never looks around is just volunteering to get jumped.",
+      AcceptedText = "Good. The ship listens to you, which puts you ahead of some captains already. Click and drag the camera once. A captain who never looks around is just volunteering to get jumped.",
       Description = "Scarlett wants you to stop staring straight ahead like a fresh deckhand. Click and drag to move your camera around once so you can actually watch the sea around you.",
-      CompletionText = "There ye go. A captain who can look around is much harder to surprise.",
+      CompletionText = null,
       Steps =
       [
         new QuestStepDefinition
@@ -167,9 +167,9 @@ public static class QuestData
       CanAcceptFromQuestLog = true,
       AutoAcceptWhenAvailable = true,
       OfferText = null,
-      AcceptedText = "Take the ship out with cannonballs aboard and fire one broadside. Q for port, E for starboard.",
+      AcceptedText = "There ye go. A captain who can look around is much harder to surprise. Take the ship out with cannonballs aboard and fire one broadside. Q for port, E for starboard.",
       Description = "Scarlett wants you to fire your cannons once so you get used to broadside combat before the real work starts.",
-      CompletionText = "Aye, that's the sound. You won't flinch the first time a fight starts now.",
+      CompletionText = null,
       Steps =
       [
         new QuestStepDefinition
@@ -190,9 +190,9 @@ public static class QuestData
       CanAcceptFromQuestLog = true,
       AutoAcceptWhenAvailable = true,
       OfferText = null,
-      AcceptedText = "A captain who can't arrive properly is just a floating apology. Press Tab to view the map, find a harbor, and set sail.",
+      AcceptedText = "Aye, that's the sound. You won't flinch the first time a fight starts now. A captain who can't arrive properly is just a floating apology. Press Tab to view the map, find a harbor, and set sail.",
       Description = "Scarlett wants proof that you can actually pull into a harbor without turning it into a scene. Sail to any port and dock once. Just move into the harbor interaction ring until the port panel opens.",
-      CompletionText = "Nice. You're not just a menace to the sea, you can actually visit places.",
+      CompletionText = null,
       Unlocks = [FeatureUnlock.SellGoods, FeatureUnlock.TavernTalk, FeatureUnlock.BuyGoods],
       Steps =
       [
@@ -214,9 +214,9 @@ public static class QuestData
       CanAcceptFromQuestLog = true,
       AutoAcceptWhenAvailable = true,
       OfferText = null,
-      AcceptedText = "Gathering keeps you afloat, but trading makes you dangerous. Buy iron at Rusthook Point or Haven Harbour, sell it up at Tidefall Island for a profit, and earn 100 gold total while you're at it.",
+      AcceptedText = "Aye, that's the sound. You won't flinch the first time a fight starts now. Gathering keeps you afloat, but trading makes you dangerous. Buy iron at Rusthook Point or Haven Harbour, sell it up at Tidefall Island for a profit, and earn 100 gold total while you're at it.",
       Description = "Scarlett wants one clean trade lesson instead of a dozen guesses. Buy iron somewhere cheap, then sell it at Tidefall Island for a profit. Rusthook Point and Haven Harbour are both good places to start. Finish by earning 100 gold total.",
-      CompletionText = "Better. Now you're trading with your head instead of your feelings. Ship components are unlocked.",
+      CompletionText = "Better. Now you're trading with your head instead of your feelings. Now head back to port and find some more quests by talking to characters in the market. They might have some work for you, and they always have gossip that can point you toward good trade routes.",
       Unlocks = [FeatureUnlock.ShipyardComponents],
       Steps =
       [

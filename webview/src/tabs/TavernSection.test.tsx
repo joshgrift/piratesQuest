@@ -3,7 +3,7 @@ import { fireEvent, screen } from "@testing-library/react";
 import { renderApp } from "../test/helpers";
 import { getIpcMessages } from "../test/helpers";
 
-describe("TavernTab", () => {
+describe("TavernSection", () => {
   it("sends accept quest IPC when starting a hire quest", async () => {
     const { ipcSpy } = renderApp({ tab: "market" });
 

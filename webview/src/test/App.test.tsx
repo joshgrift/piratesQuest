@@ -231,7 +231,8 @@ describe("App", () => {
       },
     });
 
-    expect(screen.getByText("Closes in 5s")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /dismiss message from scarlett/i })).toBeInTheDocument();
+    expect(screen.queryByText(/closes in/i)).not.toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(5000);
@@ -291,8 +292,8 @@ describe("App", () => {
     act(() => {
       vi.advanceTimersByTime(4900);
     });
-
-    expect(screen.getByText("Closes in 1s")).toBeInTheDocument();
+    expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
+    expect(screen.queryByText(/next in/i)).not.toBeInTheDocument();
 
     const followUpState = {
       ...initialState,
@@ -306,8 +307,8 @@ describe("App", () => {
       window.updateState?.(followUpState);
     });
 
-    expect(screen.getByText("1 more")).toBeInTheDocument();
-    expect(screen.getByText("Next in 1s")).toBeInTheDocument();
+    expect(screen.getByText("Next up")).toBeInTheDocument();
+    expect(screen.getByLabelText("1 more waiting")).toBeInTheDocument();
     expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
 
     act(() => {

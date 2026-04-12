@@ -2,19 +2,19 @@ import { useMemo } from "react";
 import type { PortState, QuestSummary } from "../types";
 import { BASE } from "../utils/helpers";
 
-interface TavernTabProps {
+interface TavernSectionProps {
   state: PortState;
   onTalk: (characterId: string) => void;
   onHire: (characterId: string) => void;
   onQuest: (characterId: string) => void;
 }
 
-export function TavernTab({
+export function TavernSection({
   state,
   onTalk,
   onHire,
   onQuest,
-}: TavernTabProps) {
+}: TavernSectionProps) {
   const hiredSet = useMemo(
     () => new Set(state.crew.hiredCharacterIds),
     [state.crew.hiredCharacterIds],

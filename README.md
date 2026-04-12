@@ -207,7 +207,6 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
   - [x] Cleaned up Quest Interface
   - [x] Clean up character cards
   - [x] Make it clear in the UI you can only have on active quest
-  - [ ] If you press yes on a quest, it should just go away
   - [ ] early quests, we should skip the accepted text
   - [ ] clean up character toast
 

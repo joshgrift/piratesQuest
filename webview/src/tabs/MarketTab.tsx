@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { sendIpc } from "../utils/ipc";
 import { inventoryIcon } from "../utils/helpers";
 import type { PortState } from "../types";
-import { TavernTab } from "./TavernTab";
+import { TavernSection } from "./TavernSection";
 
 type TradeMode = "buy" | "sell";
 
@@ -19,7 +19,6 @@ export function MarketTab({
   onHireCharacter,
   onQuestForCharacter,
 }: MarketTabProps) {
-  const coins = state.inventory["Coin"] ?? 0;
   const buyUnlocked = state.quests.unlockedFeatures.includes("BuyGoods");
   const sellUnlocked = state.quests.unlockedFeatures.includes("SellGoods");
   const tavernUnlocked = state.quests.unlockedFeatures.includes("TavernTalk");
@@ -104,8 +103,8 @@ export function MarketTab({
     <>
       {state.isInPort && tavernUnlocked && (
         <section className="market-people-section" aria-label="People in port">
-          <h3 className="market-people-title">People in Port</h3>
-          <TavernTab
+          <h3 className="market-people-title">Tavern</h3>
+          <TavernSection
             state={state}
             onTalk={onTalkToCharacter}
             onHire={onHireCharacter}
@@ -113,8 +112,6 @@ export function MarketTab({
           />
         </section>
       )}
-
-      <div className="market-gold-header">{coins} Gold</div>
 
       {(buyUnlocked || sellUnlocked) && (
         <div className="mode-toggle">
