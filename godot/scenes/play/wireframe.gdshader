@@ -29,6 +29,15 @@ uniform float pulse_strength : hint_range(0.0, 0.3) = 0.1;
 // Glow intensity for that cartoony pop
 uniform float glow_strength : hint_range(0.0, 2.0) = 1.0;
 
+// Softness of the main ring edge.
+uniform float edge_softness : hint_range(0.001, 0.1) = 0.02;
+
+// Extra size added around the main ring for the glow.
+uniform float glow_padding : hint_range(0.001, 0.3) = 0.1;
+
+// Softness of the glow fade.
+uniform float glow_softness : hint_range(0.001, 0.2) = 0.05;
+
 // Pass UV coordinates to fragment shader
 // UV = texture coordinates, ranging from (0,0) to (1,1) across the mesh
 varying vec2 uv_coords;
@@ -70,15 +79,15 @@ void fragment() {
 	// smoothstep creates soft edges (anti-aliasing)
 	// First smoothstep: fade in from inner edge
 	// Second smoothstep: fade out at outer edge
-	float ring_alpha = smoothstep(inner_edge - 0.02, inner_edge + 0.02, dist_from_center);
-	ring_alpha *= 1.0 - smoothstep(outer_edge - 0.02, outer_edge + 0.02, dist_from_center);
+	float ring_alpha = smoothstep(inner_edge - edge_softness, inner_edge + edge_softness, dist_from_center);
+	ring_alpha *= 1.0 - smoothstep(outer_edge - edge_softness, outer_edge + edge_softness, dist_from_center);
 
 	// === STEP 4: Add a secondary "glow" ring for cartoony effect ===
 	// This is a softer, wider ring behind the main one
-	float glow_inner = inner_edge - 0.1;
-	float glow_outer = outer_edge + 0.1;
-	float glow_alpha = smoothstep(glow_inner - 0.05, glow_inner + 0.1, dist_from_center);
-	glow_alpha *= 1.0 - smoothstep(glow_outer - 0.1, glow_outer + 0.05, dist_from_center);
+	float glow_inner = inner_edge - glow_padding;
+	float glow_outer = outer_edge + glow_padding;
+	float glow_alpha = smoothstep(glow_inner - glow_softness, glow_inner + glow_padding, dist_from_center);
+	glow_alpha *= 1.0 - smoothstep(glow_outer - glow_padding, glow_outer + glow_softness, dist_from_center);
 	glow_alpha *= 0.3;  // Make glow subtle
 
 	// === STEP 5: Combine main ring and glow ===
@@ -104,4 +113,3 @@ void fragment() {
 	// Final transparency
 	ALPHA = final_alpha * ring_color.a;
 }
-

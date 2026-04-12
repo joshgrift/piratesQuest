@@ -7,10 +7,23 @@ using Godot.Collections;
 using System;
 using System.Linq;
 
+[Tool]
 public partial class Port : Node3D, IIntractable
 {
+  private float _interactionRadius = 10.0f;
+
   [Export] public string PortId { get; set; } = "";
   [Export] public InteractionPoint DockingArea;
+  [Export(PropertyHint.Range, "0.5,200,0.5,or_greater")]
+  public float InteractionRadius
+  {
+    get => _interactionRadius;
+    set
+    {
+      _interactionRadius = Mathf.Max(0.5f, value);
+      SyncInteractionRadius();
+    }
+  }
 
   private PortDefinition _portDefinition;
 
@@ -21,6 +34,14 @@ public partial class Port : Node3D, IIntractable
 
   public override void _Ready()
   {
+    if (Engine.IsEditorHint())
+    {
+      // In the editor we only need the child interaction point to mirror the radius.
+      // Skip gameplay setup like groups, data lookups, and body event wiring.
+      SyncInteractionRadius();
+      return;
+    }
+
     // AI ships use this group to find nearby ports for awareness and
     // future behaviors like patrol routes or trade runs.
     AddToGroup("ports");
@@ -29,8 +50,25 @@ public partial class Port : Node3D, IIntractable
     if (_portDefinition == null)
       GD.PushError($"Port '{Name}' is missing port data for id '{PortId}'.");
 
+    SyncInteractionRadius();
     DockingArea.InteractionArea.BodyEntered += OnBodyEntered;
     DockingArea.InteractionArea.BodyExited += OnBodyExited;
+  }
+
+  public override void _Notification(int what)
+  {
+    if (what == NotificationReady)
+    {
+      SyncInteractionRadius();
+    }
+  }
+
+  private void SyncInteractionRadius()
+  {
+    if (DockingArea == null) return;
+
+    // The port owns the tuning value, then forwards it to the shared interaction point.
+    DockingArea.InteractionRadius = InteractionRadius;
   }
 
   private void OnBodyEntered(Node3D body)

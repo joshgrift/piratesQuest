@@ -6,17 +6,20 @@
 [ext_resource type="PackedScene" uid="uid://djxnsitp2b131" path="res://art/kenny_pirate/flag-pirate-pennant.glb" id="4_flag"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_r1qtm"]
-height = 1.0
-radius = 10.0
+height = 4.0
+radius = 20.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wireframe"]
 render_priority = 0
 shader = ExtResource("1_wireframe")
-shader_parameter/ring_color = Color(1, 0.8, 0, 0.6)
-shader_parameter/ring_thickness = 0.08
+shader_parameter/ring_color = Color(1, 0.8, 0, 0.35)
+shader_parameter/ring_thickness = 0.014
 shader_parameter/ring_position = 0.85
 shader_parameter/pulse_speed = 2.0
-shader_parameter/pulse_strength = 0.1
+shader_parameter/pulse_strength = 0.05
+shader_parameter/edge_softness = 0.012
+shader_parameter/glow_padding = 0.05
+shader_parameter/glow_softness = 0.025
 shader_parameter/glow_strength = 1.0
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ring"]
@@ -30,6 +33,7 @@ VisualRoot = NodePath("VisualRoot")
 [node name="Area3D" type="Area3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.240365, 0)
 shape = SubResource("CylinderShape3D_r1qtm")
 
 [node name="VisualRoot" type="Node3D" parent="."]
@@ -43,7 +47,7 @@ extra_cull_margin = 25.0
 mesh = SubResource("PlaneMesh_ring")
 
 [node name="BuoyBarrel" parent="VisualRoot" instance=ExtResource("3_barrel")]
-transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, 0, -0.35, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.70519274, 0)
 
 [node name="PiratePennant" parent="VisualRoot" instance=ExtResource("4_flag")]
-transform = Transform3D(0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 0, 1.55, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.17849752, 0)

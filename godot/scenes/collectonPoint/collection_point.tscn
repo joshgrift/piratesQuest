@@ -13,6 +13,7 @@ shader_parameter/gold_light = Color(0.91, 0.84, 0.64, 1)
 shader_parameter/bg_tint = Color(0.04, 0.09, 0.17, 0.55)
 shader_parameter/outer_radius = 0.44
 shader_parameter/ring_width = 0.065
+shader_parameter/blocked = 0.0
 
 [sub_resource type="QuadMesh" id="QuadMesh_compass"]
 size = Vector2(8, 8)
@@ -27,7 +28,7 @@ FeedbackRing = NodePath("Feedback/CompassRing")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.5, 0)
 
 [node name="Feedback" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 14.960728, 0)
 visible = false
 
 [node name="CompassRing" type="MeshInstance3D" parent="Feedback"]

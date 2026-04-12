@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3 uid="uid://c8c63pod53w2l"]
+[gd_scene load_steps=16 format=3 uid="uid://c8c63pod53w2l"]
 
 [ext_resource type="Script" uid="uid://cie1vrfri8q8x" path="res://scenes/play/Play.cs" id="1_j5m8q"]
 [ext_resource type="Material" uid="uid://75rdt22mc6g" path="res://art/sky/day_sky.tres" id="1_octoo"]
@@ -175,80 +175,90 @@ transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 1
 script = ExtResource("6_1phcp")
 
 [node name="Ports" type="Node3D" parent="."]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 387.91293, 0.9999962, -276.7504)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 387.91293, 0.9999962, -276.7504)
 
 [node name="StJohns" parent="Ports" instance=ExtResource("9_4dfl3")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -817.19165, 0, 725.55945)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -411.65045, 0, 362.83374)
 PortId = "saint-johns"
 
 [node name="Rusthook Point" parent="Ports" instance=ExtResource("9_4dfl3")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -537.41644, 0, -584.61957)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -277.95306, 0, -291.38126)
 PortId = "rusthook-point"
 
 [node name="Shard Bay" parent="Ports" instance=ExtResource("9_4dfl3")]
 PortId = "shard-bay"
 
 [node name="KrakenFall" parent="Ports" instance=ExtResource("9_4dfl3")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1136.0494, 3.8146973e-06, 1363.7982)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -562.75934, 3.8146973e-06, 639.5714)
 PortId = "krakenfall"
 
 [node name="Tidefall Island" parent="Ports" instance=ExtResource("9_4dfl3")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1718.8503, 3.8146973e-06, 1650.5708)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -861.5512, 7.6293945e-06, 821.5952)
 PortId = "tidefall-island"
 
 [node name="Haven Harbour" parent="Ports" instance=ExtResource("9_4dfl3")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1575.8247, -5.531311e-05, -501.3526)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -766.85693, -6.2942505e-05, -234.41791)
 PortId = "haven-harbour"
 
 [node name="Pebblehook Bay" parent="Ports" instance=ExtResource("9_4dfl3")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1993.1433, -5.531311e-05, -142.9267)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -992.0023, -5.531311e-05, -66.89377)
 PortId = "pebblehook-bay"
 
 [node name="Spire Harbour" parent="Ports" instance=ExtResource("9_4dfl3")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 320.998, -5.531311e-05, 1130.5662)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 161.80429, -5.531311e-05, 564.9187)
 PortId = "spire-harbour"
 
 [node name="Interactables" type="Node3D" parent="."]
 
 [node name="Collection Point" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 117.137184, 1, -298.0738)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 117.137184, 2.6371841, -298.0738)
 ResourceType = 1
+InteractionRadius = 20.0
 
 [node name="Collection Point7" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 497.68756, 1, -427.6233)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 497.68756, 1, -427.6233)
 ResourceType = 1
+InteractionRadius = 15.0
 
 [node name="Collection Point2" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -406.69543, 1, -30.297668)
 ResourceType = 2
+InteractionRadius = 30.0
 
 [node name="Collection Point3" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 108.74692, 1.0000763, 254.70633)
 ResourceType = 2
+InteractionRadius = 30.0
 
 [node name="Collection Point4" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.010506, 1.000061, -514.71564)
 ResourceType = 2
+InteractionRadius = 20.0
 
 [node name="Collection Point5" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -473.66302, 1.000061, 369.44034)
 ResourceType = 2
+InteractionRadius = 30.0
 
 [node name="Collection Point6" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 376.21707, 0.99993896, -26.176758)
 ResourceType = 2
+InteractionRadius = 20.0
 
 [node name="CollectionPoint" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -383.99268, 0.9999962, -291.30908)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -387.40793, 0.9999962, -297.339)
+InteractionRadius = 20.0
 
 [node name="CollectionPoint4" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 433.9519, 0.99998474, 212.63913)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 430.5752, 0.99998474, 213.44096)
+InteractionRadius = 20.0
 
 [node name="CollectionPoint3" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -614.4065, 1, -467.57925)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -614.4065, 1, -467.57925)
+InteractionRadius = 20.0
 
 [node name="CollectionPoint2" parent="Interactables" instance=ExtResource("6_ccytq")]
-transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, -608.0874, 0.9999962, 215.16774)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -610.4099, 0.9999962, 218.70955)
 ResourceType = 3
 CollectionSpeed = 4.0
 

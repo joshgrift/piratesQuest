@@ -191,9 +191,7 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 - [x] Cannonballs bounce of ships in safe zones
 - [x] Money sound no longer played everywhere
 - [x] Lock Characters behind quests
-- [ ] Improved Interaction Points UX
-  - [ ] Added boueys
-  - [ ] Added floating highlight if the players next step requires them to visit it
+- [x] Added boueys to Interaction Points
 - [x] Added Map (Tab)
 - [ ] Fixed Windows UI not loading
 - [ ] AI ships
