@@ -164,6 +164,10 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 - Sounds
   - [TomMusic](https://tommusic.itch.io/)
   - [JCSounds](https://jcsounds.itch.io/piratesfxvol1)
+  - [olexmazur](https://olexmazur.itch.io/fantasy-card-game)
+  - [cyrex-studios](https://cyrex-studios.itch.io/universal-ui-soundpack)
+  - [psionicgames](https://psionicgames.itch.io/my-game-sound-fx)
+  - [hzsmith](https://hzsmith.itch.io/free-sfx-pack-vol-4)
 - Icons
   - [Game-icons.net](https://game-icons.net/tags/pirate.html)
 - Shaders
