@@ -3,7 +3,7 @@ import { sendIpc } from "../utils/ipc";
 import { iconUrl, inventoryIcon } from "../utils/helpers";
 import type { PortState } from "../types";
 
-const ITEM_TYPES = ["Coin", "Wood", "Iron", "Fish", "Tea", "CannonBall", "Trophy"];
+const ITEM_TYPES = ["Coin", "Wood", "Iron", "Fish", "Tea", "CannonBall"];
 const STEP_AMOUNTS = [1, 50, 100] as const;
 const GOLD_STEP_AMOUNTS = [10, 100, 1000] as const;
 

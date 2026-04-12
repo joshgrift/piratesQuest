@@ -138,13 +138,6 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   [Export] private AudioStreamPlayer3D _cannonSoundPlayer;
 
-  [Export]
-  public int TrophyCount
-  {
-    get => _inventory.GetItemCount(InventoryItemType.Trophy);
-    set => _inventory.SetItem(InventoryItemType.Trophy, value);
-  }
-
   // Water Physics Properties
   [ExportGroup("Water Physics")]
   [Export] public NodePath WaterPlanePath { get; set; } = new("/root/Play/WaterPlane");
@@ -646,34 +639,21 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     // Set state to Dead - this disables movement, shooting, and taking damage
     State = PlayerState.Dead;
 
-    // Calculate what items to drop:
-    // - ALL trophies are dropped
-    // - HALF of other items are dropped (rounded down)
-    // The player keeps the other half of items but loses ALL components
+    // Drop half of each carried item (rounded down).
+    // The player keeps the other half but loses all components.
     var itemsToDrop = new Dictionary<InventoryItemType, int>();
     var currentInventory = _inventory.GetAll();
 
     foreach (var item in currentInventory)
     {
-      if (item.Key == InventoryItemType.Trophy)
+      int halfAmount = item.Value / 2;
+      if (halfAmount > 0)
       {
-        // Drop ALL trophies
-        itemsToDrop[item.Key] = item.Value;
-      }
-      else
-      {
-        // Drop HALF of other items (rounded down)
-        int halfAmount = item.Value / 2;
-        if (halfAmount > 0)
-        {
-          itemsToDrop[item.Key] = halfAmount;
-        }
+        itemsToDrop[item.Key] = halfAmount;
       }
     }
 
-    // Remove dropped items from inventory and notify the HUD
-    // For trophies: remove all
-    // For other items: remove half (what we dropped)
+    // Remove dropped items from inventory and notify the HUD.
     foreach (var item in itemsToDrop)
     {
       _inventory.UpdateItem(item.Key, -item.Value);
@@ -694,7 +674,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       ["nickname"] = Nickname,
       ["playerName"] = Name,
       ["position"] = GlobalPosition,
-      ["items"] = itemsToDrop  // Only drop half items + all trophies
+      ["items"] = itemsToDrop
     });
 
     CallDeferred(MethodName.EmitSignal, SignalName.Death, Name);

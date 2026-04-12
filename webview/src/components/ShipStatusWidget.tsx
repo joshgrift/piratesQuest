@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { PortState } from "../types";
 import { BASE, inventoryIcon } from "../utils/helpers";
 
-const INVENTORY_CHIPS = ["Wood", "Iron", "Fish", "Tea", "Trophy"] as const;
+const INVENTORY_CHIPS = ["Wood", "Iron", "Fish", "Tea"] as const;
 const STATUS_ANVIL_ICON = `${BASE}icons/flat/anvil.svg`;
 const STATUS_CANNON_ICON = `${BASE}icons/flat/cannon-shot.svg`;
 const STATUS_FLAG_ICON = `${BASE}icons/flat/pirate-flag.svg`;

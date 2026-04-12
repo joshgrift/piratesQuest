@@ -16,7 +16,6 @@ export function inventoryIcon(itemType: string): string {
     Tea: "tea.png",
     Coin: "coin.png",
     CannonBall: "cannon_ball.png",
-    Trophy: "trophy.png",
   };
   return iconUrl("inventory", map[itemType] ?? "coin.png");
 }

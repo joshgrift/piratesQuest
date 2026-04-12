@@ -44,14 +44,14 @@ describe("CreativePanel", () => {
   describe("inventory display", () => {
     it("shows all item types", () => {
       renderCreative();
-      for (const type of ["Wood", "Iron", "Fish", "Tea", "Coin", "CannonBall", "Trophy"]) {
+      for (const type of ["Wood", "Iron", "Fish", "Tea", "Coin", "CannonBall"]) {
         expect(screen.getByText(type)).toBeInTheDocument();
       }
     });
 
     it("shows current inventory amounts", () => {
       renderCreative({
-        state: { inventory: { Wood: 42, Iron: 0, Fish: 7, Tea: 0, Coin: 999, CannonBall: 0, Trophy: 0 } },
+        state: { inventory: { Wood: 42, Iron: 0, Fish: 7, Tea: 0, Coin: 999, CannonBall: 0 } },
       });
       expect(screen.getByText("42")).toBeInTheDocument();
       expect(screen.getAllByText("999").length).toBeGreaterThan(0);
@@ -62,7 +62,7 @@ describe("CreativePanel", () => {
       renderCreative({ state: { inventory: {} } });
       // All items should show 0
       const zeros = screen.getAllByText("0");
-      expect(zeros.length).toBeGreaterThanOrEqual(7);
+      expect(zeros.length).toBeGreaterThanOrEqual(6);
     });
   });
 
@@ -179,9 +179,9 @@ describe("CreativePanel", () => {
     });
 
     it("reset (×) button is disabled when item is already 0", () => {
-      renderCreative({ state: { inventory: { Trophy: 0 } } });
-      const trophyRow = screen.getByText("Trophy").closest(".creative-item")!;
-      const reset = Array.from(trophyRow.querySelectorAll("button")).find(
+      renderCreative({ state: { inventory: { CannonBall: 0 } } });
+      const cannonballRow = screen.getByText("CannonBall").closest(".creative-item")!;
+      const reset = Array.from(cannonballRow.querySelectorAll("button")).find(
         (b) => b.textContent === "×",
       )!;
       expect(reset).toBeDisabled();
@@ -203,7 +203,7 @@ describe("CreativePanel", () => {
         (m) => (m as { action: string }).action === "set_inventory",
       ) as { action: string; items: { type: string; quantity: number }[] };
       expect(setMsg).toBeDefined();
-      expect(setMsg.items).toHaveLength(7);
+      expect(setMsg.items).toHaveLength(6);
       for (const item of setMsg.items) {
         expect(item.quantity).toBe(0);
       }
@@ -218,7 +218,7 @@ describe("CreativePanel", () => {
       const setMsg = messages.find(
         (m) => (m as { action: string }).action === "set_inventory",
       ) as { action: string; items: { type: string; quantity: number }[] };
-      expect(setMsg.items).toHaveLength(7);
+      expect(setMsg.items).toHaveLength(6);
       for (const item of setMsg.items) {
         expect(item.quantity).toBe(100);
       }

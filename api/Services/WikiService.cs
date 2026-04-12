@@ -29,7 +29,7 @@ public sealed class WikiService(IWebHostEnvironment environment)
         RegexOptions.Compiled);
 
     private static readonly Regex InventoryWordPattern = new(
-        "(?<![\\p{L}])(?<word>cannonballs|cannonball|coins|coin|gold|wood|iron|fish|tea|health|trophy)(?![\\p{L}])",
+        "(?<![\\p{L}])(?<word>cannonballs|cannonball|coins|coin|gold|wood|iron|fish|tea|health)(?![\\p{L}])",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Dictionary<string, string> ResourceIconMap = new(StringComparer.OrdinalIgnoreCase)
@@ -43,8 +43,7 @@ public sealed class WikiService(IWebHostEnvironment environment)
         ["Cannon Ball"] = "/images/inventory/cannon_ball.png",
         ["Fish"] = "/images/inventory/fish.png",
         ["Tea"] = "/images/inventory/tea.png",
-        ["Health"] = "/images/inventory/health.png",
-        ["Trophy"] = "/images/inventory/trophy.png"
+        ["Health"] = "/images/inventory/health.png"
     };
 
     private static readonly Dictionary<string, (string IconPath, string AccessibleLabel)> InventoryWordMap =
@@ -59,8 +58,7 @@ public sealed class WikiService(IWebHostEnvironment environment)
             ["tea"] = ("/images/inventory/tea.png", "Tea"),
             ["cannonballs"] = ("/images/inventory/cannon_ball.png", "Cannonballs"),
             ["cannonball"] = ("/images/inventory/cannon_ball.png", "Cannonball"),
-            ["health"] = ("/images/inventory/health.png", "Health"),
-            ["trophy"] = ("/images/inventory/trophy.png", "Trophy")
+            ["health"] = ("/images/inventory/health.png", "Health")
         };
 
     private static readonly Dictionary<string, string> LabelIconMap = new(StringComparer.OrdinalIgnoreCase)

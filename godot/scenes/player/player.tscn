@@ -26,15 +26,12 @@ properties/3/replication_mode = 1
 properties/4/path = NodePath(".:visible")
 properties/4/spawn = true
 properties/4/replication_mode = 1
-properties/5/path = NodePath(".:TrophyCount")
+properties/5/path = NodePath(".:State")
 properties/5/spawn = true
 properties/5/replication_mode = 1
-properties/6/path = NodePath(".:State")
+properties/6/path = NodePath(".:ShipTier")
 properties/6/spawn = true
 properties/6/replication_mode = 1
-properties/7/path = NodePath(".:ShipTier")
-properties/7/spawn = true
-properties/7/replication_mode = 1
 
 [node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("CannonPivotLeft", "CannonPivotRight", "AutoHealTimer", "VisualRoot", "_cannonSoundPlayer")]
 collision_mask = 5
