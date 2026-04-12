@@ -1410,7 +1410,13 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   private void ApplyQuestRewards(QuestDefinition completedQuest)
   {
-    if (completedQuest == null || string.IsNullOrWhiteSpace(completedQuest.RewardCrewNpcId))
+    if (completedQuest == null)
+      return;
+
+    if (completedQuest.RewardGold > 0)
+      UpdateInventory(InventoryItemType.Coin, completedQuest.RewardGold);
+
+    if (string.IsNullOrWhiteSpace(completedQuest.RewardCrewNpcId))
       return;
 
     if (TryAddCrewCharacter(completedQuest.RewardCrewNpcId, recordQuestProgress: false))

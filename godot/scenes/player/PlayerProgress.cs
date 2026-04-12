@@ -387,6 +387,7 @@ public class PlayerProgress
     return step.Metric switch
     {
       QuestMetricKind.PortsVisitedCount => snapshot.PortsVisitedCount,
+      QuestMetricKind.UniquePortsVisitedCount => snapshot.PortsVisited.Count,
       QuestMetricKind.ShipMovementInputs => snapshot.ShipMovementInputs,
       QuestMetricKind.CameraDrags => snapshot.CameraDrags,
       QuestMetricKind.CannonballsShot => snapshot.CannonballsShot,

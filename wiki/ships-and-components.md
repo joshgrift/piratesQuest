@@ -63,6 +63,8 @@ Important crew rules:
 - crew **survive death**
 - different crew can be found at different ports around the world
 - hiring the right crew helps shape what your ship is best at
+- some crew are simple utility hires, and a few are more about roleplay than power
+- always read the crew card before hiring because not every bonus is positive
 
 If you want stronger trading, gathering, or combat runs, check ports for crew that match that job.
 

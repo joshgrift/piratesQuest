@@ -18,6 +18,7 @@ public enum QuestMetricKind
 {
   ShipMovementInputs,
   PortsVisitedCount,
+  UniquePortsVisitedCount,
   CameraDrags,
   CannonballsShot,
   ItemsCollected,
@@ -57,6 +58,7 @@ public class QuestDefinition
   public bool AutoAcceptWhenAvailable { get; init; }
   public bool Repeatable { get; init; }
   public string RewardCrewNpcId { get; init; } = "";
+  public int RewardGold { get; init; }
   public FeatureUnlock[] Unlocks { get; init; } = [];
   public QuestStepDefinition[] Steps { get; init; } = [];
 }
@@ -287,6 +289,29 @@ public static class QuestData
         },
       ],
     },
+    new QuestDefinition
+    {
+      Id = "barnaby_round_trip",
+      Title = "The Grand Port Tour",
+      GiverNpcId = "barnaby-jape",
+      GiverName = "Barnaby Jape",
+      GiverPortId = "pebblehook-bay",
+      PrerequisiteQuestIds = ["scarlett_sail_to_port"],
+      OfferText = "I have a very serious assignment for you: I need you to visit every port in the whole region so I can say I know a captain with stamina. Do it, come back taller in spirit, and I will pay you in glorious gold coin.",
+      AcceptedText = "Off you go then. Make the rounds, wave at every dock, and try not to become local gossip in all eight places at once.",
+      Description = "Barnaby wants you to sail to every port in the game at least once while this quest is active. It is a full tour of the map.",
+      CompletionText = "Beautiful. Exhausting, impractical, and beautiful. As promised, here is a gold coin. Spend it with restraint.",
+      RewardGold = 2,
+      Steps =
+      [
+        new QuestStepDefinition
+        {
+          Label = "Visit every port",
+          Metric = QuestMetricKind.UniquePortsVisitedCount,
+          RequiredValue = PortData.PortIds.Count,
+        },
+      ],
+    },
     CreateHireQuest(
       "hire_gideon_gearlock",
       "gideon-gearlock",
@@ -379,6 +404,29 @@ public static class QuestData
       description: "Silas improves iron collection, but he only joins captains who can bring ore home the hard way. Collect 10 Iron after accepting this quest, then return to Silas in Haven Harbour and talk to him to recruit him.",
       completionText: "That is solid work. I will join your crew, and your mining trips will start paying out better."
     ),
+    CreateHireQuest(
+      "hire_nera_quicksnap",
+      "nera-quicksnap",
+      "Visit 3 unique ports",
+      QuestMetricKind.UniquePortsVisitedCount,
+      requiredValue: 3,
+      offerText: "You want me aboard? Fine. Prove your ship can move. Visit three different ports after you accept this, then come back with a little speed in your wake.",
+      acceptedText: "Three unique ports. No excuses, no circling the same dock, and no pretending a fast launch matters if you never leave harbor.",
+      description: "Nera boosts your acceleration slightly, but only after you show her you can keep moving. Visit 3 different ports after accepting her quest, then return to Nera in Haven Harbour and talk to her to recruit her.",
+      completionText: "That is better. You kept moving, so I will make sure your ship does too."
+    ),
+    CreateHireQuest(
+      "hire_vera_vane",
+      "vera-vane",
+      "Collect 100 Wood",
+      QuestMetricKind.ItemsCollected,
+      requiredValue: 100,
+      offerText: "Your hull is begging for a finer hand. Bring me 100 wood after you accept this offer and I will show you what real structure looks like.",
+      acceptedText: "Go gather 100 wood for me, captain. Then come back and let me improve your ship properly.",
+      description: "Collect 100 Wood after accepting Vera's quest, then return to Vera in Spire Harbour and talk to her to recruit her.",
+      completionText: "Wonderful. That timber will do nicely, and I am sure you will feel the difference soon enough.",
+      itemType: nameof(InventoryItemType.Wood)
+    ),
   ];
 
   private static readonly Dictionary<string, QuestDefinition> _questsById = Quests
@@ -398,7 +446,10 @@ public static class QuestData
     return PortData.GetCharacterById(npcId)?.Portrait ?? "";
   }
 
-  public static QuestDefinition[] GetAvailableQuests(IEnumerable<string> completedQuestIds, string currentQuestId, IEnumerable<string> hiredCrewIds = null)
+  public static QuestDefinition[] GetAvailableQuests(
+    IEnumerable<string> completedQuestIds,
+    string currentQuestId,
+    IEnumerable<string> hiredCrewIds = null)
   {
     var completed = new HashSet<string>(completedQuestIds ?? [], StringComparer.Ordinal);
     var hiredCrew = new HashSet<string>(hiredCrewIds ?? [], StringComparer.Ordinal);

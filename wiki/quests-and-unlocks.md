@@ -18,6 +18,7 @@ Characters at ports offer quests that can reward you with:
 - resources
 - components
 - access to new crew members
+- gold
 
 They also point you toward useful next steps.
 
@@ -93,3 +94,9 @@ These hire quests are themed around the crew member's specialty. For example:
 - traders ask you to prove you can make money
 - cannoneers ask you to prove you can fight
 - gatherers ask you to prove you can bring back the right resource
+
+Some port characters also break the usual pattern:
+
+- a few crew offers are mostly about story or personality, not raw stat power
+- at least one character offers a full map tour quest instead of crew recruitment
+- not every "helpful" crew member is actually a pure upgrade, so read the details before hiring
