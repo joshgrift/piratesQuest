@@ -120,15 +120,26 @@ export function NpcCommentToast({
     isPausedRef.current = false;
   };
 
+  const toastClassName = [
+    "npc-comment-toast",
+    comment.celebrate ? "npc-comment-toast--celebrate" : "",
+    hasQueuedFollowups ? "npc-comment-toast--stacked" : "",
+  ].filter(Boolean).join(" ");
+
+  const queueButtonClassName = [
+    "npc-comment-toast-queue-badge",
+    hasQueuedFollowups ? "npc-comment-toast-queue-badge--stacked" : "npc-comment-toast-queue-badge--solo",
+    shouldAutoDismiss ? "npc-comment-toast-queue-badge--timed" : "",
+  ].join(" ");
+
+  const queueButtonStyle = shouldAutoDismiss
+    ? ({ "--npc-comment-progress": countdownProgress } as CSSProperties)
+    : undefined;
+
   return (
     <div className="npc-comment-toast-wrap" aria-live="polite">
       <div
-        className={[
-          "npc-comment-toast",
-          comment.celebrate ? "npc-comment-toast--celebrate" : "",
-          shouldAutoDismiss ? "npc-comment-toast--timed" : "",
-          hasQueuedFollowups ? "npc-comment-toast--stacked" : "",
-        ].filter(Boolean).join(" ")}
+        className={toastClassName}
         role={hasActions ? "dialog" : "button"}
         tabIndex={hasActions ? -1 : 0}
         onClick={hasActions ? undefined : onDismiss}
@@ -136,20 +147,11 @@ export function NpcCommentToast({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         aria-label={hasActions ? `${comment.name} conversation` : `Dismiss message from ${comment.name}`}
-        style={{ "--npc-comment-progress": countdownProgress } as CSSProperties}
       >
         {hasQueuedFollowups && (
           <>
             <div className="npc-comment-toast-stack npc-comment-toast-stack--back" aria-hidden="true" />
             <div className="npc-comment-toast-stack npc-comment-toast-stack--mid" aria-hidden="true" />
-          </>
-        )}
-        {shouldAutoDismiss && (
-          <>
-            <div className="npc-comment-toast-border-timer" aria-hidden="true">
-              <div className="npc-comment-toast-border-timer-fill" />
-            </div>
-            <div className="npc-comment-toast-background-timer" aria-hidden="true" />
           </>
         )}
         {comment.celebrate && (
@@ -168,14 +170,11 @@ export function NpcCommentToast({
             ))}
           </div>
         )}
-        <div className="npc-comment-toast-portrait-wrap">
-          <img
-            className="npc-comment-toast-portrait"
-            src={comment.portraitSrc}
-            alt={comment.portraitAlt}
-          />
-          <span className="npc-comment-toast-portrait-beacon" aria-hidden="true" />
-        </div>
+        <img
+          className="npc-comment-toast-portrait"
+          src={comment.portraitSrc}
+          alt={comment.portraitAlt}
+        />
 
         <div className="npc-comment-toast-copy">
           <div className="npc-comment-toast-kicker">
@@ -200,11 +199,9 @@ export function NpcCommentToast({
         </div>
         <button
           type="button"
-          className={[
-            "npc-comment-toast-queue-badge",
-            hasQueuedFollowups ? "npc-comment-toast-queue-badge--stacked" : "npc-comment-toast-queue-badge--solo",
-          ].join(" ")}
+          className={queueButtonClassName}
           aria-label={hasQueuedFollowups ? `${queueCount - 1} more waiting` : `Close message from ${comment.name}`}
+          style={queueButtonStyle}
           onClick={(event) => {
             event.stopPropagation();
             onDismiss();
@@ -216,7 +213,7 @@ export function NpcCommentToast({
               <span className="npc-comment-toast-queue-count">+{queueCount - 1}</span>
             </>
           ) : (
-            <span className="npc-comment-toast-queue-close-label">close</span>
+            <span className="npc-comment-toast-queue-count npc-comment-toast-queue-count--close">close</span>
           )}
         </button>
       </div>
