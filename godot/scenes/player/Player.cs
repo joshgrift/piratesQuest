@@ -176,6 +176,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   private const float NameTagShowDistance = 75.0f;  // Show when closer than this
   private const float NameTagHideDistance = 85.0f;  // Hide when farther than this (hysteresis)
   private const float NameTagHeight = 12.0f;
+  // Player ships spawn inside a 200x200 box centered on world origin.
+  // We retry a few times and only accept a position if the ship body does not overlap.
+  private const float SpawnWidth = 200.0f;
+  private const float SpawnDepth = 200.0f;
+  private const int SpawnAttemptCount = 30;
   // Tracks which ship tier visuals/colliders we've already applied.
   // ShipTier itself is replicated over the network, so we need to react when
   // that replicated value changes on remote clients.
@@ -220,7 +225,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     _lastAppliedShipTier = ShipTier;
 
     if (Configuration.RandomSpawnEnabled)
-      RandomSpawn(100, 100);
+      RandomSpawn();
 
     CallDeferred(MethodName.UpdateInventory, (int)InventoryItemType.CannonBall, 10);
     CallDeferred(MethodName.UpdateInventory, (int)InventoryItemType.Coin, Configuration.StartingCoin);
@@ -253,15 +258,40 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     }
   }
 
-  private void RandomSpawn(int startXRange, int startYRange)
+  private void RandomSpawn()
   {
     var rng = new RandomNumberGenerator();
     rng.Randomize();
-    GlobalPosition = new Vector3(
-      rng.Randf() * startYRange - startYRange / 2,
-      GlobalPosition.Y,
-      rng.Randf() * startXRange - startXRange / 2
-    );
+
+    for (int attempt = 0; attempt < SpawnAttemptCount; attempt++)
+    {
+      // X/Z are centered on origin so the playable area stays balanced around the map.
+      var candidatePosition = new Vector3(
+        rng.RandfRange(-SpawnWidth * 0.5f, SpawnWidth * 0.5f),
+        GlobalPosition.Y,
+        rng.RandfRange(-SpawnDepth * 0.5f, SpawnDepth * 0.5f)
+      );
+
+      if (CanSpawnAt(candidatePosition))
+      {
+        GlobalPosition = candidatePosition;
+        return;
+      }
+    }
+
+    GD.PushWarning($"{Name}: Could not find a clear random spawn after {SpawnAttemptCount} attempts.");
+  }
+
+  /// <summary>
+  /// Uses the ship's real collision body to check whether this position would overlap.
+  /// recoveryAsCollision=true means even "slight penetration that physics would push out"
+  /// counts as blocked, which is exactly what we want for spawning.
+  /// </summary>
+  private bool CanSpawnAt(Vector3 candidatePosition)
+  {
+    var candidateTransform = GlobalTransform;
+    candidateTransform.Origin = candidatePosition;
+    return !TestMove(candidateTransform, Vector3.Zero, null, 0.08f, true);
   }
 
   public override void _PhysicsProcess(double delta)
@@ -726,7 +756,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     EmitSignal(SignalName.HealthUpdate, Health);
 
     // Move to a new random spawn position
-    RandomSpawn(100, 100);
+    RandomSpawn();
 
     // Delay setting state to Alive by a short time (0.2 seconds)
     // This gives physics time to process the position change
@@ -1837,7 +1867,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (dto.IsDead)
     {
       Health = MaxHealth;
-      RandomSpawn(100, 100);
+      RandomSpawn();
       State = PlayerState.Alive;
       GD.Print($"{Name}: Was dead on save, respawning fresh with saved inventory");
     }
