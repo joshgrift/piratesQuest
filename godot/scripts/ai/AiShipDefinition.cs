@@ -1,4 +1,4 @@
-namespace PiratesQuest;
+namespace PiratesQuest.AI;
 
 using PiratesQuest.Data;
 using System.Collections.Generic;
@@ -24,7 +24,7 @@ public sealed class AiShipDefinition
   public float DetectionRange { get; init; } = 145.0f;
   public float PreferredCombatRange { get; init; } = 50.0f;
   public float FireRange { get; init; } = 70.0f;
-  public float PatrolRadius { get; init; } = 90.0f;
+  public float PatrolRadius { get; init; } = 250.0f;
   public Dictionary<InventoryItemType, int> CargoManifest { get; init; } = [];
 
   public static AiShipDefinition FromId(string id)
@@ -54,7 +54,7 @@ public sealed class AiShipDefinition
       DetectionRange = 155.0f,
       PreferredCombatRange = 48.0f,
       FireRange = 72.0f,
-      PatrolRadius = 95.0f,
+      PatrolRadius = 250.0f,
       CargoManifest = new Dictionary<InventoryItemType, int>
       {
         { InventoryItemType.Coin, 24 },

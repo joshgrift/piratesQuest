@@ -1,4 +1,4 @@
-namespace PiratesQuest;
+namespace PiratesQuest.AI;
 
 /// <summary>
 /// Decision-only interface for AI ships.

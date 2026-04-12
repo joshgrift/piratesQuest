@@ -1,4 +1,4 @@
-namespace PiratesQuest;
+namespace PiratesQuest.AI;
 
 using Godot;
 
@@ -22,5 +22,8 @@ public sealed class AiShipContext
   public bool LeftBlocked { get; init; }
   public bool RightBlocked { get; init; }
   public bool IsStuck { get; init; }
+  public bool IsEscaping { get; init; }
+  public bool IsEscapeReversing { get; init; }
+  public float EscapeTurnDirection { get; init; }
   public Port NearestPort { get; init; }
 }

@@ -1,4 +1,4 @@
-namespace PiratesQuest;
+namespace PiratesQuest.AI;
 
 /// <summary>
 /// The AI brain produces one of these each physics frame.
@@ -16,4 +16,5 @@ public sealed class AiShipControlInput
   public float Turn { get; set; }
   public bool FireLeft { get; set; }
   public bool FireRight { get; set; }
+  public string DebugState { get; set; } = string.Empty;
 }

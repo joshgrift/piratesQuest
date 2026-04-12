@@ -181,6 +181,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   private const float SpawnWidth = 200.0f;
   private const float SpawnDepth = 200.0f;
   private const int SpawnAttemptCount = 30;
+  private const float SpawnSkyCheckStartHeight = 3.0f;
+  private const float SpawnSkyCheckDistance = 250.0f;
   // Tracks which ship tier visuals/colliders we've already applied.
   // ShipTier itself is replicated over the network, so we need to react when
   // that replicated value changes on remote clients.
@@ -283,15 +285,117 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   }
 
   /// <summary>
-  /// Uses the ship's real collision body to check whether this position would overlap.
-  /// recoveryAsCollision=true means even "slight penetration that physics would push out"
-  /// counts as blocked, which is exactly what we want for spawning.
+  /// Uses an explicit shape query against the physics world to see whether the
+  /// ship footprint would overlap terrain, islands, or other bodies at this spot.
   /// </summary>
   private bool CanSpawnAt(Vector3 candidatePosition)
   {
-    var candidateTransform = GlobalTransform;
-    candidateTransform.Origin = candidatePosition;
-    return !TestMove(candidateTransform, Vector3.Zero, null, 0.08f, true);
+    var collisionNode = GetNodeOrNull<CollisionPolygon3D>($"collision-tier{ShipTier + 1}");
+    if (collisionNode == null || collisionNode.Polygon.Count() == 0)
+      return true;
+
+    var footprintShape = BuildSpawnFootprintShape(collisionNode, out var shapeLocalTransform, out var footprintSize);
+    if (footprintShape == null)
+      return true;
+
+    var playerTransform = GlobalTransform;
+    playerTransform.Origin = candidatePosition;
+
+    var query = new PhysicsShapeQueryParameters3D
+    {
+      Shape = footprintShape,
+      Transform = playerTransform * shapeLocalTransform,
+      CollisionMask = CollisionMask,
+      Margin = 0.25f
+    };
+
+    query.Exclude = [GetRid()];
+
+    var hits = GetWorld3D().DirectSpaceState.IntersectShape(query, 1);
+    if (hits.Count > 0)
+      return false;
+
+    return HasOpenSkyAbove(candidatePosition, collisionNode.Transform, footprintSize);
+  }
+
+  /// <summary>
+  /// Builds a simple box from the active collision polygon bounds.
+  /// It is not a perfect ship silhouette, but it is a reliable "don't spawn here"
+  /// footprint and matches the current ship tier size.
+  /// </summary>
+  private BoxShape3D BuildSpawnFootprintShape(
+    CollisionPolygon3D collisionNode,
+    out Transform3D shapeLocalTransform,
+    out Vector3 footprintSize
+  )
+  {
+    float minX = float.PositiveInfinity;
+    float maxX = float.NegativeInfinity;
+    float minY = float.PositiveInfinity;
+    float maxY = float.NegativeInfinity;
+
+    foreach (var point in collisionNode.Polygon)
+    {
+      minX = Mathf.Min(minX, point.X);
+      maxX = Mathf.Max(maxX, point.X);
+      minY = Mathf.Min(minY, point.Y);
+      maxY = Mathf.Max(maxY, point.Y);
+    }
+
+    float width = Mathf.Max(0.1f, maxX - minX);
+    float length = Mathf.Max(0.1f, maxY - minY);
+    float height = Mathf.Max(0.1f, collisionNode.Depth);
+
+    // Slight padding makes the spawn check conservative, which is what we want.
+    footprintSize = new Vector3(width + 1.5f, height, length + 1.5f);
+    var shape = new BoxShape3D { Size = footprintSize };
+
+    var polygonCenter = new Vector3(
+      (minX + maxX) * 0.5f,
+      0.0f,
+      (minY + maxY) * 0.5f
+    );
+
+    shapeLocalTransform = collisionNode.Transform.TranslatedLocal(polygonCenter);
+    return shape;
+  }
+
+  /// <summary>
+  /// Hollow island meshes can still "contain" the ship without overlapping it.
+  /// To avoid that, we sample the center and four corners of the ship footprint
+  /// and require a clear ray upward at each point.
+  /// </summary>
+  private bool HasOpenSkyAbove(
+    Vector3 candidatePosition,
+    Transform3D collisionLocalTransform,
+    Vector3 footprintSize
+  )
+  {
+    Vector3 halfExtents = footprintSize * 0.5f;
+    Vector3[] localSampleOffsets =
+    [
+      Vector3.Zero,
+      new Vector3(-halfExtents.X, 0.0f, -halfExtents.Z),
+      new Vector3(-halfExtents.X, 0.0f, halfExtents.Z),
+      new Vector3(halfExtents.X, 0.0f, -halfExtents.Z),
+      new Vector3(halfExtents.X, 0.0f, halfExtents.Z)
+    ];
+
+    var playerTransform = GlobalTransform;
+    playerTransform.Origin = candidatePosition;
+    var collisionWorldTransform = playerTransform * collisionLocalTransform;
+
+    foreach (var localOffset in localSampleOffsets)
+    {
+      var rayOrigin = collisionWorldTransform * (localOffset + Vector3.Up * SpawnSkyCheckStartHeight);
+      var rayTarget = rayOrigin + Vector3.Up * SpawnSkyCheckDistance;
+      var rayQuery = PhysicsRayQueryParameters3D.Create(rayOrigin, rayTarget, CollisionMask, [GetRid()]);
+      var hit = GetWorld3D().DirectSpaceState.IntersectRay(rayQuery);
+      if (hit.Count > 0)
+        return false;
+    }
+
+    return true;
   }
 
   public override void _PhysicsProcess(double delta)

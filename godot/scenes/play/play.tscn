@@ -125,6 +125,7 @@ _deadPlayerSpawner = NodePath("DeadPlayerSpawner")
 playerContainer = NodePath("SpawnPoint")
 _freeCam = NodePath("ServerFreeCam")
 _hud = NodePath("HUD/HUD")
+_debugAiShips = true
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
@@ -161,7 +162,7 @@ spawn_path = NodePath("..")
 [node name="AiShips" type="Node3D" parent="."]
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="AiShips"]
-_spawnable_scenes = PackedStringArray("res://scenes/ai_ship/ai_ship.tscn")
+_spawnable_scenes = PackedStringArray("uid://c5dj8v6e55j02")
 spawn_path = NodePath("..")
 
 [node name="Projectiles" type="Node3D" parent="."]

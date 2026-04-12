@@ -3,6 +3,7 @@ namespace PiratesQuest;
 using System;
 using System.Text.Json;
 using Godot;
+using PiratesQuest.AI;
 using PiratesQuest.Data;
 using System.Collections.Generic;
 using GodotDictionary = Godot.Collections.Dictionary;
@@ -15,9 +16,6 @@ public partial class Play : Node3D
   private const int DefaultServerPlayerMax = 8;
   private const int TargetAiShipCount = 5;
   private const float AiShipSpawnHeight = 2.0f;
-  private const float AiShipMapEdgeExtent = 1100.0f;
-  private const float AiShipSpawnInset = 85.0f;
-  private const float AiShipSpawnPaddingFromCorners = 180.0f;
 
   [Export] private MultiplayerSpawner _playerSpawner;
   [Export] private MultiplayerSpawner _aiShipSpawner;
@@ -26,6 +24,7 @@ public partial class Play : Node3D
   [Export] private Node3D playerContainer;
   [Export] private FreeCam _freeCam;
   [Export] private Hud _hud;
+  [Export] private bool _debugAiShips = false;
 
   private PackedScene _playerScene = GD.Load<PackedScene>("res://scenes/player/player.tscn");
   private PackedScene _aiShipScene = GD.Load<PackedScene>("res://scenes/ai_ship/ai_ship.tscn");
@@ -416,6 +415,18 @@ public partial class Play : Node3D
     GD.Print($"Spawned {shipsToSpawn} AI ship(s). Active AI ships: {livingAiShips + shipsToSpawn}/{TargetAiShipCount}");
   }
 
+  /// <summary>
+  /// Lets AI ships request an immediate refill instead of waiting for the long
+  /// background timer after they despawn themselves.
+  /// </summary>
+  public void RequestImmediateAiShipRefill()
+  {
+    if (!Multiplayer.IsServer())
+      return;
+
+    CallDeferred(MethodName.EnsureAiShipCount);
+  }
+
   private void SpawnAiShip(string name, Vector3 position, float yawRadians)
   {
     var spawnData = new GodotDictionary
@@ -423,6 +434,7 @@ public partial class Play : Node3D
       ["name"] = name,
       ["definitionId"] = "raider",
       ["displayName"] = "Raider",
+      ["debug"] = _debugAiShips,
       ["position"] = position,
       ["rotation"] = new Vector3(0.0f, yawRadians, 0.0f)
     };
@@ -436,10 +448,10 @@ public partial class Play : Node3D
   /// </summary>
   private (Vector3 Position, float YawRadians) PickAiShipEdgeSpawn()
   {
-    float halfExtent = AiShipMapEdgeExtent;
-    float edgeCoordinate = halfExtent - AiShipSpawnInset;
-    float spanMin = -halfExtent + AiShipSpawnPaddingFromCorners;
-    float spanMax = halfExtent - AiShipSpawnPaddingFromCorners;
+    float halfExtent = AiShipWorldSettings.MapHalfExtent;
+    float edgeCoordinate = halfExtent - AiShipWorldSettings.SpawnInset;
+    float spanMin = -halfExtent + AiShipWorldSettings.SpawnPaddingFromCorners;
+    float spanMax = halfExtent - AiShipWorldSettings.SpawnPaddingFromCorners;
     float lane = _rng.RandfRange(spanMin, spanMax);
     int side = _rng.RandiRange(0, 3);
 

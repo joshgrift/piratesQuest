@@ -1,6 +1,8 @@
 namespace PiratesQuest;
 
 using Godot;
+using PiratesQuest.AI;
+using PiratesQuest.AI.hunterDeterministic;
 using PiratesQuest.Attributes;
 using PiratesQuest.Data;
 using System.Collections.Generic;
@@ -37,6 +39,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
   private readonly List<Player> _nearbyPlayers = [];
 
   private Vector3 _spawnPoint;
+  private Vector3 _patrolCenter;
   private Vector3 _patrolPoint;
   private Vector3 _targetVelocity = Vector3.Zero;
   private Vector3 _lastPosition = Vector3.Zero;
@@ -47,11 +50,36 @@ public partial class AiShip : CharacterBody3D, IDamageable
   private float _recoilRoll = 0.0f;
   private float _fireCooldownRemaining = 0.0f;
   private float _stuckTimer = 0.0f;
+  private float _frontBlockedTimer = 0.0f;
+  private Vector3 _stallAreaAnchor = Vector3.Zero;
+  private float _stallAreaTimer = 0.0f;
+  private float _stallAreaClearTimer = 0.0f;
+  private float _lifetimeSeconds = 0.0f;
+  private float _escapeTimerRemaining = 0.0f;
+  private float _escapeTurnDirection = 1.0f;
   private bool _isSinking = false;
+  private bool _debugEnabled = false;
+  private string _debugState = string.Empty;
+  private bool _debugHasTargetPlayer = false;
+  private float _debugDistanceToGoal = 0.0f;
+  private bool _debugFrontBlocked = false;
+  private bool _debugLeftBlocked = false;
+  private bool _debugRightBlocked = false;
   private FloatingBody3D _floatingBody;
+  private MeshInstance3D _patrolDebugMarker;
+  private Label3D _stateDebugLabel;
 
   private const float RecoilRollAmount = 0.32f;
   private const float RecoilDecaySpeed = 2.4f;
+  private const float EscapeReverseDurationSeconds = 1.35f;
+  private const float EscapeForwardDurationSeconds = 1.15f;
+  private const float EscapeTriggerBlockedSeconds = 0.55f;
+  private const float StuckAreaHalfExtent = 10.0f;
+  private const float StuckAreaKillSeconds = 10.0f;
+  private const float StuckAreaClearResetSeconds = 1.5f;
+  private const float LifetimeRespawnSeconds = 1800.0f;
+  private static readonly Vector3 DebugLabelOffset = new(0.0f, 7.0f, 0.0f);
+  private static readonly Vector3 DebugMarkerHeightOffset = new(0.0f, 1.2f, 0.0f);
 
   public override void _Ready()
   {
@@ -61,6 +89,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
     _lastPosition = GlobalPosition;
 
     _floatingBody = new FloatingBody3D(this);
+    RefreshDebugVisuals();
   }
 
   /// <summary>
@@ -79,14 +108,20 @@ public partial class AiShip : CharacterBody3D, IDamageable
     DisplayName = data.ContainsKey("displayName") ? data["displayName"].AsString() : _definition.DisplayName;
     GlobalPosition = data.ContainsKey("position") ? data["position"].AsVector3() : Vector3.Zero;
     Rotation = data.ContainsKey("rotation") ? data["rotation"].AsVector3() : Vector3.Zero;
+    _debugEnabled = data.ContainsKey("debug") && data["debug"].AsBool();
 
     _spawnPoint = GlobalPosition;
-    _patrolPoint = PickPatrolPoint();
+    _stallAreaAnchor = GlobalPosition;
+    _lifetimeSeconds = 0.0f;
+    _patrolCenter = PickPatrolCenter();
+    _patrolPoint = PickPatrolPointInRange();
     Health = MaxHealth;
 
     _cargoManifest.Clear();
     foreach (var entry in _definition.CargoManifest)
       _cargoManifest[entry.Key] = entry.Value;
+
+    RefreshDebugVisuals();
   }
 
   public override void _PhysicsProcess(double delta)
@@ -97,12 +132,19 @@ public partial class AiShip : CharacterBody3D, IDamageable
     if (_fireCooldownRemaining > 0.0f)
       _fireCooldownRemaining = Mathf.Max(0.0f, _fireCooldownRemaining - (float)delta);
 
+    _lifetimeSeconds += (float)delta;
+    if (_lifetimeSeconds >= LifetimeRespawnSeconds)
+    {
+      FailSafeRespawn("lifetime expired after 30 minutes");
+      return;
+    }
+
     var targetPlayer = FindNearestTargetPlayer();
     Port nearestPort = FindNearestPort();
     Vector3 goalPosition = targetPlayer != null ? targetPlayer.GlobalPosition : GetPatrolPoint();
 
     if (targetPlayer == null && GlobalPosition.DistanceTo(_patrolPoint) < 14.0f)
-      _patrolPoint = PickPatrolPoint();
+      _patrolPoint = PickPatrolPointInRange();
 
     float traveled = GlobalPosition.DistanceTo(_lastPosition);
     _lastPosition = GlobalPosition;
@@ -112,6 +154,18 @@ public partial class AiShip : CharacterBody3D, IDamageable
       _stuckTimer += (float)delta;
     else
       _stuckTimer = 0.0f;
+
+    bool frontBlocked = ForwardRay?.IsColliding() ?? false;
+    bool leftBlocked = ForwardLeftRay?.IsColliding() ?? false;
+    bool rightBlocked = ForwardRightRay?.IsColliding() ?? false;
+
+    if (frontBlocked)
+      _frontBlockedTimer += (float)delta;
+    else
+      _frontBlockedTimer = 0.0f;
+
+    UpdateStallAreaTimer((float)delta, frontBlocked, targetPlayer != null);
+    UpdateEscapeState((float)delta, frontBlocked, leftBlocked, rightBlocked, targetPlayer == null);
 
     Vector3 localGoal = ToLocal(goalPosition);
     var context = new AiShipContext
@@ -124,14 +178,59 @@ public partial class AiShip : CharacterBody3D, IDamageable
       DistanceToGoal = GlobalPosition.DistanceTo(goalPosition),
       FireRange = _definition.FireRange,
       PreferredCombatRange = _definition.PreferredCombatRange,
-      FrontBlocked = ForwardRay?.IsColliding() ?? false,
-      LeftBlocked = ForwardLeftRay?.IsColliding() ?? false,
-      RightBlocked = ForwardRightRay?.IsColliding() ?? false,
+      FrontBlocked = frontBlocked,
+      LeftBlocked = leftBlocked,
+      RightBlocked = rightBlocked,
       IsStuck = _stuckTimer >= 1.0f,
+      IsEscaping = _escapeTimerRemaining > 0.0f,
+      IsEscapeReversing = _escapeTimerRemaining > EscapeForwardDurationSeconds,
+      EscapeTurnDirection = _escapeTurnDirection,
       NearestPort = nearestPort,
     };
 
+    _debugHasTargetPlayer = context.HasTargetPlayer;
+    _debugDistanceToGoal = context.DistanceToGoal;
+    _debugFrontBlocked = context.FrontBlocked;
+    _debugLeftBlocked = context.LeftBlocked;
+    _debugRightBlocked = context.RightBlocked;
+
     ApplyControl(_controller.GetControl(context, delta), (float)delta);
+    UpdateDebugVisuals();
+  }
+
+  private void UpdateStallAreaTimer(float delta, bool frontBlocked, bool hasTargetPlayer)
+  {
+    bool isTroubled = frontBlocked || _stuckTimer > 0.0f || _escapeTimerRemaining > 0.0f;
+    if (!isTroubled)
+    {
+      _stallAreaClearTimer += delta;
+      if (_stallAreaClearTimer >= StuckAreaClearResetSeconds)
+      {
+        _stallAreaAnchor = GlobalPosition;
+        _stallAreaTimer = 0.0f;
+      }
+      return;
+    }
+
+    _stallAreaClearTimer = 0.0f;
+
+    if (_stallAreaTimer <= 0.0f)
+      _stallAreaAnchor = GlobalPosition;
+
+    bool stillInSameArea =
+      Mathf.Abs(GlobalPosition.X - _stallAreaAnchor.X) <= StuckAreaHalfExtent &&
+      Mathf.Abs(GlobalPosition.Z - _stallAreaAnchor.Z) <= StuckAreaHalfExtent;
+
+    if (!stillInSameArea)
+    {
+      _stallAreaAnchor = GlobalPosition;
+      _stallAreaTimer = 0.0f;
+      return;
+    }
+
+    _stallAreaTimer += delta;
+    if (_stallAreaTimer >= StuckAreaKillSeconds)
+      FailSafeRespawn("stuck in the same 20x20 area for 10 seconds");
   }
 
   [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true)]
@@ -147,6 +246,8 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
   private void ApplyControl(AiShipControlInput control, float delta)
   {
+    _debugState = control.DebugState ?? string.Empty;
+
     float throttle = Mathf.Clamp(control.Throttle, -1.0f, 1.0f);
     float turn = Mathf.Clamp(control.Turn, -1.0f, 1.0f);
 
@@ -290,13 +391,161 @@ public partial class AiShip : CharacterBody3D, IDamageable
     return _patrolPoint;
   }
 
-  private Vector3 PickPatrolPoint()
+  private Vector3 PickPatrolCenter()
   {
-    // Small random sea patrol around the spawn point.
-    // This keeps the first version lively without adding route data yet.
-    float x = _rng.RandfRange(-_definition.PatrolRadius, _definition.PatrolRadius);
-    float z = _rng.RandfRange(-_definition.PatrolRadius, _definition.PatrolRadius);
-    return _spawnPoint + new Vector3(x, 0.0f, z);
+    // Give each AI ship a home area somewhere on the map.
+    float patrolExtent = AiShipWorldSettings.MapHalfExtent - AiShipWorldSettings.PatrolInset;
+    float x = _rng.RandfRange(-patrolExtent, patrolExtent);
+    float z = _rng.RandfRange(-patrolExtent, patrolExtent);
+    return new Vector3(x, _spawnPoint.Y, z);
+  }
+
+  private Vector3 PickPatrolPointInRange()
+  {
+    // Pick a random wander target inside a circle around the patrol center.
+    // Sqrt keeps the points spread across the full area instead of clustering
+    // near the outer edge.
+    float angle = _rng.RandfRange(0.0f, Mathf.Tau);
+    float distance = Mathf.Sqrt(_rng.Randf()) * _definition.PatrolRadius;
+    Vector3 offset = new(
+      Mathf.Cos(angle) * distance,
+      0.0f,
+      Mathf.Sin(angle) * distance
+    );
+
+    Vector3 candidate = _patrolCenter + offset;
+    float patrolExtent = AiShipWorldSettings.MapHalfExtent - AiShipWorldSettings.PatrolInset;
+
+    return new Vector3(
+      Mathf.Clamp(candidate.X, -patrolExtent, patrolExtent),
+      _spawnPoint.Y,
+      Mathf.Clamp(candidate.Z, -patrolExtent, patrolExtent)
+    );
+  }
+
+  private void UpdateEscapeState(
+    float delta,
+    bool frontBlocked,
+    bool leftBlocked,
+    bool rightBlocked,
+    bool isPatrolling)
+  {
+    if (_escapeTimerRemaining > 0.0f)
+    {
+      _escapeTimerRemaining = Mathf.Max(0.0f, _escapeTimerRemaining - delta);
+      return;
+    }
+
+    bool frontBlockedLongEnough = frontBlocked && _frontBlockedTimer >= EscapeTriggerBlockedSeconds;
+    bool stuck = _stuckTimer >= 1.0f;
+    if (!frontBlockedLongEnough && !stuck)
+      return;
+
+    _escapeTurnDirection = ChooseEscapeTurnDirection(leftBlocked, rightBlocked);
+    _escapeTimerRemaining = EscapeReverseDurationSeconds + EscapeForwardDurationSeconds;
+
+    // If the ship was only roaming, don't send it right back toward the same
+    // bad destination after it escapes.
+    if (isPatrolling)
+      _patrolPoint = PickPatrolPointInRange();
+  }
+
+  private void RefreshDebugVisuals()
+  {
+    if (!IsInsideTree())
+      return;
+
+    bool shouldShowDebug = _debugEnabled && Multiplayer.IsServer();
+
+    if (!shouldShowDebug)
+    {
+      _patrolDebugMarker?.QueueFree();
+      _patrolDebugMarker = null;
+      _stateDebugLabel?.QueueFree();
+      _stateDebugLabel = null;
+      return;
+    }
+
+    if (_patrolDebugMarker == null)
+    {
+      _patrolDebugMarker = AiDebugVisuals.CreatePointMarker("PatrolDebugMarker", new Color(0.25f, 0.95f, 0.65f));
+      GetTree().CurrentScene?.AddChild(_patrolDebugMarker);
+    }
+
+    if (_stateDebugLabel == null)
+    {
+      _stateDebugLabel = AiDebugVisuals.CreateStateLabel("AiStateDebugLabel", DebugLabelOffset);
+      AddChild(_stateDebugLabel);
+    }
+  }
+
+  private void UpdateDebugVisuals()
+  {
+    if (!_debugEnabled || !Multiplayer.IsServer())
+      return;
+
+    if (!IsInsideTree())
+      return;
+
+    RefreshDebugVisuals();
+
+    if (_patrolDebugMarker != null)
+      _patrolDebugMarker.GlobalPosition = _patrolCenter + DebugMarkerHeightOffset;
+
+    if (_stateDebugLabel != null)
+      _stateDebugLabel.Text = BuildDebugText();
+  }
+
+  private string BuildDebugText()
+  {
+    string targetMode = _debugHasTargetPlayer ? "Player" : "Patrol";
+    string obstacleFlags = $"{(_debugFrontBlocked ? "F" : "-")}{(_debugLeftBlocked ? "L" : "-")}{(_debugRightBlocked ? "R" : "-")}";
+    string escapeMode = _escapeTimerRemaining > 0.0f
+      ? (_escapeTimerRemaining > EscapeForwardDurationSeconds ? "Reverse" : "Forward")
+      : "None";
+
+    return string.Join('\n', [
+      DisplayName,
+      $"State: {_debugState}",
+      $"Mode: {targetMode}  Goal: {_debugDistanceToGoal:0.0}",
+      $"Speed: {_currentSpeed:0.0}/{_definition.MaxSpeed:0.0}  Turn: {_currentTurnInput:0.00}",
+      $"Patrol: ({_patrolCenter.X:0}, {_patrolCenter.Z:0}) r={_definition.PatrolRadius:0}",
+      $"Wander: ({_patrolPoint.X:0}, {_patrolPoint.Z:0})",
+      $"Blocked: {obstacleFlags}  Front: {_frontBlockedTimer:0.00}s",
+      $"Stuck: {_stuckTimer:0.00}s  Escape: {escapeMode} {_escapeTimerRemaining:0.00}s",
+      $"Trap: {_stallAreaTimer:0.00}s  Clear: {_stallAreaClearTimer:0.00}s",
+      $"Trap Box: ({_stallAreaAnchor.X:0}, {_stallAreaAnchor.Z:0}) +/- {StuckAreaHalfExtent:0}",
+      $"Life: {_lifetimeSeconds:0}s / {LifetimeRespawnSeconds:0}s",
+      $"Fire Cd: {_fireCooldownRemaining:0.00}s"
+    ]);
+  }
+
+  private void FailSafeRespawn(string reason)
+  {
+    if (_isSinking)
+      return;
+
+    _isSinking = true;
+    GD.Print($"{Name}: {reason}, forcing respawn");
+
+    if (GetTree().CurrentScene is Play play)
+      play.RequestImmediateAiShipRefill();
+
+    QueueFree();
+  }
+
+  private float ChooseEscapeTurnDirection(bool leftBlocked, bool rightBlocked)
+  {
+    if (leftBlocked && !rightBlocked)
+      return 1.0f;
+
+    if (rightBlocked && !leftBlocked)
+      return -1.0f;
+
+    // If both sides look similar, don't always prefer the same side. Flipping
+    // here gives the next recovery attempt a different angle of attack.
+    _escapeTurnDirection *= -1.0f;
+    return _escapeTurnDirection;
   }
 
   private void Sink()

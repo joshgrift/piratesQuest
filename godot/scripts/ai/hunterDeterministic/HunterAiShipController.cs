@@ -1,6 +1,7 @@
-namespace PiratesQuest;
+namespace PiratesQuest.AI.hunterDeterministic;
 
 using Godot;
+using PiratesQuest.AI;
 
 /// <summary>
 /// First AI brain: patrol open water, chase nearby players, and try to line up
@@ -12,12 +13,24 @@ public sealed class HunterAiShipController : IAiShipController
   {
     var input = new AiShipControlInput();
 
+    // Once the ship commits to an escape maneuver, keep that decision stable
+    // for a short time. This avoids the left/right wiggle that happens when
+    // obstacle checks flip every frame near shore.
+    if (context.IsEscaping)
+    {
+      input.Throttle = context.IsEscapeReversing ? -1.0f : 0.55f;
+      input.Turn = context.EscapeTurnDirection;
+      input.DebugState = context.IsEscapeReversing ? "Escape Reverse" : "Escape Forward";
+      return input;
+    }
+
     // Terrain avoidance gets top priority.
     // If the ship sees land dead ahead, surviving matters more than style.
     if (context.FrontBlocked)
     {
       input.Throttle = context.LeftBlocked && context.RightBlocked ? -0.8f : 0.25f;
       input.Turn = PickSaferTurn(context);
+      input.DebugState = "Avoid Shore";
       return input;
     }
 
@@ -26,6 +39,7 @@ public sealed class HunterAiShipController : IAiShipController
     {
       input.Throttle = -0.9f;
       input.Turn = PickSaferTurn(context);
+      input.DebugState = "Recover Stuck";
       return input;
     }
 
@@ -36,6 +50,7 @@ public sealed class HunterAiShipController : IAiShipController
     {
       input.Throttle = distance > 12.0f ? 0.75f : 0.2f;
       input.Turn = Mathf.Clamp(targetAngle / 0.8f, -1.0f, 1.0f);
+      input.DebugState = "Patrol";
       return input;
     }
 
@@ -69,8 +84,11 @@ public sealed class HunterAiShipController : IAiShipController
     {
       input.FireRight = context.LocalGoalPosition.X > 0.0f;
       input.FireLeft = context.LocalGoalPosition.X < 0.0f;
+      input.DebugState = input.FireRight ? "Fire Starboard" : "Fire Port";
+      return input;
     }
 
+    input.DebugState = inFireRange ? "Broadside Setup" : "Chase";
     return input;
   }
 
