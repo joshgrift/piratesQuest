@@ -200,6 +200,8 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
   - [ ] Fix shooting
 - [ ] Can't arbitrage any resources
 - [ ] Add another character & better space out characters
+- [ ] Player should spawn in safe areas
+- [ ] early quests, we should skip the accepted text
 
 - [ ] UI Cleanup
   - [ ] Sell buttons are backwards
@@ -207,6 +209,7 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
   - [ ] Cleaned up Quest Interface
   - [ ] Clean up character cards
   - [ ] Make it clear in the UI you can only have on active quest
+  - [ ] If you press yes on a quest, it should just go away
 
 ### Planned
 - [ ] In game map

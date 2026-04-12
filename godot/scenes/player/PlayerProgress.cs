@@ -36,11 +36,11 @@ public class PlayerProgress
     _sinceQuestStart.Reset();
   }
 
-  public void RecordPortVisited(string portName)
+  public void RecordPortVisited(string portId)
   {
-    _lifetime.RecordPortVisited(portName);
+    _lifetime.RecordPortVisited(portId);
     if (HasActiveQuest())
-      _sinceQuestStart.RecordPortVisited(portName);
+      _sinceQuestStart.RecordPortVisited(portId);
   }
 
   public void RecordItemCollected(InventoryItemType item, int amount)
@@ -352,7 +352,7 @@ public class PlayerProgress
       quest.GiverNpcId,
       quest.GiverName,
       QuestData.GetQuestGiverPortrait(quest.GiverNpcId),
-      quest.GiverPortName,
+      PortData.GetPortDisplayName(quest.GiverPortId),
       quest.RevealGiverInQuestLog,
       quest.CanAcceptFromQuestLog,
       !quest.AutoAcceptWhenAvailable,
@@ -465,11 +465,11 @@ public class PlayerProgress
       TotalMoneySpent = 0;
     }
 
-    public void RecordPortVisited(string portName)
+    public void RecordPortVisited(string portId)
     {
       PortsVisitedCount += 1;
-      if (!string.IsNullOrWhiteSpace(portName))
-        PortsVisited.Add(portName);
+      if (!string.IsNullOrWhiteSpace(portId))
+        PortsVisited.Add(portId);
     }
 
     public void RecordItemCollected(InventoryItemType item, int amount)
@@ -563,7 +563,7 @@ public class PlayerProgress
         QuantityAcquiredForCostByItem = new Dictionary<string, int>(QuantityAcquiredForCostByItem, StringComparer.Ordinal),
         ShipMovementInputs = ShipMovementInputs,
         PortsVisitedCount = PortsVisitedCount,
-        PortsVisited = PortsVisited.OrderBy(x => x, StringComparer.Ordinal).ToList(),
+        PortIdsVisited = PortsVisited.OrderBy(x => x, StringComparer.Ordinal).ToList(),
         CameraDrags = CameraDrags,
         CannonballsShot = CannonballsShot,
         ShipsHit = ShipsHit,
@@ -591,8 +591,8 @@ public class PlayerProgress
       Copy(dto.QuantityAcquiredForCostByItem, QuantityAcquiredForCostByItem);
       ShipMovementInputs = dto.ShipMovementInputs;
       PortsVisitedCount = dto.PortsVisitedCount;
-      foreach (var port in dto.PortsVisited ?? [])
-        PortsVisited.Add(port);
+      foreach (var portId in dto.PortIdsVisited ?? [])
+        PortsVisited.Add(portId);
       CameraDrags = dto.CameraDrags;
       CannonballsShot = dto.CannonballsShot;
       ShipsHit = dto.ShipsHit;

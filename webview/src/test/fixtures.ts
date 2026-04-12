@@ -236,6 +236,7 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
 
 export function makeVaultState(overrides?: Partial<VaultState>): VaultState {
   return {
+    portId: "tortuga",
     portName: "Tortuga",
     level: 1,
     items: {},

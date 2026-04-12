@@ -294,7 +294,7 @@ export function CreativeTab({ state }: { state: PortState }) {
                   key={lvl}
                   className={`creative-preset-btn ${state.vault?.level === lvl ? "creative-preset-active" : ""}`}
                   onClick={() =>
-                    sendIpc({ action: "set_vault", portName: state.vault!.portName, level: lvl })
+                    sendIpc({ action: "set_vault", portId: state.vault!.portId, level: lvl })
                   }
                 >
                   Lvl {lvl}
@@ -317,7 +317,7 @@ export function CreativeTab({ state }: { state: PortState }) {
               <button
                 className="creative-preset-btn"
                 onClick={() =>
-                  sendIpc({ action: "set_vault", portName: state.portName, level: 1 })
+                  sendIpc({ action: "set_vault", portId: "", level: 1 })
                 }
               >
                 Build Here (Lvl 1)
@@ -325,7 +325,7 @@ export function CreativeTab({ state }: { state: PortState }) {
               <button
                 className="creative-preset-btn"
                 onClick={() =>
-                  sendIpc({ action: "set_vault", portName: state.portName, level: 5 })
+                  sendIpc({ action: "set_vault", portId: "", level: 5 })
                 }
               >
                 Build Here (Lvl 5)

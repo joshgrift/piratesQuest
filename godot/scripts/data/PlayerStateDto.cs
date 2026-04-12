@@ -29,7 +29,7 @@ public class OwnedComponentDto
 /// </summary>
 public class VaultDto
 {
-  public string PortName { get; set; } = "";
+  public string PortId { get; set; } = "";
   public int Level { get; set; } = 1;
   public Dictionary<string, int> Items { get; set; } = new();
 }

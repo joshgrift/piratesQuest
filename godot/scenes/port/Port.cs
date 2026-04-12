@@ -9,9 +9,12 @@ using System.Linq;
 
 public partial class Port : Node3D, IIntractable
 {
-  [Export] public String PortName { get; set; } = "Default Port";
-  [Export] public ShopItemData[] ItemsForSale { get; set; } = [];
+  [Export] public string PortId { get; set; } = "";
   [Export] public InteractionPoint DockingArea;
+
+  private PortDefinition _portDefinition;
+
+  public string PortName => PortData.GetPortDisplayName(PortId);
 
   [Signal] public delegate void ShipDockedEventHandler(Port port, Player player, Variant payload);
   [Signal] public delegate void ShipDepartedEventHandler(Port port, Player player);
@@ -21,6 +24,10 @@ public partial class Port : Node3D, IIntractable
     // AI ships use this group to find nearby ports for awareness and
     // future behaviors like patrol routes or trade runs.
     AddToGroup("ports");
+
+    _portDefinition = PortData.GetPortById(PortId);
+    if (_portDefinition == null)
+      GD.PushError($"Port '{Name}' is missing port data for id '{PortId}'.");
 
     DockingArea.InteractionArea.BodyEntered += OnBodyEntered;
     DockingArea.InteractionArea.BodyExited += OnBodyExited;
@@ -60,10 +67,22 @@ public partial class Port : Node3D, IIntractable
 
   public Variant GetPayload()
   {
+    var itemsForSale = new Godot.Collections.Array<Godot.Collections.Dictionary>();
+    foreach (var item in PortData.GetItemsForSale(PortId))
+    {
+      itemsForSale.Add(new Godot.Collections.Dictionary
+      {
+        { "ItemType", item.ItemType.ToString() },
+        { "BuyPrice", item.BuyPrice },
+        { "SellPrice", item.SellPrice },
+      });
+    }
+
     return new Dictionary
     {
+      { "PortId", PortId },
       { "PortName", PortName },
-      { "ItemsForSale", ItemsForSale }
+      { "ItemsForSale", itemsForSale }
     };
   }
 
@@ -72,8 +91,7 @@ public partial class Port : Node3D, IIntractable
   /// </summary>
   public HudPortSnapshotDto ExportHudSnapshot()
   {
-    var tavernCharacters = TavernData
-      .GetCharactersForPort(PortName ?? "")
+    var tavernCharacters = PortData.GetCharactersForPortId(PortId)
       .Select(c => new TavernCharacterDto(
         c.Id,
         c.Name,
@@ -93,8 +111,9 @@ public partial class Port : Node3D, IIntractable
 
     return new HudPortSnapshotDto
     {
+      PortId = PortId ?? "",
       PortName = PortName ?? "",
-      ItemsForSale = (ItemsForSale ?? [])
+      ItemsForSale = PortData.GetItemsForSale(PortId)
         .Select(item => new ShopItemDto(
           item.ItemType.ToString(),
           item.BuyPrice,

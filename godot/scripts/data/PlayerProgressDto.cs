@@ -16,7 +16,7 @@ public class PlayerProgressSnapshotDto
   public Dictionary<string, int> QuantityAcquiredForCostByItem { get; set; } = new();
   public int ShipMovementInputs { get; set; }
   public int PortsVisitedCount { get; set; }
-  public List<string> PortsVisited { get; set; } = [];
+  public List<string> PortIdsVisited { get; set; } = [];
   public int CameraDrags { get; set; }
   public int CannonballsShot { get; set; }
   public int ShipsHit { get; set; }

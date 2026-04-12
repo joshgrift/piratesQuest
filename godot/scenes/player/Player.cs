@@ -63,15 +63,15 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   // ── Vault ────────────────────────────────────────────────────────
   // Each player can build one vault at a single port.
-  // Null VaultPortName means no vault exists yet.
+  // Null VaultPortId means no vault exists yet.
 
-  public string VaultPortName { get; set; }
+  public string VaultPortId { get; set; }
   public int VaultLevel { get; set; }
   public System.Collections.Generic.Dictionary<InventoryItemType, int> VaultItems { get; set; } = new();
 
   // ── Tavern Crew ──────────────────────────────────────────────────
   // Crew hires persist in player state and affect real gameplay stats.
-  public System.Collections.Generic.List<string> HiredCrewCharacterIds { get; set; } = [TavernData.ScarlettId];
+  public System.Collections.Generic.List<string> HiredCrewCharacterIds { get; set; } = [PortData.ScarlettId];
 
   // Capacities per vault level (index 0 = unused, 1-5 = levels)
   public static readonly int[] VaultItemCapacity = [0, 500, 1000, 2000, 4000, 6000];
@@ -115,7 +115,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   // True while this ship is inside a port docking area.
   // We use this to disable incoming damage in safe zones.
   [Export] public bool IsInPort { get; private set; } = false;
-  public string CurrentPortName { get; private set; }
+  public string CurrentPortId { get; private set; }
   // True for a brief window after ApplyShipTier() swaps collision shapes.
   // Prevents a spurious ShipDeparted signal while the physics engine catches up.
   public bool IsSwappingShipTier { get; private set; } = false;
@@ -634,9 +634,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     IsInPort = value;
   }
 
-  public void SetCurrentPort(string portName)
+  public void SetCurrentPort(string portId)
   {
-    CurrentPortName = string.IsNullOrWhiteSpace(portName) ? null : portName;
+    CurrentPortId = string.IsNullOrWhiteSpace(portId) ? null : portId;
   }
 
   public void OnDeath()
@@ -871,7 +871,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     // Apply hired crew stat bonuses on top of base stats and components.
     foreach (var hiredId in HiredCrewCharacterIds)
     {
-      var character = TavernData.GetCharacterById(hiredId);
+      var character = PortData.GetCharacterById(hiredId);
       if (character == null) continue;
 
       foreach (var statChange in character.StatChanges)
@@ -890,13 +890,13 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     return Math.Max(2, (componentSlots / 2) + 1);
   }
 
-  public bool HireCrew(string characterId, string currentPortName)
+  public bool HireCrew(string characterId, string currentPortId)
   {
-    var character = TavernData.GetCharacterById(characterId);
+    var character = PortData.GetCharacterById(characterId);
     if (character == null || !character.Hireable)
       return false;
 
-    if (!string.Equals(character.PortName, currentPortName, StringComparison.OrdinalIgnoreCase))
+    if (!string.Equals(PortData.GetPortIdForCharacter(characterId), currentPortId, StringComparison.Ordinal))
       return false;
 
     if (HiredCrewCharacterIds.Contains(characterId))
@@ -912,13 +912,13 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     return true;
   }
 
-  public bool StartHireQuest(string characterId, string currentPortName)
+  public bool StartHireQuest(string characterId, string currentPortId)
   {
-    var character = TavernData.GetCharacterById(characterId);
+    var character = PortData.GetCharacterById(characterId);
     if (character == null || !character.Hireable)
       return false;
 
-    if (!string.Equals(character.PortName, currentPortName, StringComparison.OrdinalIgnoreCase))
+    if (!string.Equals(PortData.GetPortIdForCharacter(characterId), currentPortId, StringComparison.Ordinal))
       return false;
 
     if (HiredCrewCharacterIds.Contains(characterId))
@@ -950,7 +950,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   public bool FireCrew(string characterId)
   {
-    if (string.Equals(characterId, TavernData.ScarlettId, StringComparison.Ordinal))
+    if (string.Equals(characterId, PortData.ScarlettId, StringComparison.Ordinal))
       return false;
 
     bool removed = HiredCrewCharacterIds.Remove(characterId);
@@ -1198,7 +1198,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     );
 
     System.Collections.Generic.Dictionary<string, int> vaultUpgradeCost = null;
-    if (VaultPortName != null && VaultLevel < VaultMaxLevel)
+    if (VaultPortId != null && VaultLevel < VaultMaxLevel)
     {
       vaultUpgradeCost = GetVaultUpgradeCost(VaultLevel).ToDictionary(
         kvp => kvp.Key.ToString(),
@@ -1227,7 +1227,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     var crewCharacters = new System.Collections.Generic.List<TavernCharacterDto>();
     foreach (var hiredId in HiredCrewCharacterIds)
     {
-      var hiredCharacter = TavernData.GetCharacterById(hiredId);
+      var hiredCharacter = PortData.GetCharacterById(hiredId);
       if (hiredCharacter != null)
       {
         crewCharacters.Add(new TavernCharacterDto(
@@ -1258,7 +1258,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   private VaultStateDto ExportVaultForHud()
   {
-    if (VaultPortName == null)
+    if (VaultPortId == null)
       return null;
 
     var vaultItems = new System.Collections.Generic.Dictionary<string, int>();
@@ -1267,7 +1267,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     return new VaultStateDto
     {
-      PortName = VaultPortName,
+      PortId = VaultPortId,
+      PortName = PortData.GetPortDisplayName(VaultPortId),
       Level = VaultLevel,
       Items = vaultItems,
       IsHere = false,
@@ -1341,10 +1342,10 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     return Progress.IsFeatureUnlocked(feature);
   }
 
-  public void RecordPortVisit(string portName)
+  public void RecordPortVisit(string portId)
   {
-    SetCurrentPort(portName);
-    Progress.RecordPortVisited(portName);
+    SetCurrentPort(portId);
+    Progress.RecordPortVisited(portId);
     ReevaluateQuestProgress();
   }
 
@@ -1483,21 +1484,21 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   /// Build a brand-new vault at the given port. Deducts resources.
   /// Returns false if the player already has a vault or can't afford it.
   /// </summary>
-  public bool BuildVault(string portName)
+  public bool BuildVault(string portId)
   {
-    if (VaultPortName != null)
+    if (VaultPortId != null)
     {
-      GD.PrintErr($"{Name}: Already has a vault at {VaultPortName}");
+      GD.PrintErr($"{Name}: Already has a vault at {VaultPortId}");
       return false;
     }
 
     if (!MakePurchase(VaultBuildCost))
       return false;
 
-    VaultPortName = portName;
+    VaultPortId = portId;
     VaultLevel = 1;
     VaultItems = new System.Collections.Generic.Dictionary<InventoryItemType, int>();
-    GD.Print($"{Name}: Built vault at {portName}");
+    GD.Print($"{Name}: Built vault at {VaultPortId}");
     return true;
   }
 
@@ -1507,7 +1508,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   /// </summary>
   public bool UpgradeVault()
   {
-    if (VaultPortName == null || VaultLevel >= VaultMaxLevel)
+    if (VaultPortId == null || VaultLevel >= VaultMaxLevel)
       return false;
 
     // Use one shared source of truth for upgrade costs to avoid drift.
@@ -1562,7 +1563,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   /// </summary>
   public bool VaultDeposit(InventoryItemType item, int amount)
   {
-    if (VaultPortName == null || amount <= 0)
+    if (VaultPortId == null || amount <= 0)
       return false;
 
     // Check the player actually has the items
@@ -1600,7 +1601,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   /// </summary>
   public bool VaultWithdraw(InventoryItemType item, int amount)
   {
-    if (VaultPortName == null || amount <= 0)
+    if (VaultPortId == null || amount <= 0)
       return false;
 
     int vaultAmount = GetVaultAmount(item);
@@ -1757,11 +1758,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     dto.HiredCrewCharacterIds = HiredCrewCharacterIds.ToList();
 
     // Persist vault if the player has one
-    if (VaultPortName != null)
+    if (VaultPortId != null)
     {
       var vaultDto = new VaultDto
       {
-        PortName = VaultPortName,
+        PortId = VaultPortId,
         Level = VaultLevel,
         Items = new System.Collections.Generic.Dictionary<string, int>()
       };
@@ -1817,7 +1818,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     // Restore hired crew ids and drop unknown ids safely.
     HiredCrewCharacterIds.Clear();
-    var validCrewIds = TavernData.GetCharacterIdSet();
+    var validCrewIds = PortData.GetCharacterIdSet();
     foreach (var id in dto.HiredCrewCharacterIds ?? [])
     {
       if (validCrewIds.Contains(id))
@@ -1836,7 +1837,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     // Restore vault state
     if (dto.Vault != null)
     {
-      VaultPortName = dto.Vault.PortName;
+      VaultPortId = PortData.ResolvePortId(dto.Vault.PortId) ?? dto.Vault.PortId;
       VaultLevel = dto.Vault.Level;
       VaultItems = new System.Collections.Generic.Dictionary<InventoryItemType, int>();
       foreach (var kvp in dto.Vault.Items)
@@ -1844,7 +1845,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
         if (Enum.TryParse<InventoryItemType>(kvp.Key, out var itemType))
           VaultItems[itemType] = kvp.Value;
       }
-      GD.Print($"{Name}: Restored vault at {VaultPortName} (level {VaultLevel})");
+      GD.Print($"{Name}: Restored vault at {VaultPortId} (level {VaultLevel})");
     }
 
     if (dto.IsDead)

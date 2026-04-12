@@ -88,6 +88,7 @@ export interface RepairCosts {
 
 /** The player's vault snapshot pushed from Godot. */
 export interface VaultState {
+  portId: string;
   portName: string;
   level: number;
   items: Record<string, number>;
@@ -195,7 +196,7 @@ export type IpcMessage =
   | { action: "vault_deposit"; items: { type: string; quantity: number }[] }
   | { action: "vault_withdraw"; items: { type: string; quantity: number }[] }
   | { action: "set_ship_tier"; tier: number }
-  | { action: "set_vault"; portName: string; level: number }
+  | { action: "set_vault"; portId: string; level: number }
   | { action: "delete_vault" };
 
 // ── Window augmentation for godot_wry bridge ───────────────────────

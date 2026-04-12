@@ -238,7 +238,7 @@ public static class HudIpcActionMap
   {
     if (message == null || currentPort == null) return;
     if (!RequireFeature(player, FeatureUnlock.TavernTalk, "hire tavern crew")) return;
-    bool ok = player.StartHireQuest(message.CharacterId, currentPort.PortName);
+    bool ok = player.StartHireQuest(message.CharacterId, currentPort.PortId);
     GD.Print(ok
       ? $"HUD: Started hire quest for '{message.CharacterId}'"
       : $"HUD: Hire quest failed for '{message.CharacterId}'");
@@ -281,9 +281,9 @@ public static class HudIpcActionMap
   {
     if (currentPort == null) return;
     if (!RequireFeature(player, FeatureUnlock.Vault, "build a vault")) return;
-    bool ok = player.BuildVault(currentPort.PortName);
+    bool ok = player.BuildVault(currentPort.PortId);
     GD.Print(ok
-      ? $"HUD: Built vault at {currentPort.PortName}"
+      ? $"HUD: Built vault at {currentPort.PortId} ({currentPort.PortName})"
       : "HUD: Build vault failed");
   }
 
@@ -342,7 +342,7 @@ public static class HudIpcActionMap
   {
     if (message == null || currentPort == null) return;
     if (!RequireFeature(player, FeatureUnlock.Vault, "use the vault")) return;
-    if (player.VaultPortName != currentPort.PortName) return;
+    if (player.VaultPortId != currentPort.PortId) return;
 
     foreach (var req in message.Items)
     {
@@ -358,7 +358,7 @@ public static class HudIpcActionMap
   {
     if (message == null || currentPort == null) return;
     if (!RequireFeature(player, FeatureUnlock.Vault, "use the vault")) return;
-    if (player.VaultPortName != currentPort.PortName) return;
+    if (player.VaultPortId != currentPort.PortId) return;
 
     foreach (var req in message.Items)
     {
@@ -380,14 +380,14 @@ public static class HudIpcActionMap
     }
 
     int level = Math.Clamp(message.Level, 1, Player.VaultMaxLevel);
-    string portName = string.IsNullOrWhiteSpace(message.PortName)
-      ? (currentPort?.PortName ?? "Creative Port")
-      : message.PortName;
+    string portId = string.IsNullOrWhiteSpace(message.PortId)
+      ? (currentPort?.PortId ?? "")
+      : PortData.ResolvePortId(message.PortId) ?? message.PortId;
 
-    player.VaultPortName = portName;
+    player.VaultPortId = string.IsNullOrWhiteSpace(portId) ? null : portId;
     player.VaultLevel = level;
     player.VaultItems ??= new Dictionary<InventoryItemType, int>();
-    GD.Print($"HUD: [Creative] Set vault at {portName} level {level}");
+    GD.Print($"HUD: [Creative] Set vault at {player.VaultPortId ?? "none"} level {level}");
   }
 
   private static void HandleDeleteVault(Player player)
@@ -398,7 +398,7 @@ public static class HudIpcActionMap
       return;
     }
 
-    player.VaultPortName = null;
+    player.VaultPortId = null;
     player.VaultLevel = 0;
     player.VaultItems = new Dictionary<InventoryItemType, int>();
     GD.Print("HUD: [Creative] Deleted vault");

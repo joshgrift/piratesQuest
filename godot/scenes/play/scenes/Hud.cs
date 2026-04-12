@@ -38,7 +38,7 @@ public partial class Hud : Control
 
     foreach (Port port in ports.Cast<Port>())
     {
-      GD.Print($"HUD subscribing to port {port.PortName} events");
+      GD.Print($"HUD subscribing to port {port.PortId} ({port.PortName}) events");
       port.ShipDocked += OnPlayerEnteredPort;
       port.ShipDeparted += OnPlayerDepartedPort;
     }
@@ -104,10 +104,10 @@ public partial class Hud : Control
   private void OnPlayerEnteredPort(Port port, Player player, Variant payload)
   {
     if (_player == null || player.Name != _player.Name) return;
-    GD.Print($"Player {player.Name} entered port {port.PortName}");
+    GD.Print($"Player {player.Name} entered port {port.PortId} ({port.PortName})");
 
-    _player.SetCurrentPort(port.PortName);
-    _player.RecordPortVisit(port.PortName);
+    _player.SetCurrentPort(port.PortId);
+    _player.RecordPortVisit(port.PortId);
     _currentPort = port;
     CallDeferred(MethodName.OnStateChange);
   }
@@ -243,7 +243,7 @@ public partial class Hud : Control
   // BuildHUDState is a pure composer over child snapshots.
   // Rule: gather data from child export methods only (Player/Port DTO exports),
   // never by reading child internals directly (fields/methods like
-  // _player.HiredCrewCharacterIds, TavernData lookups from HUD, etc).
+  // _player.HiredCrewCharacterIds, PortData lookups from HUD, etc).
   // If a HUD field needs new data, add it to the owning child export first.
   private HudStateDto BuildHUDState()
   {
@@ -265,19 +265,19 @@ public partial class Hud : Control
       ItemsForSale = portSnapshot.ItemsForSale,
       Tavern = portSnapshot.Tavern ?? new TavernStateDto { Characters = [] },
       Crew = state.Crew ?? new CrewStateDto(),
-      Vault = BuildVaultStateForPort(state.Vault, portSnapshot.PortName),
+      Vault = BuildVaultStateForPort(state.Vault, portSnapshot.PortId),
       Leaderboard = _leaderboardEntries,
     };
   }
 
-  private static VaultStateDto BuildVaultStateForPort(VaultStateDto baseVault, string currentPortName)
+  private static VaultStateDto BuildVaultStateForPort(VaultStateDto baseVault, string currentPortId)
   {
     if (baseVault == null)
       return null;
 
     return baseVault with
     {
-      IsHere = baseVault.PortName == (currentPortName ?? "")
+      IsHere = string.Equals(baseVault.PortId, currentPortId ?? "", StringComparison.Ordinal)
     };
   }
 }

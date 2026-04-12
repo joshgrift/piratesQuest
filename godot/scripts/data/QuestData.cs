@@ -46,7 +46,7 @@ public class QuestDefinition
   public string Title { get; init; } = "";
   public string GiverNpcId { get; init; } = "";
   public string GiverName { get; init; } = "";
-  public string GiverPortName { get; init; } = "";
+  public string GiverPortId { get; init; } = "";
   public string OfferText { get; init; } = "";
   public string AcceptedText { get; init; } = "";
   public string Description { get; init; } = "";
@@ -247,7 +247,7 @@ public static class QuestData
       Title = "Beef Up Your Ship",
       GiverNpcId = "elder-bertram",
       GiverName = "Elder Bertram",
-      GiverPortName = "Saint Johns",
+      GiverPortId = "saint-johns",
       PrerequisiteQuestIds = ["scarlett_trade_for_merchant"],
       OfferText = "Your ship still looks half-finished. Buy a proper component and fit it before you come grinning at me.",
       AcceptedText = "Your ship still looks half-finished. Go to a port, buy a proper component, and fit it before you come grinning at me.",
@@ -270,7 +270,7 @@ public static class QuestData
       Title = "Kill 5 Ships",
       GiverNpcId = "dorian-blackwake",
       GiverName = "Dorian Blackwake",
-      GiverPortName = "Krakenfall",
+      GiverPortId = "krakenfall",
       PrerequisiteQuestIds = ["beef_up_your_ship"],
       OfferText = "You want access to a vault? Prove you can survive a real fight first. Sink five ships and then we can talk.",
       AcceptedText = "Get out there, line up your broadsides, and sink five ships.",
@@ -352,7 +352,7 @@ public static class QuestData
       requiredValue: 12,
       offerText: "I can speed up your wood hauls, but I do not work for captains who only admire trees from the deck. Bring me proof with 12 wood in the hold, then come talk to me and show me you can finish a proper run.",
       acceptedText: "Load up 12 wood, then return and speak with me. If you can run timber without wasting daylight, I will make every future haul better.",
-      description: "Merrick improves wood collection, but he only signs on after seeing a real lumber run. Collect 12 Wood after accepting this quest, then return to Merrick in Haven and talk to him to recruit him.",
+      description: "Merrick improves wood collection, but he only signs on after seeing a real lumber run. Collect 12 Wood after accepting this quest, then return to Merrick in Haven Harbour and talk to him to recruit him.",
       completionText: "That is a respectable haul. I am aboard now, Captain, and your wood runs will move quicker from here."
     ),
     CreateHireQuest(
@@ -364,7 +364,7 @@ public static class QuestData
       requiredValue: 10,
       offerText: "I make fishing runs pay off, but only for captains who can read the water instead of begging it. Bring in 10 fish, then return and prove your timing is worth backing.",
       acceptedText: "Catch 10 fish, then come talk to me again. Show me you can fill a hold from the sea and I will make every future catch better.",
-      description: "Rafael improves fish collection, but he wants proof that you can actually work the water. Collect 10 Fish after accepting this quest, then return to Rafael in Haven and talk to him to recruit him.",
+      description: "Rafael improves fish collection, but he wants proof that you can actually work the water. Collect 10 Fish after accepting this quest, then return to Rafael in Haven Harbour and talk to him to recruit him.",
       completionText: "You read the water well enough for me. I am aboard now, and your fishing runs will come in stronger."
     ),
     CreateHireQuest(
@@ -376,7 +376,7 @@ public static class QuestData
       requiredValue: 10,
       offerText: "I can make your mining runs cleaner, but I do not sign on with anyone who cannot work stone with patience. Bring back 10 iron, then return and prove you can keep a haul steady.",
       acceptedText: "Mine 10 iron, then come speak with me. If you can pull useful stone without making a mess of it, I will sharpen every future run.",
-      description: "Silas improves iron collection, but he only joins captains who can bring ore home the hard way. Collect 10 Iron after accepting this quest, then return to Silas in Haven and talk to him to recruit him.",
+      description: "Silas improves iron collection, but he only joins captains who can bring ore home the hard way. Collect 10 Iron after accepting this quest, then return to Silas in Haven Harbour and talk to him to recruit him.",
       completionText: "That is solid work. I will join your crew, and your mining trips will start paying out better."
     ),
   ];
@@ -395,10 +395,7 @@ public static class QuestData
 
   public static string GetQuestGiverPortrait(string npcId)
   {
-    if (string.Equals(npcId, "scarlett", StringComparison.Ordinal))
-      return "character2.png";
-
-    return TavernData.GetCharacterById(npcId)?.Portrait ?? "";
+    return PortData.GetCharacterById(npcId)?.Portrait ?? "";
   }
 
   public static QuestDefinition[] GetAvailableQuests(IEnumerable<string> completedQuestIds, string currentQuestId, IEnumerable<string> hiredCrewIds = null)
@@ -435,7 +432,7 @@ public static class QuestData
     string completionText,
     string itemType = "")
   {
-    var character = TavernData.GetCharacterById(characterId);
+    var character = PortData.GetCharacterById(characterId);
     if (character == null)
       throw new InvalidOperationException($"Cannot create hire quest for missing character '{characterId}'.");
 
@@ -445,7 +442,7 @@ public static class QuestData
       Title = $"Earn {character.Name}'s Trust",
       GiverNpcId = character.Id,
       GiverName = character.Name,
-      GiverPortName = character.PortName,
+      GiverPortId = PortData.GetPortIdForCharacter(character.Id) ?? "",
       OfferText = offerText,
       AcceptedText = acceptedText,
       Description = description,

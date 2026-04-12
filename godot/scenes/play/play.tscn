@@ -6,7 +6,6 @@
 [ext_resource type="Script" uid="uid://d3pli0crpwxcc" path="res://scripts/FreeCam.cs" id="6_1phcp"]
 [ext_resource type="PackedScene" uid="uid://bkdqs4u6efsoq" path="res://scenes/collectonPoint/collection_point.tscn" id="6_ccytq"]
 [ext_resource type="PackedScene" uid="uid://bafsgh2fvblr2" path="res://scenes/port/port.tscn" id="9_4dfl3"]
-[ext_resource type="Script" uid="uid://b81r8qngpan6y" path="res://scripts/resources/ShopItemData.cs" id="10_10igl"]
 [ext_resource type="PackedScene" uid="uid://dn2535sbiok71" path="res://art/terrain.glb" id="13_l2oi0"]
 [ext_resource type="Material" uid="uid://8ml6o8kd3xou" path="res://scenes/play/water_material.tres" id="water_material"]
 [ext_resource type="FastNoiseLite" path="res://scenes/play/water_noise.tres" id="water_noise"]
@@ -117,96 +116,6 @@ subdivide_width = 500
 subdivide_depth = 500
 center_offset = Vector3(0, 0, 1)
 
-[sub_resource type="Resource" id="Resource_a0nu5"]
-script = ExtResource("10_10igl")
-BuyPrice = 5
-SellPrice = 4
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
-[sub_resource type="Resource" id="Resource_bjecb"]
-script = ExtResource("10_10igl")
-ItemType = 1
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
-[sub_resource type="Resource" id="Resource_10igl"]
-script = ExtResource("10_10igl")
-ItemType = 5
-BuyPrice = 2
-SellPrice = 0
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
-[sub_resource type="Resource" id="Resource_q6imw"]
-script = ExtResource("10_10igl")
-ItemType = 2
-SellPrice = 8
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
-[sub_resource type="Resource" id="Resource_qysfa"]
-script = ExtResource("10_10igl")
-ItemType = 3
-BuyPrice = 50
-SellPrice = 40
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
-[sub_resource type="Resource" id="Resource_4dfl3"]
-script = ExtResource("10_10igl")
-ItemType = 6
-BuyPrice = 100000
-SellPrice = 0
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
-[sub_resource type="Resource" id="Resource_gcg6u"]
-script = ExtResource("10_10igl")
-BuyPrice = 4
-SellPrice = 3
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
-[sub_resource type="Resource" id="Resource_3sgb2"]
-script = ExtResource("10_10igl")
-ItemType = 5
-BuyPrice = 2
-SellPrice = 1
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
-[sub_resource type="Resource" id="Resource_mric1"]
-script = ExtResource("10_10igl")
-ItemType = 1
-BuyPrice = 8
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
-[sub_resource type="Resource" id="Resource_l2oi0"]
-script = ExtResource("10_10igl")
-ItemType = 3
-BuyPrice = 50
-SellPrice = 45
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
-[sub_resource type="Resource" id="Resource_fe62l"]
-script = ExtResource("10_10igl")
-ItemType = 6
-BuyPrice = 100000
-SellPrice = 0
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
-[sub_resource type="Resource" id="Resource_blg3p"]
-script = ExtResource("10_10igl")
-ItemType = 2
-SellPrice = 8
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
-[sub_resource type="Resource" id="Resource_mfrq5"]
-script = ExtResource("10_10igl")
-ItemType = 5
-BuyPrice = 2
-SellPrice = 1
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
-[sub_resource type="Resource" id="Resource_ha3kl"]
-script = ExtResource("10_10igl")
-ItemType = 2
-SellPrice = 0
-metadata/_custom_type_script = "uid://b81r8qngpan6y"
-
 [node name="Play" type="Node3D" node_paths=PackedStringArray("_playerSpawner", "_aiShipSpawner", "_projectileSpawner", "_deadPlayerSpawner", "playerContainer", "_freeCam", "_hud")]
 script = ExtResource("1_j5m8q")
 _playerSpawner = NodePath("SpawnPoint/MultiplayerSpawner")
@@ -270,42 +179,34 @@ transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 387.91293, 0.9999962, -27
 
 [node name="StJohns" parent="Ports" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -817.19165, 0, 725.55945)
-PortName = "Saint Johns"
-ItemsForSale = Array[Object]([SubResource("Resource_a0nu5"), SubResource("Resource_bjecb"), SubResource("Resource_10igl"), SubResource("Resource_q6imw"), SubResource("Resource_qysfa"), SubResource("Resource_4dfl3")])
+PortId = "saint-johns"
 
 [node name="Rusthook Point" parent="Ports" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -537.41644, 0, -584.61957)
-PortName = "Rusthook Point"
-ItemsForSale = Array[Object]([SubResource("Resource_a0nu5"), SubResource("Resource_bjecb"), SubResource("Resource_10igl"), SubResource("Resource_q6imw"), SubResource("Resource_qysfa"), SubResource("Resource_4dfl3")])
+PortId = "rusthook-point"
 
 [node name="Shard Bay" parent="Ports" instance=ExtResource("9_4dfl3")]
-PortName = "Shard Bay"
-ItemsForSale = Array[Object]([SubResource("Resource_a0nu5"), SubResource("Resource_bjecb"), SubResource("Resource_10igl"), SubResource("Resource_q6imw"), SubResource("Resource_qysfa"), SubResource("Resource_4dfl3")])
+PortId = "shard-bay"
 
 [node name="KrakenFall" parent="Ports" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1136.0494, 3.8146973e-06, 1363.7982)
-PortName = "Krakenfall"
-ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_3sgb2"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l"), SubResource("Resource_blg3p")])
+PortId = "krakenfall"
 
 [node name="Tidefall Island" parent="Ports" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1718.8503, 3.8146973e-06, 1650.5708)
-PortName = "Tidefall Island"
-ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_3sgb2"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l"), SubResource("Resource_blg3p")])
+PortId = "tidefall-island"
 
 [node name="Haven Harbour" parent="Ports" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1575.8247, -5.531311e-05, -501.3526)
-PortName = "Haven Harbour"
-ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_mfrq5"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l"), SubResource("Resource_ha3kl")])
+PortId = "haven-harbour"
 
 [node name="Pebblehook Bay" parent="Ports" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1993.1433, -5.531311e-05, -142.9267)
-PortName = "Pebblehook Bay"
-ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_mfrq5"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l"), SubResource("Resource_ha3kl")])
+PortId = "pebblehook-bay"
 
 [node name="Spire Harbour" parent="Ports" instance=ExtResource("9_4dfl3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 320.998, -5.531311e-05, 1130.5662)
-PortName = "Spire Harbour"
-ItemsForSale = Array[Object]([SubResource("Resource_gcg6u"), SubResource("Resource_mfrq5"), SubResource("Resource_mric1"), SubResource("Resource_l2oi0"), SubResource("Resource_fe62l"), SubResource("Resource_ha3kl")])
+PortId = "spire-harbour"
 
 [node name="Interactables" type="Node3D" parent="."]
 

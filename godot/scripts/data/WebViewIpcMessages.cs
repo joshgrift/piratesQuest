@@ -111,6 +111,7 @@ public record RepairCostDto
 /// </summary>
 public record VaultStateDto
 {
+  public string PortId { get; init; } = "";
   public string PortName { get; init; } = "";
   public int Level { get; init; }
   public Dictionary<string, int> Items { get; init; } = new();
@@ -128,6 +129,7 @@ public record ShopItemDto(string Type, int BuyPrice, int SellPrice);
 /// </summary>
 public record HudPortSnapshotDto
 {
+  public string PortId { get; init; } = "";
   public string PortName { get; init; } = "";
   public ShopItemDto[] ItemsForSale { get; init; } = [];
   public TavernStateDto Tavern { get; init; } = new();
@@ -404,7 +406,7 @@ public record SetShipTierMessage : IpcMessage
 public record SetVaultMessage : IpcMessage
 {
   public override IpcAction Action => IpcAction.SetVault;
-  public string PortName { get; init; } = "";
+  public string PortId { get; init; } = "";
   public int Level { get; init; } = 1;
 }
 
