@@ -3667,11 +3667,20 @@ img {
   gap: 14px;
 }
 
+.quest-card--collapsed {
+  gap: 0;
+  padding: 0;
+}
+
 .quest-card-header {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   align-items: start;
+}
+
+.quest-card-heading {
+  min-width: 0;
 }
 
 .quest-card-kicker {
@@ -3690,6 +3699,83 @@ img {
 .quest-card-giver {
   color: rgba(228, 221, 202, 0.76);
   text-align: right;
+}
+
+.quest-card-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 0;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(19, 43, 52, 0.9), rgba(10, 24, 32, 0.94));
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.quest-card-toggle:hover {
+  background: linear-gradient(135deg, rgba(25, 56, 67, 0.92), rgba(12, 29, 39, 0.96));
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2);
+}
+
+.quest-card-toggle:focus-visible {
+  outline: 2px solid rgba(122, 216, 255, 0.8);
+  outline-offset: 2px;
+}
+
+.quest-card-toggle--inline {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.quest-card-toggle--inline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  transform: none;
+}
+
+.quest-card-toggle-copy {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.quest-card-summary {
+  color: rgba(241, 233, 215, 0.72);
+  font-size: 0.95rem;
+}
+
+.quest-card-toggle-label {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 241, 200, 0.8);
+}
+
+.quest-card-chevron {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 216, 137, 0.12);
+  color: #ffe9af;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.quest-card-chevron--open {
+  font-size: 1.2rem;
 }
 
 .quest-card-desc {
@@ -3730,10 +3816,6 @@ img {
   border: 1px solid rgba(112, 197, 239, 0.34);
   background: rgba(18, 45, 61, 0.5);
   color: #cfeeff;
-}
-
-.quest-accept-btn {
-  width: 100%;
 }
 
 .creative-quest-select {

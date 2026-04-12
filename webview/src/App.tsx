@@ -19,8 +19,8 @@ import { QuestStatusWidget } from "./components/QuestStatusWidget";
 import { CharacterConversationOverlay } from "./components/CharacterConversationOverlay";
 import { NpcCommentToast, type NpcCommentToastData } from "./components/NpcCommentToast";
 
-type PortTab = "market" | "shipyard" | "vault" | "creative";
-type PanelMode = "ship" | "quests" | "crew" | "port" | "stats" | "leaderboard";
+type PortTab = "market" | "shipyard" | "vault";
+type PanelMode = "ship" | "quests" | "crew" | "port" | "creative" | "stats" | "leaderboard";
 type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
 type ConversationSource = "tavern" | "crew" | "guide";
 
@@ -33,6 +33,7 @@ const SHIP_ICON = `${BASE}icons/flat/caravel.svg`;
 const QUESTS_ICON = `${BASE}icons/flat/tied-scroll.svg`;
 const CREW_ICON = `${BASE}icons/flat/bandana.svg`;
 const PORT_ICON = `${BASE}icons/flat/anchor.svg`;
+const CREATIVE_ICON = `${BASE}icons/flat/pirate-skull.svg`;
 const STATS_ICON = `${BASE}icons/flat/sextant.svg`;
 const LEADERBOARD_ICON = `${BASE}icons/flat/pirate-hat.svg`;
 
@@ -353,6 +354,8 @@ export default function App() {
   const isInPort = !!portState?.isInPort;
   const panelTitle = activePanelMode === "port"
     ? (portState?.portName ?? "Port")
+    : activePanelMode === "creative"
+      ? "Creative"
     : activePanelMode === "quests"
       ? "quests"
       : activePanelMode === "crew"
@@ -426,6 +429,19 @@ export default function App() {
         >
           <img className="rail-mode-icon" src={CREW_ICON} alt="" />
         </button>
+        {portState?.isCreative && (
+          <button
+            className={`rail-mode-btn ${activePanelMode === "creative" ? "active" : ""}`}
+            onClick={() => handleModeSelect("creative")}
+            type="button"
+            role="tab"
+            aria-selected={activePanelMode === "creative"}
+            aria-label="Creative mode"
+            title="Creative"
+          >
+            <img className="rail-mode-icon" src={CREATIVE_ICON} alt="" />
+          </button>
+        )}
         <button
           className={`rail-mode-btn ${activePanelMode === "stats" ? "active" : ""}`}
           onClick={() => handleModeSelect("stats")}
@@ -477,14 +493,6 @@ export default function App() {
                 Vault
               </button>
             )}
-            {portState?.isCreative && portState?.isInPort && (
-              <button
-                className={`tab-btn creative-tab-btn ${activePortTab === "creative" ? "active" : ""}`}
-                onClick={() => setActivePortTab("creative")}
-              >
-                Creative
-              </button>
-            )}
           </div>
         )}
 
@@ -516,6 +524,8 @@ export default function App() {
               <StatsTab state={portState} />
             ) : activePanelMode === "leaderboard" ? (
               <LeaderboardTab entries={portState.leaderboard} playerName={portState.playerName} />
+            ) : activePanelMode === "creative" && portState.isCreative ? (
+              <CreativeTab state={portState} />
             ) : activePortTab === "market" ? (
               <MarketTab
                 state={portState}
@@ -530,8 +540,6 @@ export default function App() {
               ) : (
                 <div className="empty-state">Dock at a port to access the vault.</div>
               )
-            ) : activePortTab === "creative" && portState.isCreative && portState.isInPort ? (
-              <CreativeTab state={portState} />
             ) : (
               <div className="empty-state">Port services are unavailable while at sea.</div>
             )}

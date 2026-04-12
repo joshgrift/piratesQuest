@@ -18,14 +18,19 @@ describe("CreativeTab", () => {
   // ── Visibility ────────────────────────────────────────────────────
 
   describe("visibility", () => {
-    it("Creative tab button is visible when isCreative is true", () => {
+    it("Creative rail tab is visible when isCreative is true", () => {
       renderApp({ state: { isCreative: true } });
-      expect(screen.getByRole("button", { name: "Creative" })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: "Creative mode" })).toBeInTheDocument();
     });
 
-    it("Creative tab button is hidden when isCreative is false", () => {
+    it("Creative rail tab is hidden when isCreative is false", () => {
       renderApp({ state: { isCreative: false } });
-      expect(screen.queryByRole("button", { name: "Creative" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("tab", { name: "Creative mode" })).not.toBeInTheDocument();
+    });
+
+    it("Creative rail tab stays available while at sea", () => {
+      renderApp({ state: { isCreative: true, isInPort: false } });
+      expect(screen.getByRole("tab", { name: "Creative mode" })).toBeInTheDocument();
     });
 
     it("shows Creative Mode banner", () => {
@@ -49,7 +54,7 @@ describe("CreativeTab", () => {
         state: { inventory: { Wood: 42, Iron: 0, Fish: 7, Tea: 0, Coin: 999, CannonBall: 0, Trophy: 0 } },
       });
       expect(screen.getByText("42")).toBeInTheDocument();
-      expect(screen.getByText("999")).toBeInTheDocument();
+      expect(screen.getAllByText("999").length).toBeGreaterThan(0);
       expect(screen.getByText("7")).toBeInTheDocument();
     });
 

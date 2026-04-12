@@ -150,9 +150,10 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 
 ## ROADMAP
 ### Alpha 8 - Cleanup & Map
+- [x] New Terrain
+- [x] Water Improvements
 - [ ] Map?
 - [ ] Polish and Stability
-- [ ] New Terrain
 - [ ] Bugs
   - [ ] "Ride side of your screen" - from scarlett
 - [ ] Windows UI not loading
