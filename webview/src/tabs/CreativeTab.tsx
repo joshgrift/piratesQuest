@@ -221,7 +221,7 @@ export function CreativeTab({ state }: { state: PortState }) {
           </>
         ) : (
           <div className="creative-components-info">
-            <span className="empty-state">No active quest</span>
+            <span className="empty-state">No active quest. Talk to NPCs at ports to get a new quest.</span>
           </div>
         )}
       </div>

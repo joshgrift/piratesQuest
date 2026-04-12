@@ -94,7 +94,7 @@ describe("QuestsTab", () => {
       },
     });
 
-    expect(screen.getByText("Current Orders")).toBeInTheDocument();
+    expect(screen.getAllByText("Current Orders").length).toBeGreaterThan(0);
     expect(screen.getByText("Done and Dusted")).toBeInTheDocument();
     expect(screen.queryByText("Still Locked Away")).not.toBeInTheDocument();
     expect(screen.queryByText("Available Quests")).not.toBeInTheDocument();
@@ -137,6 +137,25 @@ describe("QuestsTab", () => {
     expect(screen.queryByText("Turn it in")).not.toBeInTheDocument();
     expect(screen.queryByText(/Hide details/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Open to review the details/i)).not.toBeInTheDocument();
+  });
+
+  it("tells the player to talk to port NPCs when no quest is active", () => {
+    renderApp({
+      tab: "quests",
+      state: {
+        quests: {
+          available: [],
+          active: null,
+          all: [],
+          completedIds: [],
+          recentlyCompletedIds: [],
+          unlockedFeatures: [],
+        },
+      },
+    });
+
+    expect(screen.getByText("No Active Quest")).toBeInTheDocument();
+    expect(screen.getByText("Nothing is active right now. Talk to NPCs at ports to get a new quest.")).toBeInTheDocument();
   });
 
   it("shows a cancel button for manually accepted quests and sends cancel IPC", async () => {

@@ -10,7 +10,7 @@ type Tab = "quests" | "leaderboard" | "stats" | "ship_crew" | "ship_status" | "m
 const TAB_LABELS: Record<Tab, string> = {
   ship_status: "Ship mode",
   ship_crew: "Crew mode",
-  quests: "Quests",
+  quests: "Quests mode",
   stats: "Stats",
   leaderboard: "Leaderboard",
   market: "Market",

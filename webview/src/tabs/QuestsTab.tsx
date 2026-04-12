@@ -112,7 +112,7 @@ export function QuestsTab({ state }: { state: PortState }) {
         <div className="card quest-card">
           <div className="quest-card-title">No Active Quest</div>
           <div className="quest-card-desc">
-            Nothing is active right now.
+            Nothing is active right now. Talk to NPCs at ports to get a new quest.
           </div>
         </div>
       )}
