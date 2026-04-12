@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://db7e85x4lysx3"
+path="res://.godot/imported/GP_Draw_5_Big.wav-b6ac4f5ba078583e8665c6d3b84f4f8a.sample"
+
+[deps]
+
+source_file="res://art/sounds/card game sfx pack by olex mazur/Cards/Draw/GP_Draw_5_Big.wav"
+dest_files=["res://.godot/imported/GP_Draw_5_Big.wav-b6ac4f5ba078583e8665c6d3b84f4f8a.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

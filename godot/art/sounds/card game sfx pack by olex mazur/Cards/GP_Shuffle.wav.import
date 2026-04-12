@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bxcq855watk6k"
+path="res://.godot/imported/GP_Shuffle.wav-14219a861df61f82b5f6d8c0beb492af.sample"
+
+[deps]
+
+source_file="res://art/sounds/card game sfx pack by olex mazur/Cards/GP_Shuffle.wav"
+dest_files=["res://.godot/imported/GP_Shuffle.wav-14219a861df61f82b5f6d8c0beb492af.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
