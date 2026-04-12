@@ -353,5 +353,3 @@ export function StatsPanel({ state }: { state: PortState }) {
     </div>
   );
 }
-
-export const StatsTab = StatsPanel;

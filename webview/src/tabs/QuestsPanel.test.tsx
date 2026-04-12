@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { screen } from "@testing-library/react";
 import { getIpcMessages, renderApp } from "../test/helpers";
 
-describe("QuestsTab", () => {
+describe("QuestsPanel", () => {
   it("shows only the active quest and completed quests in the quest log", () => {
     renderApp({
       tab: "quests",

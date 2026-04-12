@@ -342,7 +342,6 @@ export function CreativePanel({ state }: { state: PortState }) {
   );
 }
 
-export const CreativeTab = CreativePanel;
 
 // ── Debug State Panel ─────────────────────────────────────────────────
 

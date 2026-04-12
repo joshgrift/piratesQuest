@@ -129,5 +129,3 @@ export function QuestsPanel({ state }: { state: PortState }) {
     </>
   );
 }
-
-export const QuestsTab = QuestsPanel;

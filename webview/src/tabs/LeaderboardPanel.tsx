@@ -114,5 +114,3 @@ export function LeaderboardPanel({
     </>
   );
 }
-
-export const LeaderboardTab = LeaderboardPanel;

@@ -14,7 +14,7 @@ function renderCreative(
   });
 }
 
-describe("CreativeTab", () => {
+describe("CreativePanel", () => {
   // ── Visibility ────────────────────────────────────────────────────
 
   describe("visibility", () => {
