@@ -190,20 +190,21 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 - [x] Added Wiki
   - [ ] Menu button to access wiki
 - [ ] AI ships
+  - [ ] Fix shooting
 - [ ] Windows UI not loading
 - [ ] Money sound played everywhere
+- [ ] Red port circles (and yellow resource circles) sometimes disappear, or take a while to appear
 
 - [ ] Map?
 
 - [ ] Flexible turn Speed when slow or fast
 - [ ] Show who is online in leaderboard
-- [ ] Hitting rocks is glitchy
+
 - [ ] Can't arbitrage any resources
+
 - [ ] Would it be nice if camera turned with the ship?
-- [ ] "Can’t buy in port, only sell" - should make it more clear what's going on
 - [ ] Educate the player on safe zone, or the cannonball shot shouldn't do damage
-- [ ] Pin Recipe or something?
-- [ ] Red port circles (and yellow resource circles) sometimes disappear, or take a while to appear
+
 - [ ] Lock Characters behind quests
 - [ ] Sell buttons are backwards
 
