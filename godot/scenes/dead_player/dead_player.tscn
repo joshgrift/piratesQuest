@@ -20,44 +20,47 @@ properties/1/path = NodePath(".:Nickname")
 properties/1/spawn = true
 properties/1/replication_mode = 1
 
-[node name="DeadPlayer" type="Area3D"]
+[node name="DeadPlayer" type="Area3D" node_paths=PackedStringArray("VisualRoot")]
 script = ExtResource("1_47tyh")
+VisualRoot = NodePath("VisualRoot")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CylinderShape3D_v55hv")
 
-[node name="barrel2" parent="." instance=ExtResource("1_58u57")]
+[node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="barrel2" parent="VisualRoot" instance=ExtResource("1_58u57")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5138218, -0.4801786, 1.2698367)
 
-[node name="barrel6" parent="." instance=ExtResource("1_58u57")]
+[node name="barrel6" parent="VisualRoot" instance=ExtResource("1_58u57")]
 transform = Transform3D(0.92097515, -0.18803275, 0.34124562, 0.17631851, 0.9821628, 0.06533067, -0.34744304, 0, 0.9377011, -5.2153473, -0.4801786, 1.2698367)
 
-[node name="barrel3" parent="." instance=ExtResource("1_58u57")]
+[node name="barrel3" parent="VisualRoot" instance=ExtResource("1_58u57")]
 transform = Transform3D(1, 0, 0, 0, 0.87200946, -0.489489, 0, 0.489489, 0.87200946, 1.9159985, -0.6155174, -3.896547)
 
-[node name="barrel5" parent="." instance=ExtResource("1_58u57")]
+[node name="barrel5" parent="VisualRoot" instance=ExtResource("1_58u57")]
 transform = Transform3D(0.9445714, -0.31048113, -0.10670722, 0.32830617, 0.8932868, 0.3070079, 0, -0.3250235, 0.945706, -4.3471355, -0.6547656, -3.8934982)
 
-[node name="barrel4" parent="." instance=ExtResource("1_58u57")]
+[node name="barrel4" parent="VisualRoot" instance=ExtResource("1_58u57")]
 transform = Transform3D(1, 0, 0, 0, 0.98137337, 0.19211096, 0, -0.19211096, 0.98137337, 3.619071, -0.6155174, 3.0448573)
 
-[node name="boat-row-small2" parent="." instance=ExtResource("2_d31ma")]
+[node name="boat-row-small2" parent="VisualRoot" instance=ExtResource("2_d31ma")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8739595, -0.36757028, -1.0105056)
 
-[node name="bottle2" parent="." instance=ExtResource("3_47tyh")]
+[node name="bottle2" parent="VisualRoot" instance=ExtResource("3_47tyh")]
 transform = Transform3D(1, 0, 0, 0, 0.870519, -0.4921349, 0, 0.4921349, 0.870519, -1.9845457, -0.19629496, -4.3505454)
 
-[node name="chest2" parent="." instance=ExtResource("4_m7dm2")]
+[node name="chest2" parent="VisualRoot" instance=ExtResource("4_m7dm2")]
 transform = Transform3D(0.9451201, -0.32672307, 0, 0.32672307, 0.9451201, 0, 0, 0, 1, 2.1505966, -0.3418429, -0.78264904)
 
-[node name="crate-bottles2" parent="." instance=ExtResource("5_r6f3j")]
+[node name="crate-bottles2" parent="VisualRoot" instance=ExtResource("5_r6f3j")]
 transform = Transform3D(1, 0, 0, 0, 0.9767958, 0.21417277, 0, -0.21417277, 0.9767958, 1.2182279, -0.06440824, 4.0520296)
 
-[node name="crate2" parent="." instance=ExtResource("6_xpplp")]
+[node name="crate2" parent="VisualRoot" instance=ExtResource("6_xpplp")]
 transform = Transform3D(1, 0, 0, 0, 0.9653042, 0.26112795, 0, -0.26112795, 0.9653042, -0.042333126, -0.17159861, -3.7685504)
 
-[node name="tool-paddle2" parent="." instance=ExtResource("7_yt55d")]
+[node name="tool-paddle2" parent="VisualRoot" instance=ExtResource("7_yt55d")]
 transform = Transform3D(-5.35353e-08, -0.9659258, 0.25881904, -3.090862e-08, 0.25881904, 0.9659258, -1, 4.371139e-08, -4.371139e-08, 4.1550817, -0.31451082, 0.82552004)
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
