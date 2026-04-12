@@ -12,7 +12,7 @@ import { QuestsTab } from "./tabs/QuestsTab";
 import { ShipCrewTab } from "./tabs/ShipCrewTab";
 import { LeaderboardTab } from "./tabs/LeaderboardTab";
 import { StatsTab } from "./tabs/StatsTab";
-import { SCARLETT_CHARACTER_ID, getFirePrompt, getHirePrompt, getRandomTalkPhrase } from "./tabs/tavernHelpers";
+import { SCARLETT_CHARACTER_ID, getFirePrompt, getRandomTalkPhrase } from "./tabs/tavernHelpers";
 import { ShipStatusWidget } from "./components/ShipStatusWidget";
 import { QuestStatusWidget } from "./components/QuestStatusWidget";
 import { NpcCommentToast, type NpcCommentToastData } from "./components/NpcCommentToast";
@@ -20,7 +20,6 @@ import type { QuestSummary, TavernCharacter } from "./types";
 
 type PortTab = "market" | "shipyard" | "vault";
 type PanelMode = "ship" | "quests" | "crew" | "port" | "creative" | "stats" | "leaderboard";
-type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
 
 const SHIP_ICON = `${BASE}icons/flat/caravel.svg`;
 const QUESTS_ICON = `${BASE}icons/flat/tied-scroll.svg`;
@@ -31,7 +30,21 @@ const STATS_ICON = `${BASE}icons/flat/sextant.svg`;
 const LEADERBOARD_ICON = `${BASE}icons/flat/pirate-hat.svg`;
 
 function findQuestForNpc(state: PortState, characterId: string): QuestSummary | null {
-  return state.quests.available.find((quest) => quest.giverNpcId === characterId) ?? null;
+  return state.quests.available.find((quest) => quest.giverNpcId === characterId && !hasText(quest.rewardCrewNpcId)) ?? null;
+}
+
+function findHireQuestForNpc(state: PortState, characterId: string): QuestSummary | null {
+  return state.quests.available.find((quest) => quest.rewardCrewNpcId === characterId) ?? null;
+}
+
+function isNextQuestStepTalkToNpc(state: PortState, character: TavernCharacter): boolean {
+  const activeQuest = state.quests.active;
+  if (!activeQuest) return false;
+
+  const nextIncompleteStep = activeQuest.steps.find((step) => !step.isComplete);
+  if (!nextIncompleteStep) return false;
+
+  return nextIncompleteStep.label.trim() === `Talk to ${character.name}`;
 }
 
 function hasText(value: string | null | undefined): value is string {
@@ -156,23 +169,6 @@ export default function App() {
     };
   }, [activePanelMode, npcCommentQueue.length]);
 
-  const handleHireCharacter = (characterId: string): HireOutcome => {
-    if (!portState) return "not_hireable";
-
-    const character = portState?.tavern.characters.find((c) => c.id === characterId);
-    if (!character?.hireable) return "not_hireable";
-
-    const alreadyHired = portState.crew.hiredCharacterIds.includes(characterId);
-    if (alreadyHired) return "already_hired";
-
-    if (portState.crew.hiredCharacterIds.length >= portState.crew.crewSlots) {
-      return "slots_full";
-    }
-
-    sendIpc({ action: "hire_character", characterId });
-    return "hired";
-  };
-
   const handleFireCharacter = (characterId: string) => {
     if (!portState) return;
     if (characterId === SCARLETT_CHARACTER_ID) return;
@@ -196,10 +192,19 @@ export default function App() {
   };
 
   const openTalkPopup = (characterId: string) => {
+    if (!portState) return;
+
     const character = findCharacterById(characterId);
     if (!character) return;
 
     recordNpcInteraction(characterId);
+
+    // If talking to this NPC is the very next quest step, let the quest
+    // resolve immediately instead of covering it with ambient dialogue.
+    if (isNextQuestStepTalkToNpc(portState, character)) {
+      return;
+    }
+
     enqueuePopup(buildCharacterPopup(character, getRandomTalkPhrase(character)));
   };
 
@@ -236,27 +241,48 @@ export default function App() {
   };
 
   const openHirePopup = (characterId: string) => {
+    if (!portState) return;
+
     const character = findCharacterById(characterId);
     if (!character) return;
 
-    recordNpcInteraction(characterId);
-    enqueuePopup(buildCharacterPopup(
-      character,
-      getHirePrompt(character),
-      [
-        {
-          label: "Hire",
-          tone: "primary",
-          onSelect: () => {
-            handleHireCharacter(character.id);
+    const hireQuest = findHireQuestForNpc(portState, character.id);
+    const crewIsFull = portState.crew.hiredCharacterIds.length >= portState.crew.crewSlots;
+    const hasDifferentActiveQuest = portState.quests.active !== null;
+
+    if (!crewIsFull && !hasDifferentActiveQuest && hireQuest && hasText(hireQuest.offerText)) {
+      recordNpcInteraction(characterId);
+      enqueuePopup(buildCharacterPopup(
+        character,
+        hireQuest.offerText,
+        [
+          {
+            label: "Accept Quest",
+            tone: "primary",
+            onSelect: () => {
+              sendIpc({
+                action: "accept_quest",
+                questId: hireQuest.id,
+                characterId: character.id,
+              });
+            },
           },
-        },
-        {
-          label: "Decline",
-          tone: "secondary",
-        },
-      ],
-    ));
+          {
+            label: "Decline",
+            tone: "secondary",
+          },
+        ],
+      ));
+      return;
+    }
+
+    const unavailableMessage = crewIsFull
+      ? "Looks like your berths are full. Free up a crew slot before asking me aboard."
+      : hasDifferentActiveQuest
+        ? "Finish your current quest first, then come back if you still want to prove yourself to me."
+        : `${character.name} is not ready to join yet.`;
+
+    enqueuePopup(buildCharacterPopup(character, unavailableMessage));
   };
 
   const openFirePopup = (characterId: string) => {

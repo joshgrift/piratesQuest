@@ -17,7 +17,7 @@ Characters at ports offer quests that can reward you with:
 
 - resources
 - components
-- crew
+- access to new crew members
 
 They also point you toward useful next steps.
 
@@ -74,3 +74,22 @@ Quests stay useful after the tutorial because they can provide:
 
 - long-term progression rewards
 - new crew
+
+## Hiring Crew Through Quests
+
+Most recruitable tavern characters do not join instantly.
+
+The usual flow is:
+
+1. click `Hire` on that character
+2. read their offer to learn what bonus they give
+3. finish the task they ask for to prove your worth
+4. return and talk to that same character to complete the final step
+
+That last conversation is the turn-in. Once the quest completes, that character joins your crew and their bonus starts helping right away.
+
+These hire quests are themed around the crew member's specialty. For example:
+
+- traders ask you to prove you can make money
+- cannoneers ask you to prove you can fight
+- gatherers ask you to prove you can bring back the right resource

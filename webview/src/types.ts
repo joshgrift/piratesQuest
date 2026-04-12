@@ -60,6 +60,7 @@ export interface QuestSummary {
   acceptedText?: string;
   description: string;
   completionText: string;
+  rewardCrewNpcId?: string;
   unlocks: string[];
   steps: QuestStepProgress[];
 }

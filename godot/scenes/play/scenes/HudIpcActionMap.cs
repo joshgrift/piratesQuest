@@ -238,10 +238,10 @@ public static class HudIpcActionMap
   {
     if (message == null || currentPort == null) return;
     if (!RequireFeature(player, FeatureUnlock.TavernTalk, "hire tavern crew")) return;
-    bool ok = player.HireCrew(message.CharacterId, currentPort.PortName);
+    bool ok = player.StartHireQuest(message.CharacterId, currentPort.PortName);
     GD.Print(ok
-      ? $"HUD: Hired character '{message.CharacterId}'"
-      : $"HUD: Hire failed for '{message.CharacterId}'");
+      ? $"HUD: Started hire quest for '{message.CharacterId}'"
+      : $"HUD: Hire quest failed for '{message.CharacterId}'");
   }
 
   private static void HandleFireCharacter(FireCharacterMessage message, Player player)

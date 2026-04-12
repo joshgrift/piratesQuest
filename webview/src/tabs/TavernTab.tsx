@@ -32,15 +32,19 @@ export function TavernTab({
 
   const questByNpcId = new Map<string, QuestSummary>();
   for (const quest of state.quests.available) {
+    if (quest.rewardCrewNpcId) continue;
     if (!questByNpcId.has(quest.giverNpcId)) {
       questByNpcId.set(quest.giverNpcId, quest);
     }
   }
 
+  const nextIncompleteStepLabel = state.quests.active?.steps.find((step) => !step.isComplete)?.label ?? "";
+
   return (
     <div className="npc-card-grid">
         {visibleCharacters.map((character) => {
           const availableQuest = questByNpcId.get(character.id) ?? null;
+          const isQuestTurnInTarget = nextIncompleteStepLabel === `Talk to ${character.name}`;
 
           return (
             <article key={character.id} className="card npc-card npc-card--tavern">
@@ -65,7 +69,7 @@ export function TavernTab({
                   </button>
                 )}
                 <button type="button" className="npc-card-action-btn npc-card-action-btn--talk" onClick={() => onTalk(character.id)}>
-                  Talk
+                  {isQuestTurnInTarget ? "Complete Quest" : "Talk"}
                 </button>
               </div>
             </article>

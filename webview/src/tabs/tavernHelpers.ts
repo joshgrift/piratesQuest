@@ -11,10 +11,6 @@ export function getRandomTalkPhrase(character: TavernCharacter): string {
   return character.talkPhrases[index] || character.talkPhrases[0] || `${character.name} stays quiet for a beat.`;
 }
 
-export function getHirePrompt(character: TavernCharacter): string {
-  return character.hireText?.trim() || `${character.name} is listening, Captain.`;
-}
-
 export function getFirePrompt(character: TavernCharacter): string {
   return character.fireText?.trim() || `${character.name} waits for your decision.`;
 }

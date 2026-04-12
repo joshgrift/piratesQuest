@@ -82,10 +82,10 @@ public class PlayerProgress
       _sinceQuestStart.RecordComponentBought(componentName);
   }
 
-  public void RecordCrewHired(string characterId)
+  public void RecordCrewHired(string characterId, bool includeActiveQuestProgress = true)
   {
     _lifetime.RecordCrewHired(characterId);
-    if (HasActiveQuest())
+    if (includeActiveQuestProgress && HasActiveQuest())
       _sinceQuestStart.RecordCrewHired(characterId);
   }
 
@@ -143,50 +143,53 @@ public class PlayerProgress
     return _unlockedFeatures.Contains(feature.ToString());
   }
 
-  public QuestDefinition[] GetAvailableQuests()
+  public QuestDefinition[] GetAvailableQuests(IEnumerable<string> hiredCrewIds = null)
   {
-    return QuestData.GetAvailableQuests(_completedQuestIds, _currentQuestId);
+    return QuestData.GetAvailableQuests(_completedQuestIds, _currentQuestId, hiredCrewIds);
   }
 
-  public bool CanAcceptQuest(string questId, string npcId)
+  public bool CanAcceptQuest(string questId, string npcId, IEnumerable<string> hiredCrewIds = null)
   {
-    if (!string.IsNullOrWhiteSpace(_currentQuestId) || _completedQuestIds.Contains(questId))
+    if (!string.IsNullOrWhiteSpace(_currentQuestId))
       return false;
 
     var quest = QuestData.GetQuest(questId);
     if (quest == null)
       return false;
 
-    bool isAvailable = GetAvailableQuests().Any(q => string.Equals(q.Id, quest.Id, StringComparison.Ordinal));
+    if (!quest.Repeatable && _completedQuestIds.Contains(questId))
+      return false;
+
+    bool isAvailable = GetAvailableQuests(hiredCrewIds).Any(q => string.Equals(q.Id, quest.Id, StringComparison.Ordinal));
     if (!isAvailable)
       return false;
 
     return string.Equals(quest.GiverNpcId, npcId, StringComparison.Ordinal);
   }
 
-  public void EnsureAutoAcceptedQuestActive()
+  public void EnsureAutoAcceptedQuestActive(IEnumerable<string> hiredCrewIds = null)
   {
     if (HasActiveQuest())
       return;
 
-    TryAutoAcceptNextQuest();
+    TryAutoAcceptNextQuest(hiredCrewIds);
   }
 
-  public bool ReevaluateQuestProgress(int equippedComponentCount)
+  public QuestDefinition ReevaluateQuestProgress(int equippedComponentCount)
   {
     var quest = QuestData.GetQuest(_currentQuestId);
     if (quest == null)
-      return false;
+      return null;
 
     bool isComplete = quest.Steps.All(step => GetMetricValue(_sinceQuestStart, step, equippedComponentCount) >= step.RequiredValue);
     if (!isComplete)
-      return false;
+      return null;
 
     CompleteQuest(quest);
-    return true;
+    return quest;
   }
 
-  public bool ForceCompleteQuest(string questId = null)
+  public QuestDefinition ForceCompleteQuest(string questId = null)
   {
     string resolvedQuestId = string.IsNullOrWhiteSpace(questId)
       ? _currentQuestId
@@ -194,10 +197,10 @@ public class PlayerProgress
 
     var quest = QuestData.GetQuest(resolvedQuestId);
     if (quest == null)
-      return false;
+      return null;
 
     CompleteQuest(quest);
-    return true;
+    return quest;
   }
 
   public bool ForceUncompleteQuest(string questId)
@@ -244,14 +247,14 @@ public class PlayerProgress
     return true;
   }
 
-  public QuestHudStateDto ExportHudState(int equippedComponentCount)
+  public QuestHudStateDto ExportHudState(int equippedComponentCount, IEnumerable<string> hiredCrewIds = null)
   {
     var hudState = new QuestHudStateDto
     {
       Active = QuestData.GetQuest(_currentQuestId) is QuestDefinition activeQuest
         ? BuildSummary(activeQuest, _sinceQuestStart, equippedComponentCount)
         : null,
-      Available = GetAvailableQuests()
+      Available = GetAvailableQuests(hiredCrewIds)
         .Select(quest => BuildSummary(quest, new ProgressSnapshot(), equippedComponentCount))
         .ToArray(),
       All = QuestData.Quests.Select(quest =>
@@ -309,7 +312,7 @@ public class PlayerProgress
 
   private void CompleteQuest(QuestDefinition quest)
   {
-    if (!_completedQuestIds.Contains(quest.Id))
+    if (!quest.Repeatable && !_completedQuestIds.Contains(quest.Id))
       _completedQuestIds.Add(quest.Id);
     if (!_recentlyCompletedQuestIds.Contains(quest.Id))
       _recentlyCompletedQuestIds.Add(quest.Id);
@@ -327,12 +330,12 @@ public class PlayerProgress
     TryAutoAcceptNextQuest();
   }
 
-  private void TryAutoAcceptNextQuest()
+  private void TryAutoAcceptNextQuest(IEnumerable<string> hiredCrewIds = null)
   {
     if (HasActiveQuest())
       return;
 
-    var nextQuest = GetAvailableQuests()
+    var nextQuest = GetAvailableQuests(hiredCrewIds)
       .FirstOrDefault(quest => quest.AutoAcceptWhenAvailable);
 
     if (nextQuest == null)
@@ -357,6 +360,7 @@ public class PlayerProgress
       quest.AcceptedText ?? "",
       quest.Description ?? "",
       quest.CompletionText ?? "",
+      quest.RewardCrewNpcId ?? "",
       quest.Unlocks.Select(x => x.ToString()).ToArray(),
       quest.Steps.Select(step =>
       {
@@ -393,6 +397,7 @@ public class PlayerProgress
       QuestMetricKind.TotalMoneyEarned => snapshot.TotalMoneyEarned,
       QuestMetricKind.EquippedComponentCount => equippedComponentCount,
       QuestMetricKind.ShipsSunk => snapshot.ShipsSunk,
+      QuestMetricKind.TalkedToNpc => snapshot.TalkedToNpcIds.Contains(step.ItemType) ? 1 : 0,
       _ => 0,
     };
   }

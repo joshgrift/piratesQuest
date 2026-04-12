@@ -27,6 +27,7 @@ public enum QuestMetricKind
   TotalMoneyEarned,
   EquippedComponentCount,
   ShipsSunk,
+  TalkedToNpc,
 }
 
 public class QuestStepDefinition
@@ -54,6 +55,8 @@ public class QuestDefinition
   public bool RevealGiverInQuestLog { get; init; } = true;
   public bool CanAcceptFromQuestLog { get; init; }
   public bool AutoAcceptWhenAvailable { get; init; }
+  public bool Repeatable { get; init; }
+  public string RewardCrewNpcId { get; init; } = "";
   public FeatureUnlock[] Unlocks { get; init; } = [];
   public QuestStepDefinition[] Steps { get; init; } = [];
 }
@@ -81,6 +84,7 @@ public record QuestSummaryDto(
   string AcceptedText,
   string Description,
   string CompletionText,
+  string RewardCrewNpcId,
   string[] Unlocks,
   QuestStepProgressDto[] Steps
 );
@@ -283,6 +287,98 @@ public static class QuestData
         },
       ],
     },
+    CreateHireQuest(
+      "hire_gideon_gearlock",
+      "gideon-gearlock",
+      "Close a sale worth 300 gold",
+      QuestMetricKind.TotalMoneyEarned,
+      requiredValue: 300,
+      offerText: "I can squeeze a better price out of every sale, but I do not board for dreamers. Bring in 300 gold from your trading, then come back and show me you can keep a ledger and a course at the same time.",
+      acceptedText: "Make 300 gold through honest selling, then come talk to me again. If you can turn cargo into coin, I will turn your markets into profit.",
+      description: "Gideon will join your crew and improve your sale prices, but only after you prove you can actually trade. Earn 300 gold after accepting his offer, then return to Gideon in Saint Johns and talk to him to finish the deal.",
+      completionText: "Those numbers will do nicely. I am aboard, Captain, and your sales will start looking sharper immediately."
+    ),
+    CreateHireQuest(
+      "hire_tommy_fuse",
+      "tommy-fuse",
+      "Fire 5 cannonballs",
+      QuestMetricKind.CannonballsShot,
+      requiredValue: 5,
+      offerText: "I make your broadsides reach farther, but I do not sign on with captains who flinch at the guns. Fire five cannonballs, then come back and prove you can keep a firing line moving.",
+      acceptedText: "Loose five cannonballs, then report back to me. Show me you can keep the guns talking and I will give your broadside more bite.",
+      description: "Tommy boosts your cannon range, but he wants to see live powder first. Fire 5 cannonballs after taking his quest, then return to Tommy in Saint Johns and talk to him to seal the hire.",
+      completionText: "That sounded disciplined enough for me. I am on your gun deck now, and your shots will fly farther for it."
+    ),
+    CreateHireQuest(
+      "hire_elder_bertram",
+      "elder-bertram",
+      "Equip 2 components",
+      QuestMetricKind.EquippedComponentCount,
+      requiredValue: 2,
+      offerText: "I reinforce hulls for captains who respect preparation. Fit at least two proper components to your ship, then return and prove you build with purpose before I lend you my craft.",
+      acceptedText: "Outfit your ship with at least two equipped components, then come speak with me again. A captain who prepares their vessel earns stronger planks.",
+      description: "Elder Bertram increases your hull strength, but he only works with captains who invest in their ship. Equip 2 components at the same time, then return to Elder Bertram in Saint Johns and talk to him to finish recruiting him.",
+      completionText: "Now that looks like a ship worth reinforcing. I will join you, and your hull will hold up better under pressure."
+    ),
+    CreateHireQuest(
+      "hire_dorian_blackwake",
+      "dorian-blackwake",
+      "Sink 1 ship",
+      QuestMetricKind.ShipsSunk,
+      requiredValue: 1,
+      offerText: "I harden every broadside I touch, but I do not waste that on soft captains. Sink a ship, then come back and prove you can finish a fight before I join your guns.",
+      acceptedText: "Sink one ship, then return to me. If you can end a battle cleanly, I will make the next one hurt even more.",
+      description: "Dorian increases your cannon damage, but he wants proof you can win a real fight. Sink 1 ship after accepting this quest, then return to Dorian in Krakenfall and talk to him to recruit him.",
+      completionText: "You finished the job. Good. I am aboard now, and your broadsides will hit harder because of it."
+    ),
+    CreateHireQuest(
+      "hire_harlan_bentbeam",
+      "harlan-bentbeam",
+      "Collect 8 Wood",
+      QuestMetricKind.ItemsCollected,
+      itemType: nameof(InventoryItemType.Wood),
+      requiredValue: 8,
+      offerText: "I keep hulls knitting themselves back together, but only for captains who respect the timber. Bring back 8 wood after honest work, then talk to me and prove you know what keeps a ship alive.",
+      acceptedText: "Gather 8 wood and then return to me. Show me you can keep good material moving and I will keep your hull mending between fights.",
+      description: "Harlan improves your hull regeneration, but he wants to see that you understand the value of solid timber. Collect 8 Wood after accepting this quest, then return to Harlan in Krakenfall and talk to him to recruit him.",
+      completionText: "That is usable lumber. I will join your crew, and your hull will start recovering itself more reliably."
+    ),
+    CreateHireQuest(
+      "hire_merrick_ash",
+      "merrick-ash",
+      "Collect 12 Wood",
+      QuestMetricKind.ItemsCollected,
+      itemType: nameof(InventoryItemType.Wood),
+      requiredValue: 12,
+      offerText: "I can speed up your wood hauls, but I do not work for captains who only admire trees from the deck. Bring me proof with 12 wood in the hold, then come talk to me and show me you can finish a proper run.",
+      acceptedText: "Load up 12 wood, then return and speak with me. If you can run timber without wasting daylight, I will make every future haul better.",
+      description: "Merrick improves wood collection, but he only signs on after seeing a real lumber run. Collect 12 Wood after accepting this quest, then return to Merrick in Haven and talk to him to recruit him.",
+      completionText: "That is a respectable haul. I am aboard now, Captain, and your wood runs will move quicker from here."
+    ),
+    CreateHireQuest(
+      "hire_rafael_tide",
+      "rafael-tide",
+      "Collect 10 Fish",
+      QuestMetricKind.ItemsCollected,
+      itemType: nameof(InventoryItemType.Fish),
+      requiredValue: 10,
+      offerText: "I make fishing runs pay off, but only for captains who can read the water instead of begging it. Bring in 10 fish, then return and prove your timing is worth backing.",
+      acceptedText: "Catch 10 fish, then come talk to me again. Show me you can fill a hold from the sea and I will make every future catch better.",
+      description: "Rafael improves fish collection, but he wants proof that you can actually work the water. Collect 10 Fish after accepting this quest, then return to Rafael in Haven and talk to him to recruit him.",
+      completionText: "You read the water well enough for me. I am aboard now, and your fishing runs will come in stronger."
+    ),
+    CreateHireQuest(
+      "hire_silas_quill",
+      "silas-quill",
+      "Collect 10 Iron",
+      QuestMetricKind.ItemsCollected,
+      itemType: nameof(InventoryItemType.Iron),
+      requiredValue: 10,
+      offerText: "I can make your mining runs cleaner, but I do not sign on with anyone who cannot work stone with patience. Bring back 10 iron, then return and prove you can keep a haul steady.",
+      acceptedText: "Mine 10 iron, then come speak with me. If you can pull useful stone without making a mess of it, I will sharpen every future run.",
+      description: "Silas improves iron collection, but he only joins captains who can bring ore home the hard way. Collect 10 Iron after accepting this quest, then return to Silas in Haven and talk to him to recruit him.",
+      completionText: "That is solid work. I will join your crew, and your mining trips will start paying out better."
+    ),
   ];
 
   private static readonly Dictionary<string, QuestDefinition> _questsById = Quests
@@ -305,15 +401,76 @@ public static class QuestData
     return TavernData.GetCharacterById(npcId)?.Portrait ?? "";
   }
 
-  public static QuestDefinition[] GetAvailableQuests(IEnumerable<string> completedQuestIds, string currentQuestId)
+  public static QuestDefinition[] GetAvailableQuests(IEnumerable<string> completedQuestIds, string currentQuestId, IEnumerable<string> hiredCrewIds = null)
   {
     var completed = new HashSet<string>(completedQuestIds ?? [], StringComparer.Ordinal);
+    var hiredCrew = new HashSet<string>(hiredCrewIds ?? [], StringComparer.Ordinal);
 
     return Quests
-      .Where(q => !completed.Contains(q.Id))
+      .Where(q => q.Repeatable || !completed.Contains(q.Id))
       .Where(q => !string.Equals(q.Id, currentQuestId, StringComparison.Ordinal))
       .Where(q => q.PrerequisiteQuestIds.All(completed.Contains))
+      .Where(q => string.IsNullOrWhiteSpace(q.RewardCrewNpcId) || !hiredCrew.Contains(q.RewardCrewNpcId))
       .ToArray();
+  }
+
+  public static QuestDefinition GetHireQuestForCharacter(string characterId)
+  {
+    if (string.IsNullOrWhiteSpace(characterId))
+      return null;
+
+    return Quests.FirstOrDefault(q =>
+      string.Equals(q.RewardCrewNpcId, characterId, StringComparison.Ordinal));
+  }
+
+  private static QuestDefinition CreateHireQuest(
+    string id,
+    string characterId,
+    string firstStepLabel,
+    QuestMetricKind firstStepMetric,
+    int requiredValue,
+    string offerText,
+    string acceptedText,
+    string description,
+    string completionText,
+    string itemType = "")
+  {
+    var character = TavernData.GetCharacterById(characterId);
+    if (character == null)
+      throw new InvalidOperationException($"Cannot create hire quest for missing character '{characterId}'.");
+
+    return new QuestDefinition
+    {
+      Id = id,
+      Title = $"Earn {character.Name}'s Trust",
+      GiverNpcId = character.Id,
+      GiverName = character.Name,
+      GiverPortName = character.PortName,
+      OfferText = offerText,
+      AcceptedText = acceptedText,
+      Description = description,
+      CompletionText = completionText,
+      PrerequisiteQuestIds = ["scarlett_sail_to_port"],
+      Repeatable = true,
+      RewardCrewNpcId = character.Id,
+      Steps =
+      [
+        new QuestStepDefinition
+        {
+          Label = firstStepLabel,
+          Metric = firstStepMetric,
+          ItemType = itemType,
+          RequiredValue = requiredValue,
+        },
+        new QuestStepDefinition
+        {
+          Label = $"Talk to {character.Name}",
+          Metric = QuestMetricKind.TalkedToNpc,
+          ItemType = character.Id,
+          RequiredValue = 1,
+        },
+      ],
+    };
   }
 
   public static string GetQuestNameForFeature(FeatureUnlock feature)

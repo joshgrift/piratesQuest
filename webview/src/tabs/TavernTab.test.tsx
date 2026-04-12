@@ -4,21 +4,23 @@ import { renderApp } from "../test/helpers";
 import { getIpcMessages } from "../test/helpers";
 
 describe("TavernTab", () => {
-  it("sends hire IPC when hiring a character", async () => {
+  it("sends accept quest IPC when starting a hire quest", async () => {
     const { ipcSpy } = renderApp({ tab: "market" });
 
     const hireButtons = screen.getAllByRole("button", { name: "Hire" });
     fireEvent.click(hireButtons[0] as HTMLElement);
-    fireEvent.click(await screen.findByRole("button", { name: "Hire" }));
+    const popupHireButtons = await screen.findAllByRole("button", { name: "Accept Quest" });
+    fireEvent.click(popupHireButtons[popupHireButtons.length - 1] as HTMLElement);
 
-    const actions = getIpcMessages(ipcSpy) as { action: string; characterId?: string }[];
+    const actions = getIpcMessages(ipcSpy) as { action: string; characterId?: string; questId?: string }[];
     expect(actions).toContainEqual({
-      action: "hire_character",
+      action: "accept_quest",
+      questId: "hire_gideon_gearlock",
       characterId: "gideon-gearlock",
     });
   });
 
-  it("blocks hire IPC when crew slots are already full", async () => {
+  it("blocks hire quest acceptance when crew slots are already full", async () => {
     const { ipcSpy } = renderApp({
       tab: "market",
       state: {
@@ -64,14 +66,45 @@ describe("TavernTab", () => {
             },
           ],
         },
+        quests: {
+          available: [
+            {
+              id: "hire_elder_bertram",
+              title: "Earn Elder Bertram's Trust",
+              giverNpcId: "elder-bertram",
+              giverName: "Elder Bertram",
+              giverPortrait: "character17.png",
+              giverPortName: "Tortuga",
+              revealGiverInQuestLog: true,
+              canAcceptFromQuestLog: false,
+              canCancel: true,
+              offerText: "Fit out your ship properly, then talk to me.",
+              acceptedText: "Equip two components, then return.",
+              description: "Bertram wants proof you prepare your ship.",
+              completionText: "That will do.",
+              rewardCrewNpcId: "elder-bertram",
+              unlocks: [],
+              steps: [],
+            },
+          ],
+          active: null,
+          all: [],
+          completedIds: [],
+          recentlyCompletedIds: [],
+          unlockedFeatures: [
+            "SellGoods",
+            "TavernTalk",
+            "BuyGoods",
+          ],
+        },
       },
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Hire" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Hire" }));
+    expect(await screen.findByText(/berths are full/i)).toBeInTheDocument();
 
     const actions = getIpcMessages(ipcSpy) as { action: string }[];
-    expect(actions.find((a) => a.action === "hire_character")).toBeUndefined();
+    expect(actions.find((a) => a.action === "accept_quest")).toBeUndefined();
   });
 
   it("shows tavern action buttons directly on the roster", () => {
@@ -88,5 +121,57 @@ describe("TavernTab", () => {
     fireEvent.click(talkButtons[talkButtons.length - 1] as HTMLElement);
 
     expect(await screen.findByText(/rumors beat blind sailing|buy a rumor/i)).toBeInTheDocument();
+  });
+
+  it("shows complete quest when talking to an npc would finish the next quest step", () => {
+    renderApp({
+      tab: "market",
+      state: {
+        quests: {
+          available: [],
+          active: {
+            id: "hire_gideon_gearlock",
+            title: "Earn Gideon Gearlock's Trust",
+            giverNpcId: "gideon-gearlock",
+            giverName: "Gideon Gearlock",
+            giverPortrait: "character8.png",
+            giverPortName: "Tortuga",
+            revealGiverInQuestLog: true,
+            canAcceptFromQuestLog: false,
+            canCancel: true,
+            offerText: "Earn 60 gold, then return and talk to me.",
+            acceptedText: "Earn 60 gold from trading, then come back and speak with me.",
+            description: "Gideon will join your crew once you prove you can trade for profit.",
+            completionText: "Those numbers look respectable. I am aboard.",
+            rewardCrewNpcId: "gideon-gearlock",
+            unlocks: [],
+            steps: [
+              {
+                label: "Close a sale worth 60 gold",
+                currentValue: 60,
+                requiredValue: 60,
+                isComplete: true,
+              },
+              {
+                label: "Talk to Gideon Gearlock",
+                currentValue: 0,
+                requiredValue: 1,
+                isComplete: false,
+              },
+            ],
+          },
+          all: [],
+          completedIds: [],
+          recentlyCompletedIds: [],
+          unlockedFeatures: [
+            "SellGoods",
+            "TavernTalk",
+            "BuyGoods",
+          ],
+        },
+      },
+    });
+
+    expect(screen.getByRole("button", { name: "Complete Quest" })).toBeInTheDocument();
   });
 });

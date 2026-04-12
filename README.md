@@ -189,15 +189,17 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 - [x] Added Wiki
   - [x] Menu button to access wiki
 - [x] Cannonballs bounce of ships in safe zones
+- [ ] Fixed Windows UI not loading
+- [x] Money sound no longer played everywhere
+- [ ] Improved Interaction Points UX
+  - [ ] Added boueys
+  - [ ] Added floating highlight if the players next step requires them to visit it
+- [ ] Map?
 - [ ] AI ships
   - [ ] Fix shooting
-- [ ] Windows UI not loading
-- [ ] Money sound played everywhere
-- [ ] Red port circles (and yellow resource circles) sometimes disappear, or take a while to appear
-- [ ] Map?
-- [ ] Flexible turn Speed when slow or fast
+
 - [ ] Can't arbitrage any resources
-- [ ] Would it be nice if camera turned with the ship?
+
 - [ ] Lock Characters behind quests
 
 - [ ] UI Cleanup
@@ -207,31 +209,16 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
   - [ ] Clean up character cards
   - [ ] Make it clear in the UI you can only have on active quest
 
-### Alpha 10 - World Update
-- [ ] Proper terrain with awesome islands and a large Island
-  - [ ] https://www.youtube.com/watch?v=D9lBhr5gq2s
-  - [ ] https://em-games-dev.itch.io/godot-low-poly-island-terrain-generator
-  - [ ] https://brokenvector.itch.io/low-poly-rock-pack
-  - [ ] https://www.youtube.com/watch?v=xeAES3sc3ck
-- [ ] More characters, Quests, and a bunch of content
-
 ### Planned
-- [ ] Better Island mesh
-   - [ ] Better island cannonball collision
-- [ ] Fix water.
 - [ ] In game map
 - [ ] Game freezes on first explosion animation
-- [ ] Jitter when hitting a rock! 
 - [ ] EU Servers
-- [ ] Stop users from going off map
 - [ ] Serve HUD from Local package instead of from web
+- [ ] Would it be nice if camera turned with the ship?
+- [ ] Flexible turn Speed when slow or fast
 
 ### Suggestions
-- [ ] Close port menu early
 - [ ] Multiple Cannonball types?
-- [ ] In Combat Timer
-  - [ ] Can't heal if you're in combat
-  - [ ] When in port, the timer pauses
 - [ ] Proximity voice chat
 - [ ] Mini games
   - [ ] Capture the flag
@@ -240,12 +227,9 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
   - [ ] Mermaid summoning
   - [ ] Bow Cannon (weak)
   - [ ] Grenade Shot
-- [ ] Suggestion: Slow turn speed when going fast
 - [ ] Player Economy
-- [ ] Remove Trophies
 - [ ] Burry items instead of vault, can check the spot for a chance to find the treasure
 - [ ] Do think there should be some sort of defense move if possible. Don't know what it could be but would be helpful.
-- [ ] In game wiki
 - [ ] Easier to see which cannon is space and Shift
 - [ ] Event driven bonuses (increase in fishing here)
 - [ ] Cracken
@@ -259,4 +243,3 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
    - [ ] affecting sailing speed based on corresponding wind and ship direction,
 - [ ] UI to show you where a port is and directions 
 - [ ] Shooting direction is still frustrating
-- [ ] See how much items cost while you are sailing?

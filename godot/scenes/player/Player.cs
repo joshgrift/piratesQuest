@@ -905,11 +905,46 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (HiredCrewCharacterIds.Count >= GetCrewSlotCapacity())
       return false;
 
-    HiredCrewCharacterIds.Add(characterId);
-    Progress.RecordCrewHired(characterId);
-    UpdatePlayerStats();
-    ReevaluateQuestProgress();
+    if (!TryAddCrewCharacter(characterId, recordQuestProgress: true))
+      return false;
+
     GD.Print($"{Name}: Hired tavern crew '{characterId}'");
+    return true;
+  }
+
+  public bool StartHireQuest(string characterId, string currentPortName)
+  {
+    var character = TavernData.GetCharacterById(characterId);
+    if (character == null || !character.Hireable)
+      return false;
+
+    if (!string.Equals(character.PortName, currentPortName, StringComparison.OrdinalIgnoreCase))
+      return false;
+
+    if (HiredCrewCharacterIds.Contains(characterId))
+      return false;
+
+    if (HiredCrewCharacterIds.Count >= GetCrewSlotCapacity())
+      return false;
+
+    var hireQuest = QuestData.GetHireQuestForCharacter(characterId);
+    if (hireQuest == null)
+      return false;
+
+    return AcceptQuest(hireQuest.Id, characterId);
+  }
+
+  private bool TryAddCrewCharacter(string characterId, bool recordQuestProgress)
+  {
+    if (HiredCrewCharacterIds.Contains(characterId))
+      return false;
+
+    HiredCrewCharacterIds.Add(characterId);
+    Progress.RecordCrewHired(characterId, recordQuestProgress);
+    UpdatePlayerStats();
+    if (recordQuestProgress)
+      ReevaluateQuestProgress();
+
     return true;
   }
 
@@ -1114,7 +1149,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       Crew = ExportCrewForHud(),
       Vault = ExportVaultForHud(),
       Leaderboard = [],
-      Quests = Progress.ExportHudState(GetTotalEquippedComponents()),
+      Quests = Progress.ExportHudState(GetTotalEquippedComponents(), HiredCrewCharacterIds),
       ServerStateJson = JsonSerializer.Serialize(SerializeState()),
     };
   }
@@ -1321,7 +1356,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   public bool AcceptQuest(string questId, string characterId)
   {
-    if (!Progress.CanAcceptQuest(questId, characterId))
+    if (!Progress.CanAcceptQuest(questId, characterId, HiredCrewCharacterIds))
       return false;
 
     Progress.ResetForNewQuest(questId, characterId);
@@ -1336,9 +1371,12 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   public void ReevaluateQuestProgress()
   {
-    bool didCompleteQuest = Progress.ReevaluateQuestProgress(GetTotalEquippedComponents());
-    if (didCompleteQuest)
-      PlayQuestCompleteSound();
+    var completedQuest = Progress.ReevaluateQuestProgress(GetTotalEquippedComponents());
+    if (completedQuest == null)
+      return;
+
+    ApplyQuestRewards(completedQuest);
+    PlayQuestCompleteSound();
   }
 
   public void RecordCameraDrag()
@@ -1355,15 +1393,27 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   public bool ForceCompleteQuest(string questId = null)
   {
-    bool didCompleteQuest = Progress.ForceCompleteQuest(questId);
-    if (didCompleteQuest)
-      PlayQuestCompleteSound();
-    return didCompleteQuest;
+    var completedQuest = Progress.ForceCompleteQuest(questId);
+    if (completedQuest == null)
+      return false;
+
+    ApplyQuestRewards(completedQuest);
+    PlayQuestCompleteSound();
+    return true;
   }
 
   public bool ForceUncompleteQuest(string questId)
   {
     return Progress.ForceUncompleteQuest(questId);
+  }
+
+  private void ApplyQuestRewards(QuestDefinition completedQuest)
+  {
+    if (completedQuest == null || string.IsNullOrWhiteSpace(completedQuest.RewardCrewNpcId))
+      return;
+
+    if (TryAddCrewCharacter(completedQuest.RewardCrewNpcId, recordQuestProgress: false))
+      GD.Print($"{Name}: Recruited '{completedQuest.RewardCrewNpcId}' from quest '{completedQuest.Id}'");
   }
 
   public bool ForceSetActiveQuest(string questId)

@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 export interface NpcCommentAction {
   label: string;
@@ -31,6 +31,8 @@ const CONFETTI_PIECES = [
   { left: "90%", delay: "0.06s", rotation: "-22deg", color: "#ff9f68" },
 ];
 
+const AUTO_DISMISS_DURATION_MS = 5000;
+
 export function NpcCommentToast({
   comment,
   queueCount,
@@ -41,35 +43,41 @@ export function NpcCommentToast({
   onDismiss: () => void;
 }) {
   const [countdownProgress, setCountdownProgress] = useState(1);
+  const dismissRef = useRef(onDismiss);
   const hasActions = (comment?.actions?.length ?? 0) > 0;
   const hasQueuedFollowups = queueCount > 1;
-  const shouldAutoAdvance = comment !== null && hasQueuedFollowups && !hasActions;
+  const shouldAutoDismiss = comment !== null && !hasActions;
 
   useEffect(() => {
-    if (!shouldAutoAdvance) {
+    dismissRef.current = onDismiss;
+  }, [onDismiss]);
+
+  useEffect(() => {
+    if (!shouldAutoDismiss) {
       setCountdownProgress(1);
       return;
     }
 
-    const durationMs = 5000;
-    const startedAt = performance.now();
+    // Start the timer when this specific toast appears.
+    // Follow-up toasts can be added later without resetting the countdown.
+    const expiresAt = performance.now() + AUTO_DISMISS_DURATION_MS;
     setCountdownProgress(1);
 
     const intervalId = window.setInterval(() => {
-      const elapsedMs = performance.now() - startedAt;
-      const nextProgress = Math.max(0, 1 - (elapsedMs / durationMs));
+      const remainingMs = Math.max(0, expiresAt - performance.now());
+      const nextProgress = remainingMs / AUTO_DISMISS_DURATION_MS;
       setCountdownProgress(nextProgress);
 
-      if (elapsedMs < durationMs) return;
+      if (remainingMs > 0) return;
 
       window.clearInterval(intervalId);
-      onDismiss();
+      dismissRef.current();
     }, 100);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [comment?.id, onDismiss, shouldAutoAdvance]);
+  }, [comment?.id, shouldAutoDismiss]);
 
   if (!comment) return null;
 
@@ -134,19 +142,22 @@ export function NpcCommentToast({
         <div className="npc-comment-toast-copy">
           <div className="npc-comment-toast-name">{comment.name}</div>
           <div className="npc-comment-toast-message">{comment.message}</div>
-          {hasQueuedFollowups && (
+          {(hasQueuedFollowups || shouldAutoDismiss) && (
             <div className="npc-comment-toast-queue">
               <div className="npc-comment-toast-queue-head">
-                <span className="npc-comment-toast-queue-badge">
-                  {queueCount - 1} more
-                </span>
-                {shouldAutoAdvance && (
+                {hasQueuedFollowups && (
+                  <span className="npc-comment-toast-queue-badge">
+                    {queueCount - 1} more
+                  </span>
+                )}
+                {shouldAutoDismiss && (
                   <span className="npc-comment-toast-queue-timer">
-                    Next in {Math.max(1, Math.ceil(countdownProgress * 5))}s
+                    {hasQueuedFollowups ? "Next" : "Closes"} in{" "}
+                    {Math.max(1, Math.ceil(countdownProgress * (AUTO_DISMISS_DURATION_MS / 1000)))}s
                   </span>
                 )}
               </div>
-              {shouldAutoAdvance && (
+              {shouldAutoDismiss && (
                 <div className="npc-comment-toast-progress" aria-hidden="true">
                   <div
                     className="npc-comment-toast-progress-fill"

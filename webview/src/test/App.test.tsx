@@ -1,9 +1,13 @@
-import { describe, it, expect } from "vitest";
-import { screen } from "@testing-library/react";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { act, screen } from "@testing-library/react";
 import { getIpcMessages, renderApp } from "./helpers";
-import { makeOwnedComponent } from "./fixtures";
+import { makeOwnedComponent, makePortState } from "./fixtures";
 
 describe("App", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("shows the port panel after openPort is called", () => {
     const { container } = renderApp();
     // The port panel should now be in the DOM
@@ -177,5 +181,122 @@ describe("App", () => {
       questId: "scarlett_learn_to_sail",
       characterId: "scarlett",
     });
+  });
+
+  it("auto-dismisses NPC comments even when there is no follow-up toast", () => {
+    vi.useFakeTimers();
+
+    renderApp({
+      isInPort: false,
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett_learn_to_sail",
+          title: "Learn to Sail",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character2.png",
+          giverPortName: "",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          canCancel: false,
+          acceptedText: "Welcome to the Seas! Press W, A, S, or D and make the ship answer.",
+          description: "Move the ship once.",
+          completionText: "",
+          unlocks: [],
+          steps: [],
+        },
+        all: [],
+        completedIds: [],
+        recentlyCompletedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    expect(screen.getByText("Closes in 5s")).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(screen.queryByText(/Press W, A, S, or D/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps the original countdown when a follow-up toast is added later", () => {
+    vi.useFakeTimers();
+
+    const initialState = makePortState({
+      isInPort: false,
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett_learn_to_sail",
+          title: "Learn to Sail",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character2.png",
+          giverPortName: "",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          canCancel: false,
+          acceptedText: "Welcome to the Seas! Press W, A, S, or D and make the ship answer.",
+          description: "Move the ship once.",
+          completionText: "",
+          unlocks: [],
+          steps: [],
+        },
+        all: [
+          {
+            id: "scarlett-first-port",
+            title: "Dock at Tortuga",
+            giverNpcId: "scarlett",
+            giverName: "Scarlett",
+            giverPortrait: "character2.png",
+            giverPortName: "Tortuga",
+            revealGiverInQuestLog: true,
+            canAcceptFromQuestLog: true,
+            canCancel: false,
+            description: "Come back to port.",
+            completionText: "Nice work. You made it back to harbor.",
+            unlocks: [],
+            steps: [],
+          },
+        ],
+        completedIds: [],
+        recentlyCompletedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    renderApp(initialState);
+
+    act(() => {
+      vi.advanceTimersByTime(4900);
+    });
+
+    expect(screen.getByText("Closes in 1s")).toBeInTheDocument();
+
+    const followUpState = {
+      ...initialState,
+      quests: {
+        ...initialState.quests,
+        recentlyCompletedIds: ["scarlett-first-port"],
+      },
+    };
+
+    act(() => {
+      window.updateState?.(followUpState);
+    });
+
+    expect(screen.getByText("1 more")).toBeInTheDocument();
+    expect(screen.getByText("Next in 1s")).toBeInTheDocument();
+    expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(screen.queryByText(/Press W, A, S, or D/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Nice work. You made it back to harbor.")).toBeInTheDocument();
   });
 });
