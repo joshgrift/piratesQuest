@@ -244,7 +244,7 @@ public static class QuestData
       GiverName = "Elder Bertram",
       GiverPortName = "Saint Johns",
       PrerequisiteQuestIds = ["scarlett_trade_for_merchant"],
-      OfferText = null,
+      OfferText = "Your ship still looks half-finished. Buy a proper component and fit it before you come grinning at me.",
       AcceptedText = "Your ship still looks half-finished. Go to a port, buy a proper component, and fit it before you come grinning at me.",
       Description = "Elder Bertram is tired of captains calling a bare deck a build. Visit the shipyard, buy extra components, and equip at least 2 of them at the same time. This checks what you're actively using, not what you're hoarding.",
       CompletionText = "Much better. Your ship finally looks like someone made decisions on purpose. Ship class upgrades are unlocked.",

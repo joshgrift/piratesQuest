@@ -38,10 +38,6 @@ function hasText(value: string | null | undefined): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-function getFirstQuestText(...values: Array<string | null | undefined>): string | null {
-  return values.find(hasText) ?? null;
-}
-
 function buildCharacterPopup(
   character: TavernCharacter,
   message: string,
@@ -213,13 +209,12 @@ export default function App() {
     const quest = character ? findQuestForNpc(portState, character.id) : null;
     if (!character || !quest) return;
 
-    const questText = getFirstQuestText(quest.offerText, quest.description);
-    if (!questText) return;
+    if (!hasText(quest.offerText)) return;
 
     recordNpcInteraction(characterId);
     enqueuePopup(buildCharacterPopup(
       character,
-      questText,
+      quest.offerText,
       [
         {
           label: "Accept Quest",

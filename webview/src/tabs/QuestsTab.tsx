@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { describeQuestUnlocks } from "../utils/questUnlocks";
 import type { PortState, QuestSummary } from "../types";
 
@@ -10,30 +10,11 @@ function QuestCard({
   quest,
   action,
   kicker = "Quest",
-  collapsed = false,
-  onToggle,
 }: {
   quest: QuestSummary;
   action?: ReactNode;
   kicker?: string;
-  collapsed?: boolean;
-  onToggle?: () => void;
 }) {
-  if (collapsed) {
-    return (
-      <div className="card quest-card quest-card--collapsed">
-        <button type="button" className="quest-card-toggle" onClick={onToggle} aria-expanded="false">
-          <div className="quest-card-toggle-copy">
-            <div className="quest-card-kicker">{kicker}</div>
-            <div className="quest-card-title">{quest.title}</div>
-            <div className="quest-card-summary">Completed. Open to review the details.</div>
-          </div>
-          <span className="quest-card-chevron" aria-hidden="true">+</span>
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="card quest-card">
       <div className="quest-card-header">
@@ -41,18 +22,11 @@ function QuestCard({
           <div className="quest-card-kicker">{kicker}</div>
           <div className="quest-card-title">{quest.title}</div>
         </div>
-        {onToggle ? (
-          <button type="button" className="quest-card-toggle quest-card-toggle--inline" onClick={onToggle} aria-expanded="true">
-            <span className="quest-card-toggle-label">Hide details</span>
-            <span className="quest-card-chevron quest-card-chevron--open" aria-hidden="true">−</span>
-          </button>
-        ) : (
-          <div className="quest-card-giver">
-            {quest.revealGiverInQuestLog
-              ? `${quest.giverName}${quest.giverPortName ? ` • ${quest.giverPortName}` : ""}`
-              : "Unknown lead"}
-          </div>
-        )}
+        <div className="quest-card-giver">
+          {quest.revealGiverInQuestLog
+            ? `${quest.giverName}${quest.giverPortName ? ` • ${quest.giverPortName}` : ""}`
+            : "Unknown lead"}
+        </div>
       </div>
 
       <div className="quest-card-giver">
@@ -85,21 +59,35 @@ function QuestCard({
   );
 }
 
+function CompletedQuestCard({ quest }: { quest: QuestSummary }) {
+  return (
+    <div className="card quest-card">
+      <div className="quest-card-header">
+        <div className="quest-card-heading">
+          <div className="quest-card-kicker">Completed Quest</div>
+          <div className="quest-card-title">{quest.title}</div>
+        </div>
+      </div>
+
+      <div className="quest-card-giver">
+        {quest.revealGiverInQuestLog
+          ? `${quest.giverName}${quest.giverPortName ? ` • ${quest.giverPortName}` : ""}`
+          : "Unknown lead"}
+      </div>
+
+      {hasText(quest.description) && (
+        <div className="quest-card-desc">{quest.description}</div>
+      )}
+    </div>
+  );
+}
+
 export function QuestsTab({ state }: { state: PortState }) {
   const { active, all, completedIds } = state.quests;
-  const [openCompletedQuestIds, setOpenCompletedQuestIds] = useState<string[]>([]);
 
   const completedQuests = completedIds
     .map((questId) => all.find((quest) => quest.id === questId))
     .filter((quest): quest is QuestSummary => quest !== undefined);
-
-  function toggleCompletedQuest(questId: string) {
-    setOpenCompletedQuestIds((currentIds) =>
-      currentIds.includes(questId)
-        ? currentIds.filter((currentId) => currentId !== questId)
-        : [...currentIds, questId],
-    );
-  }
 
   return (
     <>
@@ -119,18 +107,9 @@ export function QuestsTab({ state }: { state: PortState }) {
 
       <div className="section-title">Completed Quests</div>
       {completedQuests.length > 0 ? (
-        completedQuests.map((quest) => {
-          const isOpen = openCompletedQuestIds.includes(quest.id);
-          return (
-            <QuestCard
-              key={quest.id}
-              quest={quest}
-              kicker="Completed Quest"
-              collapsed={!isOpen}
-              onToggle={() => toggleCompletedQuest(quest.id)}
-            />
-          );
-        })
+        completedQuests.map((quest) => (
+          <CompletedQuestCard key={quest.id} quest={quest} />
+        ))
       ) : (
         <div className="card quest-card">
           <div className="quest-card-title">No Completed Quests</div>

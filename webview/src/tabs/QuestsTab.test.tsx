@@ -95,8 +95,8 @@ describe("QuestsTab", () => {
     expect(screen.queryByText("Available Quests")).not.toBeInTheDocument();
   });
 
-  it("keeps completed quests collapsed until you open them", async () => {
-    const { user } = renderApp({
+  it("shows completed quests as simple summaries without extra detail toggles", () => {
+    renderApp({
       tab: "quests",
       state: {
         quests: {
@@ -126,13 +126,10 @@ describe("QuestsTab", () => {
     });
 
     expect(screen.getByText("Done and Dusted")).toBeInTheDocument();
-    expect(screen.queryByText("A completed quest should stay collapsed by default.")).not.toBeInTheDocument();
-    expect(screen.queryByText("Turn it in")).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /Done and Dusted/i }));
-
     expect(screen.getByText("A completed quest should stay collapsed by default.")).toBeInTheDocument();
-    expect(screen.getByText("Turn it in")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Hide details/i })).toBeInTheDocument();
+    expect(screen.getByText("Governor Caspian Vale • Haven")).toBeInTheDocument();
+    expect(screen.queryByText("Turn it in")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Hide details/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Open to review the details/i)).not.toBeInTheDocument();
   });
 });
