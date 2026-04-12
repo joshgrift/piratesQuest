@@ -76,6 +76,7 @@ public record QuestSummaryDto(
   string GiverPortName,
   bool RevealGiverInQuestLog,
   bool CanAcceptFromQuestLog,
+  bool CanCancel,
   string OfferText,
   string AcceptedText,
   string Description,

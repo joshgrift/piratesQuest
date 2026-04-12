@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { screen } from "@testing-library/react";
-import { renderApp } from "../test/helpers";
+import { getIpcMessages, renderApp } from "../test/helpers";
 
 describe("QuestsTab", () => {
   it("shows only the active quest and completed quests in the quest log", () => {
@@ -18,6 +18,7 @@ describe("QuestsTab", () => {
               giverPortName: "Saint Johns",
               revealGiverInQuestLog: true,
               canAcceptFromQuestLog: true,
+              canCancel: true,
               description: "This should stay hidden from the quests panel.",
               completionText: "",
               unlocks: [],
@@ -33,6 +34,7 @@ describe("QuestsTab", () => {
             giverPortName: "Tortuga",
             revealGiverInQuestLog: true,
             canAcceptFromQuestLog: true,
+            canCancel: true,
             description: "Do the thing you're working on right now.",
             completionText: "",
             unlocks: [],
@@ -48,6 +50,7 @@ describe("QuestsTab", () => {
               giverPortName: "Tortuga",
               revealGiverInQuestLog: true,
               canAcceptFromQuestLog: true,
+              canCancel: true,
               description: "Do the thing you're working on right now.",
               completionText: "",
               unlocks: [],
@@ -62,6 +65,7 @@ describe("QuestsTab", () => {
               giverPortName: "Haven",
               revealGiverInQuestLog: true,
               canAcceptFromQuestLog: false,
+              canCancel: false,
               description: "A completed quest should stay collapsed by default.",
               completionText: "",
               unlocks: [],
@@ -76,6 +80,7 @@ describe("QuestsTab", () => {
               giverPortName: "Saint Johns",
               revealGiverInQuestLog: true,
               canAcceptFromQuestLog: true,
+              canCancel: true,
               description: "This should stay hidden from the quests panel.",
               completionText: "",
               unlocks: [],
@@ -112,6 +117,7 @@ describe("QuestsTab", () => {
               giverPortName: "Haven",
               revealGiverInQuestLog: true,
               canAcceptFromQuestLog: false,
+              canCancel: false,
               description: "A completed quest should stay collapsed by default.",
               completionText: "",
               unlocks: [],
@@ -131,5 +137,72 @@ describe("QuestsTab", () => {
     expect(screen.queryByText("Turn it in")).not.toBeInTheDocument();
     expect(screen.queryByText(/Hide details/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Open to review the details/i)).not.toBeInTheDocument();
+  });
+
+  it("shows a cancel button for manually accepted quests and sends cancel IPC", async () => {
+    const { user, ipcSpy } = renderApp({
+      tab: "quests",
+      state: {
+        quests: {
+          available: [],
+          active: {
+            id: "manual-quest",
+            title: "Merchant's Favor",
+            giverNpcId: "gideon",
+            giverName: "Gideon",
+            giverPortrait: "character8.png",
+            giverPortName: "Saint Johns",
+            revealGiverInQuestLog: true,
+            canAcceptFromQuestLog: false,
+            canCancel: true,
+            description: "A quest you should be allowed to back out of.",
+            completionText: "",
+            unlocks: [],
+            steps: [{ label: "Buy tea", currentValue: 0, requiredValue: 5, isComplete: false }],
+          },
+          all: [],
+          completedIds: [],
+          recentlyCompletedIds: [],
+          unlockedFeatures: [],
+        },
+      },
+    });
+
+    ipcSpy.mockClear();
+    await user.click(screen.getByRole("button", { name: "Cancel Quest" }));
+
+    expect(getIpcMessages(ipcSpy)).toContainEqual({ action: "cancel_quest" });
+  });
+
+  it("does not show a cancel button for auto-accepted quests", () => {
+    renderApp({
+      tab: "quests",
+      state: {
+        quests: {
+          available: [],
+          active: {
+            id: "tutorial-quest",
+            title: "Learn to Sail",
+            giverNpcId: "scarlett",
+            giverName: "Scarlett",
+            giverPortrait: "character1.png",
+            giverPortName: "Tortuga",
+            revealGiverInQuestLog: true,
+            canAcceptFromQuestLog: true,
+            canCancel: false,
+            description: "The tutorial stays active until you finish it.",
+            completionText: "",
+            unlocks: [],
+            steps: [{ label: "Move once", currentValue: 0, requiredValue: 1, isComplete: false }],
+          },
+          all: [],
+          completedIds: [],
+          recentlyCompletedIds: [],
+          unlockedFeatures: [],
+        },
+      },
+    });
+
+    expect(screen.queryByRole("button", { name: "Cancel Quest" })).not.toBeInTheDocument();
   });
 });

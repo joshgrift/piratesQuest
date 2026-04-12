@@ -232,6 +232,18 @@ public class PlayerProgress
     return true;
   }
 
+  public bool CancelActiveQuest()
+  {
+    var quest = QuestData.GetQuest(_currentQuestId);
+    if (quest == null || quest.AutoAcceptWhenAvailable)
+      return false;
+
+    _currentQuestId = null;
+    _acceptedQuestNpcId = null;
+    _sinceQuestStart.Reset();
+    return true;
+  }
+
   public QuestHudStateDto ExportHudState(int equippedComponentCount)
   {
     var hudState = new QuestHudStateDto
@@ -340,6 +352,7 @@ public class PlayerProgress
       quest.GiverPortName,
       quest.RevealGiverInQuestLog,
       quest.CanAcceptFromQuestLog,
+      !quest.AutoAcceptWhenAvailable,
       quest.OfferText ?? "",
       quest.AcceptedText ?? "",
       quest.Description ?? "",

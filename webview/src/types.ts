@@ -55,6 +55,7 @@ export interface QuestSummary {
   giverPortName: string;
   revealGiverInQuestLog: boolean;
   canAcceptFromQuestLog: boolean;
+  canCancel: boolean;
   offerText?: string;
   acceptedText?: string;
   description: string;
@@ -181,6 +182,7 @@ export type IpcMessage =
   | { action: "fire_character"; characterId: string }
   | { action: "talk_to_npc"; characterId: string }
   | { action: "accept_quest"; questId: string; characterId: string }
+  | { action: "cancel_quest" }
   | { action: "complete_quest"; questId?: string }
   | { action: "uncomplete_quest"; questId: string }
   | { action: "set_active_quest"; questId: string }

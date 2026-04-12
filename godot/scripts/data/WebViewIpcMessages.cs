@@ -179,6 +179,7 @@ public enum IpcAction
   FireCharacter,
   TalkToNpc,
   AcceptQuest,
+  CancelQuest,
   CompleteQuest,
   UncompleteQuest,
   SetActiveQuest,
@@ -216,6 +217,7 @@ public enum IpcAction
 [JsonDerivedType(typeof(FireCharacterMessage), "fire_character")]
 [JsonDerivedType(typeof(TalkToNpcMessage), "talk_to_npc")]
 [JsonDerivedType(typeof(AcceptQuestMessage), "accept_quest")]
+[JsonDerivedType(typeof(CancelQuestMessage), "cancel_quest")]
 [JsonDerivedType(typeof(CompleteQuestMessage), "complete_quest")]
 [JsonDerivedType(typeof(UncompleteQuestMessage), "uncomplete_quest")]
 [JsonDerivedType(typeof(SetActiveQuestMessage), "set_active_quest")]
@@ -333,6 +335,12 @@ public record AcceptQuestMessage : IpcMessage
   public override IpcAction Action => IpcAction.AcceptQuest;
   public string CharacterId { get; init; } = "";
   public string QuestId { get; init; } = "";
+}
+
+/// <summary>Cancels the current manually accepted quest.</summary>
+public record CancelQuestMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.CancelQuest;
 }
 
 /// <summary>Creative-mode only: force completes the current active quest.</summary>

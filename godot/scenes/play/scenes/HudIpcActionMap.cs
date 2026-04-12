@@ -28,6 +28,7 @@ public static class HudIpcActionMap
     [IpcAction.FireCharacter] = (message, player, currentPort) => HandleFireCharacter(message as FireCharacterMessage, player),
     [IpcAction.TalkToNpc] = (message, player, currentPort) => HandleTalkToNpc(message as TalkToNpcMessage, player),
     [IpcAction.AcceptQuest] = (message, player, currentPort) => HandleAcceptQuest(message as AcceptQuestMessage, player, currentPort),
+    [IpcAction.CancelQuest] = (message, player, currentPort) => HandleCancelQuest(player),
     [IpcAction.CompleteQuest] = (message, player, currentPort) => HandleCompleteQuest(message as CompleteQuestMessage, player),
     [IpcAction.UncompleteQuest] = (message, player, currentPort) => HandleUncompleteQuest(message as UncompleteQuestMessage, player),
     [IpcAction.SetActiveQuest] = (message, player, currentPort) => HandleSetActiveQuest(message as SetActiveQuestMessage, player),
@@ -265,6 +266,15 @@ public static class HudIpcActionMap
     GD.Print(ok
       ? $"HUD: Accepted quest '{message.QuestId}' from '{message.CharacterId}'"
       : $"HUD: Accept quest failed for '{message.QuestId}'");
+  }
+
+  private static void HandleCancelQuest(Player player)
+  {
+    string questId = player.Progress.CurrentQuestId ?? "";
+    bool ok = player.CancelActiveQuest();
+    GD.Print(ok
+      ? $"HUD: Cancelled quest '{questId}'"
+      : $"HUD: Cancel quest failed for '{questId}'");
   }
 
   private static void HandleBuildVault(Player player, Port currentPort)

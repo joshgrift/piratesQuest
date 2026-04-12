@@ -3285,6 +3285,13 @@ img {
   gap: 8px;
 }
 
+.quest-card-actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .npc-card-action-btn {
   border: 1px solid rgba(236, 196, 116, 0.26);
   border-radius: 999px;

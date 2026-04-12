@@ -1327,6 +1327,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     return true;
   }
 
+  public bool CancelActiveQuest()
+  {
+    return Progress.CancelActiveQuest();
+  }
+
   public void ReevaluateQuestProgress()
   {
     bool didCompleteQuest = Progress.ReevaluateQuestProgress(GetTotalEquippedComponents());

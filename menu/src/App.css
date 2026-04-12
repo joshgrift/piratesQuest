@@ -479,6 +479,7 @@ h2 {
 .ghost-btn {
   padding: 6px 10px;
   font-size: 13px;
+  min-height: 34px;
 }
 
 .ghost-action {
@@ -519,6 +520,10 @@ h2 {
   font-size: 14px;
 }
 
+.wiki-btn {
+  min-width: 76px;
+}
+
 .menu-side {
   display: flex;
   flex-direction: column;
@@ -548,6 +553,10 @@ h2 {
 }
 
 @media (max-width: 1150px) {
+  .hud-top-left {
+    right: 18px;
+  }
+
   .menu-shell {
     grid-template-columns: 1fr;
     overflow-y: auto;
@@ -564,5 +573,21 @@ h2 {
 
   .tagline {
     font-size: clamp(16px, 4vw, 22px);
+  }
+}
+
+@media (max-width: 720px) {
+  .hud-top-left {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    gap: 8px;
+  }
+
+  .ghost-btn,
+  .discord-btn-compact,
+  .wiki-btn {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }

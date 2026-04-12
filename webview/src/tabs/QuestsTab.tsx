@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { describeQuestUnlocks } from "../utils/questUnlocks";
+import { sendIpc } from "../utils/ipc";
 import type { PortState, QuestSummary } from "../types";
 
 function hasText(value: string | null | undefined): value is string {
@@ -93,7 +94,20 @@ export function QuestsTab({ state }: { state: PortState }) {
     <>
       <div className="section-title">Active Quest</div>
       {active ? (
-        <QuestCard quest={active} />
+        <QuestCard
+          quest={active}
+          action={active.canCancel ? (
+            <div className="quest-card-actions">
+              <button
+                type="button"
+                className="npc-card-action-btn npc-card-action-btn--danger"
+                onClick={() => sendIpc({ action: "cancel_quest" })}
+              >
+                Cancel Quest
+              </button>
+            </div>
+          ) : undefined}
+        />
       ) : (
         <div className="card quest-card">
           <div className="quest-card-title">No Active Quest</div>
