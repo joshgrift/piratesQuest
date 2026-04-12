@@ -44,6 +44,9 @@ export function NpcCommentToast({
 }) {
   const [countdownProgress, setCountdownProgress] = useState(1);
   const dismissRef = useRef(onDismiss);
+  const expiresAtRef = useRef(0);
+  const remainingMsRef = useRef(AUTO_DISMISS_DURATION_MS);
+  const isPausedRef = useRef(false);
   const hasActions = (comment?.actions?.length ?? 0) > 0;
   const hasQueuedFollowups = queueCount > 1;
   const shouldAutoDismiss = comment !== null && !hasActions;
@@ -55,16 +58,23 @@ export function NpcCommentToast({
   useEffect(() => {
     if (!shouldAutoDismiss) {
       setCountdownProgress(1);
+      remainingMsRef.current = AUTO_DISMISS_DURATION_MS;
+      isPausedRef.current = false;
       return;
     }
 
     // Start the timer when this specific toast appears.
     // Follow-up toasts can be added later without resetting the countdown.
-    const expiresAt = performance.now() + AUTO_DISMISS_DURATION_MS;
+    expiresAtRef.current = performance.now() + AUTO_DISMISS_DURATION_MS;
+    remainingMsRef.current = AUTO_DISMISS_DURATION_MS;
+    isPausedRef.current = false;
     setCountdownProgress(1);
 
     const intervalId = window.setInterval(() => {
-      const remainingMs = Math.max(0, expiresAt - performance.now());
+      if (isPausedRef.current) return;
+
+      const remainingMs = Math.max(0, expiresAtRef.current - performance.now());
+      remainingMsRef.current = remainingMs;
       const nextProgress = remainingMs / AUTO_DISMISS_DURATION_MS;
       setCountdownProgress(nextProgress);
 
@@ -95,6 +105,21 @@ export function NpcCommentToast({
     }
   };
 
+  const handleMouseEnter = () => {
+    if (!shouldAutoDismiss || isPausedRef.current) return;
+
+    remainingMsRef.current = Math.max(0, expiresAtRef.current - performance.now());
+    isPausedRef.current = true;
+    setCountdownProgress(remainingMsRef.current / AUTO_DISMISS_DURATION_MS);
+  };
+
+  const handleMouseLeave = () => {
+    if (!shouldAutoDismiss || !isPausedRef.current) return;
+
+    expiresAtRef.current = performance.now() + remainingMsRef.current;
+    isPausedRef.current = false;
+  };
+
   return (
     <div className="npc-comment-toast-wrap" aria-live="polite">
       <div
@@ -108,6 +133,8 @@ export function NpcCommentToast({
         tabIndex={hasActions ? -1 : 0}
         onClick={hasActions ? undefined : onDismiss}
         onKeyDown={handleKeyDown}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         aria-label={hasActions ? `${comment.name} conversation` : `Dismiss message from ${comment.name}`}
         style={{ "--npc-comment-progress": countdownProgress } as CSSProperties}
       >
@@ -141,37 +168,21 @@ export function NpcCommentToast({
             ))}
           </div>
         )}
-        <button
-          type="button"
-          className="npc-comment-toast-close"
-          aria-label={`Close message from ${comment.name}`}
-          onClick={(event) => {
-            event.stopPropagation();
-            onDismiss();
-          }}
-        >
-          x
-        </button>
-
-        <img
-          className="npc-comment-toast-portrait"
-          src={comment.portraitSrc}
-          alt={comment.portraitAlt}
-        />
+        <div className="npc-comment-toast-portrait-wrap">
+          <img
+            className="npc-comment-toast-portrait"
+            src={comment.portraitSrc}
+            alt={comment.portraitAlt}
+          />
+          <span className="npc-comment-toast-portrait-beacon" aria-hidden="true" />
+        </div>
 
         <div className="npc-comment-toast-copy">
+          <div className="npc-comment-toast-kicker">
+            {hasActions ? "Waiting on your answer" : "Deck chatter"}
+          </div>
           <div className="npc-comment-toast-name">{comment.name}</div>
           <div className="npc-comment-toast-message">{comment.message}</div>
-          {hasQueuedFollowups && (
-            <div className="npc-comment-toast-queue">
-              <span className="npc-comment-toast-queue-label">
-                Next up
-              </span>
-              <span className="npc-comment-toast-queue-badge" aria-label={`${queueCount - 1} more waiting`}>
-                +{queueCount - 1}
-              </span>
-            </div>
-          )}
           {hasActions && (
             <div className="npc-comment-toast-actions">
               {comment.actions?.map((action) => (
@@ -187,6 +198,27 @@ export function NpcCommentToast({
             </div>
           )}
         </div>
+        <button
+          type="button"
+          className={[
+            "npc-comment-toast-queue-badge",
+            hasQueuedFollowups ? "npc-comment-toast-queue-badge--stacked" : "npc-comment-toast-queue-badge--solo",
+          ].join(" ")}
+          aria-label={hasQueuedFollowups ? `${queueCount - 1} more waiting` : `Close message from ${comment.name}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onDismiss();
+          }}
+        >
+          {hasQueuedFollowups ? (
+            <>
+              <span className="npc-comment-toast-queue-caption">next</span>
+              <span className="npc-comment-toast-queue-count">+{queueCount - 1}</span>
+            </>
+          ) : (
+            <span className="npc-comment-toast-queue-close-label">close</span>
+          )}
+        </button>
       </div>
     </div>
   );

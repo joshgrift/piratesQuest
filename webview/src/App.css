@@ -406,9 +406,9 @@ img {
 
 .npc-comment-toast-wrap {
   position: fixed;
-  left: 24px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 50%;
+  top: 24px;
+  transform: translateX(-50%);
   width: min(460px, calc(100vw - 48px));
   pointer-events: auto;
   z-index: 1100;
@@ -438,6 +438,19 @@ img {
   animation: npc-comment-toast-in 0.26s ease;
 }
 
+.npc-comment-toast::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 18px;
+  bottom: 18px;
+  width: 4px;
+  border-radius: 0 999px 999px 0;
+  background: linear-gradient(180deg, rgba(114, 200, 245, 0.8), rgba(246, 198, 111, 0.8));
+  box-shadow: 0 0 12px rgba(114, 200, 245, 0.2);
+  opacity: 0.85;
+}
+
 .npc-comment-toast--stacked {
   overflow: visible;
 }
@@ -458,13 +471,15 @@ img {
 }
 
 .npc-comment-toast-stack--mid {
-  inset: 10px -10px -10px 10px;
-  opacity: 0.5;
+  inset: 12px -10px -12px 14px;
+  opacity: 0.48;
+  transform: rotate(1.3deg);
 }
 
 .npc-comment-toast-stack--back {
-  inset: 20px -18px -18px 18px;
-  opacity: 0.28;
+  inset: 22px -16px -22px 28px;
+  opacity: 0.26;
+  transform: rotate(2.6deg);
 }
 
 .npc-comment-toast--celebrate {
@@ -532,8 +547,8 @@ img {
   transform-origin: left center;
   transform: scaleX(var(--npc-comment-progress));
   background:
-    linear-gradient(90deg, rgba(105, 188, 237, 0.03), rgba(244, 196, 108, 0.08));
-  clip-path: polygon(0 0, 82% 0, 100% 100%, 0 100%);
+    linear-gradient(90deg, rgba(105, 188, 237, 0.03), rgba(244, 196, 108, 0.09));
+  clip-path: polygon(0 0, 78% 0, 100% 100%, 0 100%);
 }
 
 .npc-comment-toast-background-timer::after {
@@ -574,11 +589,29 @@ img {
     0 0 0 2px rgba(130, 188, 237, 0.65);
 }
 
-.npc-comment-toast-portrait {
+.npc-comment-toast-portrait-wrap {
   position: relative;
   z-index: 1;
   width: 78px;
   height: 78px;
+}
+
+.npc-comment-toast-portrait-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(112, 196, 244, 0.18), transparent 45%),
+    linear-gradient(145deg, rgba(247, 211, 136, 0.1), rgba(114, 178, 229, 0.08));
+  border: 1px solid rgba(244, 205, 126, 0.18);
+}
+
+.npc-comment-toast-portrait {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
   border-radius: 24px;
   object-fit: cover;
   border: 3px solid rgba(242, 201, 120, 0.68);
@@ -587,13 +620,35 @@ img {
     0 10px 18px rgba(0, 0, 0, 0.38);
 }
 
+.npc-comment-toast-portrait-beacon {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid rgba(11, 26, 39, 0.9);
+  background:
+    radial-gradient(circle at 35% 35%, #fff8cb, #f0c46e 42%, #86c3f1 100%);
+  box-shadow:
+    0 0 0 3px rgba(133, 194, 245, 0.12),
+    0 0 14px rgba(133, 194, 245, 0.35);
+}
+
 .npc-comment-toast-copy {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 8px;
+  gap: 7px;
   min-width: 0;
   padding-top: 3px;
+}
+
+.npc-comment-toast-kicker {
+  color: rgba(138, 205, 247, 0.86);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .npc-comment-toast-name {
@@ -608,40 +663,67 @@ img {
   color: rgba(242, 235, 220, 0.96);
   line-height: 1.45;
   font-size: 1rem;
-}
-
-.npc-comment-toast-queue {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 2px;
-}
-
-.npc-comment-toast-queue-label {
-  color: rgba(255, 226, 170, 0.82);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  max-width: 31ch;
 }
 
 .npc-comment-toast-queue-badge {
-  min-width: 34px;
-  height: 34px;
-  padding: 0 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  border: 1px solid rgba(132, 194, 248, 0.36);
-  background: rgba(20, 57, 88, 0.58);
+  position: absolute;
+  right: 14px;
+  z-index: 2;
+  min-width: 58px;
+  padding: 7px 10px 8px;
+  display: grid;
+  justify-items: center;
+  border-radius: 16px;
+  border: 1px solid rgba(132, 194, 248, 0.34);
+  background:
+    linear-gradient(160deg, rgba(18, 48, 75, 0.96), rgba(29, 34, 59, 0.95));
   color: #bfe3ff;
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  cursor: pointer;
   box-shadow:
-    0 10px 18px rgba(0, 0, 0, 0.24),
-    inset 0 0 0 1px rgba(255, 244, 214, 0.08);
+    0 12px 24px rgba(0, 0, 0, 0.32),
+    inset 0 0 0 1px rgba(255, 244, 214, 0.06);
+}
+
+.npc-comment-toast-queue-badge--stacked {
+  bottom: -12px;
+}
+
+.npc-comment-toast-queue-badge--solo {
+  bottom: 14px;
+}
+
+.npc-comment-toast-queue-badge::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(240, 208, 136, 0.12);
+  pointer-events: none;
+}
+
+.npc-comment-toast-queue-caption {
+  color: rgba(255, 226, 170, 0.84);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.npc-comment-toast-queue-count {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+}
+
+.npc-comment-toast-queue-close-label {
+  color: rgba(255, 226, 170, 0.94);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.1;
 }
 
 .npc-comment-toast-actions {
@@ -681,30 +763,15 @@ img {
   color: #fff0ea;
 }
 
-.npc-comment-toast-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 26px;
-  height: 26px;
-  border: none;
-  border-radius: 999px;
-  background: rgba(10, 18, 26, 0.55);
-  color: rgba(255, 232, 183, 0.92);
-  font-family: "Texturina", serif;
-  font-size: 14px;
-  cursor: pointer;
-}
-
 @keyframes npc-comment-toast-in {
   from {
     opacity: 0;
-    transform: translateX(-18px) scale(0.985);
+    transform: translateY(-14px) scale(0.985);
   }
 
   to {
     opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -735,8 +802,7 @@ img {
 @media (max-width: 900px) {
   .npc-comment-toast-wrap {
     left: 50%;
-    top: auto;
-    bottom: 24px;
+    top: 16px;
     transform: translateX(-50%);
     width: min(440px, calc(100vw - 24px));
   }
@@ -749,21 +815,37 @@ img {
   }
 
   .npc-comment-toast-stack--mid {
-    inset: 8px -8px -8px 8px;
+    inset: 8px -6px -8px 10px;
   }
 
   .npc-comment-toast-stack--back {
-    inset: 14px -12px -12px 12px;
+    inset: 14px -10px -14px 18px;
   }
 
   .npc-comment-toast-background-timer {
     border-radius: calc(22px - 1px);
   }
 
-  .npc-comment-toast-portrait {
+  .npc-comment-toast-portrait-wrap {
     width: 64px;
     height: 64px;
+  }
+
+  .npc-comment-toast-portrait {
     border-radius: 18px;
+  }
+
+  .npc-comment-toast-portrait-wrap::before {
+    border-radius: 22px;
+  }
+
+  .npc-comment-toast-portrait-beacon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .npc-comment-toast-kicker {
+    font-size: 0.66rem;
   }
 
   .npc-comment-toast-name {
@@ -772,16 +854,29 @@ img {
 
   .npc-comment-toast-message {
     font-size: 0.94rem;
-  }
-
-  .npc-comment-toast-queue-label {
-    font-size: 0.72rem;
+    max-width: none;
   }
 
   .npc-comment-toast-queue-badge {
-    min-width: 30px;
-    height: 30px;
-    font-size: 0.82rem;
+    right: 10px;
+    min-width: 50px;
+    padding: 6px 8px 7px;
+  }
+
+  .npc-comment-toast-queue-badge--stacked {
+    bottom: -10px;
+  }
+
+  .npc-comment-toast-queue-badge--solo {
+    bottom: 12px;
+  }
+
+  .npc-comment-toast-queue-caption {
+    font-size: 0.58rem;
+  }
+
+  .npc-comment-toast-queue-count {
+    font-size: 0.88rem;
   }
 }
 
@@ -3568,6 +3663,10 @@ img {
   border-top: 0;
   padding-top: 0;
   margin-top: 2px;
+}
+
+.npc-card-impact-placeholder {
+  min-height: 16px;
 }
 
 .npc-card-impact-list {

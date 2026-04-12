@@ -241,6 +241,65 @@ describe("App", () => {
     expect(screen.queryByText(/Press W, A, S, or D/i)).not.toBeInTheDocument();
   });
 
+  it("pauses NPC comment auto-dismiss while the toast is hovered", () => {
+    vi.useFakeTimers();
+
+    renderApp({
+      isInPort: false,
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett_learn_to_sail",
+          title: "Learn to Sail",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character2.png",
+          giverPortName: "",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          canCancel: false,
+          acceptedText: "Welcome to the Seas! Press W, A, S, or D and make the ship answer.",
+          description: "Move the ship once.",
+          completionText: "",
+          unlocks: [],
+          steps: [],
+        },
+        all: [],
+        completedIds: [],
+        recentlyCompletedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    const toast = screen.getByRole("button", { name: /dismiss message from scarlett/i });
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    fireEvent.mouseEnter(toast);
+
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
+
+    fireEvent.mouseLeave(toast);
+
+    act(() => {
+      vi.advanceTimersByTime(1900);
+    });
+
+    expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(screen.queryByText(/Press W, A, S, or D/i)).not.toBeInTheDocument();
+  });
+
   it("keeps the original countdown when a follow-up toast is added later", () => {
     vi.useFakeTimers();
 
@@ -307,7 +366,6 @@ describe("App", () => {
       window.updateState?.(followUpState);
     });
 
-    expect(screen.getByText("Next up")).toBeInTheDocument();
     expect(screen.getByLabelText("1 more waiting")).toBeInTheDocument();
     expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
 

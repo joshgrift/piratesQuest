@@ -58,6 +58,7 @@ export function TavernSection({
                   <div className="npc-card-copy">
                     <div className="npc-card-name">{character.name}</div>
                     <div className="npc-card-role">{character.role}</div>
+                    <div className="npc-card-impact npc-card-impact--inline npc-card-impact-placeholder" aria-hidden="true" />
                   </div>
                 </div>
               </div>

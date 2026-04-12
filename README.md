@@ -201,14 +201,14 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 - [x] Add another character & better space out characters
 - [ ] Player should spawn in safe areas
 
-- [ ] UI Cleanup
+- [x] UI Cleanup
   - [x] Sell buttons are backwards
   - [x] Merged Crew and ship tabs
   - [x] Cleaned up Quest Interface
   - [x] Clean up character cards
   - [x] Make it clear in the UI you can only have on active quest
-  - [ ] early quests, we should skip the accepted text
-  - [ ] clean up character toast
+  - [x] early quests, we should skip the accepted text
+  - [x] clean up character toast
 
 ### Planned
 - [ ] In game map
