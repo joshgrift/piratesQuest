@@ -178,27 +178,26 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 ### Alpha 8 - Cleanup & Map
 - [x] New Terrain
 - [x] Water Improvements
-- [ ] Map?
-- [ ] Polish and Stability
-- [ ] Bugs
-  - [ ] "Ride side of your screen" - from scarlett
-- [ ] Windows UI not loading
-- [ ] Make money sound played everywhere
-- [ ] Quest UI
-  - [ ] Make it more obvious who to talk to get the quest
-  - [ ] You shouldn't see the details of a quest until you accept the quest
-  - [ ] More obvious when you complete the quest
-  - [ ] Sometimes the UI doesn't show up when you complete the quest
-  - [ ] You should be able to cancel quests
+- [x] Fixed Quest Interaction
+  - [x] Linear Quest Line
+  - [x] No soft locks
+  - [x] Better descriptions and explanations
+  - [x] Can complete quests without returning to port
+  - [ ] You should be able to cancel quests (that aren't auto accepted)
   - [ ] Make it clear in the UI you can only have on active quest
-  - [ ] Soft lock the combat quest (sometimes the quests have requirements)
-- [ ] Tutorial show you how to move your UI
+- [x] Simplified character interaction, easy to get quest
+- [ ] Added more information to tutorial
+- [x] Added Wiki
+  - [ ] Menu button to access wiki
+- [ ] AI ships
+- [ ] Windows UI not loading
+- [ ] Money sound played everywhere
+
+- [ ] Map?
+
 - [ ] Flexible turn Speed when slow or fast
-- [ ] Quest UI should be easier to hide? (dismiss button)
-- [ ] Too Tedius to make someone join your crew
 - [ ] Show who is online in leaderboard
 - [ ] Hitting rocks is glitchy
-- [ ] Tea icon is smaller then fish icon when collecting
 - [ ] Can't arbitrage any resources
 - [ ] Would it be nice if camera turned with the ship?
 - [ ] "Can’t buy in port, only sell" - should make it more clear what's going on
@@ -209,7 +208,7 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 - [ ] Sell buttons are backwards
 
 ### Alpha 9 - AI Update
-- [ ] AI ships
+
 
 ### Alpha 10 - World Update
 - [ ] Proper terrain with awesome islands and a large Island

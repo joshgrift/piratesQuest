@@ -277,7 +277,7 @@ public sealed class WikiService(IWebHostEnvironment environment)
       <a class="brand" href="/wiki">
         <p class="brand-kicker">PiratesQuest</p>
         <h1 class="brand-title">Game Wiki</h1>
-        <p class="brand-subtitle">Help pages written in Markdown and served by the API.</p>
+        <p class="brand-subtitle">Quick help for sailing, trading, quests, and survival.</p>
       </a>
       {{navHtml}}
     </aside>
