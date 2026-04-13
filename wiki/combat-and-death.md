@@ -26,7 +26,9 @@ Combat consumes cannonballs from your inventory and has a 2-second cooldown betw
 
 ### AI Traders
 
-AI traders drop the goods they are carrying. They are a fast way to gain cargo without visiting a port.
+AI traders sail between ports and try to run from danger instead of fighting back.
+
+They still drop the goods they are carrying, so they are a fast way to gain cargo without visiting a port.
 
 ### AI Pirates
 

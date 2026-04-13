@@ -59,8 +59,8 @@ public static class PortData
 
   private static readonly PortDefinition[] _ports =
   [
-    // Saint Johns is a lumber-heavy starter port on the western side of the map.
-    // It exports wood cheaply, but it pays a premium for tea hauled in from the northern tea region.
+    // Saint Johns is a lumber-heavy starter port. Based in the centre of the map.
+    // It exports wood cheaply, but it pays a premium for tea hauled in from the tea ports.
     new()
     {
       Id = "saint-johns",
@@ -75,7 +75,7 @@ public static class PortData
       ],
       CharacterIds = ["gideon-gearlock", "elder-bertram"],
     },
-    // Rusthook Point is a mining port in the southwest.
+    // Rusthook Point is a northern mining port.
     // Iron is a reliable export, and nearby demand is intentionally weaker than the distant routes.
     new()
     {
@@ -92,7 +92,7 @@ public static class PortData
       CharacterIds = ["tommy-fuse", "governor-caspian"],
     },
     // Shard Bay sits close to the center, so its routes are convenient instead of exceptional.
-    // Fish are cheap here, while tea costs more because it has to be shipped in from the north.
+    // Fish are cheap here, while tea costs more because it has to be shipped in from the tea ports. It also produces iron.
     new()
     {
       Id = "shard-bay",
@@ -100,7 +100,7 @@ public static class PortData
       ItemsForSale =
       [
         new() { ItemType = InventoryItemType.Wood, BuyPrice = 8, SellPrice = 6 },
-        new() { ItemType = InventoryItemType.Iron, BuyPrice = 12, SellPrice = 9 },
+        new() { ItemType = InventoryItemType.Iron, BuyPrice = 7, SellPrice = 4 },
         new() { ItemType = InventoryItemType.Fish, BuyPrice = 2, SellPrice = 1 },
         new() { ItemType = InventoryItemType.Tea, BuyPrice = 11, SellPrice = 8 },
         new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 55, SellPrice = 46 },
@@ -139,8 +139,8 @@ public static class PortData
       ],
       CharacterIds = ["merrick-ash", "rafael-tide"],
     },
-    // Haven Harbour is a southwestern industrial stop.
-    // It exports iron and fish, but its tea demand helps create valuable north-to-south runs.
+    // Haven Harbour is a northern industrial stop.
+    // It exports iron and fish, but its tea demand helps create valuable long-haul runs.
     new()
     {
       Id = "haven-harbour",
@@ -155,7 +155,7 @@ public static class PortData
       ],
       CharacterIds = ["silas-quill", "nera-quicksnap"],
     },
-    // Pebblehook Bay is far to the west, which makes it a strong destination for long-haul tea runs.
+    // Pebblehook Bay is a far-west destination for long-haul tea runs.
     // Local fish and wood stay cheap, but imported luxury goods should sell much better here.
     new()
     {
@@ -171,19 +171,19 @@ public static class PortData
       ],
       CharacterIds = ["barnaby-jape"],
     },
-    // Spire Harbour sits far to the east, so it is a natural long-haul trade partner for western ports.
-    // It sells iron and ammunition cheaply, then pays well for western wood, fish, and imported tea.
+    // Spire Harbour is a southern, eastern long-haul trade partner.
+    // It sells wood and ammunition cheaply, then pays well for iron, and tea.
     new()
     {
       Id = "spire-harbour",
       DisplayName = "Spire Harbour",
       ItemsForSale =
       [
-        new() { ItemType = InventoryItemType.Wood, BuyPrice = 11, SellPrice = 9 },
+        new() { ItemType = InventoryItemType.Wood, BuyPrice = 5, SellPrice = 3 },
         new() { ItemType = InventoryItemType.Fish, BuyPrice = 7, SellPrice = 5 },
-        new() { ItemType = InventoryItemType.Iron, BuyPrice = 7, SellPrice = 4 },
-        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 45, SellPrice = 37 },
-        new() { ItemType = InventoryItemType.Tea, BuyPrice = 12, SellPrice = 9 },
+        new() { ItemType = InventoryItemType.Iron, BuyPrice = 12, SellPrice = 9 },
+        new() { ItemType = InventoryItemType.CannonBall, BuyPrice = 43, SellPrice = 35 },
+        new() { ItemType = InventoryItemType.Tea, BuyPrice = 13, SellPrice = 10 },
       ],
       CharacterIds = ["vera-vane"],
     },
@@ -225,13 +225,13 @@ public static class PortData
       Hireable = true,
       TalkPhrases =
       [
-        "Tea from Tidefall or Krakenfall sells beautifully in Saint Johns if you can keep your cargo dry.",
-        "Rusthook iron carried to Tidefall is not glamorous, but it is dependable, and dependable is how fortunes begin.",
-        "Wood bought in Saint Johns and sold in Spire Harbour is the sort of route disciplined captains repeat quietly.",
+        "Tea from the southern tea ports sells beautifully in western Saint Johns if you can keep your cargo dry.",
+        "Northern Rusthook iron carried south to Tidefall is not glamorous, but it is dependable, and dependable is how fortunes begin.",
+        "Southern ports pay more for iron than northern mining towns ever will. The map rewards captains who notice that.",
         "Fish from Pebblehook or Shard Bay do very nicely in Krakenfall, assuming you arrive before the smell announces you.",
-        "Tea from Tidefall to Pebblehook is a longer sail, but the ledger forgives the distance rather handsomely.",
-        "If you leave Haven with cheap iron, aim for Tidefall. If you leave Tidefall with cheap tea, aim west.",
-        "Spire likes western timber more than western captains realize.",
+        "Tea from southern Tidefall to far-west Pebblehook is a longer sail, but the ledger forgives the distance rather handsomely.",
+        "If you leave northern Haven with cheap iron, aim south for Tidefall. If you leave southern Tidefall with cheap tea, aim west for Saint Johns or Pebblehook.",
+        "Southern Spire pays well for iron and tea, but Tidefall is often the easier first stop for new captains.",
         "Shard Bay fish are common there and precious elsewhere. That difference is where your gold lives.",
         "Cheap goods are a promise. Good routes are the part that keeps the promise.",
         "Most fortunes begin with someone noticing the same numbers everyone else ignored.",
@@ -420,14 +420,14 @@ public static class PortData
       Hireable = false,
       TalkPhrases =
       [
-        "Rusthook iron sold in Tidefall is the kind of route even a governor can admire: simple, legal, and profitable.",
-        "Haven Harbour's iron also travels well to Tidefall, though fewer captains seem organized enough to notice.",
-        "Saint Johns timber moved east to Spire keeps turning up in respectable ledgers, which is irritatingly efficient.",
+        "Northern Rusthook iron sold in southern Tidefall is the kind of route even a governor can admire: simple, legal, and profitable.",
+        "Northern Haven Harbour's iron also travels well to southern Tidefall, though fewer captains seem organized enough to notice.",
+        "Southern ports pay more for iron than the northern producers do, which is exactly how trade is supposed to work.",
         "Pebblehook fish sold in Krakenfall have funded more repairs than some tax policies.",
-        "Tea from Krakenfall to Saint Johns pays well enough that I notice whenever captains stop running it.",
-        "Tea from Tidefall to Pebblehook is longer, riskier, and exactly the sort of route that rewards competent planning.",
-        "Spire Harbour pays western captains very kindly for wood, which suggests they are too busy buying elegance to chop their own.",
-        "Shard Bay's fish are cheap because they are everywhere there. They are not everywhere in the north.",
+        "Tea from the southern tea ports to western Saint Johns pays well enough that I notice whenever captains stop running it.",
+        "Tea from southern Tidefall to far-west Pebblehook is longer, riskier, and exactly the sort of route that rewards competent planning.",
+        "Spire Harbour pays visiting captains very kindly for iron and tea, though Tidefall usually gets the first wave of sensible traders.",
+        "Shard Bay's fish are cheap because they are everywhere there. They are not everywhere once you sail away from Shard Bay.",
         "A calm ledger is usually a sign that someone has stopped reporting honestly. A lively one often means someone found a route first.",
         "I do not dislike pirates. I dislike pirates who discover profitable routes and then turn them into incidents.",
       ],
@@ -511,7 +511,7 @@ public static class PortData
       Hireable = true,
       TalkPhrases =
       [
-        "Stone rewards rhythm. Swing sloppy and the island laughs at you. And if you haul that iron north to Tidefall, the market laughs a lot less.",
+        "Stone rewards rhythm. Swing sloppy and the island laughs at you. And if you haul that iron to Tidefall, the market laughs a lot less.",
         "Good mining looks patient right up until the hold starts filling fast.",
         "Iron comes easier when the crew stops fighting the rock.",
         "Every strike should have a reason. Noise is not a reason.",
@@ -582,10 +582,10 @@ public static class PortData
       [
         "I know I am not impressive yet. I am working on the yet part.",
         "People keep saying I am not built for sea work. I would like to prove them tired. The smart ones buy fish in Shard Bay, then head for Krakenfall before the hold starts to smell.",
-        "I watch good crews a lot. It is easier than joining them. Some of them buy tea up north and bring it all the way back to Saint Johns.",
-        "One captain told me Pebblehook pays even better for Tidefall tea, but only if you are brave enough for the longer sail.",
-        "I heard a crew in here bragging that Rusthook iron becomes real money the moment it reaches Tidefall.",
-        "The nicest merchants always seem to leave Saint Johns with wood and come back from Spire with heavier purses.",
+        "I watch good crews a lot. It is easier than joining them. Some of them buy tea in the south near Tidefall or Krakenfall and bring it all the way back to western Saint Johns.",
+        "One captain told me far-west Pebblehook pays even better for southern Tidefall tea, but only if you are brave enough for the longer sail.",
+        "I heard a crew in here bragging that northern Rusthook iron becomes real money the moment it reaches southern Tidefall, and Spire is not far behind.",
+        "Some sailors say southern ports pay more for iron. They sounded very sure of themselves, which usually means they were right for once.",
         "Nobody listens to deckhands much, so I hear things. Fish from Pebblehook sell well in Krakenfall too.",
         "I am not asking to be special. I am asking for a chance to get good. Watching routes helps with that.",
         "I have practiced knots until my hands ached just so nobody can call me useless twice.",

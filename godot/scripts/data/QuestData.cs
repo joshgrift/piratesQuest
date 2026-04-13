@@ -214,8 +214,8 @@ public static class QuestData
       CanAcceptFromQuestLog = true,
       AutoAcceptWhenAvailable = true,
       OfferText = null,
-      AcceptedText = "Aye, that's the sound. You won't flinch the first time a fight starts now. Gathering keeps you afloat, but trading makes you dangerous. Buy iron at Rusthook Point or Haven Harbour, sell it up at Tidefall Island for a profit, and earn 100 gold total while you're at it.",
-      Description = "Scarlett wants one clean trade lesson instead of a dozen guesses. Buy iron somewhere cheap, then sell it at Tidefall Island for a profit. Rusthook Point and Haven Harbour are both good places to start. Finish by earning 100 gold total.",
+      AcceptedText = "Aye, that's the sound. You won't flinch the first time a fight starts now. Gathering keeps you afloat, but trading makes you dangerous. Buy iron in the north at Rusthook Point or Haven Harbour, then sell it in the south at Tidefall Island or Spire Harbour for a profit. Earn 100 gold total while you're at it.",
+      Description = "Scarlett wants one clean trade lesson instead of a dozen guesses. Buy iron somewhere cheap in the north, then sell it in a southern port for a profit. Rusthook Point and Haven Harbour are both good places to start, and Tidefall Island is the easiest first destination. Finish by earning 100 gold total.",
       CompletionText = "Better. Now you're trading with your head instead of your feelings. Now head back to port and find some more quests by talking to characters in the market. They might have some work for you, and they always have gossip that can point you toward good trade routes.",
       Unlocks = [FeatureUnlock.ShipyardComponents],
       Steps =
@@ -223,14 +223,15 @@ public static class QuestData
         new QuestStepDefinition
         {
           Label = "Buy Iron in Rusthook Point or Haven Harbour",
+          PreStepPopupText = "Northern ports like Rusthook Point and Haven Harbour sell iron cheaply.",
           Metric = QuestMetricKind.ItemsBought,
           ItemType = InventoryItemType.Iron.ToString(),
           RequiredValue = 1,
         },
         new QuestStepDefinition
         {
-          Label = "Sell Iron for profit at Tidefall Island",
-          PreStepPopupText = "Talking to characters in a port will drop hints about which routes are profitable. Try asking around to find out where resources are in demand.",
+          Label = "Sell Iron for profit in a southern port",
+          PreStepPopupText = "Take that iron south to Tidefall Island or Spire Harbour. Tidefall is the easiest early route, but both southern ports pay better than the northern mining towns.",
           Metric = QuestMetricKind.SoldProfit,
           ItemType = InventoryItemType.Iron.ToString(),
           RequiredValue = 1,
@@ -238,6 +239,7 @@ public static class QuestData
         new QuestStepDefinition
         {
           Label = "Earn 100 gold",
+          PreStepPopupText = "Repeat the iron run until you've earned 100 gold total.",
           Metric = QuestMetricKind.TotalMoneyEarned,
           RequiredValue = 100,
         },
