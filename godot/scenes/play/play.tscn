@@ -210,54 +210,54 @@ PortId = "spire-harbour"
 
 [node name="Interactables" type="Node3D" parent="."]
 
-[node name="Collection Point" parent="Interactables" instance=ExtResource("6_ccytq")]
+[node name="iron" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 117.137184, 2.6371841, -298.0738)
 ResourceType = 1
 InteractionRadius = 20.0
 
-[node name="Collection Point7" parent="Interactables" instance=ExtResource("6_ccytq")]
+[node name="iron2" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 497.68756, 1, -427.6233)
 ResourceType = 1
 InteractionRadius = 15.0
 
-[node name="Collection Point2" parent="Interactables" instance=ExtResource("6_ccytq")]
+[node name="fish1" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -406.69543, 1, -30.297668)
 ResourceType = 2
 InteractionRadius = 30.0
 
-[node name="Collection Point3" parent="Interactables" instance=ExtResource("6_ccytq")]
+[node name="fish2" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 108.74692, 1.0000763, 254.70633)
 ResourceType = 2
 InteractionRadius = 30.0
 
-[node name="Collection Point4" parent="Interactables" instance=ExtResource("6_ccytq")]
+[node name="fish3" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.010506, 1.000061, -514.71564)
 ResourceType = 2
 InteractionRadius = 20.0
 
-[node name="Collection Point5" parent="Interactables" instance=ExtResource("6_ccytq")]
+[node name="fish4" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -473.66302, 1.000061, 369.44034)
 ResourceType = 2
 InteractionRadius = 30.0
 
-[node name="Collection Point6" parent="Interactables" instance=ExtResource("6_ccytq")]
+[node name="fish5" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 376.21707, 0.99993896, -26.176758)
 ResourceType = 2
 InteractionRadius = 20.0
 
-[node name="CollectionPoint" parent="Interactables" instance=ExtResource("6_ccytq")]
+[node name="wood1" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -387.40793, 0.9999962, -297.339)
 InteractionRadius = 20.0
 
-[node name="CollectionPoint4" parent="Interactables" instance=ExtResource("6_ccytq")]
+[node name="wood2" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 430.5752, 0.99998474, 213.44096)
 InteractionRadius = 20.0
 
-[node name="CollectionPoint3" parent="Interactables" instance=ExtResource("6_ccytq")]
+[node name="wood3" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -614.4065, 1, -467.57925)
 InteractionRadius = 20.0
 
-[node name="CollectionPoint2" parent="Interactables" instance=ExtResource("6_ccytq")]
+[node name="tea" parent="Interactables" instance=ExtResource("6_ccytq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -610.4099, 0.9999962, 218.70955)
 ResourceType = 3
 CollectionSpeed = 4.0

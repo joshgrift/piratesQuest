@@ -504,18 +504,45 @@ public static class QuestData
       description: "Dorian increases your cannon damage, but he wants proof you can win a real fight. Sink 1 ship after accepting this quest, then return to Dorian in Krakenfall and talk to him to recruit him.",
       completionText: "You finished the job. Good. I am aboard now, and your broadsides will hit harder because of it."
     ),
-    CreateHireQuest(
-      "hire_harlan_bentbeam",
-      "harlan-bentbeam",
-      "Collect 8 Wood",
-      QuestMetricKind.ItemsCollected,
-      itemType: nameof(InventoryItemType.Wood),
-      requiredValue: 8,
-      offerText: "I keep hulls knitting themselves back together, but only for captains who respect the timber. Bring back 8 wood after honest work, then talk to me and prove you know what keeps a ship alive.",
-      acceptedText: "Gather 8 wood and then return to me. Show me you can keep good material moving and I will keep your hull mending between fights.",
-      description: "Harlan improves your hull regeneration, but he wants to see that you understand the value of solid timber. Collect 8 Wood after accepting this quest, then return to Harlan in Krakenfall and talk to him to recruit him.",
-      completionText: "That is usable lumber. I will join your crew, and your hull will start recovering itself more reliably."
-    ),
+    new QuestDefinition
+    {
+      Id = "hire_harlan_bentbeam",
+      Title = "Earn Harlan Bentbeam's Trust",
+      GiverNpcId = "harlan-bentbeam",
+      GiverName = "Harlan Bentbeam",
+      GiverPortId = "krakenfall",
+      PrerequisiteQuestIds = [FinishedTutorialQuestId],
+      Repeatable = true,
+      RewardCrewNpcId = "harlan-bentbeam",
+      OfferText = "I keep hulls knitting themselves back together, but only for captains who respect the timber and the finer things in life. Bring back 200 wood and 50 tea after honest work, then talk to me and prove you know what keeps a ship alive.",
+      AcceptedText = "Bring me 200 wood and 50 tea, then come speak with me again. Show me you can keep good material moving and I will keep your hull mending between fights.",
+      Description = "Harlan improves your hull regeneration, but he wants to see that you understand the value of solid timber and tea stores. Collect 200 Wood and 50 Tea after accepting this quest, then return to Harlan in Krakenfall and talk to him to recruit him.",
+      CompletionText = "Suitable. I will join your crew, and your hull will start recovering itself more reliably.",
+      Steps =
+      [
+        new QuestStepDefinition
+        {
+          Label = "Collect 200 Wood",
+          Metric = QuestMetricKind.ItemsCollected,
+          ItemType = nameof(InventoryItemType.Wood),
+          RequiredValue = 200,
+        },
+        new QuestStepDefinition
+        {
+          Label = "Collect 50 Tea",
+          Metric = QuestMetricKind.ItemsCollected,
+          ItemType = nameof(InventoryItemType.Tea),
+          RequiredValue = 50,
+        },
+        new QuestStepDefinition
+        {
+          Label = "Talk to Harlan Bentbeam",
+          Metric = QuestMetricKind.TalkedToNpc,
+          ItemType = "harlan-bentbeam",
+          RequiredValue = 1,
+        },
+      ],
+    },
     CreateHireQuest(
       "hire_merrick_ash",
       "merrick-ash",
