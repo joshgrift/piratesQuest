@@ -26,6 +26,7 @@ RUN npm run build
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS api-build
 WORKDIR /src
 COPY api/ ./api/
+COPY wiki/ ./wiki/
 RUN dotnet publish api --configuration Release --output /app/publish
 
 # Stage 5: Runtime image
