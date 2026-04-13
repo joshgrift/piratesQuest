@@ -42,6 +42,7 @@ export interface QuestHudState {
   active: QuestSummary | null;
   all: QuestSummary[];
   completedIds: string[];
+  recentlyCompletedIds: string[];
   unlockedFeatures: string[];
 }
 
@@ -54,15 +55,20 @@ export interface QuestSummary {
   giverPortName: string;
   revealGiverInQuestLog: boolean;
   canAcceptFromQuestLog: boolean;
+  canCancel: boolean;
+  offerText?: string;
+  acceptedText?: string;
   description: string;
   completionText: string;
-  isReadyToTurnIn: boolean;
+  rewardCrewNpcId?: string;
   unlocks: string[];
   steps: QuestStepProgress[];
 }
 
 export interface QuestStepProgress {
   label: string;
+  preStepPopupText?: string | null;
+  postStepPopupText?: string | null;
   currentValue: number;
   requiredValue: number;
   isComplete: boolean;
@@ -82,6 +88,7 @@ export interface RepairCosts {
 
 /** The player's vault snapshot pushed from Godot. */
 export interface VaultState {
+  portId: string;
   portName: string;
   level: number;
   items: Record<string, number>;
@@ -112,6 +119,9 @@ export interface TavernCharacter {
   /** Filename in /images/characters/ */
   portrait: string;
   hireable: boolean;
+  talkPhrases: string[];
+  hireText?: string;
+  fireText?: string;
   statChanges: StatChange[];
 }
 
@@ -174,6 +184,7 @@ export type IpcMessage =
   | { action: "fire_character"; characterId: string }
   | { action: "talk_to_npc"; characterId: string }
   | { action: "accept_quest"; questId: string; characterId: string }
+  | { action: "cancel_quest" }
   | { action: "complete_quest"; questId?: string }
   | { action: "uncomplete_quest"; questId: string }
   | { action: "set_active_quest"; questId: string }
@@ -185,7 +196,7 @@ export type IpcMessage =
   | { action: "vault_deposit"; items: { type: string; quantity: number }[] }
   | { action: "vault_withdraw"; items: { type: string; quantity: number }[] }
   | { action: "set_ship_tier"; tier: number }
-  | { action: "set_vault"; portName: string; level: number }
+  | { action: "set_vault"; portId: string; level: number }
   | { action: "delete_vault" };
 
 // ── Window augmentation for godot_wry bridge ───────────────────────

@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://c16fk32icemlf"
+path="res://.godot/imported/UI_Select_4.wav-e1b988b4bff8c1e2939740d581728d66.sample"
+
+[deps]
+
+source_file="res://art/sounds/card game sfx pack by olex mazur/UI/UI_Select_4.wav"
+dest_files=["res://.godot/imported/UI_Select_4.wav-e1b988b4bff8c1e2939740d581728d66.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

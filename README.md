@@ -61,6 +61,28 @@ All scripts are in the repo root and run from there.
 | `manage.sh` | Admin CLI for the REST API. Manage users, game servers, roles, and game version. Requires `PQ_API_URL` and either `PQ_TOKEN` or a login. |
 | `admin/` | React/TypeScript admin panel that replaces most `manage.sh` usage. Build output is `api/wwwroot/admin/` and is served by the API at `/admin/`. |
 
+## Wiki Editing
+
+The in-game help guide now lives in the repo-root `wiki/` folder and is served by the API at `/wiki`.
+
+When a human or agent edits the wiki:
+
+- Treat `wiki/` as the canonical home for player-facing help content.
+- Prefer updating the relevant page in `wiki/` instead of adding long gameplay prose elsewhere.
+- Keep each page small, beginner-friendly, and focused on one topic.
+- Use the existing frontmatter fields on every page: `title`, `summary`, `section`, `order`, `template`, and `showToc`.
+- Keep `wiki/navigation.json` in sync when you add, rename, reorder, or remove pages.
+- Link between pages with normal Markdown links like `./trading.md`. The API rewrites those to `/wiki/...`.
+- If mechanics change, update the matching wiki page in the same change so the help guide stays accurate.
+- Use `GAMEPLAY.md` as a compact design overview, not as the place to preserve old tutorial dialogue or full wiki copy.
+
+Suggested workflow:
+
+1. Read the existing wiki page for the system you are changing.
+2. Update that page and `wiki/navigation.json` if needed.
+3. If the change affects high-level design, trim or refresh `GAMEPLAY.md` so it stays short and current.
+4. Build the API if you changed wiki-serving code, or at least verify the Markdown files remain valid and well-linked if the change is docs-only.
+
 ## Releasing
 - Update Version in Project Settings
 - Run `./build-game.sh`
@@ -125,6 +147,14 @@ npm run build
 
 The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`.
 
+## Importing Terrain
+- Open the blender terrain.blend file
+  - Terrain was created from this tutorial: https://www.youtube.com/watch?v=D9lBhr5gq2s
+  - add -col to the object if you want collision enabled
+- Edit terrain
+- Export .glb file in /godot/art
+- Go into Godot file browser, right click and select "reimport"
+
 ## Third Party
 - [GoDot](https://godotengine.org/)
 - [godot_wry](https://github.com/doceazedo/godot_wry) (native WebView for Godot)
@@ -134,73 +164,63 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 - Sounds
   - [TomMusic](https://tommusic.itch.io/)
   - [JCSounds](https://jcsounds.itch.io/piratesfxvol1)
+  - [olexmazur](https://olexmazur.itch.io/fantasy-card-game)
+  - [cyrex-studios](https://cyrex-studios.itch.io/universal-ui-soundpack)
+  - [psionicgames](https://psionicgames.itch.io/my-game-sound-fx)
+  - [hzsmith](https://hzsmith.itch.io/free-sfx-pack-vol-4)
 - Icons
   - [Game-icons.net](https://game-icons.net/tags/pirate.html)
+- Shaders
+  - [Synty Drop in Shader](https://godotshaders.com/shader/synty-core-drop-in-water-shader/)
 
 
 ## ROADMAP
 ### Alpha 8 - Cleanup & Map
-- [ ] Map?
-- [ ] Polish and Stability
-- [ ] New Terrain
-- [ ] Bugs
-  - [ ] "Ride side of your screen" - from scarlett
-- [ ] Windows UI not loading
-- [ ] Make money sound played everywhere
-- [ ] Quest UI
-  - [ ] Make it more obvious who to talk to get the quest
-  - [ ] You shouldn't see the details of a quest until you accept the quest
-  - [ ] More obvious when you complete the quest
-  - [ ] Sometimes the UI doesn't show up when you complete the quest
-  - [ ] You should be able to cancel quests
-  - [ ] Make it clear in the UI you can only have on active quest
-  - [ ] Soft lock the combat quest (sometimes the quests have requirements)
-- [ ] Tutorial show you how to move your UI
-- [ ] Flexible turn Speed when slow or fast
-- [ ] Quest UI should be easier to hide? (dismiss button)
-- [ ] Too Tedius to make someone join your crew
-- [ ] Show who is online in leaderboard
-- [ ] Hitting rocks is glitchy
-- [ ] Tea icon is smaller then fish icon when collecting
-- [ ] Can't arbitrage any resources
-- [ ] Would it be nice if camera turned with the ship?
-- [ ] "Can’t buy in port, only sell" - should make it more clear what's going on
-- [ ] Educate the player on safe zone, or the cannonball shot shouldn't do damage
-- [ ] Pin Recipe or something?
-- [ ] Red port circles (and yellow resource circles) sometimes disappear, or take a while to appear
-- [ ] Lock Characters behind quests
-- [ ] Sell buttons are backwards
-
-### Alpha 9 - AI Update
+- [x] New Terrain
+- [x] Water Improvements
+- [x] Fixed Quest Interaction
+  - [x] Linear Quest Line
+  - [x] No soft locks
+  - [x] Better descriptions and explanations
+  - [x] Can complete quests without returning to port
+  - [x] You should be able to cancel quests (that aren't auto accepted)
+- [x] Simplified character interaction, easy to get quest
+- [x] Added more information to tutorial
+- [x] Added Wiki
+  - [x] Menu button to access wiki
+- [x] Cannonballs bounce of ships in safe zones
+- [x] Money sound no longer played everywhere
+- [x] Lock Characters behind quests
+- [x] Added boueys to Interaction Points
+- [x] Added Map (Tab)
+- [ ] Fixed Windows UI not loading
 - [ ] AI ships
+  - [ ] Fix shooting
+  - [ ] Spawning
+- [x] Rebalanced trading, ports have specialties and it's based on map geography
+- [x] Add another character & better space out characters
+- [x] Player should spawn in safe areas
+- [x] Deleted Trophies
 
-### Alpha 10 - World Update
-- [ ] Proper terrain with awesome islands and a large Island
-  - [ ] https://www.youtube.com/watch?v=D9lBhr5gq2s
-  - [ ] https://em-games-dev.itch.io/godot-low-poly-island-terrain-generator
-  - [ ] https://brokenvector.itch.io/low-poly-rock-pack
-  - [ ] https://www.youtube.com/watch?v=xeAES3sc3ck
-- [ ] water?
-  - [ ] https://godotshaders.com/shader/synty-core-drop-in-water-shader/
-- [ ] More characters, Quests, and a bunch of content
+- [x] UI Cleanup
+  - [x] Sell buttons are backwards
+  - [x] Merged Crew and ship tabs
+  - [x] Cleaned up Quest Interface
+  - [x] Clean up character cards
+  - [x] Make it clear in the UI you can only have on active quest
+  - [x] early quests, we should skip the accepted text
+  - [x] clean up character toast
 
 ### Planned
-- [ ] Better Island mesh
-   - [ ] Better island cannonball collision
-- [ ] Fix water.
 - [ ] In game map
 - [ ] Game freezes on first explosion animation
-- [ ] Jitter when hitting a rock! 
 - [ ] EU Servers
-- [ ] Stop users from going off map
 - [ ] Serve HUD from Local package instead of from web
+- [ ] Would it be nice if camera turned with the ship?
+- [ ] Flexible turn Speed when slow or fast
 
 ### Suggestions
-- [ ] Close port menu early
 - [ ] Multiple Cannonball types?
-- [ ] In Combat Timer
-  - [ ] Can't heal if you're in combat
-  - [ ] When in port, the timer pauses
 - [ ] Proximity voice chat
 - [ ] Mini games
   - [ ] Capture the flag
@@ -209,12 +229,9 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
   - [ ] Mermaid summoning
   - [ ] Bow Cannon (weak)
   - [ ] Grenade Shot
-- [ ] Suggestion: Slow turn speed when going fast
 - [ ] Player Economy
-- [ ] Remove Trophies
 - [ ] Burry items instead of vault, can check the spot for a chance to find the treasure
 - [ ] Do think there should be some sort of defense move if possible. Don't know what it could be but would be helpful.
-- [ ] In game wiki
 - [ ] Easier to see which cannon is space and Shift
 - [ ] Event driven bonuses (increase in fishing here)
 - [ ] Cracken
@@ -228,4 +245,3 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
    - [ ] affecting sailing speed based on corresponding wind and ship direction,
 - [ ] UI to show you where a port is and directions 
 - [ ] Shooting direction is still frustrating
-- [ ] See how much items cost while you are sailing?

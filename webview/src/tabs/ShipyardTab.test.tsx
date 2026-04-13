@@ -260,7 +260,10 @@ describe("ShipyardTab", () => {
           ownedComponents: [makeOwnedComponent({ name: "Sail", isEquipped: true })],
         },
       });
-      expect(screen.getByText("+3")).toBeInTheDocument();
+      const speedRow = screen.getByText("Speed").closest(".ship-stat-list-row");
+      expect(speedRow).not.toBeNull();
+      expect(speedRow).toHaveTextContent("Includes Components +3");
+      expect(speedRow).toHaveTextContent(/2\s*\+\s*3\s*=\s*5/);
     });
 
     it("shows multiplicative bonuses as percentage", () => {
@@ -276,7 +279,15 @@ describe("ShipyardTab", () => {
           ownedComponents: [makeOwnedComponent({ name: "Boost", isEquipped: true })],
         },
       });
-      expect(screen.getByText("+50%")).toBeInTheDocument();
+      const speedRow = screen.getByText("Speed").closest(".ship-stat-list-row");
+      expect(speedRow).not.toBeNull();
+      expect(speedRow).toHaveTextContent("Includes Components +50%");
+      expect(speedRow).toHaveTextContent(/6\.67\s*x\s*1\.5\s*=\s*10/);
+    });
+
+    it("hides the impact helper when a stat has no bonuses", () => {
+      renderShipyard({ state: { stats: { Speed: 12 } } });
+      expect(screen.queryByText(/No active crew or component bonuses/i)).not.toBeInTheDocument();
     });
   });
 

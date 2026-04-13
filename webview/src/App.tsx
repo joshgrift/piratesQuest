@@ -1,48 +1,95 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import "./App.css";
 import type { PortState } from "./types";
 import { sendIpc } from "./utils/ipc";
 import { useInputCapture } from "./hooks/useInputCapture";
 import { BASE } from "./utils/helpers";
-import { MarketTab } from "./tabs/MarketTab";
-import { ShipyardTab } from "./tabs/ShipyardTab";
-import { VaultTab } from "./tabs/VaultTab";
-import { CreativeTab } from "./tabs/CreativeTab";
-import { QuestsTab } from "./tabs/QuestsTab";
-import { buildTavernConversationTree } from "./tabs/TavernTab";
-import { ShipCrewTab, buildCrewConversationTree } from "./tabs/ShipCrewTab";
-import { LeaderboardTab } from "./tabs/LeaderboardTab";
-import { StatsTab } from "./tabs/StatsTab";
-import { buildScarlettDialogue, SCARLETT_CHARACTER } from "./tabs/guideDialogue";
+import { CreativePanel } from "./tabs/CreativePanel";
+import { QuestsPanel } from "./tabs/QuestsPanel";
+import { LeaderboardPanel } from "./tabs/LeaderboardPanel";
+import { StatsPanel } from "./tabs/StatsPanel";
+import { MessageLogPanel } from "./tabs/MessageLogPanel";
+import { SCARLETT_CHARACTER_ID, getFirePrompt, getRandomTalkPhrase } from "./tabs/tavernHelpers";
 import { ShipStatusWidget } from "./components/ShipStatusWidget";
 import { QuestStatusWidget } from "./components/QuestStatusWidget";
-import { CharacterConversationOverlay } from "./components/CharacterConversationOverlay";
 import { NpcCommentToast, type NpcCommentToastData } from "./components/NpcCommentToast";
+import type { QuestSummary, TavernCharacter } from "./types";
+import { PortPanel, type PortPanelTab } from "./panels/PortPanel";
+import { ShipPanel } from "./panels/ShipPanel";
 
-type PortTab = "market" | "shipyard" | "vault" | "creative";
-type PanelMode = "ship" | "quests" | "crew" | "port" | "stats" | "leaderboard";
-type HireOutcome = "hired" | "already_hired" | "slots_full" | "not_hireable";
-type ConversationSource = "tavern" | "crew" | "guide";
+type PanelId = "ship" | "quests" | "port" | "creative" | "stats" | "leaderboard" | "log";
 
-interface ActiveConversation {
-  source: ConversationSource;
-  characterId: string;
+interface MessageLogEntry {
+  id: string;
+  portraitSrc: string;
+  portraitAlt: string;
+  name: string;
+  message: string;
+  receivedAt: number;
 }
 
 const SHIP_ICON = `${BASE}icons/flat/caravel.svg`;
 const QUESTS_ICON = `${BASE}icons/flat/tied-scroll.svg`;
-const CREW_ICON = `${BASE}icons/flat/bandana.svg`;
 const PORT_ICON = `${BASE}icons/flat/anchor.svg`;
+const CREATIVE_ICON = `${BASE}icons/flat/pirate-skull.svg`;
 const STATS_ICON = `${BASE}icons/flat/sextant.svg`;
 const LEADERBOARD_ICON = `${BASE}icons/flat/pirate-hat.svg`;
+const LOG_ICON = `${BASE}icons/flat/bandana.svg`;
+const SEA_CHART_IMAGE = `${BASE}images/map.png`;
+const MAX_MESSAGE_LOG_ENTRIES = 40;
 
-function findQuestForNpc(state: PortState, characterId: string) {
-  return state.quests.available.find((quest) => quest.giverNpcId === characterId) ?? null;
+function findQuestForNpc(state: PortState, characterId: string): QuestSummary | null {
+  return state.quests.available.find((quest) => quest.giverNpcId === characterId && !hasText(quest.rewardCrewNpcId)) ?? null;
+}
+
+function findHireQuestForNpc(state: PortState, characterId: string): QuestSummary | null {
+  return state.quests.available.find((quest) => quest.rewardCrewNpcId === characterId) ?? null;
+}
+
+function isNextQuestStepTalkToNpc(state: PortState, character: TavernCharacter): boolean {
+  const activeQuest = state.quests.active;
+  if (!activeQuest) return false;
+
+  const nextIncompleteStep = activeQuest.steps.find((step) => !step.isComplete);
+  if (!nextIncompleteStep) return false;
+
+  return nextIncompleteStep.label.trim() === `Talk to ${character.name}`;
+}
+
+function hasText(value: string | null | undefined): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isTypingInInput(): boolean {
+  const el = document.activeElement;
+  if (!(el instanceof HTMLElement)) return false;
+
+  return (
+    el.tagName === "INPUT" ||
+    el.tagName === "TEXTAREA" ||
+    el.isContentEditable
+  );
+}
+
+function buildCharacterPopup(
+  character: TavernCharacter,
+  message: string,
+  actions?: NpcCommentToastData["actions"],
+): NpcCommentToastData {
+  return {
+    id: `${character.id}-${Math.random().toString(36).slice(2, 10)}`,
+    portraitSrc: `${BASE}images/characters/${character.portrait}`,
+    portraitAlt: character.name,
+    name: character.name,
+    message,
+    actions,
+  };
 }
 
 function buildQuestCompletionComment(state: PortState, questId: string): NpcCommentToastData | null {
   const quest = state.quests.all.find((entry) => entry.id === questId);
   if (!quest) return null;
+  if (!hasText(quest.completionText)) return null;
 
   return {
     id: `quest-complete-${quest.id}`,
@@ -50,16 +97,19 @@ function buildQuestCompletionComment(state: PortState, questId: string): NpcComm
     portraitAlt: quest.giverName,
     name: quest.giverName,
     message: quest.completionText,
+    celebrate: true,
   };
 }
 
-function buildScarlettWorldJoinComment(): NpcCommentToastData {
+function buildQuestAcceptedComment(quest: QuestSummary): NpcCommentToastData | null {
+  if (!hasText(quest.acceptedText)) return null;
+
   return {
-    id: "scarlett-world-join",
-    portraitSrc: `${BASE}images/characters/${SCARLETT_CHARACTER.portrait}`,
-    portraitAlt: SCARLETT_CHARACTER.name,
-    name: SCARLETT_CHARACTER.name,
-    message: "W moves ahead, S slows ye down, and A or D steers. Tap the top-left Quests button if ye need your orders again. I've already accepted your first job: sail into any port and dock clean.",
+    id: `quest-accepted-${quest.id}`,
+    portraitSrc: `${BASE}images/characters/${quest.giverPortrait}`,
+    portraitAlt: quest.giverName,
+    name: quest.giverName,
+    message: quest.acceptedText,
   };
 }
 
@@ -67,15 +117,16 @@ export default function App() {
   useInputCapture();
 
   const [portState, setPortState] = useState<PortState | null>(null);
-  const [activePanelMode, setActivePanelMode] = useState<PanelMode | null>("ship");
-  const [activePortTab, setActivePortTab] = useState<PortTab>("market");
-  const [activeConversation, setActiveConversation] = useState<ActiveConversation | null>(null);
+  const [activePanel, setActivePanel] = useState<PanelId | null>("ship");
+  const [activePortPanelTab, setActivePortPanelTab] = useState<PortPanelTab>("market");
+  const [isMapOpen, setIsMapOpen] = useState(false);
   const [npcCommentQueue, setNpcCommentQueue] = useState<NpcCommentToastData[]>([]);
+  const [messageLogEntries, setMessageLogEntries] = useState<MessageLogEntry[]>([]);
+  const [hasUnreadMessageLog, setHasUnreadMessageLog] = useState(false);
+  const [messageLogBounceToken, setMessageLogBounceToken] = useState(0);
   const prevIsInPortRef = useRef<boolean | null>(null);
-  const prevCompletedQuestIdsRef = useRef<string[] | null>(null);
-  const prePortPanelModeRef = useRef<PanelMode | null>("ship");
-  const lastTalkedCharacterIdRef = useRef<string | null>(null);
-  const hasShownScarlettWorldIntroRef = useRef(false);
+  const prevActiveQuestIdRef = useRef<string | null>(null);
+  const previousPanelBeforeDockRef = useRef<PanelId | null>("ship");
 
   const hasUnlockedFeature = (feature: string): boolean =>
     portState?.quests.unlockedFeatures.includes(feature) ?? false;
@@ -105,34 +156,58 @@ export default function App() {
     const prevIsInPort = prevIsInPortRef.current;
     prevIsInPortRef.current = isInPort;
 
-    // Auto-open Port mode only on sea -> port transition.
+    // Auto-open the Port panel only on sea -> port transition.
     if (isInPort && prevIsInPort !== true) {
-      prePortPanelModeRef.current = activePanelMode;
-      setActivePanelMode("port");
+      previousPanelBeforeDockRef.current = activePanel;
+      setActivePanel("port");
       return;
     }
 
-    // Leaving port restores the panel mode we had before docking
+    // Leaving port restores the panel we had before docking
     // (including hidden state if the panel was collapsed).
     if (!isInPort && prevIsInPort === true) {
-      setActivePanelMode(prePortPanelModeRef.current);
+      setActivePanel(previousPanelBeforeDockRef.current);
     }
-  }, [portState?.isInPort, activePanelMode]);
+  }, [portState?.isInPort, activePanel]);
+
+  const dismissCurrentPopup = useCallback(() => {
+    if (npcCommentQueue.length === 0) return;
+    if (activePanel !== "log") {
+      setHasUnreadMessageLog(true);
+      setMessageLogBounceToken((current) => current + 1);
+    }
+    setNpcCommentQueue((current) => current.slice(1));
+  }, [activePanel, npcCommentQueue.length]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key !== "Escape") return;
-      if (e.repeat) return;
+      if (isTypingInInput()) return;
 
-      if (activeConversation) {
+      if (e.key === "Tab") {
         e.preventDefault();
-        setActiveConversation(null);
+        if (e.repeat) return;
+        setIsMapOpen((current) => !current);
         return;
       }
 
-      if (activePanelMode !== null) {
+      if (e.key !== "Escape") return;
+      if (e.repeat) return;
+
+      if (isMapOpen) {
         e.preventDefault();
-        setActivePanelMode(null);
+        setIsMapOpen(false);
+        return;
+      }
+
+      if (npcCommentQueue.length > 0) {
+        e.preventDefault();
+        dismissCurrentPopup();
+        return;
+      }
+
+      if (activePanel !== null) {
+        e.preventDefault();
+        setActivePanel(null);
       }
     }
 
@@ -140,253 +215,256 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [activePanelMode, activeConversation]);
-
-  const handleHireCharacter = (characterId: string): HireOutcome => {
-    if (!portState) return "not_hireable";
-
-    const character = portState?.tavern.characters.find((c) => c.id === characterId);
-    if (!character?.hireable) return "not_hireable";
-
-    const alreadyHired = portState.crew.hiredCharacterIds.includes(characterId);
-    if (alreadyHired) return "already_hired";
-
-    if (portState.crew.hiredCharacterIds.length >= portState.crew.crewSlots) {
-      return "slots_full";
-    }
-
-    sendIpc({ action: "hire_character", characterId });
-    return "hired";
-  };
+  }, [activePanel, dismissCurrentPopup, isMapOpen, npcCommentQueue.length]);
 
   const handleFireCharacter = (characterId: string) => {
     if (!portState) return;
+    if (characterId === SCARLETT_CHARACTER_ID) return;
     if (!portState?.crew.hiredCharacterIds.includes(characterId)) return;
     sendIpc({ action: "fire_character", characterId });
   };
 
-  useEffect(() => {
-    if (!activeConversation || !portState) return;
+  const enqueuePopup = (popup: NpcCommentToastData) => {
+    setNpcCommentQueue((current) => [...current, popup]);
+    setMessageLogEntries((current) => [
+      {
+        id: popup.id,
+        portraitSrc: popup.portraitSrc,
+        portraitAlt: popup.portraitAlt,
+        name: popup.name,
+        message: popup.message,
+        receivedAt: Date.now(),
+      },
+      ...current,
+    ].slice(0, MAX_MESSAGE_LOG_ENTRIES));
+  };
 
-    if (activeConversation.source === "guide") return;
+  const enqueuePopups = (popups: NpcCommentToastData[]) => {
+    if (popups.length === 0) return;
 
-    if (activeConversation.source === "tavern") {
-      if (!portState.isInPort) {
-        setActiveConversation(null);
-        return;
-      }
+    setNpcCommentQueue((current) => [...current, ...popups]);
+    setMessageLogEntries((current) => [
+      ...popups.map((popup) => ({
+        id: popup.id,
+        portraitSrc: popup.portraitSrc,
+        portraitAlt: popup.portraitAlt,
+        name: popup.name,
+        message: popup.message,
+        receivedAt: Date.now(),
+      })),
+      ...current,
+    ].slice(0, MAX_MESSAGE_LOG_ENTRIES));
+  };
 
-      const existsAtPort = portState.tavern.characters.some(
-        (c) => c.id === activeConversation.characterId,
-      );
-      if (!existsAtPort) setActiveConversation(null);
+  const findCharacterById = (characterId: string): TavernCharacter | null => {
+    if (!portState) return null;
+    return portState.tavern.characters.find((character) => character.id === characterId)
+      ?? portState.crew.characters.find((character) => character.id === characterId)
+      ?? null;
+  };
+
+  const recordNpcInteraction = (characterId: string) => {
+    sendIpc({ action: "talk_to_npc", characterId });
+  };
+
+  const openTalkPopup = (characterId: string) => {
+    if (!portState) return;
+
+    const character = findCharacterById(characterId);
+    if (!character) return;
+
+    recordNpcInteraction(characterId);
+
+    // If talking to this NPC is the very next quest step, let the quest
+    // resolve immediately instead of covering it with ambient dialogue.
+    if (isNextQuestStepTalkToNpc(portState, character)) {
       return;
     }
 
-    const crewIds = new Set(portState.crew.hiredCharacterIds);
-    const existsInCrew = portState.crew.characters.some((c) => c.id === activeConversation.characterId);
+    enqueuePopup(buildCharacterPopup(character, getRandomTalkPhrase(character)));
+  };
 
-    if (!existsInCrew || !crewIds.has(activeConversation.characterId)) {
-      setActiveConversation(null);
-    }
-  }, [activeConversation, portState]);
+  const openQuestPopup = (characterId: string) => {
+    if (!portState) return;
+    const character = findCharacterById(characterId);
+    const quest = character ? findQuestForNpc(portState, character.id) : null;
+    if (!character || !quest) return;
 
-  useEffect(() => {
-    if (!activeConversation) {
-      lastTalkedCharacterIdRef.current = null;
+    if (!hasText(quest.offerText)) return;
+
+    recordNpcInteraction(characterId);
+    enqueuePopup(buildCharacterPopup(
+      character,
+      quest.offerText,
+      [
+        {
+          label: "Accept Quest",
+          tone: "primary",
+          onSelect: () => {
+            sendIpc({
+              action: "accept_quest",
+              questId: quest.id,
+              characterId: character.id,
+            });
+          },
+        },
+        {
+          label: "Decline",
+          tone: "secondary",
+        },
+      ],
+    ));
+  };
+
+  const openHirePopup = (characterId: string) => {
+    if (!portState) return;
+
+    const character = findCharacterById(characterId);
+    if (!character) return;
+
+    const hireQuest = findHireQuestForNpc(portState, character.id);
+    const crewIsFull = portState.crew.hiredCharacterIds.length >= portState.crew.crewSlots;
+    const hasDifferentActiveQuest = portState.quests.active !== null;
+
+    if (!crewIsFull && !hasDifferentActiveQuest && hireQuest && hasText(hireQuest.offerText)) {
+      recordNpcInteraction(characterId);
+      enqueuePopup(buildCharacterPopup(
+        character,
+        hireQuest.offerText,
+        [
+          {
+            label: "Accept Quest",
+            tone: "primary",
+            onSelect: () => {
+              sendIpc({
+                action: "accept_quest",
+                questId: hireQuest.id,
+                characterId: character.id,
+              });
+            },
+          },
+          {
+            label: "Decline",
+            tone: "secondary",
+          },
+        ],
+      ));
       return;
     }
 
-    if (lastTalkedCharacterIdRef.current === activeConversation.characterId) return;
-    lastTalkedCharacterIdRef.current = activeConversation.characterId;
-    sendIpc({ action: "talk_to_npc", characterId: activeConversation.characterId });
-  }, [activeConversation]);
+    const unavailableMessage = crewIsFull
+      ? "Looks like your berths are full. Free up a crew slot before asking me aboard."
+      : hasDifferentActiveQuest
+        ? "Finish your current quest first, then come back if you still want to prove yourself to me."
+        : `${character.name} is not ready to join yet.`;
+
+    enqueuePopup(buildCharacterPopup(character, unavailableMessage));
+  };
+
+  const openFirePopup = (characterId: string) => {
+    const character = findCharacterById(characterId);
+    if (!character) return;
+
+    recordNpcInteraction(characterId);
+    enqueuePopup(buildCharacterPopup(
+      character,
+      getFirePrompt(character),
+      [
+        {
+          label: "Fire",
+          tone: "danger",
+          onSelect: () => {
+            handleFireCharacter(character.id);
+          },
+        },
+        {
+          label: "Never mind",
+          tone: "secondary",
+        },
+      ],
+    ));
+  };
 
   useEffect(() => {
-    const completedIds = portState?.quests.completedIds ?? [];
-    const previousIds = prevCompletedQuestIdsRef.current;
-    prevCompletedQuestIdsRef.current = completedIds;
+    if (!portState) return;
 
-    if (!portState || previousIds === null) return;
-
-    const previousIdSet = new Set(previousIds);
-    const newComments = completedIds
-      .filter((questId) => !previousIdSet.has(questId))
+    const newComments = (portState.quests.recentlyCompletedIds ?? [])
       .map((questId) => buildQuestCompletionComment(portState, questId))
       .filter((comment): comment is NpcCommentToastData => comment !== null);
 
     if (newComments.length === 0) return;
 
-    setNpcCommentQueue((current) => [...current, ...newComments]);
+    enqueuePopups(newComments);
   }, [portState]);
 
   useEffect(() => {
-    if (!portState) return;
-    if (hasShownScarlettWorldIntroRef.current) return;
+    const activeQuest = portState?.quests.active ?? null;
+    const previousActiveQuestId = prevActiveQuestIdRef.current;
+    prevActiveQuestIdRef.current = activeQuest?.id ?? null;
 
-    const hasFinishedStarterQuest = portState.quests.completedIds.includes("scarlett_sail_to_port");
-    if (hasFinishedStarterQuest) return;
+    if (!activeQuest) return;
+    if (activeQuest.id === previousActiveQuestId) return;
 
-    const starterQuest = portState.quests.available.find((quest) => quest.id === "scarlett_sail_to_port");
-    const starterQuestAlreadyActive = portState.quests.active?.id === "scarlett_sail_to_port";
+    const acceptedComment = buildQuestAcceptedComment(activeQuest);
+    if (!acceptedComment) return;
 
-    if (!starterQuest && !starterQuestAlreadyActive) return;
-
-    hasShownScarlettWorldIntroRef.current = true;
-
-    // Accept the starter quest immediately so the quest tracker matches
-    // Scarlett's onboarding toast from the first moment the player sees it.
-    if (starterQuest) {
-      sendIpc({
-        action: "accept_quest",
-        questId: starterQuest.id,
-        characterId: SCARLETT_CHARACTER.id,
-      });
-    }
-
-    setNpcCommentQueue((current) => [...current, buildScarlettWorldJoinComment()]);
+    enqueuePopup(acceptedComment);
   }, [portState]);
 
-  const openConversation = (source: ConversationSource, characterId: string) => {
-    setActiveConversation((prev) => {
-      if (prev?.source === source && prev.characterId === characterId) return prev;
-      return { source, characterId };
-    });
-  };
-
-  const activeConversationView = useMemo(() => {
-    if (!portState || !activeConversation) return null;
-
-    if (activeConversation.source === "guide") {
-      const scarlettQuest = findQuestForNpc(portState, SCARLETT_CHARACTER.id);
-
-      return {
-        speakerName: SCARLETT_CHARACTER.name,
-        speakerPortraitSrc: `${BASE}images/characters/${SCARLETT_CHARACTER.portrait}`,
-        speakerPortraitAlt: SCARLETT_CHARACTER.name,
-        tree: buildScarlettDialogue(!!scarlettQuest),
-        instantNodeIds: ["root"],
-        onAction: (actionId: string): string | void => {
-          if (actionId !== "accept_scarlett_quest") return;
-          if (!scarlettQuest) return "quests_already_started";
-
-          sendIpc({
-            action: "accept_quest",
-            questId: scarlettQuest.id,
-            characterId: SCARLETT_CHARACTER.id,
-          });
-          return "quest_accept_success";
-        },
-      };
+  useEffect(() => {
+    if (activePanel === "log") {
+      setHasUnreadMessageLog(false);
     }
+  }, [activePanel]);
 
-    if (activeConversation.source === "tavern") {
-      const character = portState.tavern.characters.find((c) => c.id === activeConversation.characterId);
-      if (!character) return null;
-
-      const availableQuest = findQuestForNpc(portState, character.id);
-      const tree = buildTavernConversationTree(character, availableQuest);
-
-      return {
-        speakerName: character.name,
-        speakerPortraitSrc: `${BASE}images/characters/${character.portrait}`,
-        speakerPortraitAlt: character.name,
-        tree,
-        instantNodeIds: [],
-        onAction: (actionId: string): string | void => {
-          if (actionId === "probe_hire") {
-            if (portState.crew.hiredCharacterIds.includes(character.id)) return "already_hired";
-            if (character.hireable) return "hire_offer";
-            return "not_hireable";
-          }
-
-          if (actionId === "hire") {
-            const outcome = handleHireCharacter(character.id);
-
-            switch (outcome) {
-              case "hired":
-                return "hire_success";
-              case "already_hired":
-                return "already_hired";
-              case "slots_full":
-                return "hire_blocked";
-              default:
-                return "root";
-            }
-          }
-
-          if (actionId === "accept_quest" && availableQuest) {
-            sendIpc({
-              action: "accept_quest",
-              questId: availableQuest.id,
-              characterId: character.id,
-            });
-            return "quest_accept_success";
-          }
-
-          return;
-        },
-      };
-    }
-
-    const hiredIds = new Set(portState.crew.hiredCharacterIds);
-    const character = portState.crew.characters.find(
-      (c) => c.id === activeConversation.characterId && hiredIds.has(c.id),
-    );
-    if (!character) return null;
-
-    return {
-      speakerName: character.name,
-      speakerPortraitSrc: `${BASE}images/characters/${character.portrait}`,
-      speakerPortraitAlt: character.name,
-      tree: buildCrewConversationTree(character),
-      instantNodeIds: [],
-      onAction: (actionId: string): string | void => {
-        if (actionId !== "fire") return;
-        handleFireCharacter(character.id);
-        return "fire_success";
-      },
-    };
-  }, [portState, activeConversation]);
-
-  const panelClass = ["port-panel", activePanelMode === null ? "hidden" : ""].filter(Boolean).join(" ");
+  const panelClass = ["port-panel", activePanel === null ? "hidden" : ""].filter(Boolean).join(" ");
   const isInPort = !!portState?.isInPort;
-  const panelTitle = activePanelMode === "port"
+  const panelTitle = activePanel === "port"
     ? (portState?.portName ?? "Port")
-    : activePanelMode === "quests"
+    : activePanel === "creative"
+      ? "Creative"
+    : activePanel === "quests"
       ? "quests"
-      : activePanelMode === "crew"
-        ? "crew"
-    : activePanelMode === "stats"
+    : activePanel === "stats"
       ? "stats"
-    : activePanelMode === "leaderboard"
+    : activePanel === "log"
+      ? "Ship Log"
+    : activePanel === "leaderboard"
       ? "Hall of Captains"
       : "ship";
 
-  const handleModeSelect = (mode: PanelMode) => {
-    if (mode === "port" && !isInPort) return;
-    setActivePanelMode((prev) => (prev === mode ? null : mode));
+  const handlePanelSelect = (panel: PanelId) => {
+    if (panel === "port" && !isInPort) return;
+    setActivePanel((prev) => (prev === panel ? null : panel));
   };
 
   return (
     <>
+      <aside
+        className={`sea-chart ${isMapOpen ? "open" : ""}`}
+        aria-hidden={!isMapOpen}
+      >
+        <div className="sea-chart__panel">
+          <img className="sea-chart__image" src={SEA_CHART_IMAGE} alt="World map of the sea" />
+        </div>
+      </aside>
+
       <QuestStatusWidget
         state={portState}
-        panelOpen={activePanelMode !== null}
+        panelOpen={activePanel !== null}
         onOpenQuests={() => {
-          setActivePanelMode("quests");
-          setActiveConversation(null);
+          setActivePanel("quests");
         }}
       />
-      <ShipStatusWidget state={portState} panelOpen={activePanelMode !== null} />
+      <ShipStatusWidget state={portState} panelOpen={activePanel !== null} />
 
-      <div className={`mode-rail ${activePanelMode === null ? "collapsed" : ""}`} role="tablist" aria-label="Panel mode">
+      <div className={`mode-rail ${activePanel === null ? "collapsed" : ""}`} role="tablist" aria-label="Panel mode">
         <button
-          className={`rail-mode-btn ${activePanelMode === "port" ? "active" : ""}`}
-          onClick={() => handleModeSelect("port")}
+          className={`rail-mode-btn ${activePanel === "port" ? "active" : ""}`}
+          onClick={() => handlePanelSelect("port")}
           type="button"
           role="tab"
-          aria-selected={activePanelMode === "port"}
+          aria-selected={activePanel === "port"}
           aria-label="Port mode"
           title={isInPort ? "Port" : "Port mode is only available while docked."}
           disabled={!isInPort}
@@ -394,55 +472,69 @@ export default function App() {
           <img className="rail-mode-icon" src={PORT_ICON} alt="" />
         </button>
         <button
-          className={`rail-mode-btn ${activePanelMode === "ship" ? "active" : ""}`}
-          onClick={() => handleModeSelect("ship")}
+          className={`rail-mode-btn ${activePanel === "ship" ? "active" : ""}`}
+          onClick={() => handlePanelSelect("ship")}
           type="button"
           role="tab"
-          aria-selected={activePanelMode === "ship"}
+          aria-selected={activePanel === "ship"}
           aria-label="Ship mode"
           title="Ship"
         >
           <img className="rail-mode-icon" src={SHIP_ICON} alt="" />
         </button>
         <button
-          className={`rail-mode-btn ${activePanelMode === "quests" ? "active" : ""}`}
-          onClick={() => handleModeSelect("quests")}
+          className={`rail-mode-btn ${activePanel === "quests" ? "active" : ""}`}
+          onClick={() => handlePanelSelect("quests")}
           type="button"
           role="tab"
-          aria-selected={activePanelMode === "quests"}
+          aria-selected={activePanel === "quests"}
           aria-label="Quests mode"
           title="Quests"
         >
           <img className="rail-mode-icon" src={QUESTS_ICON} alt="" />
         </button>
         <button
-          className={`rail-mode-btn ${activePanelMode === "crew" ? "active" : ""}`}
-          onClick={() => handleModeSelect("crew")}
+          key={`ship-log-${messageLogBounceToken}`}
+          className={`rail-mode-btn ${activePanel === "log" ? "active" : ""} ${hasUnreadMessageLog ? "rail-mode-btn--bounce" : ""}`}
+          onClick={() => handlePanelSelect("log")}
           type="button"
           role="tab"
-          aria-selected={activePanelMode === "crew"}
-          aria-label="Crew mode"
-          title="Crew"
+          aria-selected={activePanel === "log"}
+          aria-label="Ship log mode"
+          title="Ship Log"
         >
-          <img className="rail-mode-icon" src={CREW_ICON} alt="" />
+          <img className="rail-mode-icon" src={LOG_ICON} alt="" />
         </button>
+        {portState?.isCreative && (
+          <button
+            className={`rail-mode-btn ${activePanel === "creative" ? "active" : ""}`}
+            onClick={() => handlePanelSelect("creative")}
+            type="button"
+            role="tab"
+            aria-selected={activePanel === "creative"}
+            aria-label="Creative mode"
+            title="Creative"
+          >
+            <img className="rail-mode-icon" src={CREATIVE_ICON} alt="" />
+          </button>
+        )}
         <button
-          className={`rail-mode-btn ${activePanelMode === "stats" ? "active" : ""}`}
-          onClick={() => handleModeSelect("stats")}
+          className={`rail-mode-btn ${activePanel === "stats" ? "active" : ""}`}
+          onClick={() => handlePanelSelect("stats")}
           type="button"
           role="tab"
-          aria-selected={activePanelMode === "stats"}
+          aria-selected={activePanel === "stats"}
           aria-label="Stats mode"
           title="Stats"
         >
           <img className="rail-mode-icon" src={STATS_ICON} alt="" />
         </button>
         <button
-          className={`rail-mode-btn ${activePanelMode === "leaderboard" ? "active" : ""}`}
-          onClick={() => handleModeSelect("leaderboard")}
+          className={`rail-mode-btn ${activePanel === "leaderboard" ? "active" : ""}`}
+          onClick={() => handlePanelSelect("leaderboard")}
           type="button"
           role="tab"
-          aria-selected={activePanelMode === "leaderboard"}
+          aria-selected={activePanel === "leaderboard"}
           aria-label="Leaderboard mode"
           title="Leaderboard"
         >
@@ -455,87 +547,41 @@ export default function App() {
           <div className="port-name">{panelTitle}</div>
         </div>
 
-        {activePanelMode === "port" && (
-          <div className="tab-bar">
-            <button
-              className={`tab-btn ${activePortTab === "market" ? "active" : ""}`}
-              onClick={() => setActivePortTab("market")}
-            >
-              Market
-            </button>
-            <button
-              className={`tab-btn ${activePortTab === "shipyard" ? "active" : ""}`}
-              onClick={() => setActivePortTab("shipyard")}
-            >
-              Shipyard
-            </button>
-            {hasUnlockedFeature("Vault") && (
-              <button
-                className={`tab-btn vault-tab-btn ${activePortTab === "vault" ? "active" : ""}`}
-                onClick={() => setActivePortTab("vault")}
-              >
-                Vault
-              </button>
-            )}
-            {portState?.isCreative && portState?.isInPort && (
-              <button
-                className={`tab-btn creative-tab-btn ${activePortTab === "creative" ? "active" : ""}`}
-                onClick={() => setActivePortTab("creative")}
-              >
-                Creative
-              </button>
-            )}
-          </div>
-        )}
-
         {portState && (
-          <div className="tab-content">
-            {activePanelMode === "ship" ? (
-              <ShipyardTab
-                state={portState}
-                isInPort={portState.isInPort}
-                showForSale={false}
-                showShipUpgrade={false}
-              />
-            ) : activePanelMode === "quests" ? (
-              <QuestsTab state={portState} />
-            ) : activePanelMode === "crew" ? (
-              <ShipCrewTab
-                state={portState}
-                onOpenConversation={(characterId) => openConversation(
-                  characterId === SCARLETT_CHARACTER.id ? "guide" : "crew",
-                  characterId,
-                )}
-                activeConversationCharacterId={
-                  activeConversation?.source === "crew" || activeConversation?.source === "guide"
-                    ? activeConversation.characterId
-                    : null
-                }
-              />
-            ) : activePanelMode === "stats" ? (
-              <StatsTab state={portState} />
-            ) : activePanelMode === "leaderboard" ? (
-              <LeaderboardTab entries={portState.leaderboard} playerName={portState.playerName} />
-            ) : activePortTab === "market" ? (
-              <MarketTab
-                state={portState}
-                onOpenConversation={(characterId) => openConversation("tavern", characterId)}
-                activeConversationCharacterId={activeConversation?.source === "tavern" ? activeConversation.characterId : null}
-              />
-            ) : activePortTab === "shipyard" ? (
-              <ShipyardTab state={portState} isInPort={portState.isInPort} />
-            ) : activePortTab === "vault" && hasUnlockedFeature("Vault") ? (
-              portState.isInPort ? (
-                <VaultTab state={portState} />
+          activePanel === "port" ? (
+            <PortPanel
+              state={portState}
+              activeTab={activePortPanelTab}
+              onSelectTab={setActivePortPanelTab}
+              hasUnlockedFeature={hasUnlockedFeature}
+              onTalkToCharacter={openTalkPopup}
+              onHireCharacter={openHirePopup}
+              onQuestForCharacter={openQuestPopup}
+            />
+          ) : (
+            <div className="tab-content">
+              {activePanel === "ship" ? (
+                <ShipPanel
+                  state={portState}
+                  onTalkToCrewmate={openTalkPopup}
+                  onFireCrewmate={openFirePopup}
+                  onQuestForCrewmate={openQuestPopup}
+                />
+              ) : activePanel === "quests" ? (
+                <QuestsPanel state={portState} />
+              ) : activePanel === "stats" ? (
+                <StatsPanel state={portState} />
+              ) : activePanel === "log" ? (
+                <MessageLogPanel entries={messageLogEntries} />
+              ) : activePanel === "leaderboard" ? (
+                <LeaderboardPanel entries={portState.leaderboard} playerName={portState.playerName} />
+              ) : activePanel === "creative" && portState.isCreative ? (
+                <CreativePanel state={portState} />
               ) : (
-                <div className="empty-state">Dock at a port to access the vault.</div>
-              )
-            ) : activePortTab === "creative" && portState.isCreative && portState.isInPort ? (
-              <CreativeTab state={portState} />
-            ) : (
-              <div className="empty-state">Port services are unavailable while at sea.</div>
-            )}
-          </div>
+                <div className="empty-state">Waiting for ship data from Godot...</div>
+              )}
+            </div>
+          )
         )}
 
         {!portState && (
@@ -545,22 +591,10 @@ export default function App() {
         )}
       </div>
 
-      {activeConversationView && (
-        <CharacterConversationOverlay
-          isOpen
-          speakerName={activeConversationView.speakerName}
-          speakerPortraitSrc={activeConversationView.speakerPortraitSrc}
-          speakerPortraitAlt={activeConversationView.speakerPortraitAlt}
-          tree={activeConversationView.tree}
-          instantNodeIds={activeConversationView.instantNodeIds}
-          onAction={activeConversationView.onAction}
-          onClose={() => setActiveConversation(null)}
-        />
-      )}
-
       <NpcCommentToast
         comment={npcCommentQueue[0] ?? null}
-        onDismiss={() => setNpcCommentQueue((current) => current.slice(1))}
+        queueCount={npcCommentQueue.length}
+        onDismiss={dismissCurrentPopup}
       />
     </>
   );

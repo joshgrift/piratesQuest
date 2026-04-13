@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://ilx2ve4ot4uq"
+path="res://.godot/imported/GP_Armor_Up_1.wav-7a26fe74a7fc59100d9dfe53ecd5f224.sample"
+
+[deps]
+
+source_file="res://art/sounds/card game sfx pack by olex mazur/Buff/GP_Armor_Up_1.wav"
+dest_files=["res://.godot/imported/GP_Armor_Up_1.wav-7a26fe74a7fc59100d9dfe53ecd5f224.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

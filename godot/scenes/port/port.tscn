@@ -5,7 +5,6 @@
 
 [node name="Port" type="Node3D" node_paths=PackedStringArray("DockingArea") groups=["ports"]]
 script = ExtResource("1_hw7r7")
-ItemsForSale = Array[Object]([])
 DockingArea = NodePath("InteractionPoint")
 
 [node name="InteractionPoint" parent="." instance=ExtResource("2_yaj5u")]

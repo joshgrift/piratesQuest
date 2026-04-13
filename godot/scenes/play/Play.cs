@@ -3,8 +3,10 @@ namespace PiratesQuest;
 using System;
 using System.Text.Json;
 using Godot;
+using PiratesQuest.AI;
 using PiratesQuest.Data;
 using System.Collections.Generic;
+using GodotDictionary = Godot.Collections.Dictionary;
 
 public partial class Play : Node3D
 {
@@ -13,19 +15,23 @@ public partial class Play : Node3D
   private const int DefaultServerPlayerMax = 8;
 
   [Export] private MultiplayerSpawner _playerSpawner;
+  [Export] private MultiplayerSpawner _aiShipSpawner;
   [Export] private MultiplayerSpawner _projectileSpawner;
   [Export] private MultiplayerSpawner _deadPlayerSpawner;
   [Export] private Node3D playerContainer;
   [Export] private FreeCam _freeCam;
   [Export] private Hud _hud;
+  [Export] private bool _debugAiShips = false;
 
   private PackedScene _playerScene = GD.Load<PackedScene>("res://scenes/player/player.tscn");
+  private PackedScene _aiShipScene = GD.Load<PackedScene>("res://scenes/ai_ship/ai_ship.tscn");
   private PackedScene _cannonBallScene = GD.Load<PackedScene>("res://scenes/cannon_ball/cannon_ball.tscn");
   private PackedScene _deadPlayerScene = GD.Load<PackedScene>("res://scenes/dead_player/dead_player.tscn");
   private readonly Dictionary<long, string> _peerUsernames = new();
   private Timer _heartbeatTimer;
   private Timer _leaderboardTimer;
   private LeaderboardEntryDto[] _latestLeaderboard = [];
+  private AiShipManager _aiShipManager;
 
   /// <summary>
   /// Handle global gameplay shortcuts.
@@ -44,6 +50,17 @@ public partial class Play : Node3D
     {
       ReturnToMenu();
       // Mark the input as handled so other nodes don't react to the same Esc press.
+      GetViewport().SetInputAsHandled();
+      return;
+    }
+
+    // K toggles Godot's built-in collision debug overlay.
+    // This is the same style of collision visualization you get from the editor's
+    // debug tools, so it's handy for checking ship and island collision in-game.
+    if (@event.IsActionPressed("toggle_collision_debug"))
+    {
+      GetTree().DebugCollisionsHint = !GetTree().DebugCollisionsHint;
+      GD.Print($"Collision debug is now {(GetTree().DebugCollisionsHint ? "ON" : "OFF")}");
       GetViewport().SetInputAsHandled();
     }
   }
@@ -65,6 +82,9 @@ public partial class Play : Node3D
     _projectileSpawner.SpawnFunction = new Callable(this, MethodName.ProjectileSpawnHandler);
     _deadPlayerSpawner.SpawnFunction = new Callable(this, MethodName.DeadPlayerSpawnHandler);
 
+    _aiShipManager = new AiShipManager();
+    _aiShipManager.Initialize(this, _aiShipScene, _aiShipSpawner, _projectileSpawner, _deadPlayerSpawner, _debugAiShips);
+
     // Start background ambient sounds
     // We use the AudioManager autoload singleton to play looping sounds
     // The "-10" volume (in decibels) makes these sounds quieter so they don't overpower gameplay
@@ -83,6 +103,7 @@ public partial class Play : Node3D
 
       StartServerHeartbeatIfNeeded();
       StartLeaderboardSyncIfNeeded();
+      _aiShipManager.StartRespawnLoop();
 
       // Activate free camera in server mode
       if (Configuration.IsDesignatedServerMode() && _freeCam != null)

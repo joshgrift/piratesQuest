@@ -19,6 +19,8 @@ export const INPUT_CONFIG = {
     // Cannons
     q: "fire_left",
     e: "fire_right",
+    // Debug helper
+    k: "toggle_collision_debug",
   } satisfies Record<string, string>,
 
   camera: {
@@ -62,5 +64,6 @@ export const INPUT_CONFIG = {
     ".conversation-thread-shell",
     ".conversation-thread-log",
     ".conversation-thread-controls",
+    ".sea-chart",
   ],
 } as const;

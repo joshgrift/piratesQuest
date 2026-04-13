@@ -41,6 +41,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   private bool _actionMoveRight;
   private bool _actionFireLeft;
   private bool _actionFireRight;
+  private bool _actionToggleCollisionDebugHeld;
 
   // Ship recoil/rocking effect when firing
   private float _recoilRoll = 0.0f;
@@ -62,15 +63,15 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   // ── Vault ────────────────────────────────────────────────────────
   // Each player can build one vault at a single port.
-  // Null VaultPortName means no vault exists yet.
+  // Null VaultPortId means no vault exists yet.
 
-  public string VaultPortName { get; set; }
+  public string VaultPortId { get; set; }
   public int VaultLevel { get; set; }
   public System.Collections.Generic.Dictionary<InventoryItemType, int> VaultItems { get; set; } = new();
 
   // ── Tavern Crew ──────────────────────────────────────────────────
   // Crew hires persist in player state and affect real gameplay stats.
-  public System.Collections.Generic.List<string> HiredCrewCharacterIds { get; set; } = [];
+  public System.Collections.Generic.List<string> HiredCrewCharacterIds { get; set; } = [PortData.ScarlettId];
 
   // Capacities per vault level (index 0 = unused, 1-5 = levels)
   public static readonly int[] VaultItemCapacity = [0, 500, 1000, 2000, 4000, 6000];
@@ -114,7 +115,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   // True while this ship is inside a port docking area.
   // We use this to disable incoming damage in safe zones.
   [Export] public bool IsInPort { get; private set; } = false;
-  public string CurrentPortName { get; private set; }
+  public string CurrentPortId { get; private set; }
   // True for a brief window after ApplyShipTier() swaps collision shapes.
   // Prevents a spurious ShipDeparted signal while the physics engine catches up.
   public bool IsSwappingShipTier { get; private set; } = false;
@@ -133,26 +134,19 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   [Export] public MultiplayerSpawner ProjectileSpawner;
   [Export] public MultiplayerSpawner DeadPlayerSpawner;
   [Export] public Timer AutoHealTimer;
+  [Export] public Node3D VisualRoot { get; set; }
 
   [Export] private AudioStreamPlayer3D _cannonSoundPlayer;
 
   // Water Physics Properties
   [ExportGroup("Water Physics")]
-  [Export] public FastNoiseLite WaterNoiseResource { get; set; }
-  [Export] public MeshInstance3D WaterPlane { get; set; }
-  [Export] public float WaveHeight { get; set; } = 3.0f;
-  [Export] public float WaveSpeed { get; set; } = 0.05f;
-  [Export] public float WaterNoiseScale { get; set; } = 0.002f;
+  [Export] public NodePath WaterPlanePath { get; set; } = new("/root/Play/WaterPlane");
   [Export] public float ShipLength { get; set; } = 10.0f;
-  [Export] public float VerticalOffset { get; set; } = -0.2f;
+  [Export] public float VisualBobStrength { get; set; } = 0.35f;
   [Export] public float WaterSmoothSpeed { get; set; } = 8.0f;
+  [Export] public bool ShowWaterDebug { get; set; } = false;
 
-  [Export]
-  public int TrophyCount
-  {
-    get => _inventory.GetItemCount(InventoryItemType.Trophy);
-    set => _inventory.SetItem(InventoryItemType.Trophy, value);
-  }
+
 
   // Simple movement state
   private float _currentSpeed = 0.0f;       // Current forward/backward speed
@@ -174,6 +168,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   // Track whether we're currently playing the creaking sound
   // This prevents us from starting the sound over and over every frame
   private bool _isCreakingPlaying = false;
+  private FloatingBody3D _floatingBody;
 
   // Name tag shown above remote players when nearby
   private Label3D _nameLabel;
@@ -181,6 +176,13 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   private const float NameTagShowDistance = 75.0f;  // Show when closer than this
   private const float NameTagHideDistance = 85.0f;  // Hide when farther than this (hysteresis)
   private const float NameTagHeight = 12.0f;
+  // Player ships spawn inside a 200x200 box centered on world origin.
+  // We retry a few times and only accept a position if the ship body does not overlap.
+  private const float SpawnWidth = 200.0f;
+  private const float SpawnDepth = 200.0f;
+  private const int SpawnAttemptCount = 30;
+  private const float SpawnSkyCheckStartHeight = 3.0f;
+  private const float SpawnSkyCheckDistance = 250.0f;
   // Tracks which ship tier visuals/colliders we've already applied.
   // ShipTier itself is replicated over the network, so we need to react when
   // that replicated value changes on remote clients.
@@ -188,6 +190,10 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   public override void _Ready()
   {
+    // Groups make it easier for AI ships and other world systems to
+    // discover active players without hard-coding scene paths.
+    AddToGroup("players");
+
     Health = MaxHealth;
     Progress.RecordShipTierReached(ShipTier);
 
@@ -214,26 +220,14 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       AddChild(syncTimer);
     }
 
-    // Try to find water plane if not set
-    if (WaterPlane == null)
-    {
-      WaterPlane = GetNodeOrNull<MeshInstance3D>("/root/Play/Ground/WaterPlane");
-      if (WaterPlane != null)
-      {
-        GD.Print($"{Name}: Found WaterPlane at absolute path");
-      }
-      else
-      {
-        GD.PrintErr($"{Name}: Could not find WaterPlane!");
-      }
-    }
+    _floatingBody = new FloatingBody3D(this);
 
     // Apply ship tier visuals (collision + mesh) for the starting tier
     ApplyShipTier();
     _lastAppliedShipTier = ShipTier;
 
     if (Configuration.RandomSpawnEnabled)
-      RandomSpawn(100, 100);
+      RandomSpawn();
 
     CallDeferred(MethodName.UpdateInventory, (int)InventoryItemType.CannonBall, 10);
     CallDeferred(MethodName.UpdateInventory, (int)InventoryItemType.Coin, Configuration.StartingCoin);
@@ -266,15 +260,142 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     }
   }
 
-  private void RandomSpawn(int startXRange, int startYRange)
+  private void RandomSpawn()
   {
     var rng = new RandomNumberGenerator();
     rng.Randomize();
-    GlobalPosition = new Vector3(
-      rng.Randf() * startYRange - startYRange / 2,
-      GlobalPosition.Y,
-      rng.Randf() * startXRange - startXRange / 2
+
+    for (int attempt = 0; attempt < SpawnAttemptCount; attempt++)
+    {
+      // X/Z are centered on origin so the playable area stays balanced around the map.
+      var candidatePosition = new Vector3(
+        rng.RandfRange(-SpawnWidth * 0.5f, SpawnWidth * 0.5f),
+        GlobalPosition.Y,
+        rng.RandfRange(-SpawnDepth * 0.5f, SpawnDepth * 0.5f)
+      );
+
+      if (CanSpawnAt(candidatePosition))
+      {
+        GlobalPosition = candidatePosition;
+        return;
+      }
+    }
+
+    GD.PushWarning($"{Name}: Could not find a clear random spawn after {SpawnAttemptCount} attempts.");
+  }
+
+  /// <summary>
+  /// Uses an explicit shape query against the physics world to see whether the
+  /// ship footprint would overlap terrain, islands, or other bodies at this spot.
+  /// </summary>
+  private bool CanSpawnAt(Vector3 candidatePosition)
+  {
+    var collisionNode = GetNodeOrNull<CollisionPolygon3D>($"collision-tier{ShipTier + 1}");
+    if (collisionNode == null || collisionNode.Polygon.Count() == 0)
+      return true;
+
+    var footprintShape = BuildSpawnFootprintShape(collisionNode, out var shapeLocalTransform, out var footprintSize);
+    if (footprintShape == null)
+      return true;
+
+    var playerTransform = GlobalTransform;
+    playerTransform.Origin = candidatePosition;
+
+    var query = new PhysicsShapeQueryParameters3D
+    {
+      Shape = footprintShape,
+      Transform = playerTransform * shapeLocalTransform,
+      CollisionMask = CollisionMask,
+      Margin = 0.25f
+    };
+
+    query.Exclude = [GetRid()];
+
+    var hits = GetWorld3D().DirectSpaceState.IntersectShape(query, 1);
+    if (hits.Count > 0)
+      return false;
+
+    return HasOpenSkyAbove(candidatePosition, collisionNode.Transform, footprintSize);
+  }
+
+  /// <summary>
+  /// Builds a simple box from the active collision polygon bounds.
+  /// It is not a perfect ship silhouette, but it is a reliable "don't spawn here"
+  /// footprint and matches the current ship tier size.
+  /// </summary>
+  private BoxShape3D BuildSpawnFootprintShape(
+    CollisionPolygon3D collisionNode,
+    out Transform3D shapeLocalTransform,
+    out Vector3 footprintSize
+  )
+  {
+    float minX = float.PositiveInfinity;
+    float maxX = float.NegativeInfinity;
+    float minY = float.PositiveInfinity;
+    float maxY = float.NegativeInfinity;
+
+    foreach (var point in collisionNode.Polygon)
+    {
+      minX = Mathf.Min(minX, point.X);
+      maxX = Mathf.Max(maxX, point.X);
+      minY = Mathf.Min(minY, point.Y);
+      maxY = Mathf.Max(maxY, point.Y);
+    }
+
+    float width = Mathf.Max(0.1f, maxX - minX);
+    float length = Mathf.Max(0.1f, maxY - minY);
+    float height = Mathf.Max(0.1f, collisionNode.Depth);
+
+    // Slight padding makes the spawn check conservative, which is what we want.
+    footprintSize = new Vector3(width + 1.5f, height, length + 1.5f);
+    var shape = new BoxShape3D { Size = footprintSize };
+
+    var polygonCenter = new Vector3(
+      (minX + maxX) * 0.5f,
+      0.0f,
+      (minY + maxY) * 0.5f
     );
+
+    shapeLocalTransform = collisionNode.Transform.TranslatedLocal(polygonCenter);
+    return shape;
+  }
+
+  /// <summary>
+  /// Hollow island meshes can still "contain" the ship without overlapping it.
+  /// To avoid that, we sample the center and four corners of the ship footprint
+  /// and require a clear ray upward at each point.
+  /// </summary>
+  private bool HasOpenSkyAbove(
+    Vector3 candidatePosition,
+    Transform3D collisionLocalTransform,
+    Vector3 footprintSize
+  )
+  {
+    Vector3 halfExtents = footprintSize * 0.5f;
+    Vector3[] localSampleOffsets =
+    [
+      Vector3.Zero,
+      new Vector3(-halfExtents.X, 0.0f, -halfExtents.Z),
+      new Vector3(-halfExtents.X, 0.0f, halfExtents.Z),
+      new Vector3(halfExtents.X, 0.0f, -halfExtents.Z),
+      new Vector3(halfExtents.X, 0.0f, halfExtents.Z)
+    ];
+
+    var playerTransform = GlobalTransform;
+    playerTransform.Origin = candidatePosition;
+    var collisionWorldTransform = playerTransform * collisionLocalTransform;
+
+    foreach (var localOffset in localSampleOffsets)
+    {
+      var rayOrigin = collisionWorldTransform * (localOffset + Vector3.Up * SpawnSkyCheckStartHeight);
+      var rayTarget = rayOrigin + Vector3.Up * SpawnSkyCheckDistance;
+      var rayQuery = PhysicsRayQueryParameters3D.Create(rayOrigin, rayTarget, CollisionMask, [GetRid()]);
+      var hit = GetWorld3D().DirectSpaceState.IntersectRay(rayQuery);
+      if (hit.Count > 0)
+        return false;
+    }
+
+    return true;
   }
 
   public override void _PhysicsProcess(double delta)
@@ -349,13 +470,51 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (!IsMultiplayerAuthority()) return;
     switch (key)
     {
-      case "w": _actionMoveForward = pressed; break;
-      case "s": _actionMoveBack    = pressed; break;
-      case "a": _actionMoveLeft    = pressed; break;
-      case "d": _actionMoveRight   = pressed; break;
-      case "q": _actionFireLeft    = pressed; break;
-      case "e": _actionFireRight   = pressed; break;
+      case "w":
+        _actionMoveForward = pressed;
+        if (pressed) RecordShipMovementInput();
+        break;
+      case "s":
+        _actionMoveBack = pressed;
+        if (pressed) RecordShipMovementInput();
+        break;
+      case "a":
+        _actionMoveLeft = pressed;
+        if (pressed) RecordShipMovementInput();
+        break;
+      case "d":
+        _actionMoveRight = pressed;
+        if (pressed) RecordShipMovementInput();
+        break;
+      case "q": _actionFireLeft = pressed; break;
+      case "e": _actionFireRight = pressed; break;
+      case "k":
+        HandleCollisionDebugToggleInput(pressed);
+        break;
     }
+  }
+
+  /// <summary>
+  /// Toggles Godot's built-in collision debug overlay once per key press.
+  /// Browsers fire repeated keydown events while a key is held, so we track
+  /// whether K is already down and only toggle on the first press.
+  /// </summary>
+  private void HandleCollisionDebugToggleInput(bool pressed)
+  {
+    if (pressed)
+    {
+      if (_actionToggleCollisionDebugHeld)
+      {
+        return;
+      }
+
+      _actionToggleCollisionDebugHeld = true;
+      GetTree().DebugCollisionsHint = !GetTree().DebugCollisionsHint;
+      GD.Print($"Collision debug is now {(GetTree().DebugCollisionsHint ? "ON" : "OFF")}");
+      return;
+    }
+
+    _actionToggleCollisionDebugHeld = false;
   }
 
   /// <summary>
@@ -602,9 +761,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     IsInPort = value;
   }
 
-  public void SetCurrentPort(string portName)
+  public void SetCurrentPort(string portId)
   {
-    CurrentPortName = string.IsNullOrWhiteSpace(portName) ? null : portName;
+    CurrentPortId = string.IsNullOrWhiteSpace(portId) ? null : portId;
   }
 
   public void OnDeath()
@@ -614,34 +773,21 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     // Set state to Dead - this disables movement, shooting, and taking damage
     State = PlayerState.Dead;
 
-    // Calculate what items to drop:
-    // - ALL trophies are dropped
-    // - HALF of other items are dropped (rounded down)
-    // The player keeps the other half of items but loses ALL components
+    // Drop half of each carried item (rounded down).
+    // The player keeps the other half but loses all components.
     var itemsToDrop = new Dictionary<InventoryItemType, int>();
     var currentInventory = _inventory.GetAll();
 
     foreach (var item in currentInventory)
     {
-      if (item.Key == InventoryItemType.Trophy)
+      int halfAmount = item.Value / 2;
+      if (halfAmount > 0)
       {
-        // Drop ALL trophies
-        itemsToDrop[item.Key] = item.Value;
-      }
-      else
-      {
-        // Drop HALF of other items (rounded down)
-        int halfAmount = item.Value / 2;
-        if (halfAmount > 0)
-        {
-          itemsToDrop[item.Key] = halfAmount;
-        }
+        itemsToDrop[item.Key] = halfAmount;
       }
     }
 
-    // Remove dropped items from inventory and notify the HUD
-    // For trophies: remove all
-    // For other items: remove half (what we dropped)
+    // Remove dropped items from inventory and notify the HUD.
     foreach (var item in itemsToDrop)
     {
       _inventory.UpdateItem(item.Key, -item.Value);
@@ -662,7 +808,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       ["nickname"] = Nickname,
       ["playerName"] = Name,
       ["position"] = GlobalPosition,
-      ["items"] = itemsToDrop  // Only drop half items + all trophies
+      ["items"] = itemsToDrop
     });
 
     CallDeferred(MethodName.EmitSignal, SignalName.Death, Name);
@@ -714,7 +860,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     EmitSignal(SignalName.HealthUpdate, Health);
 
     // Move to a new random spawn position
-    RandomSpawn(100, 100);
+    RandomSpawn();
 
     // Delay setting state to Alive by a short time (0.2 seconds)
     // This gives physics time to process the position change
@@ -839,7 +985,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     // Apply hired crew stat bonuses on top of base stats and components.
     foreach (var hiredId in HiredCrewCharacterIds)
     {
-      var character = TavernData.GetCharacterById(hiredId);
+      var character = PortData.GetCharacterById(hiredId);
       if (character == null) continue;
 
       foreach (var statChange in character.StatChanges)
@@ -853,17 +999,18 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (ShipTier >= 0 && ShipTier < GameData.ShipTiers.Length)
       componentSlots = GameData.ShipTiers[ShipTier].ComponentSlots;
 
-    // Crew grows with ship size: 4/6/8 component slots => 2/3/4 crew slots.
-    return Math.Max(1, componentSlots / 2);
+    // Crew grows with ship size: 4/6/8 component slots => 3/4/5 crew slots.
+    // Scarlett takes one berth by default, so everyone gets one extra slot.
+    return Math.Max(2, (componentSlots / 2) + 1);
   }
 
-  public bool HireCrew(string characterId, string currentPortName)
+  public bool HireCrew(string characterId, string currentPortId)
   {
-    var character = TavernData.GetCharacterById(characterId);
+    var character = PortData.GetCharacterById(characterId);
     if (character == null || !character.Hireable)
       return false;
 
-    if (!string.Equals(character.PortName, currentPortName, StringComparison.OrdinalIgnoreCase))
+    if (!string.Equals(PortData.GetPortIdForCharacter(characterId), currentPortId, StringComparison.Ordinal))
       return false;
 
     if (HiredCrewCharacterIds.Contains(characterId))
@@ -872,16 +1019,54 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (HiredCrewCharacterIds.Count >= GetCrewSlotCapacity())
       return false;
 
-    HiredCrewCharacterIds.Add(characterId);
-    Progress.RecordCrewHired(characterId);
-    UpdatePlayerStats();
-    ReevaluateQuestProgress();
+    if (!TryAddCrewCharacter(characterId, recordQuestProgress: true))
+      return false;
+
     GD.Print($"{Name}: Hired tavern crew '{characterId}'");
+    return true;
+  }
+
+  public bool StartHireQuest(string characterId, string currentPortId)
+  {
+    var character = PortData.GetCharacterById(characterId);
+    if (character == null || !character.Hireable)
+      return false;
+
+    if (!string.Equals(PortData.GetPortIdForCharacter(characterId), currentPortId, StringComparison.Ordinal))
+      return false;
+
+    if (HiredCrewCharacterIds.Contains(characterId))
+      return false;
+
+    if (HiredCrewCharacterIds.Count >= GetCrewSlotCapacity())
+      return false;
+
+    var hireQuest = QuestData.GetHireQuestForCharacter(characterId);
+    if (hireQuest == null)
+      return false;
+
+    return AcceptQuest(hireQuest.Id, characterId);
+  }
+
+  private bool TryAddCrewCharacter(string characterId, bool recordQuestProgress)
+  {
+    if (HiredCrewCharacterIds.Contains(characterId))
+      return false;
+
+    HiredCrewCharacterIds.Add(characterId);
+    Progress.RecordCrewHired(characterId, recordQuestProgress);
+    UpdatePlayerStats();
+    if (recordQuestProgress)
+      ReevaluateQuestProgress();
+
     return true;
   }
 
   public bool FireCrew(string characterId)
   {
+    if (string.Equals(characterId, PortData.ScarlettId, StringComparison.Ordinal))
+      return false;
+
     bool removed = HiredCrewCharacterIds.Remove(characterId);
     if (!removed)
       return false;
@@ -1009,8 +1194,10 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     EmitSignal(SignalName.InventoryChanged, (int)item, _inventory.GetItemCount(item), amount);
 
-    if (item == InventoryItemType.Coin && amount > 0)
+    if (item == InventoryItemType.Coin && amount > 0 && IsMultiplayerAuthority())
     {
+      // Coin rewards are player-owned feedback, so only the local owning client
+      // should hear them. Without this check, replicated player nodes can all play it.
       var audioManager = GetNode<AudioManager>("/root/AudioManager");
       audioManager.PlaySound("res://art/sounds/jcsounds/Misc Sfx/sfx_coin_clink_01.wav", volumeDb: -5.0f);
     }
@@ -1076,7 +1263,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       Crew = ExportCrewForHud(),
       Vault = ExportVaultForHud(),
       Leaderboard = [],
-      Quests = Progress.ExportHudState(GetTotalEquippedComponents()),
+      Quests = Progress.ExportHudState(GetTotalEquippedComponents(), HiredCrewCharacterIds),
       ServerStateJson = JsonSerializer.Serialize(SerializeState()),
     };
   }
@@ -1125,7 +1312,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     );
 
     System.Collections.Generic.Dictionary<string, int> vaultUpgradeCost = null;
-    if (VaultPortName != null && VaultLevel < VaultMaxLevel)
+    if (VaultPortId != null && VaultLevel < VaultMaxLevel)
     {
       vaultUpgradeCost = GetVaultUpgradeCost(VaultLevel).ToDictionary(
         kvp => kvp.Key.ToString(),
@@ -1154,7 +1341,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     var crewCharacters = new System.Collections.Generic.List<TavernCharacterDto>();
     foreach (var hiredId in HiredCrewCharacterIds)
     {
-      var hiredCharacter = TavernData.GetCharacterById(hiredId);
+      var hiredCharacter = PortData.GetCharacterById(hiredId);
       if (hiredCharacter != null)
       {
         crewCharacters.Add(new TavernCharacterDto(
@@ -1163,6 +1350,9 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
           hiredCharacter.Role,
           hiredCharacter.Portrait,
           hiredCharacter.Hireable,
+          hiredCharacter.TalkPhrases,
+          hiredCharacter.HireText,
+          hiredCharacter.FireText,
           hiredCharacter.StatChanges.Select(sc => new StatChangeDto(
             sc.Stat.ToString(),
             sc.Modifier.ToString(),
@@ -1182,7 +1372,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   private VaultStateDto ExportVaultForHud()
   {
-    if (VaultPortName == null)
+    if (VaultPortId == null)
       return null;
 
     var vaultItems = new System.Collections.Generic.Dictionary<string, int>();
@@ -1191,7 +1381,8 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     return new VaultStateDto
     {
-      PortName = VaultPortName,
+      PortId = VaultPortId,
+      PortName = PortData.GetPortDisplayName(VaultPortId),
       Level = VaultLevel,
       Items = vaultItems,
       IsHere = false,
@@ -1265,11 +1456,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     return Progress.IsFeatureUnlocked(feature);
   }
 
-  public void RecordPortVisit(string portName)
+  public void RecordPortVisit(string portId)
   {
-    SetCurrentPort(portName);
-    Progress.RecordPortVisited(portName);
-    ReevaluateQuestProgress(portName);
+    SetCurrentPort(portId);
+    Progress.RecordPortVisited(portId);
+    ReevaluateQuestProgress();
   }
 
   public void RecordNpcTalkedTo(string characterId)
@@ -1280,7 +1471,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
   public bool AcceptQuest(string questId, string characterId)
   {
-    if (!Progress.CanAcceptQuest(questId, characterId))
+    if (!Progress.CanAcceptQuest(questId, characterId, HiredCrewCharacterIds))
       return false;
 
     Progress.ResetForNewQuest(questId, characterId);
@@ -1288,19 +1479,62 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     return true;
   }
 
-  public void ReevaluateQuestProgress(string currentPortName = null)
+  public bool CancelActiveQuest()
   {
-    Progress.ReevaluateQuestProgress(GetTotalEquippedComponents(), currentPortName ?? CurrentPortName);
+    return Progress.CancelActiveQuest();
+  }
+
+  public void ReevaluateQuestProgress()
+  {
+    var completedQuest = Progress.ReevaluateQuestProgress(GetTotalEquippedComponents());
+    if (completedQuest == null)
+      return;
+
+    ApplyQuestRewards(completedQuest);
+    PlayQuestCompleteSound();
+  }
+
+  public void RecordCameraDrag()
+  {
+    Progress.RecordCameraDrag();
+    ReevaluateQuestProgress();
+  }
+
+  public void RecordShipMovementInput()
+  {
+    Progress.RecordShipMovementInput();
+    ReevaluateQuestProgress();
   }
 
   public bool ForceCompleteQuest(string questId = null)
   {
-    return Progress.ForceCompleteQuest(questId);
+    var completedQuest = Progress.ForceCompleteQuest(questId);
+    if (completedQuest == null)
+      return false;
+
+    ApplyQuestRewards(completedQuest);
+    PlayQuestCompleteSound();
+    return true;
   }
 
   public bool ForceUncompleteQuest(string questId)
   {
     return Progress.ForceUncompleteQuest(questId);
+  }
+
+  private void ApplyQuestRewards(QuestDefinition completedQuest)
+  {
+    if (completedQuest == null)
+      return;
+
+    if (completedQuest.RewardGold > 0)
+      UpdateInventory(InventoryItemType.Coin, completedQuest.RewardGold);
+
+    if (string.IsNullOrWhiteSpace(completedQuest.RewardCrewNpcId))
+      return;
+
+    if (TryAddCrewCharacter(completedQuest.RewardCrewNpcId, recordQuestProgress: false))
+      GD.Print($"{Name}: Recruited '{completedQuest.RewardCrewNpcId}' from quest '{completedQuest.Id}'");
   }
 
   public bool ForceSetActiveQuest(string questId)
@@ -1326,6 +1560,20 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     if (!IsMultiplayerAuthority()) return;
     Progress.RecordShipSunk();
     ReevaluateQuestProgress();
+  }
+
+  private void PlayQuestCompleteSound()
+  {
+    // Quest completion is also private feedback for the player who completed it.
+    // Only the multiplayer authority for this Player node should hear the sound.
+    if (!IsMultiplayerAuthority())
+      return;
+
+    var audioManager = GetNodeOrNull<AudioManager>("/root/AudioManager");
+    if (audioManager == null)
+      return;
+
+    audioManager.PlaySound("res://art/sounds/success.wav", volumeDb: -3.0f);
   }
 
   private void NotifyAttacker(string attackerPlayerId, StringName methodName)
@@ -1356,21 +1604,21 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   /// Build a brand-new vault at the given port. Deducts resources.
   /// Returns false if the player already has a vault or can't afford it.
   /// </summary>
-  public bool BuildVault(string portName)
+  public bool BuildVault(string portId)
   {
-    if (VaultPortName != null)
+    if (VaultPortId != null)
     {
-      GD.PrintErr($"{Name}: Already has a vault at {VaultPortName}");
+      GD.PrintErr($"{Name}: Already has a vault at {VaultPortId}");
       return false;
     }
 
     if (!MakePurchase(VaultBuildCost))
       return false;
 
-    VaultPortName = portName;
+    VaultPortId = portId;
     VaultLevel = 1;
     VaultItems = new System.Collections.Generic.Dictionary<InventoryItemType, int>();
-    GD.Print($"{Name}: Built vault at {portName}");
+    GD.Print($"{Name}: Built vault at {VaultPortId}");
     return true;
   }
 
@@ -1380,7 +1628,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   /// </summary>
   public bool UpgradeVault()
   {
-    if (VaultPortName == null || VaultLevel >= VaultMaxLevel)
+    if (VaultPortId == null || VaultLevel >= VaultMaxLevel)
       return false;
 
     // Use one shared source of truth for upgrade costs to avoid drift.
@@ -1435,7 +1683,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   /// </summary>
   public bool VaultDeposit(InventoryItemType item, int amount)
   {
-    if (VaultPortName == null || amount <= 0)
+    if (VaultPortId == null || amount <= 0)
       return false;
 
     // Check the player actually has the items
@@ -1473,7 +1721,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   /// </summary>
   public bool VaultWithdraw(InventoryItemType item, int amount)
   {
-    if (VaultPortName == null || amount <= 0)
+    if (VaultPortId == null || amount <= 0)
       return false;
 
     int vaultAmount = GetVaultAmount(item);
@@ -1535,7 +1783,19 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
       int peerId = GetMultiplayerAuthority();
       RpcId(peerId, MethodName.ReceiveState, stateJson);
       GD.Print($"{Name}: Sent saved state to client (peer {peerId})");
+      return;
     }
+
+    // First-time players do not have saved state yet, so we initialize
+    // their default progression on the authoritative player and send that
+    // fresh state down to the client like a normal load.
+    Progress.EnsureAutoAcceptedQuestActive();
+    var newPlayerStateJson = JsonSerializer.Serialize(SerializeState());
+    LastSyncedStateJson = newPlayerStateJson;
+
+    int newPlayerPeerId = GetMultiplayerAuthority();
+    RpcId(newPlayerPeerId, MethodName.ReceiveState, newPlayerStateJson);
+    GD.Print($"{Name}: Sent initialized state to new client (peer {newPlayerPeerId})");
   }
 
   /// <summary>
@@ -1618,11 +1878,11 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     dto.HiredCrewCharacterIds = HiredCrewCharacterIds.ToList();
 
     // Persist vault if the player has one
-    if (VaultPortName != null)
+    if (VaultPortId != null)
     {
       var vaultDto = new VaultDto
       {
-        PortName = VaultPortName,
+        PortId = VaultPortId,
         Level = VaultLevel,
         Items = new System.Collections.Generic.Dictionary<string, int>()
       };
@@ -1678,7 +1938,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
 
     // Restore hired crew ids and drop unknown ids safely.
     HiredCrewCharacterIds.Clear();
-    var validCrewIds = TavernData.GetCharacterIdSet();
+    var validCrewIds = PortData.GetCharacterIdSet();
     foreach (var id in dto.HiredCrewCharacterIds ?? [])
     {
       if (validCrewIds.Contains(id))
@@ -1697,7 +1957,7 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
     // Restore vault state
     if (dto.Vault != null)
     {
-      VaultPortName = dto.Vault.PortName;
+      VaultPortId = PortData.ResolvePortId(dto.Vault.PortId) ?? dto.Vault.PortId;
       VaultLevel = dto.Vault.Level;
       VaultItems = new System.Collections.Generic.Dictionary<InventoryItemType, int>();
       foreach (var kvp in dto.Vault.Items)
@@ -1705,13 +1965,13 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
         if (Enum.TryParse<InventoryItemType>(kvp.Key, out var itemType))
           VaultItems[itemType] = kvp.Value;
       }
-      GD.Print($"{Name}: Restored vault at {VaultPortName} (level {VaultLevel})");
+      GD.Print($"{Name}: Restored vault at {VaultPortId} (level {VaultLevel})");
     }
 
     if (dto.IsDead)
     {
       Health = MaxHealth;
-      RandomSpawn(100, 100);
+      RandomSpawn();
       State = PlayerState.Alive;
       GD.Print($"{Name}: Was dead on save, respawning fresh with saved inventory");
     }
@@ -1777,75 +2037,24 @@ public partial class Player : CharacterBody3D, ICanCollect, IDamageable
   /// </summary>
   private void ApplyWaterPhysics(float delta)
   {
-    // Skip if water physics is not configured
-    if (WaterNoiseResource == null || WaterPlane == null)
+    if (!_floatingBody.Apply(
+      VisualRoot,
+      WaterPlanePath,
+      ShipLength,
+      VisualBobStrength,
+      WaterSmoothSpeed,
+      ShowWaterDebug,
+      _accelerationPitch,
+      _currentTurnInput * Mathf.DegToRad(5.0f) + _recoilRoll,
+      delta
+    ))
     {
-      GD.PrintErr($"Water physics not configured! NoiseResource: {WaterNoiseResource != null}, WaterPlane: {WaterPlane != null}");
+      GD.PrintErr("Water physics not configured! WaterPlane: False");
       return;
     }
 
-    // Get current game time in seconds
-    float time = Time.GetTicksMsec() / 1000.0f;
-    Vector3 pos = GlobalPosition;
-
-    // Get the ship's forward direction (Z axis in local space)
-    Vector3 forwardDir = Transform.Basis.Z;
-
-    // Calculate sampling points at bow (front) and stern (back)
-    Vector3 bowPos = pos + forwardDir * (ShipLength / 2.0f);
-    Vector3 sternPos = pos - forwardDir * (ShipLength / 2.0f);
-
-    // Sample water heights at bow and stern
-    float heightBow = GetWaterHeight(bowPos, time);
-    float heightStern = GetWaterHeight(sternPos, time);
-    float heightAvg = (heightBow + heightStern) / 2.0f;
-
-    // Update vertical position to sit on water surface
-    float planeY = WaterPlane?.GlobalPosition.Y ?? 0.0f;
-    float targetY = heightAvg + planeY + VerticalOffset - 0.5f;
-
-    // Smoothly interpolate to target Y position
-    Vector3 currentPos = GlobalPosition;
-    currentPos.Y = Mathf.Lerp(currentPos.Y, targetY, delta * WaterSmoothSpeed);
-    GlobalPosition = currentPos;
-
-    // Update pitch rotation based on wave slope
-    float heightDiff = heightBow - heightStern;
-    float targetPitch = -Mathf.Atan2(heightDiff, ShipLength);
-
-    // Add extra pitch from acceleration / braking so the ship leans
-    // slightly forward/backward when its speed changes aggressively.
-    float combinedTargetPitch = targetPitch + _accelerationPitch;
-
-    // Calculate roll (bank) based on turning and add recoil rocking
-    float maxRollAngle = Mathf.DegToRad(5.0f); // Maximum 5 degrees of roll
-    float targetRoll = _currentTurnInput * maxRollAngle + _recoilRoll;
-
-    // Smoothly interpolate rotation
-    Vector3 rotation = Rotation;
-    rotation.X = Mathf.LerpAngle(rotation.X, combinedTargetPitch, delta * WaterSmoothSpeed);
-    rotation.Z = Mathf.LerpAngle(rotation.Z, targetRoll, delta * WaterSmoothSpeed * 0.3f); // Slow, subtle banking
-    Rotation = rotation;
-
     // Decay the recoil rocking over time so the ship returns to normal
     _recoilRoll = Mathf.Lerp(_recoilRoll, 0.0f, delta * RecoilDecaySpeed);
-  }
-
-  /// <summary>
-  /// Calculates water height at a specific world position.
-  /// This matches the shader's vertex displacement calculation.
-  /// </summary>
-  private float GetWaterHeight(Vector3 worldPos, float time)
-  {
-    // Convert world position to UV coordinates matching the shader
-    float sampleX = (worldPos.X * WaterNoiseScale) + (time * WaveSpeed);
-    float sampleZ = (worldPos.Z * WaterNoiseScale);
-
-    // Sample the noise (multiply by 100 for proper scale)
-    float noiseVal = WaterNoiseResource.GetNoise2D(sampleX * 100.0f, sampleZ * 100.0f);
-
-    // Normalize from [-1, 1] to [0, 1] and scale by wave height
-    return ((noiseVal + 1.0f) / 2.0f) * WaveHeight;
   }
 
   /// <summary>

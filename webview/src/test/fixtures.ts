@@ -92,6 +92,9 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
           role: "Merchant Broker",
           portrait: "character8.png",
           hireable: true,
+          talkPhrases: ["Mind the margins."],
+          hireText: "Give me a berth and I will sharpen your prices.",
+          fireText: "Very well. Keep your own books.",
           statChanges: [{ stat: "SellPriceBonus", modifier: "Additive", value: 0.005 }],
         },
         {
@@ -100,6 +103,9 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
           role: "Powder Runner",
           portrait: "character7.png",
           hireable: true,
+          talkPhrases: ["Dry powder, quick hands."],
+          hireText: "Say the word and I am aboard.",
+          fireText: "I will find another deck for my powder tricks.",
           statChanges: [{ stat: "AttackRange", modifier: "Additive", value: 3 }],
         },
         {
@@ -108,6 +114,7 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
           role: "Rumor Broker",
           portrait: "character15.png",
           hireable: false,
+          talkPhrases: ["Rumors beat blind sailing."],
           statChanges: [],
         },
       ],
@@ -118,10 +125,75 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
       characters: [],
     },
     quests: {
-      available: [],
+      available: [
+        {
+          id: "hire_gideon_gearlock",
+          title: "Earn Gideon Gearlock's Trust",
+          giverNpcId: "gideon-gearlock",
+          giverName: "Gideon Gearlock",
+          giverPortrait: "character8.png",
+          giverPortName: "Tortuga",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: false,
+          canCancel: true,
+          offerText: "I can sharpen your sale prices, but first I need proof you can make a real trade run. Earn 60 gold, then return and talk to me.",
+          acceptedText: "Earn 60 gold from trading, then come back and speak with me.",
+          description: "Gideon will join your crew once you prove you can trade for profit.",
+          completionText: "Those numbers look respectable. I am aboard.",
+          rewardCrewNpcId: "gideon-gearlock",
+          unlocks: [],
+          steps: [
+            {
+              label: "Close a sale worth 60 gold",
+              currentValue: 0,
+              requiredValue: 60,
+              isComplete: false,
+            },
+            {
+              label: "Talk to Gideon Gearlock",
+              currentValue: 0,
+              requiredValue: 1,
+              isComplete: false,
+            },
+          ],
+        },
+      ],
       active: null,
-      all: [],
+      all: [
+        {
+          id: "hire_gideon_gearlock",
+          title: "Earn Gideon Gearlock's Trust",
+          giverNpcId: "gideon-gearlock",
+          giverName: "Gideon Gearlock",
+          giverPortrait: "character8.png",
+          giverPortName: "Tortuga",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: false,
+          canCancel: true,
+          offerText: "I can sharpen your sale prices, but first I need proof you can make a real trade run. Earn 60 gold, then return and talk to me.",
+          acceptedText: "Earn 60 gold from trading, then come back and speak with me.",
+          description: "Gideon will join your crew once you prove you can trade for profit.",
+          completionText: "Those numbers look respectable. I am aboard.",
+          rewardCrewNpcId: "gideon-gearlock",
+          unlocks: [],
+          steps: [
+            {
+              label: "Close a sale worth 60 gold",
+              currentValue: 0,
+              requiredValue: 60,
+              isComplete: false,
+            },
+            {
+              label: "Talk to Gideon Gearlock",
+              currentValue: 0,
+              requiredValue: 1,
+              isComplete: false,
+            },
+          ],
+        },
+      ],
       completedIds: [],
+      recentlyCompletedIds: [],
       unlockedFeatures: [
         "SellGoods",
         "TavernTalk",
@@ -164,6 +236,7 @@ export function makePortState(overrides?: Partial<PortState>): PortState {
 
 export function makeVaultState(overrides?: Partial<VaultState>): VaultState {
   return {
+    portId: "tortuga",
     portName: "Tortuga",
     level: 1,
     items: {},

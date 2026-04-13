@@ -3,17 +3,26 @@ import { inventoryIcon, formatStatName, fmt } from "../utils/helpers";
 import { ComponentCard } from "../components/ComponentCard";
 import { ShipUpgradeCard } from "../components/ShipUpgradeCard";
 import type { PortState, ComponentData } from "../types";
+import { getCrewImpact, getEquippedComponentImpact } from "../utils/shipBonuses";
 
 export function ShipyardTab({
   state,
   isInPort = true,
   showForSale = true,
   showShipUpgrade = true,
+  showHealth = true,
+  showStats = true,
+  showComponents = true,
+  showPortLocked = true,
 }: {
   state: PortState;
   isInPort?: boolean;
   showForSale?: boolean;
   showShipUpgrade?: boolean;
+  showHealth?: boolean;
+  showStats?: boolean;
+  showComponents?: boolean;
+  showPortLocked?: boolean;
 }) {
   const buyUnlocked = state.quests.unlockedFeatures.includes("BuyGoods");
   const componentsUnlocked = state.quests.unlockedFeatures.includes("ShipyardComponents");
@@ -40,19 +49,8 @@ export function ShipyardTab({
 
   const forSale = state.components;
 
-  // Total additive/multiplicative contribution per stat from all equipped components
-  const statBonuses: Record<string, { add: number; multi: number }> = {};
-  for (const { count, data } of equipped) {
-    for (const sc of data.statChanges) {
-      if (!statBonuses[sc.stat]) statBonuses[sc.stat] = { add: 0, multi: 1 };
-      const bonus = statBonuses[sc.stat]!;
-      if (sc.modifier === "Additive") {
-        bonus.add += sc.value * count;
-      } else {
-        bonus.multi *= Math.pow(sc.value, count);
-      }
-    }
-  }
+  const componentImpact = getEquippedComponentImpact(equipped);
+  const crewImpact = getCrewImpact(state);
 
   const canAfford = (cost: Record<string, number>): boolean => {
     return Object.entries(cost).every(
@@ -93,96 +91,99 @@ export function ShipyardTab({
 
   return (
     <>
-      {/* Health & Repair */}
-      <div className="section-title">Ship Health</div>
-      <div className="card health-section">
-        <div className="health-bar-container">
-          <div className="health-bar">
-            <div
-              className="health-bar-fill"
-              style={{
-                width: `${healthPct}%`,
-                backgroundColor: `hsl(${healthHue}, 75%, 42%)`,
-              }}
-            />
-          </div>
-          <div className="health-text">
-            {state.health} / {state.maxHealth}
-          </div>
-        </div>
-        {healthNeeded <= 0 ? (
-          <div className="hull-full">Hull at Full Strength</div>
-        ) : (
-          <>
-            <div className="repair-options">
-              <div className="repair-row">
-                <button
-                  className="repair-btn"
-                  disabled={!isInPort || maxHeal <= 0}
-                  onClick={() => sendIpc({ action: "heal" })}
-                  title={!isInPort ? "Port required: repair hull while docked." : undefined}
-                >
-                  Repair Hull
-                </button>
-                <div className="repair-costs">
-                  <span className={`cost-chip ${woodAvail < healthNeeded * woodPerHp ? "chip-short" : "chip-wood"}`}>
-                    <img src={inventoryIcon("Wood")} alt="Wood" className="chip-icon" />{healthNeeded * woodPerHp}
-                  </span>
-                  <span className={`cost-chip ${fishAvail < healthNeeded * fishPerHp ? "chip-short" : "chip-fish"}`}>
-                    <img src={inventoryIcon("Fish")} alt="Fish" className="chip-icon" />{healthNeeded * fishPerHp}
-                  </span>
-                  <span className="repair-hp">+{maxHeal} HP</span>
-                </div>
+      {showHealth && (
+        <>
+          <div className="section-title">Ship Health</div>
+          <div className="card health-section">
+            <div className="health-bar-container">
+              <div className="health-bar">
+                <div
+                  className="health-bar-fill"
+                  style={{
+                    width: `${healthPct}%`,
+                    backgroundColor: `hsl(${healthHue}, 75%, 42%)`,
+                  }}
+                />
               </div>
-              {buyHealGoldCost !== null && (
-                <div className="repair-row">
-                  <button
-                    className="repair-btn repair-btn-gold"
-                    disabled={!isInPort || maxBuyHeal <= 0 || !buyUnlocked}
-                    onClick={async () => {
-                      const items: { type: string; quantity: number }[] = [];
-                      if (woodToBuy > 0) items.push({ type: "Wood", quantity: woodToBuy });
-                      if (fishToBuy > 0) items.push({ type: "Fish", quantity: fishToBuy });
-                      if (items.length > 0) {
-                        await sendIpcAndWait({ action: "buy_items", items });
-                      }
-                      sendIpc({ action: "heal" });
-                    }}
-                    title={
-                      !isInPort
-                        ? "Port required: buy and repair while docked."
-                        : !buyUnlocked
-                          ? "Complete Harvest For Someone to unlock buying goods."
-                          : undefined
-                    }
-                  >
-                    Buy & Repair
-                  </button>
-                  <div className="repair-costs">
-                    <span className={`cost-chip ${maxBuyHeal <= 0 ? "chip-short" : "chip-gold"}`}>
-                      <img src={inventoryIcon("Coin")} alt="Gold" className="chip-icon" />{buyHealGoldCost}
-                    </span>
-                    <span className="repair-hp">+{maxBuyHeal} HP</span>
+              <div className="health-text">
+                {state.health} / {state.maxHealth}
+              </div>
+            </div>
+            {healthNeeded <= 0 ? (
+              <div className="hull-full">Hull at Full Strength</div>
+            ) : (
+              <>
+                <div className="repair-options">
+                  <div className="repair-row">
+                    <button
+                      className="repair-btn"
+                      disabled={!isInPort || maxHeal <= 0}
+                      onClick={() => sendIpc({ action: "heal" })}
+                      title={!isInPort ? "Port required: repair hull while docked." : undefined}
+                    >
+                      Repair Hull
+                    </button>
+                    <div className="repair-costs">
+                      <span className={`cost-chip ${woodAvail < healthNeeded * woodPerHp ? "chip-short" : "chip-wood"}`}>
+                        <img src={inventoryIcon("Wood")} alt="Wood" className="chip-icon" />{healthNeeded * woodPerHp}
+                      </span>
+                      <span className={`cost-chip ${fishAvail < healthNeeded * fishPerHp ? "chip-short" : "chip-fish"}`}>
+                        <img src={inventoryIcon("Fish")} alt="Fish" className="chip-icon" />{healthNeeded * fishPerHp}
+                      </span>
+                      <span className="repair-hp">+{maxHeal} HP</span>
+                    </div>
                   </div>
+                  {buyHealGoldCost !== null && (
+                    <div className="repair-row">
+                      <button
+                        className="repair-btn repair-btn-gold"
+                        disabled={!isInPort || maxBuyHeal <= 0 || !buyUnlocked}
+                        onClick={async () => {
+                          const items: { type: string; quantity: number }[] = [];
+                          if (woodToBuy > 0) items.push({ type: "Wood", quantity: woodToBuy });
+                          if (fishToBuy > 0) items.push({ type: "Fish", quantity: fishToBuy });
+                          if (items.length > 0) {
+                            await sendIpcAndWait({ action: "buy_items", items });
+                          }
+                          sendIpc({ action: "heal" });
+                        }}
+                        title={
+                          !isInPort
+                            ? "Port required: buy and repair while docked."
+                            : !buyUnlocked
+                              ? "Complete Harvest For Someone to unlock buying goods."
+                              : undefined
+                        }
+                      >
+                        Buy & Repair
+                      </button>
+                      <div className="repair-costs">
+                        <span className={`cost-chip ${maxBuyHeal <= 0 ? "chip-short" : "chip-gold"}`}>
+                          <img src={inventoryIcon("Coin")} alt="Gold" className="chip-icon" />{buyHealGoldCost}
+                        </span>
+                        <span className="repair-hp">+{maxBuyHeal} HP</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="repair-inventory">
-              <span className={woodAvail < healthNeeded * woodPerHp ? "resource-short" : ""}>
-                <img src={inventoryIcon("Wood")} alt="Wood" className="chip-icon" />{woodAvail}
-              </span>
-              <span className={fishAvail < healthNeeded * fishPerHp ? "resource-short" : ""}>
-                <img src={inventoryIcon("Fish")} alt="Fish" className="chip-icon" />{fishAvail}
-              </span>
-              {buyHealGoldCost !== null && (
-                <span className={maxBuyHeal <= 0 ? "resource-short" : ""}>
-                  <img src={inventoryIcon("Coin")} alt="Gold" className="chip-icon" />{coinsAvail}
-                </span>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+                <div className="repair-inventory">
+                  <span className={woodAvail < healthNeeded * woodPerHp ? "resource-short" : ""}>
+                    <img src={inventoryIcon("Wood")} alt="Wood" className="chip-icon" />{woodAvail}
+                  </span>
+                  <span className={fishAvail < healthNeeded * fishPerHp ? "resource-short" : ""}>
+                    <img src={inventoryIcon("Fish")} alt="Fish" className="chip-icon" />{fishAvail}
+                  </span>
+                  {buyHealGoldCost !== null && (
+                    <span className={maxBuyHeal <= 0 ? "resource-short" : ""}>
+                      <img src={inventoryIcon("Coin")} alt="Gold" className="chip-icon" />{coinsAvail}
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Ship Upgrade */}
       {showShipUpgrade && state.shipTiers && state.shipTiers.length > 0 && (
@@ -201,36 +202,8 @@ export function ShipyardTab({
         </>
       )}
 
-      {/* Stats */}
-      <div className="section-title">Ship Stats</div>
-      <div className="card mb-12">
-        <div className="stats-grid">
-          {Object.entries(state.stats).map(([stat, value]) => {
-            const bonus = statBonuses[stat];
-            const parts: string[] = [];
-            if (bonus?.add) parts.push(`+${fmt(bonus.add)}`);
-            if (bonus?.multi && bonus.multi !== 1)
-              parts.push(`+${Math.round((bonus.multi - 1) * 100)}%`);
-            return (
-              <div className="stat-row" key={stat}>
-                <span className="stat-label">{formatStatName(stat)}</span>
-                <span className="stat-value">
-                  {typeof value === "number" ? fmt(value) : value}
-                  {parts.length > 0 && (
-                    <span className="stat-bonus">{parts.join(" ")}</span>
-                  )}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {componentsUnlocked && (
+      {showComponents && componentsUnlocked && (
         <>
-          <div className="section-sep" />
-
-          {/* Equipped Components */}
           <div className="section-title">Equipped Components</div>
           <div className="capacity-bar">
             <span>Slots:</span>
@@ -321,7 +294,83 @@ export function ShipyardTab({
         </>
       )}
 
-      {!isInPort && (
+      {showStats && (
+        <>
+          <div className="section-title">Ship Stats</div>
+          <div className="card mb-12">
+            <div className="ship-stat-list">
+              {Object.entries(state.stats).map(([stat, value]) => {
+                const componentBonus = componentImpact[stat];
+                const crewBonus = crewImpact[stat] ?? 0;
+                const impactNotes: string[] = [];
+                const additiveTerms: string[] = [];
+                const componentAdditiveBonus = componentBonus?.additive ?? 0;
+                const additiveBonus = crewBonus + componentAdditiveBonus;
+                const multiplicativeBonus = componentBonus?.multiplicative ?? 1;
+                const isNumericStat = typeof value === "number";
+                const baseValue = isNumericStat
+                  ? (value / multiplicativeBonus) - additiveBonus
+                  : null;
+                const roundedBaseValue = baseValue === null ? null : fmt(baseValue);
+                const roundedFinalValue = isNumericStat ? fmt(value) : value;
+
+                if (crewBonus !== 0) {
+                  impactNotes.push(`Crew +${fmt(crewBonus)}`);
+                  additiveTerms.push(`+ ${fmt(crewBonus)}`);
+                }
+
+                if (componentAdditiveBonus !== 0) {
+                  impactNotes.push(`Components +${fmt(componentAdditiveBonus)}`);
+                  additiveTerms.push(`+ ${fmt(componentAdditiveBonus)}`);
+                }
+
+                if (componentBonus && componentBonus.multiplicative !== 1) {
+                  impactNotes.push(`Components +${Math.round((componentBonus.multiplicative - 1) * 100)}%`);
+                }
+
+                return (
+                  <div className="ship-stat-list-row" key={stat}>
+                    <div className="ship-stat-list-copy">
+                      <span className="stat-label">{formatStatName(stat)}</span>
+                      {impactNotes.length > 0 && (
+                        <span className="ship-stat-impact">
+                          Includes {impactNotes.join(" • ")}
+                        </span>
+                      )}
+                    </div>
+                    <span className="ship-stat-formula">
+                      {isNumericStat && impactNotes.length > 0 ? (
+                        <>
+                          <span className="ship-stat-formula-line">
+                            <span className="ship-stat-formula-base">{roundedBaseValue}</span>
+                            {additiveTerms.map((term) => (
+                              <span key={`${stat}-${term}`} className="ship-stat-formula-part">{term}</span>
+                            ))}
+                            {multiplicativeBonus !== 1 && additiveTerms.length > 0 && (
+                              <span className="ship-stat-formula-part"> </span>
+                            )}
+                            {multiplicativeBonus !== 1 && (
+                              <span className="ship-stat-formula-part">x {fmt(multiplicativeBonus)}</span>
+                            )}
+                          </span>
+                          <span className="ship-stat-formula-result">
+                            <span className="ship-stat-formula-equals">=</span>
+                            <span className="ship-stat-formula-final">{roundedFinalValue}</span>
+                          </span>
+                        </>
+                      ) : (
+                        <span className="stat-value">{roundedFinalValue}</span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
+      {showPortLocked && !isInPort && (
         <div className="card port-locked-card">
           <div className="section-title">Port Services Locked</div>
           <div className="empty-state">

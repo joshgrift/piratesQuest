@@ -166,6 +166,7 @@ img {
   justify-content: center;
   align-items: center;
   position: relative;
+  left: 0;
   width: 52px;
   height: 52px;
   padding: 0;
@@ -181,6 +182,10 @@ img {
     inset 0 0 0 1px rgba(247, 221, 162, 0.2),
     inset 0 -8px 12px rgba(0, 0, 0, 0.28);
   opacity: 0.95;
+}
+
+.rail-mode-btn--bounce {
+  animation: rail-mode-bounce 0.28s cubic-bezier(0.22, 1, 0.36, 1) 0s 1;
 }
 
 .rail-mode-icon {
@@ -216,6 +221,16 @@ img {
   transform: scaleY(0.4);
   transform-origin: center;
   transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+@keyframes rail-mode-bounce {
+  0%, 100% {
+    left: 0;
+  }
+
+  50% {
+    left: -6px;
+  }
 }
 
 .rail-mode-btn:hover:not(:disabled) {
@@ -407,93 +422,347 @@ img {
 .npc-comment-toast-wrap {
   position: fixed;
   left: 50%;
-  bottom: 24px;
+  top: 24px;
   transform: translateX(-50%);
-  width: min(560px, calc(100vw - 32px));
+  width: min(540px, calc(100vw - 48px));
   pointer-events: auto;
   z-index: 1100;
-  animation: npc-comment-toast-in 0.24s ease;
 }
 
 .npc-comment-toast {
   position: relative;
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr);
-  gap: 14px;
-  align-items: center;
-  padding: 14px 18px 14px 14px;
-  border-radius: 22px;
-  border: 1px solid rgba(239, 196, 116, 0.55);
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 16px 18px 16px 14px;
+  border-radius: 26px;
+  border: 1px solid rgba(239, 196, 116, 0.32);
   background:
-    linear-gradient(145deg, rgba(20, 33, 48, 0.97), rgba(52, 30, 16, 0.96)),
-    radial-gradient(circle at 18% 18%, rgba(118, 183, 232, 0.2), transparent 34%),
-    radial-gradient(circle at 84% 78%, rgba(239, 196, 116, 0.2), transparent 40%);
+    linear-gradient(155deg, rgba(14, 29, 44, 0.97), rgba(56, 34, 18, 0.96)),
+    radial-gradient(circle at 18% 24%, rgba(118, 183, 232, 0.22), transparent 34%),
+    radial-gradient(circle at 88% 82%, rgba(239, 196, 116, 0.18), transparent 40%);
   box-shadow:
-    0 18px 34px rgba(0, 0, 0, 0.48),
-    inset 0 0 0 1px rgba(255, 232, 183, 0.12);
+    0 20px 42px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 232, 183, 0.12),
+    inset 0 16px 24px rgba(255, 234, 195, 0.03);
   cursor: pointer;
   outline: none;
+  overflow: hidden;
+  animation: npc-comment-toast-in 0.26s ease;
+}
+
+.npc-comment-toast--stacked {
+  overflow: visible;
+}
+
+.npc-comment-toast-stack {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(155deg, rgba(16, 30, 44, 0.9), rgba(51, 31, 17, 0.88)),
+    radial-gradient(circle at 18% 24%, rgba(118, 183, 232, 0.16), transparent 34%),
+    radial-gradient(circle at 88% 82%, rgba(239, 196, 116, 0.14), transparent 40%);
+  border: 1px solid rgba(239, 196, 116, 0.18);
+  box-shadow:
+    0 18px 28px rgba(0, 0, 0, 0.22),
+    inset 0 0 0 1px rgba(255, 232, 183, 0.08);
+}
+
+.npc-comment-toast-stack--mid {
+  inset: 12px -10px -12px 14px;
+  opacity: 0.48;
+  transform: rotate(1.3deg);
+}
+
+.npc-comment-toast-stack--back {
+  inset: 22px -16px -22px 28px;
+  opacity: 0.26;
+  transform: rotate(2.6deg);
+}
+
+.npc-comment-toast--celebrate {
+  box-shadow:
+    0 20px 42px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 221, 147, 0.34),
+    0 0 28px rgba(246, 198, 111, 0.26),
+    inset 0 0 0 1px rgba(255, 232, 183, 0.12),
+    inset 0 16px 24px rgba(255, 234, 195, 0.03);
+}
+
+.npc-comment-toast-confetti {
+  position: absolute;
+  inset: -30px 8px auto 8px;
+  height: 72px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.npc-comment-toast-confetti-piece {
+  position: absolute;
+  top: 24px;
+  width: 10px;
+  height: 18px;
+  border-radius: 3px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  animation: npc-comment-confetti-burst 1s ease-out forwards;
 }
 
 .npc-comment-toast:focus-visible {
   box-shadow:
-    0 18px 34px rgba(0, 0, 0, 0.48),
+    0 20px 42px rgba(0, 0, 0, 0.5),
     inset 0 0 0 1px rgba(255, 232, 183, 0.12),
     0 0 0 2px rgba(130, 188, 237, 0.65);
 }
 
 .npc-comment-toast-portrait {
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
+  position: relative;
+  z-index: 1;
+  width: 78px;
+  height: 78px;
+  border-radius: 24px;
   object-fit: cover;
-  border: 3px solid rgba(242, 201, 120, 0.68);
-  box-shadow: 0 0 18px rgba(114, 180, 228, 0.35), 0 10px 18px rgba(0, 0, 0, 0.38);
 }
 
 .npc-comment-toast-copy {
+  position: relative;
+  z-index: 1;
   display: grid;
-  gap: 6px;
+  gap: 7px;
   min-width: 0;
+  padding-top: 3px;
+}
+
+.npc-comment-toast-kicker {
+  color: rgba(138, 205, 247, 0.86);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .npc-comment-toast-name {
   font-family: "New Rocker", cursive;
-  font-size: 1.4rem;
+  font-size: 1.28rem;
   line-height: 1;
   color: #ffe0a7;
+  letter-spacing: 0.02em;
 }
 
 .npc-comment-toast-message {
   color: rgba(242, 235, 220, 0.96);
   line-height: 1.45;
   font-size: 1rem;
+  max-width: 31ch;
 }
 
-.npc-comment-toast-close {
+.npc-comment-toast-queue-badge {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 26px;
-  height: 26px;
-  border: none;
-  border-radius: 999px;
-  background: rgba(10, 18, 26, 0.55);
-  color: rgba(255, 232, 183, 0.92);
-  font-family: "Texturina", serif;
-  font-size: 14px;
+  --npc-comment-progress: 1;
+  right: 14px;
+  z-index: 2;
+  min-width: 58px;
+  padding: 7px 10px 8px;
+  display: grid;
+  justify-items: center;
+  border-radius: 16px;
+  border: 1px solid rgba(132, 194, 248, 0.34);
+  background:
+    linear-gradient(160deg, rgba(18, 48, 75, 0.96), rgba(29, 34, 59, 0.95));
+  color: #bfe3ff;
   cursor: pointer;
+  overflow: hidden;
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.32);
+}
+
+.npc-comment-toast-queue-badge--timed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, rgba(114, 200, 245, 0.28), rgba(246, 198, 111, 0.34))
+    left / calc(var(--npc-comment-progress) * 100%) 100% no-repeat;
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+.npc-comment-toast-queue-badge--stacked {
+  bottom: -12px;
+}
+
+.npc-comment-toast-queue-badge--solo {
+  bottom: 14px;
+}
+
+.npc-comment-toast-queue-caption {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 226, 170, 0.84);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.npc-comment-toast-queue-count {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 226, 170, 0.94);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.npc-comment-toast-queue-count--close {
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+}
+
+.npc-comment-toast-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.npc-comment-toast-action {
+  border: 1px solid rgba(236, 197, 121, 0.34);
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-family: "Texturina", serif;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.npc-comment-toast-action:hover {
+  transform: translateY(-1px);
+}
+
+.npc-comment-toast-action--primary {
+  background: linear-gradient(135deg, rgba(238, 194, 109, 0.94), rgba(204, 132, 49, 0.95));
+  color: #1f130b;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.28);
+}
+
+.npc-comment-toast-action--secondary {
+  background: rgba(15, 28, 39, 0.72);
+  color: #f5e3bf;
+}
+
+.npc-comment-toast-action--danger {
+  background: linear-gradient(135deg, rgba(163, 54, 39, 0.94), rgba(114, 24, 20, 0.95));
+  color: #fff0ea;
 }
 
 @keyframes npc-comment-toast-in {
   from {
     opacity: 0;
-    transform: translate(-50%, 18px);
+    transform: translateY(-14px) scale(0.985);
   }
 
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes npc-comment-confetti-burst {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.7);
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-40px) translateX(var(--confetti-drift, 0px)) rotate(220deg) scale(1.05);
+  }
+}
+
+.npc-comment-toast-confetti-piece:nth-child(odd) {
+  --confetti-drift: -18px;
+}
+
+.npc-comment-toast-confetti-piece:nth-child(even) {
+  --confetti-drift: 18px;
+}
+
+@media (max-width: 900px) {
+  .npc-comment-toast-wrap {
+    left: 50%;
+    top: 16px;
+    transform: translateX(-50%);
+    width: min(500px, calc(100vw - 24px));
+  }
+
+  .npc-comment-toast {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px 16px 14px 12px;
+    border-radius: 22px;
+  }
+
+  .npc-comment-toast-stack--mid {
+    inset: 8px -6px -8px 10px;
+  }
+
+  .npc-comment-toast-stack--back {
+    inset: 14px -10px -14px 18px;
+  }
+
+  .npc-comment-toast-background-timer {
+    border-radius: calc(22px - 1px);
+  }
+
+  .npc-comment-toast-portrait {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+  }
+
+  .npc-comment-toast-kicker {
+    font-size: 0.66rem;
+  }
+
+  .npc-comment-toast-name {
+    font-size: 1.1rem;
+  }
+
+  .npc-comment-toast-message {
+    font-size: 0.94rem;
+    max-width: none;
+  }
+
+  .npc-comment-toast-queue-badge {
+    right: 10px;
+    min-width: 50px;
+    padding: 6px 8px 7px;
+  }
+
+  .npc-comment-toast-queue-badge--stacked {
+    bottom: -10px;
+  }
+
+  .npc-comment-toast-queue-badge--solo {
+    bottom: 12px;
+  }
+
+  .npc-comment-toast-queue-caption {
+    font-size: 0.58rem;
+  }
+
+  .npc-comment-toast-queue-count {
+    font-size: 0.88rem;
   }
 }
 
@@ -542,6 +811,53 @@ img {
     radial-gradient(circle at 76% 67%, rgba(186, 140, 71, 0.34), transparent 34%),
     linear-gradient(115deg, transparent 40%, rgba(255, 233, 180, 0.13) 50%, transparent 60%),
     repeating-linear-gradient(0deg, transparent 0 10px, rgba(221, 183, 111, 0.09) 10px 11px);
+}
+
+.sea-chart {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: min(52rem, 92vw);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  z-index: 1300;
+}
+
+.sea-chart__panel {
+  position: relative;
+  width: 100%;
+  padding: 1.5rem 0 1.5rem 1.5rem;
+  transform: translateX(calc(-100% - 2rem));
+  transition: transform 220ms ease;
+}
+
+.sea-chart.open {
+  pointer-events: none;
+}
+
+.sea-chart.open .sea-chart__panel {
+  transform: translateX(0);
+}
+
+.sea-chart__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 50vh;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.35));
+}
+
+@media (max-width: 900px) {
+  .sea-chart {
+    width: 100vw;
+  }
+
+  .sea-chart__panel {
+    padding: 1rem 0 1rem 1rem;
+  }
 }
 
 .ship-status-header {
@@ -1441,13 +1757,6 @@ img {
   color: #c8bda8;
 }
 
-.market-gold-header {
-  margin: 0 0 8px;
-  color: #eac689;
-  font-size: 13px;
-  font-weight: 700;
-}
-
 .mode-btn {
   flex: 1;
   padding: 7px 0;
@@ -2172,6 +2481,73 @@ img {
   padding: 1px 4px;
   font-family: monospace;
   white-space: nowrap;
+}
+
+.ship-stat-list {
+  display: grid;
+  gap: 8px;
+}
+
+.ship-stat-list-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ship-stat-list-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ship-stat-impact {
+  font-size: 11px;
+  color: #9fd3a0;
+  line-height: 1.35;
+}
+
+.ship-stat-formula {
+  display: grid;
+  justify-content: flex-end;
+  gap: 2px;
+  text-align: right;
+  color: #9fd3a0;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.ship-stat-formula-line,
+.ship-stat-formula-result {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.ship-stat-formula-base,
+.ship-stat-formula-equals,
+.ship-stat-formula-final {
+  color: #e0d5c0;
+  font-family: monospace;
+}
+
+.ship-stat-formula-part {
+  color: #9fd3a0;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.ship-stat-formula-base,
+.ship-stat-formula-equals {
+  font-size: 12px;
+}
+
+.ship-stat-formula-final {
+  font-size: 13px;
 }
 
 /* ── Empty State ──────────────────────────────────────────────────── */
@@ -2934,6 +3310,37 @@ img {
   font-weight: 700;
 }
 
+.ship-crew-summary-divider {
+  height: 1px;
+  margin: 10px 0 12px;
+  background: linear-gradient(90deg, rgba(236, 196, 116, 0.04), rgba(236, 196, 116, 0.3), rgba(118, 186, 233, 0.18), rgba(236, 196, 116, 0.04));
+}
+
+.ship-crew-summary-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.ship-crew-summary-title {
+  font-family: "New Rocker", cursive;
+  font-size: 14px;
+  color: #f1ddb8;
+  letter-spacing: 0.03em;
+}
+
+.ship-crew-summary-note {
+  font-size: 11px;
+  color: #8b9ab5;
+}
+
+.ship-crew-stats-grid {
+  gap: 6px 10px;
+}
+
 .tavern-crew-help {
   margin-top: 8px;
   font-size: 11px;
@@ -3065,6 +3472,205 @@ img {
   background: rgba(107, 223, 107, 0.15);
   color: #8ff08f;
   border: 1px solid rgba(107, 223, 107, 0.35);
+}
+
+.npc-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.npc-card-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.npc-card {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(236, 196, 116, 0.22);
+  background:
+    linear-gradient(160deg, rgba(20, 33, 47, 0.96), rgba(53, 29, 16, 0.92)),
+    radial-gradient(circle at 15% 15%, rgba(116, 182, 229, 0.18), transparent 38%);
+  box-shadow:
+    0 16px 28px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 229, 172, 0.08);
+}
+
+.npc-card-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.npc-card-main {
+  min-width: 0;
+}
+
+.npc-card-portrait {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(242, 201, 120, 0.68);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.28);
+}
+
+.npc-card-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.npc-card-name {
+  font-family: "New Rocker", cursive;
+  font-size: 1.2rem;
+  color: #f1ddb8;
+}
+
+.npc-card-role {
+  font-size: 0.72rem;
+  color: #9fb3c7;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.npc-card-impact {
+  border-top: 1px solid rgba(236, 196, 116, 0.14);
+  padding-top: 10px;
+}
+
+.npc-card-impact--inline {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 2px;
+}
+
+.npc-card-impact-placeholder {
+  min-height: 16px;
+}
+
+.npc-card-impact-list {
+  display: grid;
+  gap: 6px;
+}
+
+.npc-card-impact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #e8dcc5;
+  font-size: 0.92rem;
+}
+
+.npc-card-impact-empty {
+  color: #c1b39a;
+  font-size: 0.9rem;
+}
+
+.npc-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quest-card-actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.npc-card-action-btn {
+  border: 1px solid rgba(236, 196, 116, 0.26);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(15, 27, 37, 0.74);
+  color: #f6e5bf;
+  font-family: "Texturina", serif;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.npc-card-action-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(236, 196, 116, 0.46);
+}
+
+.npc-card-action-btn--quest {
+  background: rgba(89, 56, 19, 0.86);
+}
+
+.npc-card-action-btn--talk {
+  background: rgba(24, 51, 72, 0.78);
+}
+
+.npc-card-action-btn--danger {
+  background: rgba(108, 32, 24, 0.82);
+}
+
+.npc-card--list {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 18px;
+}
+
+.npc-card-portrait--compact {
+  width: 64px;
+  height: 64px;
+  border-width: 2px;
+}
+
+.npc-card--list .npc-card-name {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.npc-card--list .npc-card-role {
+  font-size: 0.64rem;
+}
+
+.npc-card--list .npc-card-impact-list {
+  gap: 4px;
+}
+
+.npc-card--list .npc-card-impact-row {
+  font-size: 0.82rem;
+}
+
+.npc-card--list .npc-card-impact-empty {
+  font-size: 0.8rem;
+}
+
+.npc-card--list .npc-card-actions {
+  justify-content: flex-end;
+  align-self: center;
+  gap: 6px;
+}
+
+.npc-card--list .npc-card-action-btn {
+  padding: 6px 10px;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 720px) {
+  .npc-card--list {
+    grid-template-columns: 1fr;
+  }
+
+  .npc-card--list .npc-card-actions {
+    justify-content: flex-start;
+    align-self: start;
+  }
 }
 
 .tavern-stats-card {
@@ -3667,11 +4273,25 @@ img {
   gap: 14px;
 }
 
+.quest-card--completed {
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.quest-card--collapsed {
+  gap: 0;
+  padding: 0;
+}
+
 .quest-card-header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: start;
+}
+
+.quest-card-heading {
+  min-width: 0;
 }
 
 .quest-card-kicker {
@@ -3690,6 +4310,100 @@ img {
 .quest-card-giver {
   color: rgba(228, 221, 202, 0.76);
   text-align: right;
+  white-space: nowrap;
+}
+
+.quest-card--completed .quest-card-header {
+  align-items: center;
+}
+
+.quest-card--completed .quest-card-kicker {
+  font-size: 0.72rem;
+}
+
+.quest-card--completed .quest-card-title {
+  font-size: 1rem;
+}
+
+.quest-card--completed .quest-card-giver {
+  font-size: 0.92rem;
+}
+
+.quest-card-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 0;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(19, 43, 52, 0.9), rgba(10, 24, 32, 0.94));
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.quest-card-toggle:hover {
+  background: linear-gradient(135deg, rgba(25, 56, 67, 0.92), rgba(12, 29, 39, 0.96));
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2);
+}
+
+.quest-card-toggle:focus-visible {
+  outline: 2px solid rgba(122, 216, 255, 0.8);
+  outline-offset: 2px;
+}
+
+.quest-card-toggle--inline {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.quest-card-toggle--inline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  transform: none;
+}
+
+.quest-card-toggle-copy {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.quest-card-summary {
+  color: rgba(241, 233, 215, 0.72);
+  font-size: 0.95rem;
+}
+
+.quest-card-toggle-label {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 241, 200, 0.8);
+}
+
+.quest-card-chevron {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 216, 137, 0.12);
+  color: #ffe9af;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.quest-card-chevron--open {
+  font-size: 1.2rem;
 }
 
 .quest-card-desc {
@@ -3730,10 +4444,6 @@ img {
   border: 1px solid rgba(112, 197, 239, 0.34);
   background: rgba(18, 45, 61, 0.5);
   color: #cfeeff;
-}
-
-.quest-accept-btn {
-  width: 100%;
 }
 
 .creative-quest-select {
@@ -3921,6 +4631,108 @@ img {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr);
   gap: 16px;
+}
+
+.message-log-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.message-log-hero,
+.message-log-empty {
+  padding: 16px 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(235, 191, 110, 0.22);
+  background:
+    linear-gradient(150deg, rgba(11, 28, 44, 0.88), rgba(43, 25, 14, 0.86)),
+    radial-gradient(circle at top left, rgba(115, 181, 228, 0.12), transparent 35%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 230, 179, 0.04),
+    0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.message-log-kicker {
+  color: #8ec8ee;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.message-log-title,
+.message-log-empty-title {
+  margin-top: 8px;
+  font-family: "New Rocker", cursive;
+  font-size: 26px;
+  line-height: 1.05;
+  color: #ffe4a9;
+}
+
+.message-log-subtitle,
+.message-log-empty p {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #d6e5f1;
+  max-width: 58ch;
+}
+
+.message-log-list {
+  display: grid;
+  gap: 12px;
+}
+
+.message-log-entry {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(232, 189, 108, 0.18);
+  background:
+    linear-gradient(155deg, rgba(12, 27, 42, 0.88), rgba(40, 24, 16, 0.84));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 232, 183, 0.03),
+    0 10px 22px rgba(0, 0, 0, 0.18);
+}
+
+.message-log-entry-portrait {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  object-fit: cover;
+}
+
+.message-log-entry-copy {
+  min-width: 0;
+}
+
+.message-log-entry-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.message-log-entry-name {
+  font-family: "New Rocker", cursive;
+  font-size: 20px;
+  color: #ffe3a7;
+}
+
+.message-log-entry-time {
+  flex-shrink: 0;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8fbde0;
+}
+
+.message-log-entry-message {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #e5edf4;
 }
 
 .stats-panel {

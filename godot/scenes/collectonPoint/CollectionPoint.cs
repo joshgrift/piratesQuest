@@ -4,11 +4,13 @@ using PiratesQuest.Data;
 using PiratesQuest.Attributes;
 using System.Collections.Generic;
 
+[Tool]
 public partial class CollectionPoint : Node3D, IDropper
 {
   // HashSet prevents duplicate entries if BodyEntered fires multiple times
   // for the same collector (which can happen with complex colliders).
   private readonly HashSet<ICanCollect> _collectors = [];
+  private float _interactionRadius = 10.0f;
 
   private Timer _collectionTimer;
 
@@ -24,6 +26,16 @@ public partial class CollectionPoint : Node3D, IDropper
   [Export] public int CollectionPerSecond = 4;
   [Export] public float CollectionSpeed = 2.0f;
   [Export] public InteractionPoint DockingArea;
+  [Export(PropertyHint.Range, "0.5,200,0.5,or_greater")]
+  public float InteractionRadius
+  {
+    get => _interactionRadius;
+    set
+    {
+      _interactionRadius = Mathf.Max(0.5f, value);
+      SyncInteractionRadius();
+    }
+  }
 
   // ===== Visual feedback =====
   // FeedbackRoot controls visibility; FeedbackRing holds the compass shader mesh.
@@ -33,6 +45,15 @@ public partial class CollectionPoint : Node3D, IDropper
 
   public override void _Ready()
   {
+    SyncInteractionRadius();
+
+    if (Engine.IsEditorHint())
+    {
+      // Tool mode is only for previewing the interaction radius in the editor.
+      // The timer and collection gameplay should only run in-game.
+      return;
+    }
+
     DockingArea.InteractionArea.BodyEntered += OnBodyEntered;
     DockingArea.InteractionArea.BodyExited += OnBodyExited;
 
@@ -57,8 +78,19 @@ public partial class CollectionPoint : Node3D, IDropper
     SetProgress(0.0f, false);
   }
 
+  public override void _Notification(int what)
+  {
+    if (what == NotificationReady)
+    {
+      SyncInteractionRadius();
+    }
+  }
+
   public override void _Process(double delta)
   {
+    if (Engine.IsEditorHint())
+      return;
+
     bool hasCollectors = _collectors.Count > 0;
 
     if (!hasCollectors || _collectionTimer == null || _collectionTimer.WaitTime <= 0.0)
@@ -133,6 +165,18 @@ public partial class CollectionPoint : Node3D, IDropper
         SetProgress(0.0f, false);
       }
     }
+  }
+
+  /// <summary>
+  /// Forwards the wrapper's exported radius down to the shared interaction point child.
+  /// </summary>
+  private void SyncInteractionRadius()
+  {
+    if (DockingArea == null) return;
+
+    // Collection points expose the same tuning knob as ports, so scene instances
+    // can size the interaction area without opening the nested child scene.
+    DockingArea.InteractionRadius = InteractionRadius;
   }
 
   /// <summary>

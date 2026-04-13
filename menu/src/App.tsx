@@ -6,6 +6,7 @@ import type { ApiStatusResponse, GithubRelease, MenuServer, MenuState } from "./
 const RELEASES_URL = "https://api.github.com/repos/joshgrift/piratesQuest/releases?per_page=6";
 const DISCORD_INVITE_URL = "https://discord.gg/R9Fz54UNud";
 const WEBSITE_URL = "https://pirates.quest";
+const WIKI_URL = "https://pirates.quest/wiki";
 
 const EMPTY_STATE: MenuState = {
   apiBaseUrl: "",
@@ -286,6 +287,13 @@ export default function App() {
           type="button"
         >
           Discord
+        </button>
+        <button
+          className="ghost-btn wiki-btn"
+          onClick={() => sendIpc({ action: "open_url", url: WIKI_URL })}
+          type="button"
+        >
+          Wiki
         </button>
         <button
           className="ghost-btn"

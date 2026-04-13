@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { sendIpc } from "../utils/ipc";
 import { iconUrl, inventoryIcon } from "../utils/helpers";
 import type { PortState } from "../types";
-const VAULT_ITEM_TYPES = ["Wood", "Iron", "Fish", "Tea", "CannonBall", "Trophy"];
+const VAULT_ITEM_TYPES = ["Wood", "Iron", "Fish", "Tea", "CannonBall"];
 
 export function VaultTab({ state }: { state: PortState }) {
   const vault = state.vault;

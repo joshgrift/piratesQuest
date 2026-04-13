@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://cbpbyhh8dviry"
+path="res://.godot/imported/GP_Damage_8.wav-93f4f4ba8d72db06b538ad27ae99416a.sample"
+
+[deps]
+
+source_file="res://art/sounds/card game sfx pack by olex mazur/Damage/GP_Damage_8.wav"
+dest_files=["res://.godot/imported/GP_Damage_8.wav-93f4f4ba8d72db06b538ad27ae99416a.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

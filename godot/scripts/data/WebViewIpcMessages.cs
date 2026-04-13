@@ -78,6 +78,9 @@ public record TavernCharacterDto(
   string Role,
   string Portrait,
   bool Hireable,
+  string[] TalkPhrases,
+  string HireText,
+  string FireText,
   StatChangeDto[] StatChanges
 );
 
@@ -108,6 +111,7 @@ public record RepairCostDto
 /// </summary>
 public record VaultStateDto
 {
+  public string PortId { get; init; } = "";
   public string PortName { get; init; } = "";
   public int Level { get; init; }
   public Dictionary<string, int> Items { get; init; } = new();
@@ -125,6 +129,7 @@ public record ShopItemDto(string Type, int BuyPrice, int SellPrice);
 /// </summary>
 public record HudPortSnapshotDto
 {
+  public string PortId { get; init; } = "";
   public string PortName { get; init; } = "";
   public ShopItemDto[] ItemsForSale { get; init; } = [];
   public TavernStateDto Tavern { get; init; } = new();
@@ -176,6 +181,7 @@ public enum IpcAction
   FireCharacter,
   TalkToNpc,
   AcceptQuest,
+  CancelQuest,
   CompleteQuest,
   UncompleteQuest,
   SetActiveQuest,
@@ -213,6 +219,7 @@ public enum IpcAction
 [JsonDerivedType(typeof(FireCharacterMessage), "fire_character")]
 [JsonDerivedType(typeof(TalkToNpcMessage), "talk_to_npc")]
 [JsonDerivedType(typeof(AcceptQuestMessage), "accept_quest")]
+[JsonDerivedType(typeof(CancelQuestMessage), "cancel_quest")]
 [JsonDerivedType(typeof(CompleteQuestMessage), "complete_quest")]
 [JsonDerivedType(typeof(UncompleteQuestMessage), "uncomplete_quest")]
 [JsonDerivedType(typeof(SetActiveQuestMessage), "set_active_quest")]
@@ -332,6 +339,12 @@ public record AcceptQuestMessage : IpcMessage
   public string QuestId { get; init; } = "";
 }
 
+/// <summary>Cancels the current manually accepted quest.</summary>
+public record CancelQuestMessage : IpcMessage
+{
+  public override IpcAction Action => IpcAction.CancelQuest;
+}
+
 /// <summary>Creative-mode only: force completes the current active quest.</summary>
 public record CompleteQuestMessage : IpcMessage
 {
@@ -393,7 +406,7 @@ public record SetShipTierMessage : IpcMessage
 public record SetVaultMessage : IpcMessage
 {
   public override IpcAction Action => IpcAction.SetVault;
-  public string PortName { get; init; } = "";
+  public string PortId { get; init; } = "";
   public int Level { get; init; } = 1;
 }
 

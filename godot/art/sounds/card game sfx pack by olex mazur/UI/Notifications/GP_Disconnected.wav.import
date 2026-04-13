@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://dui1j0c01oypv"
+path="res://.godot/imported/GP_Disconnected.wav-18e356c503bd771b8a5743727d590a0a.sample"
+
+[deps]
+
+source_file="res://art/sounds/card game sfx pack by olex mazur/UI/Notifications/GP_Disconnected.wav"
+dest_files=["res://.godot/imported/GP_Disconnected.wav-18e356c503bd771b8a5743727d590a0a.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

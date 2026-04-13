@@ -1,9 +1,13 @@
-import { describe, it, expect } from "vitest";
-import { screen } from "@testing-library/react";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { act, fireEvent, screen } from "@testing-library/react";
 import { getIpcMessages, renderApp } from "./helpers";
-import { makeOwnedComponent } from "./fixtures";
+import { makeOwnedComponent, makePortState } from "./fixtures";
 
 describe("App", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("shows the port panel after openPort is called", () => {
     const { container } = renderApp();
     // The port panel should now be in the DOM
@@ -23,6 +27,18 @@ describe("App", () => {
     );
   });
 
+  it("toggles the sea chart when Tab is pressed", () => {
+    renderApp();
+
+    expect(screen.getByAltText("World map of the sea").closest(".sea-chart")).not.toHaveClass("open");
+
+    fireEvent.keyDown(window, { key: "Tab" });
+    expect(screen.getByAltText("World map of the sea").closest(".sea-chart")).toHaveClass("open");
+
+    fireEvent.keyDown(window, { key: "Tab" });
+    expect(screen.getByAltText("World map of the sea").closest(".sea-chart")).not.toHaveClass("open");
+  });
+
   it("shows the ship status widget with player, health, and cannonballs", () => {
     const { getByTestId } = renderApp({
       playerName: "Scarlet Jack",
@@ -37,8 +53,10 @@ describe("App", () => {
     });
 
     expect(getByTestId("ship-status-player")).toHaveTextContent("Scarlet Jack");
-    expect(getByTestId("ship-status-health")).toHaveTextContent("77 / 120");
-    expect(getByTestId("ship-status-cannonballs")).toHaveTextContent("19 balls");
+    expect(getByTestId("ship-status-cannonballs")).toHaveTextContent("19");
+
+    fireEvent.click(screen.getByRole("button", { name: "Show ship indicator details" }));
+    expect(screen.getByText("77 / 120")).toBeInTheDocument();
   });
 
   it("shows cooling cannon state and overburdened warning", () => {
@@ -48,12 +66,15 @@ describe("App", () => {
       isOverburdened: true,
     });
 
-    expect(getByTestId("ship-status-cannon-state")).toHaveTextContent("Cooling 1.2s");
-    expect(getByTestId("ship-status-overburdened")).toHaveTextContent("Overburdened");
+    fireEvent.click(getByTestId("ship-status-cannon-state"));
+    expect(screen.getByText("Loading 1.2s")).toBeInTheDocument();
+
+    fireEvent.click(getByTestId("ship-status-overburdened"));
+    expect(screen.getByText("Burdened")).toBeInTheDocument();
   });
 
   it("shows component and crew slot usage", () => {
-    const { getByTestId } = renderApp({
+    renderApp({
       componentCapacity: 4,
       ownedComponents: [
         makeOwnedComponent({ name: "Hull", isEquipped: true }),
@@ -67,8 +88,9 @@ describe("App", () => {
       },
     });
 
-    expect(getByTestId("ship-status-component-slots")).toHaveTextContent("2/4");
-    expect(getByTestId("ship-status-crew-slots")).toHaveTextContent("2/3");
+    fireEvent.click(screen.getByRole("button", { name: "Show ship indicator details" }));
+    expect(screen.getByTestId("ship-status-component-slots")).toHaveAttribute("aria-label", "Component slots: 2/4");
+    expect(screen.getByTestId("ship-status-crew-slots")).toHaveAttribute("aria-label", "Crew slots: 2/3");
   });
 
   it("marks completed quest widget steps with the complete styling hook", () => {
@@ -84,9 +106,9 @@ describe("App", () => {
           giverPortName: "Tortuga",
           revealGiverInQuestLog: true,
           canAcceptFromQuestLog: true,
+          canCancel: false,
           description: "A short tutorial quest.",
           completionText: "Nicely done.",
-          isReadyToTurnIn: false,
           unlocks: [],
           steps: [
             { label: "Buy 1 Tea", currentValue: 1, requiredValue: 1, isComplete: true },
@@ -95,6 +117,7 @@ describe("App", () => {
         },
         all: [],
         completedIds: [],
+        recentlyCompletedIds: [],
         unlockedFeatures: [],
       },
     });
@@ -108,23 +131,54 @@ describe("App", () => {
     expect(completedValue).toHaveTextContent("1/1");
   });
 
-  it("auto-opens Scarlett's onboarding and accepts her starter quest at sea", () => {
+  it("shows AcceptedText when a quest is already active from auto-accept", () => {
+    renderApp({
+      isInPort: false,
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett_learn_to_sail",
+          title: "Learn to Sail",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character2.png",
+          giverPortName: "",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          canCancel: false,
+          acceptedText: "Welcome to the Seas! Press W, A, S, or D and make the ship answer.",
+          description: "Move the ship once.",
+          completionText: "",
+          unlocks: [],
+          steps: [],
+        },
+        all: [],
+        completedIds: [],
+        recentlyCompletedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
+  });
+
+  it("does not auto-open Scarlett onboarding or auto-accept her quest at sea", () => {
     const { ipcSpy } = renderApp({
       isInPort: false,
       quests: {
         available: [
           {
-            id: "scarlett_sail_to_port",
-            title: "Sail to Port",
+            id: "scarlett_learn_to_sail",
+            title: "Learn to Sail",
             giverNpcId: "scarlett",
             giverName: "Scarlett",
             giverPortrait: "character2.png",
             giverPortName: "",
             revealGiverInQuestLog: true,
             canAcceptFromQuestLog: true,
+            canCancel: false,
             description: "Dock once.",
             completionText: "Nicely done.",
-            isReadyToTurnIn: false,
             unlocks: ["SellGoods", "TavernTalk"],
             steps: [],
           },
@@ -132,18 +186,266 @@ describe("App", () => {
         active: null,
         all: [],
         completedIds: [],
+        recentlyCompletedIds: [],
         unlockedFeatures: [],
       },
     });
 
-    expect(screen.getByText(/top-left Quests button/i)).toBeInTheDocument();
-    expect(screen.queryByRole("dialog", { name: "Scarlett conversation" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/top-left Quests button/i)).not.toBeInTheDocument();
 
     const actions = getIpcMessages(ipcSpy) as { action: string; questId?: string; characterId?: string }[];
-    expect(actions).toContainEqual({
+    expect(actions).not.toContainEqual({
       action: "accept_quest",
-      questId: "scarlett_sail_to_port",
+      questId: "scarlett_learn_to_sail",
       characterId: "scarlett",
     });
+  });
+
+  it("auto-dismisses NPC comments even when there is no follow-up toast", () => {
+    vi.useFakeTimers();
+
+    renderApp({
+      isInPort: false,
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett_learn_to_sail",
+          title: "Learn to Sail",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character2.png",
+          giverPortName: "",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          canCancel: false,
+          acceptedText: "Welcome to the Seas! Press W, A, S, or D and make the ship answer.",
+          description: "Move the ship once.",
+          completionText: "",
+          unlocks: [],
+          steps: [],
+        },
+        all: [],
+        completedIds: [],
+        recentlyCompletedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    expect(screen.getByRole("button", { name: /dismiss message from scarlett/i })).toBeInTheDocument();
+    expect(screen.queryByText(/closes in/i)).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(screen.queryByText(/Press W, A, S, or D/i)).not.toBeInTheDocument();
+  });
+
+  it("pauses NPC comment auto-dismiss while the toast is hovered", () => {
+    vi.useFakeTimers();
+
+    renderApp({
+      isInPort: false,
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett_learn_to_sail",
+          title: "Learn to Sail",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character2.png",
+          giverPortName: "",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          canCancel: false,
+          acceptedText: "Welcome to the Seas! Press W, A, S, or D and make the ship answer.",
+          description: "Move the ship once.",
+          completionText: "",
+          unlocks: [],
+          steps: [],
+        },
+        all: [],
+        completedIds: [],
+        recentlyCompletedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    const toast = screen.getByRole("button", { name: /dismiss message from scarlett/i });
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    fireEvent.mouseEnter(toast);
+
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
+
+    fireEvent.mouseLeave(toast);
+
+    act(() => {
+      vi.advanceTimersByTime(1900);
+    });
+
+    expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(screen.queryByText(/Press W, A, S, or D/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps the original countdown when a follow-up toast is added later", () => {
+    vi.useFakeTimers();
+
+    const initialState = makePortState({
+      isInPort: false,
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett_learn_to_sail",
+          title: "Learn to Sail",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character2.png",
+          giverPortName: "",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          canCancel: false,
+          acceptedText: "Welcome to the Seas! Press W, A, S, or D and make the ship answer.",
+          description: "Move the ship once.",
+          completionText: "",
+          unlocks: [],
+          steps: [],
+        },
+        all: [
+          {
+            id: "scarlett-first-port",
+            title: "Dock at Tortuga",
+            giverNpcId: "scarlett",
+            giverName: "Scarlett",
+            giverPortrait: "character2.png",
+            giverPortName: "Tortuga",
+            revealGiverInQuestLog: true,
+            canAcceptFromQuestLog: true,
+            canCancel: false,
+            description: "Come back to port.",
+            completionText: "Nice work. You made it back to harbor.",
+            unlocks: [],
+            steps: [],
+          },
+        ],
+        completedIds: [],
+        recentlyCompletedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    renderApp(initialState);
+
+    act(() => {
+      vi.advanceTimersByTime(4900);
+    });
+    expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
+    expect(screen.queryByText(/next in/i)).not.toBeInTheDocument();
+
+    const followUpState = {
+      ...initialState,
+      quests: {
+        ...initialState.quests,
+        recentlyCompletedIds: ["scarlett-first-port"],
+      },
+    };
+
+    act(() => {
+      window.updateState?.(followUpState);
+    });
+
+    expect(screen.getByLabelText("1 more waiting")).toBeInTheDocument();
+    expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(screen.queryByText(/Press W, A, S, or D/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Nice work. You made it back to harbor.")).toBeInTheDocument();
+  });
+
+  it("stores dismissed NPC messages in the ship log", () => {
+    renderApp({
+      isInPort: false,
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett_learn_to_sail",
+          title: "Learn to Sail",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character2.png",
+          giverPortName: "",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          canCancel: false,
+          acceptedText: "Welcome to the Seas! Press W, A, S, or D and make the ship answer.",
+          description: "Move the ship once.",
+          completionText: "",
+          unlocks: [],
+          steps: [],
+        },
+        all: [],
+        completedIds: [],
+        recentlyCompletedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /close message from scarlett/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /ship log mode/i }));
+
+    expect(screen.getByText("Recent messages from the crew and harbors")).toBeInTheDocument();
+    expect(screen.getByText(/Press W, A, S, or D/i)).toBeInTheDocument();
+  });
+
+  it("bounces the ship log button after a toast disappears until the log is opened", () => {
+    renderApp({
+      isInPort: false,
+      quests: {
+        available: [],
+        active: {
+          id: "scarlett_learn_to_sail",
+          title: "Learn to Sail",
+          giverNpcId: "scarlett",
+          giverName: "Scarlett",
+          giverPortrait: "character2.png",
+          giverPortName: "",
+          revealGiverInQuestLog: true,
+          canAcceptFromQuestLog: true,
+          canCancel: false,
+          acceptedText: "Welcome to the Seas! Press W, A, S, or D and make the ship answer.",
+          description: "Move the ship once.",
+          completionText: "",
+          unlocks: [],
+          steps: [],
+        },
+        all: [],
+        completedIds: [],
+        recentlyCompletedIds: [],
+        unlockedFeatures: [],
+      },
+    });
+
+    expect(screen.getByRole("tab", { name: /ship log mode/i })).not.toHaveClass("rail-mode-btn--bounce");
+
+    fireEvent.click(screen.getByRole("button", { name: /close message from scarlett/i }));
+    expect(screen.getByRole("tab", { name: /ship log mode/i })).toHaveClass("rail-mode-btn--bounce");
+
+    fireEvent.click(screen.getByRole("tab", { name: /ship log mode/i }));
+    expect(screen.getByRole("tab", { name: /ship log mode/i })).not.toHaveClass("rail-mode-btn--bounce");
   });
 });

@@ -5,18 +5,17 @@ import { makePortState } from "./fixtures";
 import type { PortState } from "../types";
 import type { Mock } from "vitest";
 
-type Tab = "quests" | "leaderboard" | "stats" | "ship_crew" | "ship_status" | "market" | "shipyard" | "vault" | "creative";
+type Tab = "quests" | "leaderboard" | "stats" | "ship_status" | "market" | "shipyard" | "vault" | "creative";
 
 const TAB_LABELS: Record<Tab, string> = {
   ship_status: "Ship mode",
-  ship_crew: "Crew mode",
-  quests: "Quests",
+  quests: "Quests mode",
   stats: "Stats",
   leaderboard: "Leaderboard",
   market: "Market",
   shipyard: "Shipyard",
   vault: "Vault",
-  creative: "Creative",
+  creative: "Creative mode",
 };
 
 interface RenderAppOptions {
@@ -92,7 +91,7 @@ export function renderApp(overridesOrOptions?: Partial<PortState> | RenderAppOpt
           resolvedModeButton.click();
         });
       }
-    } else if (["market", "shipyard", "vault", "creative"].includes(tab)) {
+    } else if (["market", "shipyard", "vault"].includes(tab)) {
       const modeButton = screen.getByRole("tab", { name: "Port mode" });
       if (modeButton.getAttribute("aria-selected") !== "true") {
         act(() => {
@@ -103,6 +102,13 @@ export function renderApp(overridesOrOptions?: Partial<PortState> | RenderAppOpt
       act(() => {
         tabButton.click();
       });
+    } else if (tab === "creative") {
+      const modeButton = screen.getByRole("tab", { name: TAB_LABELS[tab] });
+      if (modeButton.getAttribute("aria-selected") !== "true") {
+        act(() => {
+          modeButton.click();
+        });
+      }
     } else {
       const modeButton = screen.getByRole("tab", { name: TAB_LABELS[tab] });
       if (modeButton.getAttribute("aria-selected") !== "true") {

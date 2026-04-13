@@ -232,13 +232,12 @@ describe("MarketTab", () => {
       expect(screen.getByRole("button", { name: "+" })).toBeDisabled();
     });
 
-    it("sell mode has -100, -50, -5 bulk decrement buttons", async () => {
+    it("sell mode has +5, +50, +100 bulk increment buttons", async () => {
       const { user } = renderSellMode();
       await user.click(screen.getByRole("button", { name: "Sell Goods" }));
-      // These buttons label as negative numbers in sell mode
-      expect(screen.getByRole("button", { name: "-100" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "-50" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "-5" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "+5" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "+50" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "+100" })).toBeInTheDocument();
     });
   });
 
@@ -430,9 +429,9 @@ describe("MarketTab", () => {
       expect(screen.getByRole("button", { name: "+" })).toBeDisabled();
     });
 
-    it("shows gold count in the header", () => {
+    it("does not repeat gold count inside the market tab", () => {
       renderMarket({ state: { inventory: { Coin: 999 } } });
-      expect(screen.getByText(/999 Gold/)).toBeInTheDocument();
+      expect(screen.queryByText(/999 Gold/)).not.toBeInTheDocument();
     });
   });
 

@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bbp2rjyongt7r"
+path="res://.godot/imported/GP_PutDown_7.wav-e3e91428c7e64f5487c8b8a598340ccc.sample"
+
+[deps]
+
+source_file="res://art/sounds/card game sfx pack by olex mazur/Cards/Play/GP_PutDown_7.wav"
+dest_files=["res://.godot/imported/GP_PutDown_7.wav-e3e91428c7e64f5487c8b8a598340ccc.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

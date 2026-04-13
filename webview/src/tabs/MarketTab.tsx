@@ -2,22 +2,23 @@ import { useState, useCallback, useEffect } from "react";
 import { sendIpc } from "../utils/ipc";
 import { inventoryIcon } from "../utils/helpers";
 import type { PortState } from "../types";
-import { TavernTab } from "./TavernTab";
+import { TavernSection } from "./TavernSection";
 
 type TradeMode = "buy" | "sell";
 
 interface MarketTabProps {
   state: PortState;
-  onOpenConversation: (characterId: string) => void;
-  activeConversationCharacterId?: string | null;
+  onTalkToCharacter: (characterId: string) => void;
+  onHireCharacter: (characterId: string) => void;
+  onQuestForCharacter: (characterId: string) => void;
 }
 
 export function MarketTab({
   state,
-  onOpenConversation,
-  activeConversationCharacterId,
+  onTalkToCharacter,
+  onHireCharacter,
+  onQuestForCharacter,
 }: MarketTabProps) {
-  const coins = state.inventory["Coin"] ?? 0;
   const buyUnlocked = state.quests.unlockedFeatures.includes("BuyGoods");
   const sellUnlocked = state.quests.unlockedFeatures.includes("SellGoods");
   const tavernUnlocked = state.quests.unlockedFeatures.includes("TavernTalk");
@@ -102,16 +103,15 @@ export function MarketTab({
     <>
       {state.isInPort && tavernUnlocked && (
         <section className="market-people-section" aria-label="People in port">
-          <h3 className="market-people-title">People in Port</h3>
-          <TavernTab
+          <h3 className="market-people-title">Tavern</h3>
+          <TavernSection
             state={state}
-            onOpenConversation={onOpenConversation}
-            activeConversationCharacterId={activeConversationCharacterId}
+            onTalk={onTalkToCharacter}
+            onHire={onHireCharacter}
+            onQuest={onQuestForCharacter}
           />
         </section>
       )}
-
-      <div className="market-gold-header">{coins} Gold</div>
 
       {(buyUnlocked || sellUnlocked) && (
         <div className="mode-toggle">
@@ -168,16 +168,13 @@ export function MarketTab({
                 <div className="qty-stepper">
                   {mode === "sell" ? (
                     <>
-                      {([100, 50, 5] as const).map((n) => (
-                        <button
-                          key={n}
-                          className="qty-btn"
-                          disabled={qty + n > max}
-                          onClick={() => setQty(item.type, Math.min(max, qty + n))}
-                        >
-                          -{n}
-                        </button>
-                      ))}
+                      <button
+                        className="qty-btn qty-btn-reset"
+                        disabled={qty <= 0}
+                        onClick={() => setQty(item.type, 0)}
+                      >
+                        ×
+                      </button>
                       <button
                         className="qty-btn"
                         disabled={qty <= 0}
@@ -193,19 +190,22 @@ export function MarketTab({
                       >
                         +
                       </button>
+                      {([5, 50, 100] as const).map((n) => (
+                        <button
+                          key={n}
+                          className="qty-btn"
+                          disabled={qty + n > max}
+                          onClick={() => setQty(item.type, Math.min(max, qty + n))}
+                        >
+                          +{n}
+                        </button>
+                      ))}
                       <button
                         className="qty-btn qty-btn-all"
                         disabled={qty >= max}
                         onClick={() => setQty(item.type, max)}
                       >
                         All
-                      </button>
-                      <button
-                        className="qty-btn qty-btn-reset"
-                        disabled={qty <= 0}
-                        onClick={() => setQty(item.type, 0)}
-                      >
-                        ×
                       </button>
                     </>
                   ) : (

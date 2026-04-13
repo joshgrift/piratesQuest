@@ -28,6 +28,7 @@ public static class HudIpcActionMap
     [IpcAction.FireCharacter] = (message, player, currentPort) => HandleFireCharacter(message as FireCharacterMessage, player),
     [IpcAction.TalkToNpc] = (message, player, currentPort) => HandleTalkToNpc(message as TalkToNpcMessage, player),
     [IpcAction.AcceptQuest] = (message, player, currentPort) => HandleAcceptQuest(message as AcceptQuestMessage, player, currentPort),
+    [IpcAction.CancelQuest] = (message, player, currentPort) => HandleCancelQuest(player),
     [IpcAction.CompleteQuest] = (message, player, currentPort) => HandleCompleteQuest(message as CompleteQuestMessage, player),
     [IpcAction.UncompleteQuest] = (message, player, currentPort) => HandleUncompleteQuest(message as UncompleteQuestMessage, player),
     [IpcAction.SetActiveQuest] = (message, player, currentPort) => HandleSetActiveQuest(message as SetActiveQuestMessage, player),
@@ -65,7 +66,7 @@ public static class HudIpcActionMap
       if (ok)
       {
         player.Progress.RecordItemBought(type, req.Quantity, totalCost);
-        player.ReevaluateQuestProgress(currentPort?.PortName);
+        player.ReevaluateQuestProgress();
       }
     }
   }
@@ -95,7 +96,7 @@ public static class HudIpcActionMap
       if (ok)
       {
         player.Progress.RecordItemSold(type, req.Quantity, totalRevenue);
-        player.ReevaluateQuestProgress(currentPort?.PortName);
+        player.ReevaluateQuestProgress();
       }
     }
   }
@@ -116,7 +117,7 @@ public static class HudIpcActionMap
     var component = GameData.Components.FirstOrDefault(c => c.name == message.Name);
     if (component == null) return;
     player.EquipComponent(component);
-    player.ReevaluateQuestProgress(currentPort?.PortName);
+    player.ReevaluateQuestProgress();
   }
 
   private static void HandleUnequipComponent(UnequipComponentMessage message, Player player, Port currentPort)
@@ -126,7 +127,7 @@ public static class HudIpcActionMap
     var component = GameData.Components.FirstOrDefault(c => c.name == message.Name);
     if (component == null) return;
     player.UnEquipComponent(component);
-    player.ReevaluateQuestProgress(currentPort?.PortName);
+    player.ReevaluateQuestProgress();
   }
 
   private static void HandleHeal(Player player, Port currentPort)
@@ -237,10 +238,10 @@ public static class HudIpcActionMap
   {
     if (message == null || currentPort == null) return;
     if (!RequireFeature(player, FeatureUnlock.TavernTalk, "hire tavern crew")) return;
-    bool ok = player.HireCrew(message.CharacterId, currentPort.PortName);
+    bool ok = player.StartHireQuest(message.CharacterId, currentPort.PortId);
     GD.Print(ok
-      ? $"HUD: Hired character '{message.CharacterId}'"
-      : $"HUD: Hire failed for '{message.CharacterId}'");
+      ? $"HUD: Started hire quest for '{message.CharacterId}'"
+      : $"HUD: Hire quest failed for '{message.CharacterId}'");
   }
 
   private static void HandleFireCharacter(FireCharacterMessage message, Player player)
@@ -267,13 +268,22 @@ public static class HudIpcActionMap
       : $"HUD: Accept quest failed for '{message.QuestId}'");
   }
 
+  private static void HandleCancelQuest(Player player)
+  {
+    string questId = player.Progress.CurrentQuestId ?? "";
+    bool ok = player.CancelActiveQuest();
+    GD.Print(ok
+      ? $"HUD: Cancelled quest '{questId}'"
+      : $"HUD: Cancel quest failed for '{questId}'");
+  }
+
   private static void HandleBuildVault(Player player, Port currentPort)
   {
     if (currentPort == null) return;
     if (!RequireFeature(player, FeatureUnlock.Vault, "build a vault")) return;
-    bool ok = player.BuildVault(currentPort.PortName);
+    bool ok = player.BuildVault(currentPort.PortId);
     GD.Print(ok
-      ? $"HUD: Built vault at {currentPort.PortName}"
+      ? $"HUD: Built vault at {currentPort.PortId} ({currentPort.PortName})"
       : "HUD: Build vault failed");
   }
 
@@ -332,7 +342,7 @@ public static class HudIpcActionMap
   {
     if (message == null || currentPort == null) return;
     if (!RequireFeature(player, FeatureUnlock.Vault, "use the vault")) return;
-    if (player.VaultPortName != currentPort.PortName) return;
+    if (player.VaultPortId != currentPort.PortId) return;
 
     foreach (var req in message.Items)
     {
@@ -348,7 +358,7 @@ public static class HudIpcActionMap
   {
     if (message == null || currentPort == null) return;
     if (!RequireFeature(player, FeatureUnlock.Vault, "use the vault")) return;
-    if (player.VaultPortName != currentPort.PortName) return;
+    if (player.VaultPortId != currentPort.PortId) return;
 
     foreach (var req in message.Items)
     {
@@ -370,14 +380,14 @@ public static class HudIpcActionMap
     }
 
     int level = Math.Clamp(message.Level, 1, Player.VaultMaxLevel);
-    string portName = string.IsNullOrWhiteSpace(message.PortName)
-      ? (currentPort?.PortName ?? "Creative Port")
-      : message.PortName;
+    string portId = string.IsNullOrWhiteSpace(message.PortId)
+      ? (currentPort?.PortId ?? "")
+      : PortData.ResolvePortId(message.PortId) ?? message.PortId;
 
-    player.VaultPortName = portName;
+    player.VaultPortId = string.IsNullOrWhiteSpace(portId) ? null : portId;
     player.VaultLevel = level;
     player.VaultItems ??= new Dictionary<InventoryItemType, int>();
-    GD.Print($"HUD: [Creative] Set vault at {portName} level {level}");
+    GD.Print($"HUD: [Creative] Set vault at {player.VaultPortId ?? "none"} level {level}");
   }
 
   private static void HandleDeleteVault(Player player)
@@ -388,7 +398,7 @@ public static class HudIpcActionMap
       return;
     }
 
-    player.VaultPortName = null;
+    player.VaultPortId = null;
     player.VaultLevel = 0;
     player.VaultItems = new Dictionary<InventoryItemType, int>();
     GD.Print("HUD: [Creative] Deleted vault");
@@ -404,6 +414,8 @@ public static class HudIpcActionMap
   {
     if (message == null) return;
     GetCameraPivot(player)?.HandleCameraRotate(message.DeltaX, message.DeltaY);
+    if (!Mathf.IsZeroApprox(message.DeltaX) || !Mathf.IsZeroApprox(message.DeltaY))
+      player.RecordCameraDrag();
   }
 
   private static void HandleInputCameraZoom(InputCameraZoomMessage message, Player player)

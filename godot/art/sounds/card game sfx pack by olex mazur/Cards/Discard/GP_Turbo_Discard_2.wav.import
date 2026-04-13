@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://by40by5vlgsot"
+path="res://.godot/imported/GP_Turbo_Discard_2.wav-fac6c2169d7949f9ba86d3e3814fa996.sample"
+
+[deps]
+
+source_file="res://art/sounds/card game sfx pack by olex mazur/Cards/Discard/GP_Turbo_Discard_2.wav"
+dest_files=["res://.godot/imported/GP_Turbo_Discard_2.wav-fac6c2169d7949f9ba86d3e3814fa996.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
