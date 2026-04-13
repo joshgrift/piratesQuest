@@ -12,10 +12,7 @@ public partial class Play : Node3D
 {
   private const double HeartbeatIntervalSeconds = 60.0;
   private const double LeaderboardSyncIntervalSeconds = 60.0;
-  private const double AiShipRespawnCheckIntervalSeconds = 300.0;
   private const int DefaultServerPlayerMax = 8;
-  private const int TargetAiShipCount = 5;
-  private const float AiShipSpawnHeight = 2.0f;
 
   [Export] private MultiplayerSpawner _playerSpawner;
   [Export] private MultiplayerSpawner _aiShipSpawner;
@@ -31,12 +28,10 @@ public partial class Play : Node3D
   private PackedScene _cannonBallScene = GD.Load<PackedScene>("res://scenes/cannon_ball/cannon_ball.tscn");
   private PackedScene _deadPlayerScene = GD.Load<PackedScene>("res://scenes/dead_player/dead_player.tscn");
   private readonly Dictionary<long, string> _peerUsernames = new();
-  private readonly RandomNumberGenerator _rng = new();
   private Timer _heartbeatTimer;
   private Timer _leaderboardTimer;
-  private Timer _aiShipRespawnTimer;
   private LeaderboardEntryDto[] _latestLeaderboard = [];
-  private int _nextAiShipSequence = 1;
+  private AiShipManager _aiShipManager;
 
   /// <summary>
   /// Handle global gameplay shortcuts.
@@ -83,12 +78,12 @@ public partial class Play : Node3D
 
   public override void _Ready()
   {
-    _rng.Randomize();
-
     _playerSpawner.SpawnFunction = new Callable(this, MethodName.PlayerSpawnHandler);
-    _aiShipSpawner.SpawnFunction = new Callable(this, MethodName.AiShipSpawnHandler);
     _projectileSpawner.SpawnFunction = new Callable(this, MethodName.ProjectileSpawnHandler);
     _deadPlayerSpawner.SpawnFunction = new Callable(this, MethodName.DeadPlayerSpawnHandler);
+
+    _aiShipManager = new AiShipManager();
+    _aiShipManager.Initialize(this, _aiShipScene, _aiShipSpawner, _projectileSpawner, _deadPlayerSpawner, _debugAiShips);
 
     // Start background ambient sounds
     // We use the AudioManager autoload singleton to play looping sounds
@@ -108,7 +103,7 @@ public partial class Play : Node3D
 
       StartServerHeartbeatIfNeeded();
       StartLeaderboardSyncIfNeeded();
-      StartAiShipRespawnLoop();
+      _aiShipManager.StartRespawnLoop();
 
       // Activate free camera in server mode
       if (Configuration.IsDesignatedServerMode() && _freeCam != null)
@@ -314,20 +309,6 @@ public partial class Play : Node3D
     return player;
   }
 
-  private AiShip AiShipSpawnHandler(Variant data)
-  {
-    var dict = data.AsGodotDictionary();
-    var aiShip = _aiShipScene.Instantiate<AiShip>();
-
-    aiShip.ProjectileSpawner = GetNode<MultiplayerSpawner>("Projectiles/ProjectileSpawner");
-    aiShip.DeadPlayerSpawner = _deadPlayerSpawner;
-    aiShip.SetMultiplayerAuthority(1);
-    aiShip.Synchronizer?.SetMultiplayerAuthority(1);
-    aiShip.ConfigureFromSpawnData(dict);
-
-    return aiShip;
-  }
-
   private void HandleDeath(Player player)
   {
     // Hide the player while they wait to respawn
@@ -358,116 +339,6 @@ public partial class Play : Node3D
   {
     _playerSpawner.Spawn(peerId);
     GD.Print($"Requested spawn for peer {peerId}");
-  }
-
-  /// <summary>
-  /// Keeps the world stocked with AI ships.
-  /// We do one immediate fill on startup, then re-check every 5 minutes.
-  /// </summary>
-  private void StartAiShipRespawnLoop()
-  {
-    if (!Multiplayer.IsServer())
-      return;
-
-    _aiShipRespawnTimer = new Timer
-    {
-      WaitTime = AiShipRespawnCheckIntervalSeconds,
-      Autostart = true
-    };
-
-    _aiShipRespawnTimer.Timeout += EnsureAiShipCount;
-    AddChild(_aiShipRespawnTimer);
-
-    EnsureAiShipCount();
-    GD.Print($"AI ship refill timer started (every {AiShipRespawnCheckIntervalSeconds:0.#}s)");
-  }
-
-  /// <summary>
-  /// Makes sure exactly TargetAiShipCount AI ships exist.
-  /// Missing ships are replaced at the edge of the playable map so they sail inward.
-  /// </summary>
-  private void EnsureAiShipCount()
-  {
-    if (!Multiplayer.IsServer())
-      return;
-
-    var aiShipRoot = GetNodeOrNull<Node3D>("AiShips");
-    if (aiShipRoot == null)
-      return;
-
-    int livingAiShips = 0;
-    foreach (Node child in aiShipRoot.GetChildren())
-    {
-      if (child is AiShip)
-        livingAiShips++;
-    }
-
-    int shipsToSpawn = TargetAiShipCount - livingAiShips;
-    if (shipsToSpawn <= 0)
-      return;
-
-    for (int i = 0; i < shipsToSpawn; i++)
-    {
-      var (position, yawRadians) = PickAiShipEdgeSpawn();
-      SpawnAiShip($"ai_ship_raider_{_nextAiShipSequence++}", position, yawRadians);
-    }
-
-    GD.Print($"Spawned {shipsToSpawn} AI ship(s). Active AI ships: {livingAiShips + shipsToSpawn}/{TargetAiShipCount}");
-  }
-
-  /// <summary>
-  /// Lets AI ships request an immediate refill instead of waiting for the long
-  /// background timer after they despawn themselves.
-  /// </summary>
-  public void RequestImmediateAiShipRefill()
-  {
-    if (!Multiplayer.IsServer())
-      return;
-
-    CallDeferred(MethodName.EnsureAiShipCount);
-  }
-
-  private void SpawnAiShip(string name, Vector3 position, float yawRadians)
-  {
-    var spawnData = new GodotDictionary
-    {
-      ["name"] = name,
-      ["definitionId"] = "raider",
-      ["displayName"] = "Raider",
-      ["debug"] = _debugAiShips,
-      ["position"] = position,
-      ["rotation"] = new Vector3(0.0f, yawRadians, 0.0f)
-    };
-
-    _aiShipSpawner.Spawn(spawnData);
-  }
-
-  /// <summary>
-  /// Picks a random spawn point along one of the four map edges, then points the
-  /// ship back toward the center so it enters the playable space instead of sailing away.
-  /// </summary>
-  private (Vector3 Position, float YawRadians) PickAiShipEdgeSpawn()
-  {
-    float halfExtent = AiShipWorldSettings.MapHalfExtent;
-    float edgeCoordinate = halfExtent - AiShipWorldSettings.SpawnInset;
-    float spanMin = -halfExtent + AiShipWorldSettings.SpawnPaddingFromCorners;
-    float spanMax = halfExtent - AiShipWorldSettings.SpawnPaddingFromCorners;
-    float lane = _rng.RandfRange(spanMin, spanMax);
-    int side = _rng.RandiRange(0, 3);
-
-    Vector3 position = side switch
-    {
-      0 => new Vector3(-edgeCoordinate, AiShipSpawnHeight, lane),
-      1 => new Vector3(edgeCoordinate, AiShipSpawnHeight, lane),
-      2 => new Vector3(lane, AiShipSpawnHeight, -edgeCoordinate),
-      _ => new Vector3(lane, AiShipSpawnHeight, edgeCoordinate),
-    };
-
-    // Aim roughly toward the map center so a freshly spawned ship immediately
-    // moves into the world instead of scraping along the border.
-    Vector3 toCenter = (Vector3.Zero - position).Normalized();
-    float yawRadians = Mathf.Atan2(-toCenter.X, -toCenter.Z);
-    return (position, yawRadians);
   }
 
   private void ConnectHud(Player player)
