@@ -12,6 +12,8 @@ public sealed class HunterAiShipController : IAiShipController
   public AiShipControlInput GetControl(AiShipContext context, double delta)
   {
     var input = new AiShipControlInput();
+    float obstacleTurnBias = AiNavigationHelpers.BuildObstacleTurnBias(context);
+    bool sideTerrainNearby = AiNavigationHelpers.HasSideTerrainNearby(context);
 
     // Once the ship commits to an escape maneuver, keep that decision stable
     // for a short time. This avoids the left/right wiggle that happens when
@@ -28,8 +30,8 @@ public sealed class HunterAiShipController : IAiShipController
     // If the ship sees land dead ahead, surviving matters more than style.
     if (context.FrontBlocked)
     {
-      input.Throttle = context.LeftBlocked && context.RightBlocked ? -0.8f : 0.25f;
-      input.Turn = PickSaferTurn(context);
+      input.Throttle = -0.75f;
+      input.Turn = AiNavigationHelpers.PickSaferTurn(context);
       input.DebugState = "Avoid Shore";
       return input;
     }
@@ -38,7 +40,7 @@ public sealed class HunterAiShipController : IAiShipController
     if (context.IsStuck)
     {
       input.Throttle = -0.9f;
-      input.Turn = PickSaferTurn(context);
+      input.Turn = AiNavigationHelpers.PickSaferTurn(context);
       input.DebugState = "Recover Stuck";
       return input;
     }
@@ -49,7 +51,9 @@ public sealed class HunterAiShipController : IAiShipController
     if (!context.HasTargetPlayer)
     {
       input.Throttle = distance > 12.0f ? 0.75f : 0.2f;
-      input.Turn = Mathf.Clamp(targetAngle / 0.8f, -1.0f, 1.0f);
+      float patrolTurn = Mathf.Clamp(targetAngle / 0.8f, -1.0f, 1.0f);
+      float obstacleAssist = sideTerrainNearby ? obstacleTurnBias * 0.12f : 0.0f;
+      input.Turn = Mathf.Clamp(patrolTurn + obstacleAssist, -1.0f, 1.0f);
       input.DebugState = "Patrol";
       return input;
     }
@@ -62,10 +66,12 @@ public sealed class HunterAiShipController : IAiShipController
 
     bool inFireRange = distance <= context.FireRange;
     float steeringAngle = inFireRange
-      ? NormalizeAngle(targetAngle - desiredBroadsideAngle)
+      ? AiNavigationHelpers.NormalizeAngle(targetAngle - desiredBroadsideAngle)
       : targetAngle;
 
-    input.Turn = Mathf.Clamp(steeringAngle / 0.85f, -1.0f, 1.0f);
+    float chaseTurn = Mathf.Clamp(steeringAngle / 0.85f, -1.0f, 1.0f);
+    float chaseObstacleAssist = sideTerrainNearby ? obstacleTurnBias * 0.1f : 0.0f;
+    input.Turn = Mathf.Clamp(chaseTurn + chaseObstacleAssist, -1.0f, 1.0f);
 
     if (distance > context.PreferredCombatRange + 12.0f)
     {
@@ -90,19 +96,5 @@ public sealed class HunterAiShipController : IAiShipController
 
     input.DebugState = inFireRange ? "Broadside Setup" : "Chase";
     return input;
-  }
-
-  private static float PickSaferTurn(AiShipContext context)
-  {
-    if (context.LeftBlocked && !context.RightBlocked) return 1.0f;
-    if (context.RightBlocked && !context.LeftBlocked) return -1.0f;
-
-    // If both sides look similar, keep the choice stable by preferring starboard.
-    return 1.0f;
-  }
-
-  private static float NormalizeAngle(float angle)
-  {
-    return Mathf.Atan2(Mathf.Sin(angle), Mathf.Cos(angle));
   }
 }

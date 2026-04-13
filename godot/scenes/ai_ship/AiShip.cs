@@ -18,7 +18,11 @@ public partial class AiShip : CharacterBody3D, IDamageable
   [Export] public RayCast3D ForwardRay;
   [Export] public RayCast3D ForwardLeftRay;
   [Export] public RayCast3D ForwardRightRay;
+  [Export] public RayCast3D WideLeftRay;
+  [Export] public RayCast3D WideRightRay;
   [Export] public Node3D VisualRoot { get; set; }
+  [Export] public Node3D RaiderVisualRoot { get; set; }
+  [Export] public Node3D TraderVisualRoot { get; set; }
 
   [ExportGroup("Water Physics")]
   [Export] public NodePath WaterPlanePath { get; set; } = new("/root/Play/WaterPlane");
@@ -29,14 +33,18 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
   public MultiplayerSpawner ProjectileSpawner { get; set; }
   public MultiplayerSpawner DeadPlayerSpawner { get; set; }
+  public AiShipManager Manager { get; set; }
   public int Health { get; set; } = 100;
   public int MaxHealth => Mathf.RoundToInt(_definition.MaxHealth);
+  public string ArchetypeId => _definition.Id;
+  public string AllyTypeId => _definition.AllyTypeId;
 
   private AiShipDefinition _definition = AiShipDefinition.FromId("raider");
-  private IAiShipController _controller = new HunterAiShipController();
+  private IAiShipController _controller;
   private readonly RandomNumberGenerator _rng = new();
   private readonly Dictionary<InventoryItemType, int> _cargoManifest = [];
   private readonly List<Player> _nearbyPlayers = [];
+  private readonly List<Port> _ports = [];
 
   private Vector3 _spawnPoint;
   private Vector3 _patrolCenter;
@@ -89,6 +97,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
     _lastPosition = GlobalPosition;
 
     _floatingBody = new FloatingBody3D(this);
+    _controller = _definition.CreateController();
     RefreshDebugVisuals();
   }
 
@@ -102,7 +111,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
       : "raider";
 
     _definition = AiShipDefinition.FromId(definitionId);
-    _controller = new HunterAiShipController();
+    _controller = _definition.CreateController();
 
     Name = data.ContainsKey("name") ? data["name"].AsString() : $"ai_ship_{GetInstanceId()}";
     DisplayName = data.ContainsKey("displayName") ? data["displayName"].AsString() : _definition.DisplayName;
@@ -121,6 +130,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
     foreach (var entry in _definition.CargoManifest)
       _cargoManifest[entry.Key] = entry.Value;
 
+    ApplyVisualType();
     RefreshDebugVisuals();
   }
 
@@ -141,6 +151,8 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
     var targetPlayer = FindNearestTargetPlayer();
     Port nearestPort = FindNearestPort();
+    Port[] availablePorts = GetPorts();
+    var nearbyThreatShip = FindNearestThreatShip();
     Vector3 goalPosition = targetPlayer != null ? targetPlayer.GlobalPosition : GetPatrolPoint();
 
     if (targetPlayer == null && GlobalPosition.DistanceTo(_patrolPoint) < 14.0f)
@@ -156,8 +168,14 @@ public partial class AiShip : CharacterBody3D, IDamageable
       _stuckTimer = 0.0f;
 
     bool frontBlocked = ForwardRay?.IsColliding() ?? false;
-    bool leftBlocked = ForwardLeftRay?.IsColliding() ?? false;
-    bool rightBlocked = ForwardRightRay?.IsColliding() ?? false;
+    bool frontLeftBlocked = ForwardLeftRay?.IsColliding() ?? false;
+    bool frontRightBlocked = ForwardRightRay?.IsColliding() ?? false;
+    bool wideLeftBlocked = WideLeftRay?.IsColliding() ?? false;
+    bool wideRightBlocked = WideRightRay?.IsColliding() ?? false;
+    bool leftBlocked = frontLeftBlocked || wideLeftBlocked;
+    bool rightBlocked = frontRightBlocked || wideRightBlocked;
+    float leftObstacleStrength = (frontLeftBlocked ? 1.0f : 0.0f) + (wideLeftBlocked ? 0.75f : 0.0f);
+    float rightObstacleStrength = (frontRightBlocked ? 1.0f : 0.0f) + (wideRightBlocked ? 0.75f : 0.0f);
 
     if (frontBlocked)
       _frontBlockedTimer += (float)delta;
@@ -171,6 +189,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
     var context = new AiShipContext
     {
       ShipPosition = GlobalPosition,
+      ShipBasis = GlobalTransform.Basis,
       CurrentSpeed = _currentSpeed,
       GoalPosition = goalPosition,
       LocalGoalPosition = localGoal,
@@ -178,14 +197,22 @@ public partial class AiShip : CharacterBody3D, IDamageable
       DistanceToGoal = GlobalPosition.DistanceTo(goalPosition),
       FireRange = _definition.FireRange,
       PreferredCombatRange = _definition.PreferredCombatRange,
+      GoalArrivalDistance = _definition.GoalArrivalDistance,
       FrontBlocked = frontBlocked,
       LeftBlocked = leftBlocked,
       RightBlocked = rightBlocked,
+      LeftObstacleStrength = leftObstacleStrength,
+      RightObstacleStrength = rightObstacleStrength,
       IsStuck = _stuckTimer >= 1.0f,
       IsEscaping = _escapeTimerRemaining > 0.0f,
       IsEscapeReversing = _escapeTimerRemaining > EscapeForwardDurationSeconds,
       EscapeTurnDirection = _escapeTurnDirection,
       NearestPort = nearestPort,
+      Ports = availablePorts,
+      HasNearbyThreatShip = nearbyThreatShip != null,
+      NearbyThreatShipPosition = nearbyThreatShip?.GlobalPosition ?? Vector3.Zero,
+      LocalNearbyThreatShipPosition = nearbyThreatShip != null ? ToLocal(nearbyThreatShip.GlobalPosition) : Vector3.Zero,
+      DistanceToNearbyThreatShip = nearbyThreatShip != null ? GlobalPosition.DistanceTo(nearbyThreatShip.GlobalPosition) : float.MaxValue,
     };
 
     _debugHasTargetPlayer = context.HasTargetPlayer;
@@ -343,6 +370,8 @@ public partial class AiShip : CharacterBody3D, IDamageable
         continue;
       if (player.State == PlayerState.Dead)
         continue;
+      if (player.IsInPort)
+        continue;
 
       float distance = GlobalPosition.DistanceTo(player.GlobalPosition);
       if (distance <= _definition.DetectionRange)
@@ -360,6 +389,46 @@ public partial class AiShip : CharacterBody3D, IDamageable
         best = player;
         bestDistance = distance;
       }
+    }
+
+    return best;
+  }
+
+  private Node3D FindNearestThreatShip()
+  {
+    Node3D best = null;
+    float bestDistance = float.MaxValue;
+
+    foreach (Node node in GetTree().GetNodesInGroup("players"))
+    {
+      if (node is not Player player)
+        continue;
+      if (player.State == PlayerState.Dead || player.IsInPort)
+        continue;
+
+      float distance = GlobalPosition.DistanceTo(player.GlobalPosition);
+      if (distance > _definition.ShipAvoidanceRange || distance >= bestDistance)
+        continue;
+
+      best = player;
+      bestDistance = distance;
+    }
+
+    foreach (Node node in GetTree().GetNodesInGroup("ai_ships"))
+    {
+      if (node == this)
+        continue;
+      if (node is not AiShip aiShip)
+        continue;
+      if (aiShip.AllyTypeId == AllyTypeId)
+        continue;
+
+      float distance = GlobalPosition.DistanceTo(aiShip.GlobalPosition);
+      if (distance > _definition.ShipAvoidanceRange || distance >= bestDistance)
+        continue;
+
+      best = aiShip;
+      bestDistance = distance;
     }
 
     return best;
@@ -384,6 +453,19 @@ public partial class AiShip : CharacterBody3D, IDamageable
     }
 
     return best;
+  }
+
+  private Port[] GetPorts()
+  {
+    _ports.Clear();
+
+    foreach (Node node in GetTree().GetNodesInGroup("ports"))
+    {
+      if (node is Port port)
+        _ports.Add(port);
+    }
+
+    return _ports.ToArray();
   }
 
   private Vector3 GetPatrolPoint()
@@ -528,8 +610,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
     _isSinking = true;
     GD.Print($"{Name}: {reason}, forcing respawn");
 
-    if (GetTree().CurrentScene is Play play)
-      play.RequestImmediateAiShipRefill();
+    Manager?.RequestImmediateRefill();
 
     QueueFree();
   }
@@ -572,6 +653,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
       DeadPlayerSpawner.Spawn(spawnData);
     }
 
+    Manager?.RequestImmediateRefill();
     QueueFree();
   }
 
@@ -596,5 +678,14 @@ public partial class AiShip : CharacterBody3D, IDamageable
       return;
 
     _recoilRoll = Mathf.Lerp(_recoilRoll, 0.0f, delta * RecoilDecaySpeed);
+  }
+
+  private void ApplyVisualType()
+  {
+    if (RaiderVisualRoot != null)
+      RaiderVisualRoot.Visible = _definition.VisualType == AiShipVisualType.RaiderBlack;
+
+    if (TraderVisualRoot != null)
+      TraderVisualRoot.Visible = _definition.VisualType == AiShipVisualType.PlayerWhite;
   }
 }

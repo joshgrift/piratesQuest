@@ -37,7 +37,6 @@ Right now that includes:
 
 - `IAiShipController.cs`
   - the decision interface
-- `AiShipControlInput.cs`
   - the tiny command object returned by an AI brain each frame
 - `AiShipContext.cs`
   - the read-only snapshot passed into the AI brain
