@@ -6,3 +6,12 @@ dist/
 webview/node_modules/
 api/bin/
 api/obj/
+!godot/
+godot/**
+!godot/server-docker/
+!godot/server-docker/Dockerfile
+!godot/server-docker/entrypoint.sh
+!godot/.docker/
+godot/.docker/**
+!godot/.docker/server-image/
+!godot/.docker/server-image/**
