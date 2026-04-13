@@ -205,6 +205,8 @@ public static class PortData
         "Keep your eyes moving, captain. I'd hate to lose a face that pretty to something as dull as tunnel vision.",
         "If a job feels too safe, you probably missed the dangerous part. Try to stay sharp for me.",
         "Quests teach the ropes, but habits keep you alive after the lesson ends, and I am getting rather used to having you around.",
+        "Elder Bertram's job is the one that opens ship upgrades. Impress him and your little starter hull can become something properly dangerous.",
+        "If Dorian tells you to sink ships, listen. His kind of lesson is what opens the vault, and you will want a vault before the sea starts collecting interest.",
         "Ports are for selling, repairing, and making smarter mistakes than the last voyage. Preferably fewer of the dramatic kind.",
         "Do not confuse confidence with steering in a straight line toward trouble. Swagger is only charming when you survive it.",
         "A calm captain makes fewer repairs and earns fewer enemies. Very attractive qualities, as it happens.",

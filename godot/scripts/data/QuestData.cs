@@ -110,6 +110,8 @@ public static class QuestData
     InventoryItemType.Tea.ToString(),
   ];
 
+  private static readonly string FinishedTutorialQuestId = "scarlett_trade_for_merchant";
+
   public static readonly QuestDefinition[] Quests =
   [
     new QuestDefinition
@@ -252,7 +254,7 @@ public static class QuestData
       GiverNpcId = "elder-bertram",
       GiverName = "Elder Bertram",
       GiverPortId = "saint-johns",
-      PrerequisiteQuestIds = ["scarlett_trade_for_merchant"],
+      PrerequisiteQuestIds = [FinishedTutorialQuestId],
       OfferText = "Your ship still looks half-finished. Buy a proper component and fit it before you come grinning at me.",
       AcceptedText = "Your ship still looks half-finished. Go to a port, buy a proper component, and fit it before you come grinning at me.",
       Description = "Elder Bertram is tired of captains calling a bare deck a build. Visit the shipyard, buy extra components, and equip at least 2 of them at the same time. This checks what you're actively using, not what you're hoarding.",
@@ -275,7 +277,7 @@ public static class QuestData
       GiverNpcId = "dorian-blackwake",
       GiverName = "Dorian Blackwake",
       GiverPortId = "krakenfall",
-      PrerequisiteQuestIds = ["beef_up_your_ship"],
+      PrerequisiteQuestIds = [FinishedTutorialQuestId],
       OfferText = "You want access to a vault? Prove you can survive a real fight first. Sink five ships and then we can talk.",
       AcceptedText = "Get out there, line up your broadsides, and sink five ships.",
       Description = "Dorian doesn't care about your potential. He cares whether you can finish a fight. Sink 5 ships with your cannons. Q fires your port side and E fires your starboard side, so line up your broadsides and don't let enemy ships limp away.",
@@ -298,7 +300,7 @@ public static class QuestData
       GiverNpcId = "barnaby-jape",
       GiverName = "Barnaby Jape",
       GiverPortId = "pebblehook-bay",
-      PrerequisiteQuestIds = ["scarlett_sail_to_port"],
+      PrerequisiteQuestIds = [FinishedTutorialQuestId],
       OfferText = "I have a very serious assignment for you: I need you to visit every port in the whole region so I can say I know a captain with stamina. Do it, come back taller in spirit, and I will pay you in glorious gold coin.",
       AcceptedText = "Off you go then. Make the rounds, wave at every dock, and try not to become local gossip in all eight places at once.",
       Description = "Barnaby wants you to sail to every port in the game at least once while this quest is active. It is a full tour of the map.",
@@ -311,6 +313,150 @@ public static class QuestData
           Label = "Visit every port",
           Metric = QuestMetricKind.UniquePortsVisitedCount,
           RequiredValue = PortData.PortIds.Count,
+        },
+      ],
+    },
+    new QuestDefinition
+    {
+      Id = "gideon_southern_iron_run",
+      Title = "Southern Iron Run",
+      GiverNpcId = "gideon-gearlock",
+      GiverName = "Gideon Gearlock",
+      GiverPortId = "saint-johns",
+      PrerequisiteQuestIds = [FinishedTutorialQuestId],
+      OfferText = "I have a modest contract for a captain who can follow numbers instead of moods. Take northern iron south and close three profitable iron sales, then I will get you and extra 250 gold.",
+      AcceptedText = "Buy cheap iron in the north, sell it in the south, and do it profitably three times. Tidefall and Spire are both respectable destinations.",
+      Description = "Gideon wants proof that your first lucky trade was not an accident. Sell Iron for profit after taking this quest. Northern ports are the best places to buy it, while southern ports usually pay better.",
+      CompletionText = "Neat work. Predictable, profitable, and blessedly free of drama.",
+      RewardGold = 250,
+      Steps =
+      [
+        new QuestStepDefinition
+        {
+          Label = "Sell Iron for profit",
+          Metric = QuestMetricKind.SoldProfit,
+          ItemType = InventoryItemType.Iron.ToString(),
+          RequiredValue = 100,
+        },
+      ],
+    },
+    new QuestDefinition
+    {
+      Id = "elsie_first_real_trade",
+      Title = "Elsie's First Real Trade Tip",
+      GiverNpcId = "elsie-drift",
+      GiverName = "Elsie Drift",
+      GiverPortId = "shard-bay",
+      PrerequisiteQuestIds = [FinishedTutorialQuestId],
+      OfferText = "I heard a route that sounds real, not tavern nonsense. If you try it and come back richer, could you tell me I was not foolish for noticing it?",
+      AcceptedText = "Fish is cheap around here. Sell it somewhere that actually misses it and come back with proof you made the right call.",
+      Description = "Elsie wants help proving that the route she overheard is actually good. Sell Fish for profit 2 times after accepting this quest.",
+      CompletionText = "It worked? Good. I mean, of course it worked. I was nearly certain.",
+      RewardGold = 400,
+      Steps =
+      [
+        new QuestStepDefinition
+        {
+          Label = "Sell Fish for profit",
+          Metric = QuestMetricKind.SoldProfit,
+          ItemType = InventoryItemType.Fish.ToString(),
+          RequiredValue = 100,
+        },
+      ],
+    },
+    new QuestDefinition
+    {
+      Id = "merrick_fill_the_hold",
+      Title = "Fill the Hold with Timber",
+      GiverNpcId = "merrick-ash",
+      GiverName = "Merrick Ash",
+      GiverPortId = "tidefall-island",
+      PrerequisiteQuestIds = [FinishedTutorialQuestId],
+      OfferText = "You want easy coin? Bring back a proper load instead of three apologetic planks. Fill the hold with wood and I will pay you 4000 gold.",
+      AcceptedText = "Bring in 800 wood. Cut it, stack it, move it. Then come collect your pay.",
+      Description = "Merrick is offering quick cash for a solid timber run. Collect 800 Wood after accepting this quest.",
+      CompletionText = "That is a real haul. You brought wood, not excuses.",
+      RewardGold = 4000,
+      Steps =
+      [
+        new QuestStepDefinition
+        {
+          Label = "Collect 800 Wood",
+          Metric = QuestMetricKind.ItemsCollected,
+          ItemType = InventoryItemType.Wood.ToString(),
+          RequiredValue = 800,
+        },
+      ],
+    },
+    new QuestDefinition
+    {
+      Id = "rafael_fresh_catch",
+      Title = "Fresh Catch Bonus",
+      GiverNpcId = "rafael-tide",
+      GiverName = "Rafael Tide",
+      GiverPortId = "tidefall-island",
+      PrerequisiteQuestIds = [FinishedTutorialQuestId],
+      OfferText = "Bring me proof you can work the water cleanly and I will make it worth the trouble. I need fish, not stories. I'll pay you a gold for each fish you bring me.",
+      AcceptedText = "Catch 160 fish and bring back a proper haul. If the sea likes you today, so will I.",
+      Description = "Rafael is paying captains who can put together a real fishing run. Collect 160 Fish after accepting this quest.",
+      CompletionText = "That is a catch worth admiring. Nicely done.",
+      RewardGold = 160,
+      Steps =
+      [
+        new QuestStepDefinition
+        {
+          Label = "Collect 160 Fish",
+          Metric = QuestMetricKind.ItemsCollected,
+          ItemType = InventoryItemType.Fish.ToString(),
+          RequiredValue = 160,
+        },
+      ],
+    },
+    new QuestDefinition
+    {
+      Id = "barnaby_delivery_for_elsie",
+      Title = "Barnaby's Sealed Note",
+      GiverNpcId = "barnaby-jape",
+      GiverName = "Barnaby Jape",
+      GiverPortId = "pebblehook-bay",
+      PrerequisiteQuestIds = [FinishedTutorialQuestId],
+      OfferText = "I have an extremely important note for Elsie Drift in Shard Bay. It may be heartfelt, embarrassing, or both. Deliver it for me and I shall reward your heroism handsomely with 1000 gold coins.",
+      AcceptedText = "Take my sealed note to Elsie Drift in Shard Bay. Do try not to read it unless the temptation becomes artistically overwhelming.",
+      Description = "Barnaby wants you to deliver a package to Elsie Drift in Shard Bay. Just reach Elsie and speak with her while this quest is active.",
+      CompletionText = "Marvelous. The note arrived, Elsie endured it, and you are richer for your service.",
+      RewardGold = 1000,
+      Steps =
+      [
+        new QuestStepDefinition
+        {
+          Label = "Deliver Barnaby's package to Elsie Drift",
+          Metric = QuestMetricKind.TalkedToNpc,
+          ItemType = "elsie-drift",
+          RequiredValue = 1,
+        },
+      ],
+    },
+    new QuestDefinition
+    {
+      Id = "valora_packet_for_caspian",
+      Title = "A Quiet Packet",
+      GiverNpcId = "valora-rumwhisper",
+      GiverName = "Valora Rumwhisper",
+      GiverPortId = "krakenfall",
+      PrerequisiteQuestIds = [FinishedTutorialQuestId],
+      OfferText = "Governor Caspian pretends to dislike my little errands, which only makes them more amusing. Take this packet to him in Rusthook Point and do try to look innocent while doing it. I'll pay you 850 gold.",
+      AcceptedText = "Carry my packet north to Governor Caspian in Rusthook Point. If he sighs before opening it, tell him I consider that affection.",
+      Description = "Valora wants you to deliver a package to Governor Caspian in Rusthook Point. Just talk to him there while this quest is active.",
+      CompletionText = "Perfect. He received it, which means he will now spend the evening pretending he did not.",
+      RewardGold = 850,
+      Steps =
+      [
+        new QuestStepDefinition
+        {
+          Label = "Deliver Valora's packet to Governor Caspian",
+          Metric = QuestMetricKind.TalkedToNpc,
+          ItemType = "governor-caspian",
+          RequiredValue = 1,
         },
       ],
     },

@@ -41,6 +41,11 @@ In the current flow, quests unlock:
 5. ship class upgrades
 6. the vault
 
+The main mechanic unlock quests are:
+
+- `Beef Up Your Ship` from Elder Bertram on Saint Johns unlocks ship class upgrades
+- `Kill 5 Ships` from Dorian Blackwake in Shard Bay unlocks the vault
+
 ## Why Quests Matter
 
 This structure keeps new players from being overwhelmed.
@@ -58,6 +63,12 @@ Instead of learning every system at once, you are introduced to them in sequence
 - direct rewards
 - new opportunities
 - follow-up quests
+
+Some quests also exist mainly to pay you.
+
+- trading jobs can reward clean, repeatable market runs
+- gathering jobs can pay for bringing back a useful haul
+- delivery jobs can pay you for carrying a package to another port character
 
 ## Turn-Ins and Expectations
 
@@ -99,4 +110,5 @@ Some port characters also break the usual pattern:
 
 - a few crew offers are mostly about story or personality, not raw stat power
 - at least one character offers a full map tour quest instead of crew recruitment
+- some non-hireable characters offer simple cash jobs instead of crew slots
 - not every "helpful" crew member is actually a pure upgrade, so read the details before hiring
