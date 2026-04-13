@@ -210,41 +210,8 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 
 
 ## ROADMAP
-### Alpha 8 - Cleanup & Map
-- [x] New Terrain
-- [x] Water Improvements
-- [x] Fixed Quest Interaction
-  - [x] Linear Quest Line
-  - [x] No soft locks
-  - [x] Better descriptions and explanations
-  - [x] Can complete quests without returning to port
-  - [x] You should be able to cancel quests (that aren't auto accepted)
-- [x] Simplified character interaction, easy to get quest
-- [x] Added more information to tutorial
-- [x] Added Wiki
-  - [x] Menu button to access wiki
-- [x] Cannonballs bounce of ships in safe zones
-- [x] Money sound no longer played everywhere
-- [x] Lock Characters behind quests
-- [x] Added boueys to Interaction Points
-- [x] Added Map (Tab)
-- [ ] Fixed Windows UI not loading
-- [ ] AI ships
-  - [ ] Fix shooting
-  - [ ] Spawning
-- [x] Rebalanced trading, ports have specialties and it's based on map geography
-- [x] Add another character & better space out characters
-- [x] Player should spawn in safe areas
-- [x] Deleted Trophies
-
-- [x] UI Cleanup
-  - [x] Sell buttons are backwards
-  - [x] Merged Crew and ship tabs
-  - [x] Cleaned up Quest Interface
-  - [x] Clean up character cards
-  - [x] Make it clear in the UI you can only have on active quest
-  - [x] early quests, we should skip the accepted text
-  - [x] clean up character toast
+### Alpha 0.9.0
+- Ghost ships when improper disconnect happens 
 
 ### Planned
 - [ ] In game map

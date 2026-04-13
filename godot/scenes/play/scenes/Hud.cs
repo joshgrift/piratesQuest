@@ -144,7 +144,14 @@ public partial class Hud : Control
     wv.Position = Vector2.Zero;
     wv.Size = new Vector2(targetSize.X + 1f, targetSize.Y + 1f);
     wv.SetDeferred("size", targetSize);
-    _webView.CallDeferred("eval", "window.dispatchEvent(new Event('resize'));");
+
+    // Only poke the page with a JS resize event after the React app has told us
+    // its bridge is ready. On Windows, sending eval calls too early appears more
+    // brittle than the menu flow, which avoids JS eval during startup.
+    if (_webViewLoaded)
+    {
+      _webView.CallDeferred("eval", "window.dispatchEvent(new Event('resize'));");
+    }
   }
 
   private void OnWindowResized()
