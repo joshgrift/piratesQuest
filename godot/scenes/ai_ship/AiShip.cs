@@ -101,6 +101,15 @@ public partial class AiShip : CharacterBody3D, IDamageable
     RefreshDebugVisuals();
   }
 
+  public override void _ExitTree()
+  {
+    // The patrol marker is added to the active scene instead of under this ship,
+    // so Godot will not clean it up automatically when the ship dies.
+    // We explicitly remove AI debug visuals here so death, despawn, and fail-safe
+    // cleanup all behave the same way.
+    CleanupDebugVisuals();
+  }
+
   /// <summary>
   /// Called by Play when the spawner instantiates this ship on each peer.
   /// </summary>
@@ -541,10 +550,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
     if (!shouldShowDebug)
     {
-      _patrolDebugMarker?.QueueFree();
-      _patrolDebugMarker = null;
-      _stateDebugLabel?.QueueFree();
-      _stateDebugLabel = null;
+      CleanupDebugVisuals();
       return;
     }
 
@@ -559,6 +565,17 @@ public partial class AiShip : CharacterBody3D, IDamageable
       _stateDebugLabel = AiDebugVisuals.CreateStateLabel("AiStateDebugLabel", DebugLabelOffset);
       AddChild(_stateDebugLabel);
     }
+  }
+
+  private void CleanupDebugVisuals()
+  {
+    if (IsInstanceValid(_patrolDebugMarker))
+      _patrolDebugMarker.QueueFree();
+    _patrolDebugMarker = null;
+
+    if (IsInstanceValid(_stateDebugLabel))
+      _stateDebugLabel.QueueFree();
+    _stateDebugLabel = null;
   }
 
   private void UpdateDebugVisuals()
