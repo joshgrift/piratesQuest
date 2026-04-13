@@ -56,6 +56,7 @@ public partial class InteractionPoint : Node3D
   private CollisionShape3D _collisionShape;
   private FloatingBody3D _floatingBody;
   private bool _materialWasDuplicated = false;
+  private bool _collisionShapeWasDuplicated = false;
 
   public override void _Ready()
   {
@@ -73,6 +74,8 @@ public partial class InteractionPoint : Node3D
       _meshInstance.MaterialOverride = (Material)_meshInstance.MaterialOverride.Duplicate();
       _materialWasDuplicated = true;
     }
+
+    EnsureUniqueCollisionShape();
 
     // Apply the color to the shader
     UpdateRingColor();
@@ -121,6 +124,8 @@ public partial class InteractionPoint : Node3D
   public void UpdateInteractionRadius()
   {
     CacheChildNodes();
+    EnsureUniqueCollisionShape();
+
     if (_collisionShape?.Shape is CylinderShape3D collisionCylinder)
     {
       collisionCylinder.Radius = InteractionRadius;
@@ -186,5 +191,17 @@ public partial class InteractionPoint : Node3D
     // while it is still rebuilding part of the scene tree.
     _meshInstance ??= GetNodeOrNull<MeshInstance3D>("VisualRoot/RingMesh");
     _collisionShape ??= GetNodeOrNull<CollisionShape3D>("Area3D/CollisionShape3D");
+  }
+
+  private void EnsureUniqueCollisionShape()
+  {
+    if (_collisionShape?.Shape == null || _collisionShapeWasDuplicated)
+      return;
+
+    // Collision shapes are resources, so scene instances can end up sharing one.
+    // Duplicating here keeps each interaction point's collider independent, which
+    // makes the exported radius behave the same way as the unique ring material.
+    _collisionShape.Shape = (Shape3D)_collisionShape.Shape.Duplicate();
+    _collisionShapeWasDuplicated = true;
   }
 }
