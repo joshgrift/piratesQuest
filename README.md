@@ -58,6 +58,7 @@ All scripts are in the repo root and run from there.
 | `build-game.sh` | Builds the port UI and publishes it to `api/fragments/webview/`, then exports macOS, Windows, and Linux server builds zipped into `dist/<version>/`. Supports `--skip-notarization` (or `--no-notarize`) to skip macOS notarization (and codesign) for that run. |
 | `run` | Small local process manager for development. Supports `up`, `down`, `restart`, `status`, and `build`, so you can keep the stack running and restart only the service you changed. `up` streams the combined logs. Supports `--build`, `--server`, `--prod`, `--user`, and `--password` flags. |
 | `publish-backend.sh` | Builds the menu webview + port webview + API into a Docker image (`piratesquest-api`). Pass an optional tag argument (default `latest`). |
+| `server.sh` | Docker-based dedicated server manager. Supports `list`, `new`, `start`, and `stop` for named server containers. |
 | `manage.sh` | Admin CLI for the REST API. Manage users, game servers, roles, and game version. Requires `PQ_API_URL` and either `PQ_TOKEN` or a login. |
 | `admin/` | React/TypeScript admin panel that replaces most `manage.sh` usage. Build output is `api/wwwroot/admin/` and is served by the API at `/admin/`. |
 
@@ -85,15 +86,49 @@ Suggested workflow:
 
 ## Releasing
 - Update Version in Project Settings
+- Log into Docker and your DigitalOcean registry first, for example with `doctl registry login`
 - Run `./build-game.sh`
 - Add new Git Release in github
 - Upload builds in dist to github release
-- Run `./publish-backend.sh` to build the Docker image (`piratesquest-api`)
-- Deploy the image to your cloud provider with these env vars:
-  - `ConnectionStrings__Default` — Postgres connection string
-  - `Jwt__Key` — JWT signing key (≥ 32 bytes)
-  - `ServerApiKey` — shared key for game-server → API auth
-  - The container listens on port **8080**
+- Pushing to main deploys the api
+- `build-game.sh` also builds and pushes the dedicated server image as `registry.digitalocean.com/piratesquest/piratesquest-server:<version>` and `:latest`
+
+### Dedicated Server Containers
+
+The dedicated server now has a separate Docker image and a small host-side manager script.
+The Docker image files live under `godot/server-docker/` so the server-specific container setup stays next to the Godot dedicated server export.
+
+Release image:
+
+```bash
+./build-game.sh
+```
+
+That pushes:
+
+- `registry.digitalocean.com/piratesquest/piratesquest-server:<game-version>`
+- `registry.digitalocean.com/piratesquest/piratesquest-server:latest`
+
+If you rebuild the same game version again, `build-game.sh` publishes a fresh image and moves the same version tag to that newest upload.
+
+If you ever need a different registry, you can still override it with `DOCR_REGISTRY=... ./build-game.sh`.
+The dedicated server image is built as `linux/amd64` by default because the Godot server export is currently Linux x64.
+
+Server host usage:
+
+```bash
+./server.sh list
+./server.sh new 12 your-server-api-key 7777
+./server.sh stop 12
+./server.sh start 12
+./server.sh destroy 12
+```
+
+Helpful environment variables:
+
+- `PQ_SERVER_IMAGE` overrides the image to pull/run
+- `PQ_SERVER_PLATFORM` overrides the Docker platform (defaults to `linux/amd64`)
+- `PQ_API_URL` passes a custom API base URL to the game server
 
 ## Port WebView
 

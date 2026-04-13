@@ -9,3 +9,4 @@ node_modules/
 **/*.tsbuildinfo
 api/wwwroot/admin/
 .run
+godot/.docker
