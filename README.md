@@ -211,17 +211,26 @@ The build output goes to `../api/wwwroot/admin/`, served by the API at `/admin/`
 
 ## ROADMAP
 ### Alpha 0.9.0
-- Ghost ships when improper disconnect happens 
+- [ ] Ghost ships when improper disconnect happens 
+- [ ] Fix ship floating getting airtime
+- [ ] Map decoration
+- [ ] Characters should comment if you try to take on more then one quest
+- [ ] Cheaper cannonballs
+- [ ] Tea should sell for more
+- [ ] Characters should let you know when you collect rubble, who's it was and what you got
+- [ ] Split Ai ship and Human ship stats
+- [ ] Ship models don't upgrade when you guy em
 
 ### Planned
-- [ ] In game map
 - [ ] Game freezes on first explosion animation
-- [ ] EU Servers
 - [ ] Serve HUD from Local package instead of from web
-- [ ] Would it be nice if camera turned with the ship?
 - [ ] Flexible turn Speed when slow or fast
+- [ ] Splash graphics and sound (cannonball touch water)
+- [ ] Ship Wake
 
 ### Suggestions
+- [ ] EU Servers
+- [ ] Would it be nice if camera turned with the ship?
 - [ ] Multiple Cannonball types?
 - [ ] Proximity voice chat
 - [ ] Mini games
