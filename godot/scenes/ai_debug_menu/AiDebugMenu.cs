@@ -13,6 +13,8 @@ public partial class AiDebugMenu : CanvasLayer
 
   private VBoxContainer _shipList;
   private Label _detailLabel;
+  private Button _enableDebugButton;
+  private Button _enableNavigationDebugButton;
   private Button _zoomInButton;
   private AiShip _selectedShip;
   private readonly Dictionary<AiShip, Button> _rows = new();
@@ -96,6 +98,22 @@ public partial class AiDebugMenu : CanvasLayer
     _zoomInButton.Pressed += ZoomInOnSelectedShip;
     detailLayout.AddChild(_zoomInButton);
 
+    _enableDebugButton = new Button
+    {
+      Text = "Enable Debug On Selected Ship",
+      Disabled = true,
+    };
+    _enableDebugButton.Pressed += EnableDebugOnSelectedShip;
+    detailLayout.AddChild(_enableDebugButton);
+
+    _enableNavigationDebugButton = new Button
+    {
+      Text = "Enable Rays + Patrol On Selected Ship",
+      Disabled = true,
+    };
+    _enableNavigationDebugButton.Pressed += EnableNavigationDebugOnSelectedShip;
+    detailLayout.AddChild(_enableNavigationDebugButton);
+
     _detailLabel = new Label
     {
       Text = "No ship selected",
@@ -126,6 +144,8 @@ public partial class AiDebugMenu : CanvasLayer
       $"Pos: ({p.X:0.0}, {p.Y:0.0}, {p.Z:0.0})",
       $"Rot: ({Mathf.RadToDeg(r.X):0.0}°, {Mathf.RadToDeg(r.Y):0.0}°, {Mathf.RadToDeg(r.Z):0.0}°)",
       $"Ally: {_selectedShip.AllyTypeId}",
+      $"Debug: {(_selectedShip.IsDebugEnabled ? "On" : "Off")}",
+      $"Nav Debug: {(_selectedShip.IsNavigationDebugEnabled ? "On" : "Off")}",
       string.Empty,
       _selectedShip.BuildDebugText(),
     ]);
@@ -202,6 +222,30 @@ public partial class AiDebugMenu : CanvasLayer
     {
       _zoomInButton.Disabled = !IsInstanceValid(_selectedShip);
     }
+
+    if (_enableDebugButton != null)
+    {
+      bool hasSelectedShip = IsInstanceValid(_selectedShip);
+      bool canEnable = hasSelectedShip && !_selectedShip.IsDebugEnabled;
+      _enableDebugButton.Disabled = !canEnable;
+      _enableDebugButton.Text = !hasSelectedShip
+        ? "Select A Ship To Enable Debug"
+        : canEnable
+          ? "Enable Debug On Selected Ship"
+          : "Debug Already Enabled";
+    }
+
+    if (_enableNavigationDebugButton != null)
+    {
+      bool hasSelectedShip = IsInstanceValid(_selectedShip);
+      bool canEnable = hasSelectedShip && !_selectedShip.IsNavigationDebugEnabled;
+      _enableNavigationDebugButton.Disabled = !canEnable;
+      _enableNavigationDebugButton.Text = !hasSelectedShip
+        ? "Select A Ship To Enable Rays + Patrol"
+        : canEnable
+          ? "Enable Rays + Patrol On Selected Ship"
+          : "Rays + Patrol Already Enabled";
+    }
   }
 
   private void ZoomInOnSelectedShip()
@@ -237,5 +281,31 @@ public partial class AiDebugMenu : CanvasLayer
 
     camera.GlobalPosition = shipPosition + (directionFromShip * nextDistance);
     camera.LookAt(shipPosition, Vector3.Up);
+  }
+
+  private void EnableDebugOnSelectedShip()
+  {
+    if (!IsInstanceValid(_selectedShip))
+    {
+      _detailLabel.Text = "No ship selected";
+      UpdateRowHighlights();
+      return;
+    }
+
+    _selectedShip.SetDebugEnabled(true);
+    UpdateRowHighlights();
+  }
+
+  private void EnableNavigationDebugOnSelectedShip()
+  {
+    if (!IsInstanceValid(_selectedShip))
+    {
+      _detailLabel.Text = "No ship selected";
+      UpdateRowHighlights();
+      return;
+    }
+
+    _selectedShip.SetNavigationDebugEnabled(true);
+    UpdateRowHighlights();
   }
 }
