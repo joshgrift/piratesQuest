@@ -223,4 +223,8 @@ public sealed class HunterAiShipController : IAiShipController
       Mathf.Clamp(candidate.Z, -patrolExtent, patrolExtent)
     );
   }
+
+  public void OnRemoved(AiShipMemory memory, string reason)
+  {
+  }
 }

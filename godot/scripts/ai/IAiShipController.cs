@@ -2,7 +2,7 @@ namespace PiratesQuest.AI;
 
 /// <summary>
 /// Decision-only interface for AI ships.
-/// 
+///
 /// The controller decides what the ship wants to do.
 /// The AiShip node is still responsible for movement, combat, and loot.
 /// The controller also gets a small memory bag so each AI can remember
@@ -12,7 +12,7 @@ public interface IAiShipController
 {
   /// <summary>
   /// Let the scene share its current short-lived recovery state with the AI.
-  /// 
+  ///
   /// Each AI controller decides how to store these values in its own memory.
   /// That keeps memory keys controller-specific instead of making them global.
   /// </summary>
@@ -24,28 +24,35 @@ public interface IAiShipController
     float escapeTurnDirection);
 
   AiShipControlInput GetControl(AiShipContext context, AiShipMemory memory, double delta);
+
+  /// <summary>
+  /// Called exactly once before the ship leaves the scene (sink, forced respawn,
+  /// worker failure, or scene shutdown). Lets the controller flush any per-ship
+  /// state it owns, such as closing an episode or notifying a worker process.
+  /// </summary>
+  void OnRemoved(AiShipMemory memory, string reason);
 }
 
 /// <summary>
 /// The AI brain produces one of these each physics frame.
-/// 
+///
 /// It is intentionally tiny:
 /// - Throttle controls forward/backward movement
 /// - Turn controls steering
 /// - FireLeft / FireRight request a broadside
-/// 
+///
 /// Keeping this small makes it easy to swap different AI approaches later.
 /// </summary>
 public sealed class AiShipControlInput
 {
   /// <summary>
   /// Forward/backward throttle request for this frame.
-  /// 
+  ///
   /// Typical values:
   /// - 1 = full forward
   /// - 0 = coast / stop accelerating
   /// - -1 = full reverse
-  /// 
+  ///
   /// The ship scene converts this into real speed using acceleration and
   /// deceleration from the active AI ship definition.
   /// </summary>
@@ -53,12 +60,12 @@ public sealed class AiShipControlInput
 
   /// <summary>
   /// Steering request for this frame.
-  /// 
+  ///
   /// Typical values:
   /// - -1 = hard port/left
   /// - 0 = no turn
   /// - 1 = hard starboard/right
-  /// 
+  ///
   /// The ship scene applies this using the definition's turn speed, so the AI
   /// asks for intent here, not exact degrees to rotate.
   /// </summary>

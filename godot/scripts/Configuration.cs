@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using Godot;
 
@@ -47,6 +48,10 @@ partial class Configuration : Node
   public static string CmdUser { get; private set; }
   public static string CmdPassword { get; private set; }
   public static bool DisableSaveUser { get; private set; }
+  public static bool PythonAiEnabled { get; private set; }
+  public static string PythonAiExecutable { get; private set; } = "python3";
+  public static string PythonAiScriptPath { get; private set; } = "res://python_ai/worker.py";
+  public static int PythonAiCount { get; private set; } = 1;
   // Port UI URL can be overridden with --webview-url for local dev.
   public static string WebViewUrl { get; private set; } = LocalDevPortWebViewUrl;
   // Menu UI is always served from the configured API host.
@@ -68,32 +73,67 @@ partial class Configuration : Node
 
   public override void _Ready()
   {
-    if (IsDesignatedServerMode())
+    try
     {
-      try
+      var args = OS.GetCmdlineArgs();
+      ParseSharedArgs(args);
+
+      if (IsDesignatedServerMode())
       {
-        ParseServerArgs();
+        ParseServerArgs(args);
       }
-      catch (Exception exception)
+      else
       {
-        GD.PushError($"Fatal server startup error: {exception.Message}");
-        GetTree()?.Quit(1);
-        return;
+        ParseClientArgs(args);
       }
     }
-    else
+    catch (Exception exception)
     {
-      ParseClientArgs();
+      GD.PushError($"Fatal startup error: {exception.Message}");
+      GetTree()?.Quit(1);
+      return;
     }
+
     CallDeferred(MethodName.ConfigureWindowTitle);
   }
 
-  private static void ParseServerArgs()
+  private static void ParseSharedArgs(string[] args)
+  {
+    for (int i = 0; i < args.Length; i++)
+    {
+      switch (args[i])
+      {
+        case "--api-url" when i + 1 < args.Length:
+          ApiBaseUrl = args[i + 1].TrimEnd('/');
+          break;
+        case "--python-ai":
+          PythonAiEnabled = true;
+          break;
+        case "--python-ai-exe" when i + 1 < args.Length:
+          PythonAiExecutable = args[i + 1].Trim();
+          break;
+        case "--python-ai-script" when i + 1 < args.Length:
+          PythonAiScriptPath = args[i + 1].Trim();
+          break;
+        case "--python-ai-count" when i + 1 < args.Length:
+          if (!int.TryParse(args[i + 1], out int count))
+          {
+            throw new InvalidOperationException("--python-ai-count must be an integer.");
+          }
+
+          PythonAiCount = Mathf.Max(0, count);
+          break;
+      }
+    }
+
+    MenuWebViewUrl = $"{ApiBaseUrl}/fragments/menu/";
+  }
+
+  private static void ParseServerArgs(string[] args)
   {
     bool hasServerId = false;
     bool hasApiKey = false;
 
-    var args = OS.GetCmdlineArgs();
     for (int i = 0; i < args.Length - 1; i++)
     {
       switch (args[i])
@@ -108,9 +148,6 @@ partial class Configuration : Node
         case "--server-api-key":
           ServerApiKey = args[i + 1];
           hasApiKey = true;
-          break;
-        case "--api-url":
-          ApiBaseUrl = args[i + 1].TrimEnd('/');
           break;
         case "--port":
           if (!int.TryParse(args[i + 1], out int port) || port < 1 || port > 65535)
@@ -128,9 +165,8 @@ partial class Configuration : Node
         "Dedicated server requires --server-id <int> and --server-api-key <string> arguments");
   }
 
-  private static void ParseClientArgs()
+  private static void ParseClientArgs(string[] args)
   {
-    var args = OS.GetCmdlineArgs();
     bool hasWebViewUrlOverride = false;
     bool hasApiUrlOverride = false;
     for (int i = 0; i < args.Length; i++)
@@ -147,7 +183,6 @@ partial class Configuration : Node
           DisableSaveUser = true;
           break;
         case "--api-url" when i + 1 < args.Length:
-          ApiBaseUrl = args[i + 1].TrimEnd('/');
           hasApiUrlOverride = true;
           break;
         case "--webview-url" when i + 1 < args.Length:
@@ -195,6 +230,28 @@ partial class Configuration : Node
     var args = OS.GetCmdlineArgs();
 
     return args.Contains("--server") || OS.HasFeature("dedicated_server");
+  }
+
+  /// <summary>
+  /// Converts the configured Python worker script path into an absolute path
+  /// so <see cref="System.Diagnostics.Process"/> can launch it reliably.
+  /// </summary>
+  public static string GetPythonAiScriptAbsolutePath()
+  {
+    if (string.IsNullOrWhiteSpace(PythonAiScriptPath))
+      return string.Empty;
+
+    if (PythonAiScriptPath.StartsWith("res://", StringComparison.OrdinalIgnoreCase) ||
+        PythonAiScriptPath.StartsWith("user://", StringComparison.OrdinalIgnoreCase))
+    {
+      return ProjectSettings.GlobalizePath(PythonAiScriptPath);
+    }
+
+    if (Path.IsPathRooted(PythonAiScriptPath))
+      return Path.GetFullPath(PythonAiScriptPath);
+
+    string projectRoot = ProjectSettings.GlobalizePath("res://");
+    return Path.GetFullPath(Path.Combine(projectRoot, PythonAiScriptPath));
   }
 
   public static Error SaveUserToken(string userToken)

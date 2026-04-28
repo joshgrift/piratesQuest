@@ -142,6 +142,10 @@ public sealed class TraderDeterministicAiShipController : IAiShipController
     return nextPort ?? currentPort;
   }
 
+  public void OnRemoved(AiShipMemory memory, string reason)
+  {
+  }
+
   private static bool GetIsStuck(AiShipMemory memory)
   {
     return memory.TryGet(IsStuckKey, out bool value) && value;

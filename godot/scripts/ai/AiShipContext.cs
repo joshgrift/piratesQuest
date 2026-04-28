@@ -4,7 +4,7 @@ using Godot;
 
 /// <summary>
 /// Read-only snapshot of the world as seen by an AI ship this frame.
-/// 
+///
 /// We include stable ship/world state plus the current frame's nearby ship
 /// contacts and terrain ray readings.
 /// Static tuning values should live in controller config instead.

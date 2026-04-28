@@ -2,6 +2,7 @@ namespace PiratesQuest.AI;
 
 using PiratesQuest.Data;
 using PiratesQuest.AI.hunterDeterministic;
+using PiratesQuest.AI.pythonNavigation;
 using PiratesQuest.AI.traderDeterministic;
 using System.Collections.Generic;
 
@@ -39,14 +40,20 @@ public sealed class AiShipDefinition
     {
       "raider" => CreateRaider(),
       "trader" => CreateTrader(),
+      "neural_patrol" => CreateNeuralPatrol(),
       _ => CreateRaider(),
     };
   }
 
-  public IAiShipController CreateController()
+  public IAiShipController CreateController(AiShipControllerServices services)
   {
     return Id switch
     {
+      "neural_patrol" => new PythonNavigationAiShipController(
+        services?.PythonAiWorker,
+        PatrolRadius,
+        GoalArrivalDistance,
+        MaxSpeed),
       "trader" => new TraderDeterministicAiShipController(new TraderDeterministicAiShipControllerConfig
       {
         GoalArrivalDistance = GoalArrivalDistance
@@ -117,6 +124,34 @@ public sealed class AiShipDefinition
         { InventoryItemType.Wood, 12 },
         { InventoryItemType.Iron, 10 },
         { InventoryItemType.Fish, 16 },
+      }
+    };
+  }
+
+  private static AiShipDefinition CreateNeuralPatrol()
+  {
+    return new AiShipDefinition
+    {
+      Id = "neural_patrol",
+      DisplayName = "Neural Patrol",
+      AllyTypeId = "trader",
+      VisualType = AiShipVisualType.PlayerWhite,
+      MaxHealth = 120.0f,
+      MaxSpeed = 12.0f,
+      Acceleration = 4.0f,
+      Deceleration = 4.2f,
+      TurnSpeed = 0.5f,
+      AttackDamage = 0.0f,
+      ProjectileBonusSpeed = 0.0f,
+      FireCooldownSeconds = 999.0f,
+      ShipAvoidanceRange = 125.0f,
+      PreferredCombatRange = 0.0f,
+      FireRange = 0.0f,
+      GoalArrivalDistance = 18.0f,
+      PatrolRadius = 250.0f,
+      CargoManifest = new Dictionary<InventoryItemType, int>
+      {
+        { InventoryItemType.Coin, 12 },
       }
     };
   }

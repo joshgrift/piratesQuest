@@ -1,12 +1,15 @@
 namespace PiratesQuest.AI;
 
 using Godot;
+using PiratesQuest.AI.pythonNavigation;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using GodotDictionary = Godot.Collections.Dictionary;
 
 /// <summary>
 /// Shared tuning values for where AI ships are allowed to spawn and patrol.
-/// 
+///
 /// Keeping these in one place helps the play scene and the AI ship scene agree
 /// on what "the playable map" means.
 /// </summary>
@@ -24,7 +27,7 @@ public static class AiShipWorldSettings
 
 /// <summary>
 /// Owns AI ship population management for the play scene.
-/// 
+///
 /// Play.cs still owns the rest of the world, but this class keeps the AI ship
 /// refill logic in one focused place.
 /// </summary>
@@ -35,8 +38,9 @@ public partial class AiShipManager : RefCounted
 
   private readonly Dictionary<string, int> _targetCountByArchetype = new()
   {
-    { "raider", 5 },
-    { "trader", 5 },
+    { "raider", 2 },
+    { "trader", 2 },
+    { "neural_patrol", 1 }
   };
 
   private readonly Dictionary<string, int> _nextSequenceByArchetype = new();
@@ -49,6 +53,11 @@ public partial class AiShipManager : RefCounted
   private MultiplayerSpawner _deadPlayerSpawner;
   private Timer _respawnTimer;
   private bool _debugAiShips;
+  private bool _pythonAiSessionDisabled;
+  private bool _isShuttingDown;
+  private PythonAiWorkerClient _pythonAiWorker;
+
+  public AiShipControllerServices ControllerServices { get; private set; } = AiShipControllerServices.Empty;
 
   public void Initialize(
     Play play,
@@ -73,6 +82,8 @@ public partial class AiShipManager : RefCounted
   {
     if (_play == null || !_play.Multiplayer.IsServer())
       return;
+
+    InitializePythonAiIfNeeded();
 
     _respawnTimer = new Timer
     {
@@ -108,6 +119,35 @@ public partial class AiShipManager : RefCounted
       return;
 
     Callable.From(EnsurePopulation).CallDeferred();
+  }
+
+  public void Shutdown()
+  {
+    if (_isShuttingDown)
+      return;
+
+    _isShuttingDown = true;
+
+    if (IsInstanceValid(_respawnTimer))
+    {
+      _respawnTimer.Timeout -= EnsurePopulation;
+      _respawnTimer.Stop();
+      _respawnTimer.QueueFree();
+    }
+    _respawnTimer = null;
+
+    // Close neural ships while the worker is still alive so their controllers
+    // can flush a final terminal transition for scene shutdown.
+    DespawnNeuralShips("scene_exit");
+
+    if (_pythonAiWorker != null)
+    {
+      _pythonAiWorker.Unavailable -= OnPythonAiWorkerUnavailable;
+      _pythonAiWorker.Shutdown();
+      _pythonAiWorker = null;
+    }
+
+    ControllerServices = AiShipControllerServices.Empty;
   }
 
   private void EnsurePopulation()
@@ -163,6 +203,103 @@ public partial class AiShipManager : RefCounted
     };
 
     _aiShipSpawner.Spawn(spawnData);
+  }
+
+  private void InitializePythonAiIfNeeded()
+  {
+    _targetCountByArchetype.Remove("neural_patrol");
+
+    if (!Configuration.PythonAiEnabled || Configuration.PythonAiCount <= 0)
+    {
+      GD.Print("Python AI disabled; skipping neural patrol archetype.");
+      return;
+    }
+
+    if (_pythonAiSessionDisabled)
+      return;
+
+    string scriptPath = Configuration.GetPythonAiScriptAbsolutePath();
+    string rolloutPath = BuildRolloutFilePath();
+
+    _pythonAiWorker = new PythonAiWorkerClient(
+      Configuration.PythonAiExecutable,
+      scriptPath,
+      rolloutPath);
+
+    _pythonAiWorker.Unavailable += OnPythonAiWorkerUnavailable;
+
+    if (!_pythonAiWorker.Start())
+    {
+      GD.PrintErr("Python AI worker never reached ready handshake. Neural patrol ships will be skipped for this session.");
+      _pythonAiWorker.Unavailable -= OnPythonAiWorkerUnavailable;
+      _pythonAiWorker.Shutdown();
+      _pythonAiWorker = null;
+      _pythonAiSessionDisabled = true;
+      ControllerServices = AiShipControllerServices.Empty;
+      return;
+    }
+
+    ControllerServices = new AiShipControllerServices
+    {
+      PythonAiWorker = _pythonAiWorker
+    };
+
+    _targetCountByArchetype["neural_patrol"] = Configuration.PythonAiCount;
+    GD.Print($"Python AI ready. Target neural patrol ships: {Configuration.PythonAiCount}");
+  }
+
+  private string BuildRolloutFilePath()
+  {
+    string rolloutDirectory = ProjectSettings.GlobalizePath("user://ai_rollouts");
+    Directory.CreateDirectory(rolloutDirectory);
+
+    string timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+    return Path.Combine(rolloutDirectory, $"rollout_{timestamp}.jsonl");
+  }
+
+  private void OnPythonAiWorkerUnavailable(string reason)
+  {
+    if (_isShuttingDown)
+      return;
+
+    GD.PrintErr($"Python AI worker became unavailable: {reason}");
+    Callable.From(HandlePythonWorkerUnavailable).CallDeferred();
+  }
+
+  private void HandlePythonWorkerUnavailable()
+  {
+    if (_isShuttingDown || _pythonAiSessionDisabled)
+      return;
+
+    _pythonAiSessionDisabled = true;
+    _targetCountByArchetype.Remove("neural_patrol");
+    ControllerServices = AiShipControllerServices.Empty;
+
+    if (_pythonAiWorker != null)
+    {
+      _pythonAiWorker.Unavailable -= OnPythonAiWorkerUnavailable;
+      _pythonAiWorker.Shutdown();
+      _pythonAiWorker = null;
+    }
+
+    DespawnNeuralShips("worker_unavailable");
+  }
+
+  private void DespawnNeuralShips(string reason)
+  {
+    Node aiShipRoot = _aiShipSpawner?.GetParent();
+    if (aiShipRoot == null)
+      return;
+
+    foreach (Node child in aiShipRoot.GetChildren())
+    {
+      if (child is not AiShip aiShip)
+        continue;
+      if (aiShip.ArchetypeId != "neural_patrol")
+        continue;
+
+      aiShip.ForceRemoval(reason);
+    }
   }
 
   private (Vector3 Position, float YawRadians) PickEdgeSpawn()

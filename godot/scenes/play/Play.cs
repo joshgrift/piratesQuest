@@ -594,6 +594,8 @@ public partial class Play : Node3D
   /// </summary>
   public override void _ExitTree()
   {
+    _aiShipManager?.Shutdown();
+
     if (!Multiplayer.IsServer())
     {
       Multiplayer.ServerDisconnected -= OnServerDisconnected;

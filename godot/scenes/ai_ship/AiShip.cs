@@ -64,6 +64,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
   private float _escapeTimerRemaining = 0.0f;
   private float _escapeTurnDirection = 1.0f;
   private bool _isSinking = false;
+  private bool _controllerRemoved = false;
   private bool _debugEnabled = false;
   private bool _navigationDebugEnabled = false;
   private string _debugState = string.Empty;
@@ -113,12 +114,14 @@ public partial class AiShip : CharacterBody3D, IDamageable
     _lastPosition = GlobalPosition;
 
     _floatingBody = new FloatingBody3D(this);
-    _controller = _definition.CreateController();
+    _controller ??= _definition.CreateController(Manager?.ControllerServices ?? AiShipControllerServices.Empty);
     RefreshDebugVisuals();
   }
 
   public override void _ExitTree()
   {
+    NotifyControllerRemovedOnce("scene_exit");
+
     // The patrol marker is added to the active scene instead of under this ship,
     // so Godot will not clean it up automatically when the ship dies.
     // We explicitly remove AI debug visuals here so death, despawn, and fail-safe
@@ -135,21 +138,28 @@ public partial class AiShip : CharacterBody3D, IDamageable
       ? data["definitionId"].AsString()
       : "raider";
 
+    Vector3 spawnPosition = data.ContainsKey("position") ? data["position"].AsVector3() : Vector3.Zero;
+    Vector3 spawnRotation = data.ContainsKey("rotation") ? data["rotation"].AsVector3() : Vector3.Zero;
+
     _definition = AiShipDefinition.FromId(definitionId);
-    _controller = _definition.CreateController();
+    _controller = _definition.CreateController(Manager?.ControllerServices ?? AiShipControllerServices.Empty);
 
     Name = data.ContainsKey("name") ? data["name"].AsString() : $"ai_ship_{GetInstanceId()}";
     DisplayName = data.ContainsKey("displayName") ? data["displayName"].AsString() : _definition.DisplayName;
-    GlobalPosition = data.ContainsKey("position") ? data["position"].AsVector3() : Vector3.Zero;
-    Rotation = data.ContainsKey("rotation") ? data["rotation"].AsVector3() : Vector3.Zero;
+    Position = spawnPosition;
+    Rotation = spawnRotation;
     _debugEnabled = data.ContainsKey("debug") && data["debug"].AsBool();
 
-    _spawnPoint = GlobalPosition;
-    _lastPosition = GlobalPosition;
-    _stallAreaAnchor = GlobalPosition;
+    _spawnPoint = spawnPosition;
+    _lastPosition = spawnPosition;
+    _stallAreaAnchor = spawnPosition;
     _lifetimeSeconds = 0.0f;
     Health = MaxHealth;
+    _isSinking = false;
+    _controllerRemoved = false;
+
     _memory.Clear();
+    _memory.Set("ship_id", Name);
 
     _cargoManifest.Clear();
     foreach (var entry in _definition.CargoManifest)
@@ -239,6 +249,16 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
     ApplyControl(_controller.GetControl(context, _memory, delta), (float)delta);
     UpdateDebugVisuals();
+  }
+
+  public void ForceRemoval(string reason)
+  {
+    if (_isSinking)
+      return;
+
+    _isSinking = true;
+    NotifyControllerRemovedOnce(reason);
+    QueueFree();
   }
 
   private void UpdateStallAreaTimer(float delta, bool frontBlocked)
@@ -722,6 +742,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
     _isSinking = true;
     GD.Print($"{Name}: {reason}, forcing respawn");
+    NotifyControllerRemovedOnce("forced_respawn");
 
     Manager?.RequestImmediateRefill();
 
@@ -748,6 +769,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
       return;
 
     _isSinking = true;
+    NotifyControllerRemovedOnce("ship_sunk");
 
     if (DeadPlayerSpawner != null && _cargoManifest.Count > 0)
     {
@@ -768,6 +790,31 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
     Manager?.RequestImmediateRefill();
     QueueFree();
+  }
+
+  private void NotifyControllerRemovedOnce(string reason)
+  {
+    if (_controllerRemoved)
+      return;
+
+    _controllerRemoved = true;
+    _controller?.OnRemoved(_memory, reason);
+  }
+
+  private float CalculateRayDistanceFraction(RayCast3D ray)
+  {
+    if (ray == null)
+      return 1.0f;
+
+    float maxDistance = ray.TargetPosition.Length();
+    if (maxDistance <= 0.001f)
+      return 1.0f;
+
+    if (!ray.IsColliding())
+      return 1.0f;
+
+    float hitDistance = ray.GlobalPosition.DistanceTo(ray.GetCollisionPoint());
+    return Mathf.Clamp(hitDistance / maxDistance, 0.0f, 1.0f);
   }
 
   public void OnDeath()

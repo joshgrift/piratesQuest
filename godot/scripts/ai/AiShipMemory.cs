@@ -47,6 +47,14 @@ public sealed class AiShipMemory
   }
 
   /// <summary>
+  /// Read a typed value or fall back to a default when the key is missing.
+  /// </summary>
+  public T GetOrDefault<T>(string key, T defaultValue = default)
+  {
+    return TryGet<T>(key, out T value) ? value : defaultValue;
+  }
+
+  /// <summary>
   /// Read an existing typed value or create it once if it does not exist yet.
   /// </summary>
   public T GetOrCreate<T>(string key, Func<T> factory)
@@ -57,5 +65,21 @@ public sealed class AiShipMemory
     T newValue = factory();
     _values[key] = newValue;
     return newValue;
+  }
+
+  /// <summary>
+  /// True when this memory bag already has a value stored under the key.
+  /// </summary>
+  public bool ContainsKey(string key)
+  {
+    return _values.ContainsKey(key);
+  }
+
+  /// <summary>
+  /// Forget one stored value.
+  /// </summary>
+  public void Remove(string key)
+  {
+    _values.Remove(key);
   }
 }

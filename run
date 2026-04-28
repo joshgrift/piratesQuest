@@ -32,6 +32,10 @@ SERVER_ONLY=false
 BUILD_FIRST=false
 CLIENT_USER=""
 CLIENT_PASS=""
+PYTHON_AI=true
+PYTHON_AI_EXE="${PYTHON_AI_EXE:-/usr/bin/python3}"
+PYTHON_AI_COUNT=""
+PYTHON_AI_SCRIPT="${ROOT_DIR}/godot/python_ai/worker.py"
 
 mkdir -p "${PID_DIR}" "${LOG_DIR}"
 
@@ -82,6 +86,10 @@ Options:
   --prod               Use https://pirates.quest for API instead of local API
   --user <name>        Pass login user when starting the client
   --password <pass>    Pass login password when starting the client
+  --python-ai          Enable the shared Python AI worker for the local server
+  --no-python-ai       Disable the shared Python AI worker for the local server
+  --python-ai-exe <p>  Override the Python executable for the local server
+  --python-ai-count <n> Override how many neural patrol ships the local server should target
 
 Typical flow:
   1. ./run up
@@ -351,6 +359,18 @@ start_service() {
         --server-id "${SERVER_ID}"
         --server-api-key "${SERVER_API_KEY}"
       )
+      if [[ "${PYTHON_AI}" == "true" ]]; then
+        server_args+=(
+          --python-ai
+          --python-ai-script "${PYTHON_AI_SCRIPT}"
+        )
+        if [[ -n "${PYTHON_AI_EXE}" ]]; then
+          server_args+=(--python-ai-exe "${PYTHON_AI_EXE}")
+        fi
+        if [[ -n "${PYTHON_AI_COUNT}" ]]; then
+          server_args+=(--python-ai-count "${PYTHON_AI_COUNT}")
+        fi
+      fi
       if [[ "${USE_PROD}" == "true" ]]; then
         server_args+=(--api-url "https://pirates.quest")
       fi
@@ -632,6 +652,10 @@ while [[ $# -gt 0 ]]; do
     --prod) USE_PROD=true; shift ;;
     --user) CLIENT_USER="$2"; shift 2 ;;
     --password) CLIENT_PASS="$2"; shift 2 ;;
+    --python-ai) PYTHON_AI=true; shift ;;
+    --no-python-ai) PYTHON_AI=false; shift ;;
+    --python-ai-exe) PYTHON_AI_EXE="$2"; shift 2 ;;
+    --python-ai-count) PYTHON_AI_COUNT="$2"; shift 2 ;;
     --help|-h) print_help; exit 0 ;;
     *)
       print_info "${RED}" "Unknown argument: $1"
