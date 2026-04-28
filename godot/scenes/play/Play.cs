@@ -27,6 +27,7 @@ public partial class Play : Node3D
   private PackedScene _aiShipScene = GD.Load<PackedScene>("res://scenes/ai_ship/ai_ship.tscn");
   private PackedScene _cannonBallScene = GD.Load<PackedScene>("res://scenes/cannon_ball/cannon_ball.tscn");
   private PackedScene _deadPlayerScene = GD.Load<PackedScene>("res://scenes/dead_player/dead_player.tscn");
+  private PackedScene _aiDebugMenuScene = GD.Load<PackedScene>("res://scenes/ai_debug_menu/ai_debug_menu.tscn");
   private readonly Dictionary<long, string> _peerUsernames = new();
   private Timer _heartbeatTimer;
   private Timer _leaderboardTimer;
@@ -104,6 +105,8 @@ public partial class Play : Node3D
       StartServerHeartbeatIfNeeded();
       StartLeaderboardSyncIfNeeded();
       _aiShipManager.StartRespawnLoop();
+
+      AddChild(_aiDebugMenuScene.Instantiate());
 
       // Activate free camera in server mode
       if (Configuration.IsDesignatedServerMode() && _freeCam != null)

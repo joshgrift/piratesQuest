@@ -37,6 +37,8 @@ public partial class AiShip : CharacterBody3D, IDamageable
   public int MaxHealth => Mathf.RoundToInt(_definition.MaxHealth);
   public string ArchetypeId => _definition.Id;
   public string AllyTypeId => _definition.AllyTypeId;
+  public bool IsDebugEnabled => _debugEnabled;
+  public bool IsNavigationDebugEnabled => _navigationDebugEnabled;
 
   private AiShipDefinition _definition = AiShipDefinition.FromId("raider");
   private IAiShipController _controller;
@@ -63,6 +65,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
   private float _escapeTurnDirection = 1.0f;
   private bool _isSinking = false;
   private bool _debugEnabled = false;
+  private bool _navigationDebugEnabled = false;
   private string _debugState = string.Empty;
   private bool _debugHasTargetShip = false;
   private float _debugDistanceToTargetShip = 0.0f;
@@ -70,7 +73,9 @@ public partial class AiShip : CharacterBody3D, IDamageable
   private bool _debugLeftBlocked = false;
   private bool _debugRightBlocked = false;
   private FloatingBody3D _floatingBody;
+  private MeshInstance3D _patrolPointDebugMarker;
   private Label3D _stateDebugLabel;
+  private readonly List<RayDebugVisual> _rayDebugVisuals = new();
 
   private const float RecoilRollAmount = 0.32f;
   private const float RecoilDecaySpeed = 2.4f;
@@ -81,7 +86,25 @@ public partial class AiShip : CharacterBody3D, IDamageable
   private const float StuckAreaKillSeconds = 10.0f;
   private const float StuckAreaClearResetSeconds = 1.5f;
   private const float LifetimeRespawnSeconds = 1800.0f;
+  private const string HunterPatrolPointMemoryKey = "hunter.patrol_point";
+  private static readonly Color DebugRayBlockedColor = new(1.0f, 0.34f, 0.24f, 1.0f);
+  private static readonly Color DebugRayClearColor = new(0.2f, 0.95f, 0.66f, 1.0f);
   private static readonly Vector3 DebugLabelOffset = new(0.0f, 7.0f, 0.0f);
+  private static readonly Vector3 DebugMarkerHeightOffset = new(0.0f, 1.2f, 0.0f);
+
+  private sealed class RayDebugVisual
+  {
+    public RayCast3D Ray { get; }
+    public MeshInstance3D Mesh { get; }
+    public StandardMaterial3D Material { get; }
+
+    public RayDebugVisual(RayCast3D ray, MeshInstance3D mesh, StandardMaterial3D material)
+    {
+      Ray = ray;
+      Mesh = mesh;
+      Material = material;
+    }
+  }
 
   public override void _Ready()
   {
@@ -483,31 +506,107 @@ public partial class AiShip : CharacterBody3D, IDamageable
     if (!IsInsideTree())
       return;
 
-    bool shouldShowDebug = _debugEnabled && Multiplayer.IsServer();
+    bool isServer = Multiplayer.IsServer();
+    bool shouldShowStateDebug = _debugEnabled && isServer;
+    bool shouldShowNavigationDebug = _navigationDebugEnabled && isServer;
 
-    if (!shouldShowDebug)
+    if (!shouldShowStateDebug)
     {
-      CleanupDebugVisuals();
-      return;
+      CleanupStateDebugVisuals();
     }
-
-    if (_stateDebugLabel == null)
+    else if (_stateDebugLabel == null)
     {
       _stateDebugLabel = AiDebugVisuals.CreateStateLabel("AiStateDebugLabel", DebugLabelOffset);
       AddChild(_stateDebugLabel);
     }
+
+    if (!shouldShowNavigationDebug)
+    {
+      CleanupNavigationDebugVisuals();
+    }
+    else
+    {
+      EnsureNavigationDebugVisuals();
+    }
   }
 
   private void CleanupDebugVisuals()
+  {
+    CleanupStateDebugVisuals();
+    CleanupNavigationDebugVisuals();
+  }
+
+  private void CleanupStateDebugVisuals()
   {
     if (IsInstanceValid(_stateDebugLabel))
       _stateDebugLabel.QueueFree();
     _stateDebugLabel = null;
   }
 
+  private void CleanupNavigationDebugVisuals()
+  {
+    if (IsInstanceValid(_patrolPointDebugMarker))
+      _patrolPointDebugMarker.QueueFree();
+    _patrolPointDebugMarker = null;
+
+    foreach (RayDebugVisual rayDebug in _rayDebugVisuals)
+    {
+      if (IsInstanceValid(rayDebug.Mesh))
+        rayDebug.Mesh.QueueFree();
+    }
+    _rayDebugVisuals.Clear();
+  }
+
+  private void EnsureNavigationDebugVisuals()
+  {
+    if (_patrolPointDebugMarker == null)
+    {
+      _patrolPointDebugMarker = AiDebugVisuals.CreatePointMarker(
+        "PatrolPointDebugMarker",
+        new Color(0.25f, 0.95f, 0.65f),
+        radius: 0.8f
+      );
+      GetTree().CurrentScene?.AddChild(_patrolPointDebugMarker);
+    }
+
+    if (_rayDebugVisuals.Count == 0)
+    {
+      TryCreateRayDebugVisual("ForwardRayDebug", ForwardRay);
+      TryCreateRayDebugVisual("ForwardLeftRayDebug", ForwardLeftRay);
+      TryCreateRayDebugVisual("ForwardRightRayDebug", ForwardRightRay);
+      TryCreateRayDebugVisual("WideLeftRayDebug", WideLeftRay);
+      TryCreateRayDebugVisual("WideRightRayDebug", WideRightRay);
+    }
+  }
+
+  private void TryCreateRayDebugVisual(string name, RayCast3D ray)
+  {
+    if (ray == null)
+      return;
+
+    var material = new StandardMaterial3D
+    {
+      AlbedoColor = DebugRayClearColor,
+      ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+      Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+    };
+
+    var rayMesh = new MeshInstance3D
+    {
+      Name = name,
+      TopLevel = true,
+      Mesh = new ImmediateMesh(),
+      MaterialOverride = material,
+      CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+    };
+    GetTree().CurrentScene?.AddChild(rayMesh);
+
+    _rayDebugVisuals.Add(new RayDebugVisual(ray, rayMesh, material));
+  }
+
   private void UpdateDebugVisuals()
   {
-    if (!_debugEnabled || !Multiplayer.IsServer())
+    if (!Multiplayer.IsServer())
       return;
 
     if (!IsInsideTree())
@@ -515,11 +614,84 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
     RefreshDebugVisuals();
 
-    if (_stateDebugLabel != null)
+    if (_debugEnabled && _stateDebugLabel != null)
       _stateDebugLabel.Text = BuildDebugText();
+
+    if (_navigationDebugEnabled)
+      UpdateNavigationDebugVisuals();
   }
 
-  private string BuildDebugText()
+  private void UpdateNavigationDebugVisuals()
+  {
+    if (_memory.TryGet<Vector3>(HunterPatrolPointMemoryKey, out Vector3 patrolPoint))
+    {
+      if (_patrolPointDebugMarker != null)
+      {
+        _patrolPointDebugMarker.Visible = true;
+        _patrolPointDebugMarker.GlobalPosition = patrolPoint + DebugMarkerHeightOffset;
+      }
+    }
+    else if (_patrolPointDebugMarker != null)
+    {
+      _patrolPointDebugMarker.Visible = false;
+    }
+
+    foreach (RayDebugVisual rayDebug in _rayDebugVisuals)
+    {
+      UpdateRayDebugVisual(rayDebug);
+    }
+  }
+
+  private static void UpdateRayDebugVisual(RayDebugVisual rayDebug)
+  {
+    if (!IsInstanceValid(rayDebug.Ray) || !IsInstanceValid(rayDebug.Mesh))
+      return;
+
+    Vector3 start = rayDebug.Ray.GlobalPosition;
+    bool blocked = rayDebug.Ray.IsColliding();
+    Vector3 end = blocked
+      ? rayDebug.Ray.GetCollisionPoint()
+      : rayDebug.Ray.ToGlobal(rayDebug.Ray.TargetPosition);
+
+    rayDebug.Material.AlbedoColor = blocked ? DebugRayBlockedColor : DebugRayClearColor;
+
+    if (rayDebug.Mesh.Mesh is not ImmediateMesh lineMesh)
+      return;
+
+    lineMesh.ClearSurfaces();
+    lineMesh.SurfaceBegin(Mesh.PrimitiveType.Lines);
+    lineMesh.SurfaceAddVertex(start);
+    lineMesh.SurfaceAddVertex(end);
+    lineMesh.SurfaceEnd();
+  }
+
+  /// <summary>
+  /// Server-side AI debug toggle used by the AI debug menu.
+  /// </summary>
+  public void SetDebugEnabled(bool enabled)
+  {
+    if (_debugEnabled == enabled)
+      return;
+
+    _debugEnabled = enabled;
+    RefreshDebugVisuals();
+    UpdateDebugVisuals();
+  }
+
+  /// <summary>
+  /// Server-side navigation debug toggle for patrol-point and terrain-ray visuals.
+  /// </summary>
+  public void SetNavigationDebugEnabled(bool enabled)
+  {
+    if (_navigationDebugEnabled == enabled)
+      return;
+
+    _navigationDebugEnabled = enabled;
+    RefreshDebugVisuals();
+    UpdateDebugVisuals();
+  }
+
+  public string BuildDebugText()
   {
     string targetText = _debugHasTargetShip
       ? $"Ship {_debugDistanceToTargetShip:0.0}"
