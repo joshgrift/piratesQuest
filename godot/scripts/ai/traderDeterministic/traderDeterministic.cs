@@ -14,15 +14,16 @@ using PiratesQuest.AI;
 /// </summary>
 public sealed class TraderDeterministicAiShipController : IAiShipController
 {
+  private const string CurrentPortIdKey = "trader.current_port_id";
+
   private readonly RandomNumberGenerator _rng = new();
-  private string _currentPortId = string.Empty;
 
   public TraderDeterministicAiShipController()
   {
     _rng.Randomize();
   }
 
-  public AiShipControlInput GetControl(AiShipContext context, double delta)
+  public AiShipControlInput GetControl(AiShipContext context, AiShipMemory memory, double delta)
   {
     var input = new AiShipControlInput();
     float obstacleTurnBias = AiNavigationHelpers.BuildObstacleTurnBias(context);
@@ -52,7 +53,7 @@ public sealed class TraderDeterministicAiShipController : IAiShipController
       return input;
     }
 
-    Port targetPort = PickOrRefreshTargetPort(context);
+    Port targetPort = PickOrRefreshTargetPort(context, memory);
     if (targetPort == null)
     {
       input.Throttle = 0.0f;
@@ -88,16 +89,20 @@ public sealed class TraderDeterministicAiShipController : IAiShipController
     return input;
   }
 
-  private Port PickOrRefreshTargetPort(AiShipContext context)
+  private Port PickOrRefreshTargetPort(AiShipContext context, AiShipMemory memory)
   {
     if (context.Ports.Length == 0)
       return null;
 
-    Port currentPort = FindPortById(context, _currentPortId);
+    string currentPortId = memory.TryGet<string>(CurrentPortIdKey, out string storedPortId)
+      ? storedPortId
+      : string.Empty;
+
+    Port currentPort = FindPortById(context, currentPortId);
     if (currentPort == null)
     {
       currentPort = PickRandomPort(context, null);
-      _currentPortId = currentPort?.PortId ?? string.Empty;
+      memory.Set(CurrentPortIdKey, currentPort?.PortId ?? string.Empty);
       return currentPort;
     }
 
@@ -106,7 +111,7 @@ public sealed class TraderDeterministicAiShipController : IAiShipController
       return currentPort;
 
     Port nextPort = PickRandomPort(context, currentPort.PortId);
-    _currentPortId = nextPort?.PortId ?? currentPort.PortId;
+    memory.Set(CurrentPortIdKey, nextPort?.PortId ?? currentPort.PortId);
     return nextPort ?? currentPort;
   }
 

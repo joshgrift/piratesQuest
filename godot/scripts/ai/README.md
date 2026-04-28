@@ -40,6 +40,8 @@ Right now that includes:
   - the tiny command object returned by an AI brain each frame
 - `AiShipContext.cs`
   - the read-only snapshot passed into the AI brain
+- `AiShipMemory.cs`
+  - the per-ship runtime memory bag owned by the controller layer
 - `AiShipDefinition.cs`
   - data for AI ship archetypes
 
@@ -68,6 +70,7 @@ When adding a new AI:
 2. Create a new folder in `godot/scripts/ai/` for the AI itself.
 3. Put that AI's controller and any AI-specific helpers in that folder.
 4. Keep `AiShip.cs` responsible for applying the returned control input.
+5. Keep long-lived AI behavior state in `AiShipMemory`, not in `AiShip.cs`.
 
 ## Rule Of Thumb
 
@@ -76,6 +79,7 @@ If the code answers one of these questions, it probably belongs here:
 - "What should the AI do next?"
 - "What data does the AI need to decide?"
 - "What reusable AI helper can multiple AI ships share?"
+- "What should this AI ship remember between frames?"
 
 If the code answers one of these questions, it probably belongs in `scenes/ai_ship`:
 

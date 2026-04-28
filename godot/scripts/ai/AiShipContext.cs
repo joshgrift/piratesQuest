@@ -6,7 +6,8 @@ using Godot;
 /// Read-only snapshot of the world as seen by an AI ship this frame.
 /// 
 /// We only include things AI ships actually care about right now:
-/// nearby players, nearby ports, the current goal, and obstacle sensing.
+/// nearby players, nearby ports, and obstacle sensing.
+/// Any controller-owned goals should live in AiShipMemory instead.
 /// </summary>
 public sealed class AiShipContext
 {
@@ -32,26 +33,6 @@ public sealed class AiShipContext
   public float CurrentSpeed { get; init; }
 
   /// <summary>
-  /// The main world-space position the ship scene chose as this frame's goal.
-  /// For hunters that is usually a player or patrol point. Other AI types can
-  /// ignore it if they compute their own goal from other context fields.
-  /// </summary>
-  public Vector3 GoalPosition { get; init; }
-
-  /// <summary>
-  /// The same goal as <see cref="GoalPosition"/>, but already converted into
-  /// the ship's local space.
-  /// 
-  /// Practical meaning:
-  /// - X less than 0 = goal is to port/left
-  /// - X greater than 0 = goal is to starboard/right
-  /// - Z less than 0 = goal is generally in front
-  /// 
-  /// This is the easiest field to use when deciding which way to turn.
-  /// </summary>
-  public Vector3 LocalGoalPosition { get; init; }
-
-  /// <summary>
   /// True when the ship scene found a player target for this frame.
   /// Hunter AI uses this to switch between patrol behavior and combat behavior.
   /// Traders usually ignore it and rely on threat-avoidance fields instead.
@@ -59,11 +40,36 @@ public sealed class AiShipContext
   public bool HasTargetPlayer { get; init; }
 
   /// <summary>
-  /// Straight-line distance from the ship to <see cref="GoalPosition"/>.
-  /// AI uses this to slow down near a goal, decide whether it is in combat range,
-  /// or pick a new destination after arriving.
+  /// World-space position of the player target, when one exists.
+  /// If <see cref="HasTargetPlayer"/> is false this will be Vector3.Zero.
   /// </summary>
-  public float DistanceToGoal { get; init; }
+  public Vector3 TargetPlayerPosition { get; init; }
+
+  /// <summary>
+  /// Target player position already converted into the ship's local space.
+  /// This makes it easy to ask "is the player to my left or right?" without
+  /// each controller repeating the same transform work.
+  /// </summary>
+  public Vector3 LocalTargetPlayerPosition { get; init; }
+
+  /// <summary>
+  /// Straight-line distance to the current player target.
+  /// If no player target exists this should be float.MaxValue.
+  /// </summary>
+  public float DistanceToTargetPlayer { get; init; }
+
+  /// <summary>
+  /// Original spawn point for this AI ship.
+  /// Controllers can use this as a stable reference when building patrol areas
+  /// or other long-lived local behavior.
+  /// </summary>
+  public Vector3 SpawnPoint { get; init; }
+
+  /// <summary>
+  /// Patrol radius from the active AI ship definition.
+  /// Hunters use this to choose wander points inside their patrol area.
+  /// </summary>
+  public float PatrolRadius { get; init; }
 
   /// <summary>
   /// Distance where a broadside shot is allowed to start making sense.

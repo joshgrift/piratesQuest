@@ -5,11 +5,12 @@ namespace PiratesQuest.AI;
 /// 
 /// The controller decides what the ship wants to do.
 /// The AiShip node is still responsible for movement, combat, and loot.
-/// That split keeps the gameplay rules in one place.
+/// The controller also gets a small memory bag so each AI can remember
+/// per-ship runtime state without pushing that state into AiShip.cs.
 /// </summary>
 public interface IAiShipController
 {
-  AiShipControlInput GetControl(AiShipContext context, double delta);
+  AiShipControlInput GetControl(AiShipContext context, AiShipMemory memory, double delta);
 }
 
 /// <summary>
