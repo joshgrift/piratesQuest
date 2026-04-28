@@ -247,7 +247,15 @@ public partial class AiShip : CharacterBody3D, IDamageable
     _debugLeftBlocked = AiNavigationHelpers.IsLeftBlocked(context);
     _debugRightBlocked = AiNavigationHelpers.IsRightBlocked(context);
 
-    ApplyControl(_controller.GetControl(context, _memory, delta), (float)delta);
+    AiShipControlInput control = _controller.GetControl(context, _memory, delta);
+
+    // Training capture is server-side only and only for the deterministic raider.
+    // We log the state before movement is applied so the CSV stays aligned with
+    // "this observation produced this action".
+    if (ArchetypeId == "raider")
+      Manager?.LogRaiderTrainingSample(this, context, _memory, control);
+
+    ApplyControl(control, (float)delta);
     UpdateDebugVisuals();
   }
 

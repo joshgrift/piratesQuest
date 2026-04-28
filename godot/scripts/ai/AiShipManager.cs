@@ -56,6 +56,7 @@ public partial class AiShipManager : RefCounted
   private bool _pythonAiSessionDisabled;
   private bool _isShuttingDown;
   private PythonAiWorkerClient _pythonAiWorker;
+  private RaiderTrainingCsvLogger _raiderTrainingLogger;
 
   public AiShipControllerServices ControllerServices { get; private set; } = AiShipControllerServices.Empty;
 
@@ -83,6 +84,7 @@ public partial class AiShipManager : RefCounted
     if (_play == null || !_play.Multiplayer.IsServer())
       return;
 
+    InitializeRaiderTrainingLogger();
     InitializePythonAiIfNeeded();
 
     _respawnTimer = new Timer
@@ -147,6 +149,9 @@ public partial class AiShipManager : RefCounted
       _pythonAiWorker = null;
     }
 
+    _raiderTrainingLogger?.Dispose();
+    _raiderTrainingLogger = null;
+
     ControllerServices = AiShipControllerServices.Empty;
   }
 
@@ -207,11 +212,13 @@ public partial class AiShipManager : RefCounted
 
   private void InitializePythonAiIfNeeded()
   {
-    _targetCountByArchetype.Remove("neural_patrol");
+    _targetCountByArchetype["neural_patrol"] = 1;
+    RefreshControllerServices();
 
     if (!Configuration.PythonAiEnabled || Configuration.PythonAiCount <= 0)
     {
       GD.Print("Python AI disabled; skipping neural patrol archetype.");
+      _targetCountByArchetype.Remove("neural_patrol");
       return;
     }
 
@@ -235,17 +242,46 @@ public partial class AiShipManager : RefCounted
       _pythonAiWorker.Shutdown();
       _pythonAiWorker = null;
       _pythonAiSessionDisabled = true;
-      ControllerServices = AiShipControllerServices.Empty;
+      RefreshControllerServices();
       return;
     }
 
+    _targetCountByArchetype["neural_patrol"] = Configuration.PythonAiCount;
+    RefreshControllerServices();
+    GD.Print($"Python AI ready. Target neural patrol ships: {Configuration.PythonAiCount}");
+  }
+
+  public void LogRaiderTrainingSample(
+    AiShip ship,
+    AiShipContext context,
+    AiShipMemory memory,
+    AiShipControlInput control)
+  {
+    _raiderTrainingLogger?.LogSample(ship, context, memory, control);
+  }
+
+  private void InitializeRaiderTrainingLogger()
+  {
+    if (_raiderTrainingLogger != null)
+      return;
+
+    string outputDirectory = ProjectSettings.GlobalizePath("user://ai_training");
+    Directory.CreateDirectory(outputDirectory);
+
+    string timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+    string outputPath = Path.Combine(outputDirectory, $"raider_movements_{timestamp}.csv");
+    _raiderTrainingLogger = new RaiderTrainingCsvLogger(outputPath);
+    RefreshControllerServices();
+    GD.Print($"Raider training CSV logging to {outputPath}");
+  }
+
+  private void RefreshControllerServices()
+  {
     ControllerServices = new AiShipControllerServices
     {
-      PythonAiWorker = _pythonAiWorker
+      PythonAiWorker = _pythonAiWorker,
+      RaiderTrainingLogger = _raiderTrainingLogger
     };
-
-    _targetCountByArchetype["neural_patrol"] = Configuration.PythonAiCount;
-    GD.Print($"Python AI ready. Target neural patrol ships: {Configuration.PythonAiCount}");
   }
 
   private string BuildRolloutFilePath()
@@ -273,7 +309,6 @@ public partial class AiShipManager : RefCounted
 
     _pythonAiSessionDisabled = true;
     _targetCountByArchetype.Remove("neural_patrol");
-    ControllerServices = AiShipControllerServices.Empty;
 
     if (_pythonAiWorker != null)
     {
@@ -282,6 +317,7 @@ public partial class AiShipManager : RefCounted
       _pythonAiWorker = null;
     }
 
+    RefreshControllerServices();
     DespawnNeuralShips("worker_unavailable");
   }
 

@@ -19,5 +19,11 @@ public sealed class AiShipControllerServices
   /// </summary>
   public PythonAiWorkerClient PythonAiWorker { get; init; }
 
+  /// <summary>
+  /// Shared CSV logger for deterministic raider training capture.
+  /// Null when logging has not been initialized for this session.
+  /// </summary>
+  public RaiderTrainingCsvLogger RaiderTrainingLogger { get; init; }
+
   public static readonly AiShipControllerServices Empty = new();
 }
