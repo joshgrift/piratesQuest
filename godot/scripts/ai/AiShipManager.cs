@@ -15,6 +15,7 @@ public static class AiShipWorldSettings
   public const float MapHalfExtent = 1100.0f;
   public const float SpawnInset = 85.0f;
   public const float SpawnPaddingFromCorners = 180.0f;
+  public const float ShipDiscoveryRange = 160.0f;
 
   // Patrol points stay a little inside the edge so ships spend more time in
   // useful water and less time scraping the border.

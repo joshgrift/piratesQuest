@@ -2,6 +2,7 @@ namespace PiratesQuest.AI.hunterDeterministic;
 
 using Godot;
 using PiratesQuest.AI;
+using System;
 
 /// <summary>
 /// First AI brain: patrol open water, chase nearby players, and try to line up
@@ -12,50 +13,75 @@ public sealed class HunterAiShipController : IAiShipController
   private const string PatrolCenterKey = "hunter.patrol_center";
   private const string PatrolPointKey = "hunter.patrol_point";
   private const string WasEscapingKey = "hunter.was_escaping";
+  private const string IsStuckKey = "hunter.is_stuck";
+  private const string IsEscapingKey = "hunter.is_escaping";
+  private const string IsEscapeReversingKey = "hunter.is_escape_reversing";
+  private const string EscapeTurnDirectionKey = "hunter.escape_turn_direction";
   private const float PatrolArrivalDistance = 14.0f;
 
+  private readonly HunterAiShipControllerConfig _config;
   private readonly RandomNumberGenerator _rng = new();
 
-  public HunterAiShipController()
+  public HunterAiShipController(HunterAiShipControllerConfig config)
   {
+    ArgumentNullException.ThrowIfNull(config);
+    _config = config;
     _rng.Randomize();
+  }
+
+  public void SyncSceneMemory(
+    AiShipMemory memory,
+    bool isStuck,
+    bool isEscaping,
+    bool isEscapeReversing,
+    float escapeTurnDirection)
+  {
+    memory.Set(IsStuckKey, isStuck);
+    memory.Set(IsEscapingKey, isEscaping);
+    memory.Set(IsEscapeReversingKey, isEscapeReversing);
+    memory.Set(EscapeTurnDirectionKey, escapeTurnDirection);
   }
 
   public AiShipControlInput GetControl(AiShipContext context, AiShipMemory memory, double delta)
   {
     var input = new AiShipControlInput();
+    bool isStuck = GetIsStuck(memory);
+    bool isEscaping = GetIsEscaping(memory);
+    bool isEscapeReversing = GetIsEscapeReversing(memory);
+    float escapeTurnDirection = GetEscapeTurnDirection(memory);
+    AiShipContact targetShip = context.FindNearestHostileShip();
     float obstacleTurnBias = AiNavigationHelpers.BuildObstacleTurnBias(context);
     bool sideTerrainNearby = AiNavigationHelpers.HasSideTerrainNearby(context);
     bool wasEscaping = memory.TryGet<bool>(WasEscapingKey, out bool storedWasEscaping) && storedWasEscaping;
 
     AiShipControlInput FinishInput()
     {
-      memory.Set(WasEscapingKey, context.IsEscaping);
+      memory.Set(WasEscapingKey, isEscaping);
       return input;
     }
 
     // Once the ship commits to an escape maneuver, keep that decision stable
     // for a short time. This avoids the left/right wiggle that happens when
     // obstacle checks flip every frame near shore.
-    if (context.IsEscaping)
+    if (isEscaping)
     {
       // If patrol mode just triggered an escape, pick a fresh patrol point now
       // so the ship does not head straight back into the same bad water after recovery.
-      if (!wasEscaping && !context.HasTargetPlayer)
+      if (!wasEscaping && targetShip == null)
       {
         Vector3 patrolCenter = GetPatrolCenter(context, memory);
         memory.Set(PatrolPointKey, PickPatrolPointInRange(context, patrolCenter));
       }
 
-      input.Throttle = context.IsEscapeReversing ? -1.0f : 0.55f;
-      input.Turn = context.EscapeTurnDirection;
-      input.DebugState = context.IsEscapeReversing ? "Escape Reverse" : "Escape Forward";
+      input.Throttle = isEscapeReversing ? -1.0f : 0.55f;
+      input.Turn = escapeTurnDirection;
+      input.DebugState = isEscapeReversing ? "Escape Reverse" : "Escape Forward";
       return FinishInput();
     }
 
     // Terrain avoidance gets top priority.
     // If the ship sees land dead ahead, surviving matters more than style.
-    if (context.FrontBlocked)
+    if (AiNavigationHelpers.IsFrontBlocked(context))
     {
       input.Throttle = -0.75f;
       input.Turn = AiNavigationHelpers.PickSaferTurn(context);
@@ -64,7 +90,7 @@ public sealed class HunterAiShipController : IAiShipController
     }
 
     // If we're already rubbing against terrain, reverse and pivot away.
-    if (context.IsStuck)
+    if (isStuck)
     {
       input.Throttle = -0.9f;
       input.Turn = AiNavigationHelpers.PickSaferTurn(context);
@@ -72,7 +98,7 @@ public sealed class HunterAiShipController : IAiShipController
       return FinishInput();
     }
 
-    if (!context.HasTargetPlayer)
+    if (targetShip == null)
     {
       Vector3 patrolCenter = GetPatrolCenter(context, memory);
       Vector3 patrolPoint = memory.GetOrCreate(PatrolPointKey, () => PickPatrolPointInRange(context, patrolCenter));
@@ -96,29 +122,30 @@ public sealed class HunterAiShipController : IAiShipController
       return FinishInput();
     }
 
-    float playerTargetAngle = Mathf.Atan2(context.LocalTargetPlayerPosition.X, -context.LocalTargetPlayerPosition.Z);
-    float playerDistance = context.DistanceToTargetPlayer;
+    Vector3 localTargetShipPosition = context.ShipBasis.Inverse() * (targetShip.Position - context.ShipPosition);
+    float targetShipAngle = Mathf.Atan2(localTargetShipPosition.X, -localTargetShipPosition.Z);
+    float targetShipDistance = targetShip.Distance;
 
-    // When attacking, try to keep the player off one side of the hull so the
+    // When attacking, try to keep the target ship off one side of the hull so the
     // cannons have a clear broadside instead of staring at the bow.
-    float desiredBroadsideAngle = context.LocalTargetPlayerPosition.X >= 0.0f
+    float desiredBroadsideAngle = localTargetShipPosition.X >= 0.0f
       ? Mathf.DegToRad(78.0f)
       : Mathf.DegToRad(-78.0f);
 
-    bool inFireRange = playerDistance <= context.FireRange;
+    bool inFireRange = targetShipDistance <= _config.FireRange;
     float steeringAngle = inFireRange
-      ? AiNavigationHelpers.NormalizeAngle(playerTargetAngle - desiredBroadsideAngle)
-      : playerTargetAngle;
+      ? AiNavigationHelpers.NormalizeAngle(targetShipAngle - desiredBroadsideAngle)
+      : targetShipAngle;
 
     float chaseTurn = Mathf.Clamp(steeringAngle / 0.85f, -1.0f, 1.0f);
     float chaseObstacleAssist = sideTerrainNearby ? obstacleTurnBias * 0.1f : 0.0f;
     input.Turn = Mathf.Clamp(chaseTurn + chaseObstacleAssist, -1.0f, 1.0f);
 
-    if (playerDistance > context.PreferredCombatRange + 12.0f)
+    if (targetShipDistance > _config.PreferredCombatRange + 12.0f)
     {
       input.Throttle = 1.0f;
     }
-    else if (playerDistance < context.PreferredCombatRange * 0.65f)
+    else if (targetShipDistance < _config.PreferredCombatRange * 0.65f)
     {
       input.Throttle = 0.2f;
     }
@@ -129,8 +156,8 @@ public sealed class HunterAiShipController : IAiShipController
 
     if (inFireRange && Mathf.Abs(steeringAngle) < 0.22f)
     {
-      input.FireRight = context.LocalTargetPlayerPosition.X > 0.0f;
-      input.FireLeft = context.LocalTargetPlayerPosition.X < 0.0f;
+      input.FireRight = localTargetShipPosition.X > 0.0f;
+      input.FireLeft = localTargetShipPosition.X < 0.0f;
       input.DebugState = input.FireRight ? "Fire Starboard" : "Fire Port";
       return FinishInput();
     }
@@ -144,6 +171,26 @@ public sealed class HunterAiShipController : IAiShipController
     return memory.GetOrCreate(PatrolCenterKey, () => PickPatrolCenter(context));
   }
 
+  private static bool GetIsStuck(AiShipMemory memory)
+  {
+    return memory.TryGet(IsStuckKey, out bool value) && value;
+  }
+
+  private static bool GetIsEscaping(AiShipMemory memory)
+  {
+    return memory.TryGet(IsEscapingKey, out bool value) && value;
+  }
+
+  private static bool GetIsEscapeReversing(AiShipMemory memory)
+  {
+    return memory.TryGet(IsEscapeReversingKey, out bool value) && value;
+  }
+
+  private static float GetEscapeTurnDirection(AiShipMemory memory)
+  {
+    return memory.TryGet(EscapeTurnDirectionKey, out float value) ? value : 1.0f;
+  }
+
   private Vector3 PickPatrolCenter(AiShipContext context)
   {
     float patrolExtent = AiShipWorldSettings.MapHalfExtent - AiShipWorldSettings.PatrolInset;
@@ -154,13 +201,13 @@ public sealed class HunterAiShipController : IAiShipController
 
   private Vector3 PickPatrolPointInRange(AiShipContext context, Vector3 patrolCenter)
   {
-    if (context.PatrolRadius <= 0.0f)
+    if (_config.PatrolRadius <= 0.0f)
       return patrolCenter;
 
     // Sqrt spreads points across the whole patrol circle instead of stacking
     // them too heavily near the edge.
     float angle = _rng.RandfRange(0.0f, Mathf.Tau);
-    float distance = Mathf.Sqrt(_rng.Randf()) * context.PatrolRadius;
+    float distance = Mathf.Sqrt(_rng.Randf()) * _config.PatrolRadius;
     Vector3 offset = new(
       Mathf.Cos(angle) * distance,
       0.0f,

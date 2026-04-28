@@ -25,7 +25,6 @@ public sealed class AiShipDefinition
   public float AttackDamage { get; init; } = 20.0f;
   public float ProjectileBonusSpeed { get; init; } = 28.0f;
   public float FireCooldownSeconds { get; init; } = 2.5f;
-  public float DetectionRange { get; init; } = 145.0f;
   public float ShipAvoidanceRange { get; init; } = 110.0f;
   public float PreferredCombatRange { get; init; } = 50.0f;
   public float FireRange { get; init; } = 70.0f;
@@ -48,8 +47,16 @@ public sealed class AiShipDefinition
   {
     return Id switch
     {
-      "trader" => new TraderDeterministicAiShipController(),
-      _ => new HunterAiShipController(),
+      "trader" => new TraderDeterministicAiShipController(new TraderDeterministicAiShipControllerConfig
+      {
+        GoalArrivalDistance = GoalArrivalDistance
+      }),
+      _ => new HunterAiShipController(new HunterAiShipControllerConfig
+      {
+        FireRange = FireRange,
+        PreferredCombatRange = PreferredCombatRange,
+        PatrolRadius = PatrolRadius
+      }),
     };
   }
 
@@ -69,7 +76,6 @@ public sealed class AiShipDefinition
       AttackDamage = 18.0f,
       ProjectileBonusSpeed = 30.0f,
       FireCooldownSeconds = 2.2f,
-      DetectionRange = 155.0f,
       ShipAvoidanceRange = 90.0f,
       PreferredCombatRange = 48.0f,
       FireRange = 72.0f,
@@ -100,7 +106,6 @@ public sealed class AiShipDefinition
       AttackDamage = 0.0f,
       ProjectileBonusSpeed = 0.0f,
       FireCooldownSeconds = 999.0f,
-      DetectionRange = 0.0f,
       ShipAvoidanceRange = 150.0f,
       PreferredCombatRange = 0.0f,
       FireRange = 0.0f,

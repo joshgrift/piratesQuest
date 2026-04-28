@@ -10,6 +10,19 @@ namespace PiratesQuest.AI;
 /// </summary>
 public interface IAiShipController
 {
+  /// <summary>
+  /// Let the scene share its current short-lived recovery state with the AI.
+  /// 
+  /// Each AI controller decides how to store these values in its own memory.
+  /// That keeps memory keys controller-specific instead of making them global.
+  /// </summary>
+  void SyncSceneMemory(
+    AiShipMemory memory,
+    bool isStuck,
+    bool isEscaping,
+    bool isEscapeReversing,
+    float escapeTurnDirection);
+
   AiShipControlInput GetControl(AiShipContext context, AiShipMemory memory, double delta);
 }
 

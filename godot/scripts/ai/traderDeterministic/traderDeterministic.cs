@@ -2,6 +2,7 @@ namespace PiratesQuest.AI.traderDeterministic;
 
 using Godot;
 using PiratesQuest.AI;
+using System;
 
 /// <summary>
 /// A simple deterministic trader:
@@ -15,29 +16,54 @@ using PiratesQuest.AI;
 public sealed class TraderDeterministicAiShipController : IAiShipController
 {
   private const string CurrentPortIdKey = "trader.current_port_id";
+  private const string IsStuckKey = "trader.is_stuck";
+  private const string IsEscapingKey = "trader.is_escaping";
+  private const string IsEscapeReversingKey = "trader.is_escape_reversing";
+  private const string EscapeTurnDirectionKey = "trader.escape_turn_direction";
 
+  private readonly TraderDeterministicAiShipControllerConfig _config;
   private readonly RandomNumberGenerator _rng = new();
 
-  public TraderDeterministicAiShipController()
+  public TraderDeterministicAiShipController(TraderDeterministicAiShipControllerConfig config)
   {
+    ArgumentNullException.ThrowIfNull(config);
+    _config = config;
     _rng.Randomize();
+  }
+
+  public void SyncSceneMemory(
+    AiShipMemory memory,
+    bool isStuck,
+    bool isEscaping,
+    bool isEscapeReversing,
+    float escapeTurnDirection)
+  {
+    memory.Set(IsStuckKey, isStuck);
+    memory.Set(IsEscapingKey, isEscaping);
+    memory.Set(IsEscapeReversingKey, isEscapeReversing);
+    memory.Set(EscapeTurnDirectionKey, escapeTurnDirection);
   }
 
   public AiShipControlInput GetControl(AiShipContext context, AiShipMemory memory, double delta)
   {
     var input = new AiShipControlInput();
+    bool isStuck = GetIsStuck(memory);
+    bool isEscaping = GetIsEscaping(memory);
+    bool isEscapeReversing = GetIsEscapeReversing(memory);
+    float escapeTurnDirection = GetEscapeTurnDirection(memory);
+    AiShipContact threatShip = context.FindNearestThreatShip();
     float obstacleTurnBias = AiNavigationHelpers.BuildObstacleTurnBias(context);
     bool sideTerrainNearby = AiNavigationHelpers.HasSideTerrainNearby(context);
 
-    if (context.IsEscaping)
+    if (isEscaping)
     {
-      input.Throttle = context.IsEscapeReversing ? -1.0f : 0.65f;
-      input.Turn = context.EscapeTurnDirection;
-      input.DebugState = context.IsEscapeReversing ? "Escape Reverse" : "Escape Forward";
+      input.Throttle = isEscapeReversing ? -1.0f : 0.65f;
+      input.Turn = escapeTurnDirection;
+      input.DebugState = isEscapeReversing ? "Escape Reverse" : "Escape Forward";
       return input;
     }
 
-    if (context.FrontBlocked)
+    if (AiNavigationHelpers.IsFrontBlocked(context))
     {
       input.Throttle = -0.65f;
       input.Turn = AiNavigationHelpers.PickSaferTurn(context);
@@ -45,7 +71,7 @@ public sealed class TraderDeterministicAiShipController : IAiShipController
       return input;
     }
 
-    if (context.IsStuck)
+    if (isStuck)
     {
       input.Throttle = -0.95f;
       input.Turn = AiNavigationHelpers.PickSaferTurn(context);
@@ -62,12 +88,13 @@ public sealed class TraderDeterministicAiShipController : IAiShipController
       return input;
     }
 
-    if (context.HasNearbyThreatShip)
+    if (threatShip != null)
     {
-      Vector3 fleeLocal = -context.LocalNearbyThreatShipPosition;
+      Vector3 localThreatShipPosition = context.ShipBasis.Inverse() * (threatShip.Position - context.ShipPosition);
+      Vector3 fleeLocal = -localThreatShipPosition;
       float fleeAngle = Mathf.Atan2(fleeLocal.X, -fleeLocal.Z);
 
-      input.Throttle = context.DistanceToNearbyThreatShip < 45.0f ? 1.0f : 0.75f;
+      input.Throttle = threatShip.Distance < 45.0f ? 1.0f : 0.75f;
       input.Turn = Mathf.Clamp(fleeAngle / 0.8f, -1.0f, 1.0f);
       input.DebugState = "Avoid Ship";
       return input;
@@ -78,7 +105,7 @@ public sealed class TraderDeterministicAiShipController : IAiShipController
     float targetAngle = Mathf.Atan2(localPort.X, -localPort.Z);
     float portTurn = Mathf.Clamp(targetAngle / 0.72f, -1.0f, 1.0f);
 
-    input.Throttle = distanceToPort > context.GoalArrivalDistance * 2.0f ? 0.82f : 0.35f;
+    input.Throttle = distanceToPort > _config.GoalArrivalDistance * 2.0f ? 0.82f : 0.35f;
 
     // If the bow is clear, keep moving and let side terrain act like a gentle
     // nudge instead of a full stop/reverse command. This helps traders slide
@@ -107,12 +134,32 @@ public sealed class TraderDeterministicAiShipController : IAiShipController
     }
 
     float distanceToCurrentPort = context.ShipPosition.DistanceTo(currentPort.GlobalPosition);
-    if (distanceToCurrentPort > context.GoalArrivalDistance)
+    if (distanceToCurrentPort > _config.GoalArrivalDistance)
       return currentPort;
 
     Port nextPort = PickRandomPort(context, currentPort.PortId);
     memory.Set(CurrentPortIdKey, nextPort?.PortId ?? currentPort.PortId);
     return nextPort ?? currentPort;
+  }
+
+  private static bool GetIsStuck(AiShipMemory memory)
+  {
+    return memory.TryGet(IsStuckKey, out bool value) && value;
+  }
+
+  private static bool GetIsEscaping(AiShipMemory memory)
+  {
+    return memory.TryGet(IsEscapingKey, out bool value) && value;
+  }
+
+  private static bool GetIsEscapeReversing(AiShipMemory memory)
+  {
+    return memory.TryGet(IsEscapeReversingKey, out bool value) && value;
+  }
+
+  private static float GetEscapeTurnDirection(AiShipMemory memory)
+  {
+    return memory.TryGet(EscapeTurnDirectionKey, out float value) ? value : 1.0f;
   }
 
   private static Port FindPortById(AiShipContext context, string portId)

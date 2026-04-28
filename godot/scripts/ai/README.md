@@ -37,13 +37,15 @@ Right now that includes:
 
 - `IAiShipController.cs`
   - the decision interface
+  - the scene-to-controller memory sync hook
   - the tiny command object returned by an AI brain each frame
 - `AiShipContext.cs`
-  - the read-only snapshot passed into the AI brain
+  - the read-only per-frame snapshot passed into the AI brain
+  - includes nearby ship contacts and terrain ray readings for this frame
 - `AiShipMemory.cs`
   - the per-ship runtime memory bag owned by the controller layer
 - `AiShipDefinition.cs`
-  - data for AI ship archetypes
+  - data for AI ship archetypes and one-time controller config
 
 In other words: this is the place for "decide what the ship wants to do."
 
@@ -71,6 +73,8 @@ When adding a new AI:
 3. Put that AI's controller and any AI-specific helpers in that folder.
 4. Keep `AiShip.cs` responsible for applying the returned control input.
 5. Keep long-lived AI behavior state in `AiShipMemory`, not in `AiShip.cs`.
+6. Pass static tuning into the controller once when it is created instead of putting it in `AiShipContext`.
+7. Put current-frame sensing in `AiShipContext`, and let each AI own its own memory keys for cross-frame state, including any recovery flags it wants to remember.
 
 ## Rule Of Thumb
 

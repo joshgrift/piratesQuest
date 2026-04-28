@@ -42,7 +42,6 @@ public partial class AiShip : CharacterBody3D, IDamageable
   private IAiShipController _controller;
   private readonly AiShipMemory _memory = new();
   private readonly Dictionary<InventoryItemType, int> _cargoManifest = [];
-  private readonly List<Player> _nearbyPlayers = [];
   private readonly List<Port> _ports = [];
 
   private Vector3 _spawnPoint;
@@ -65,8 +64,8 @@ public partial class AiShip : CharacterBody3D, IDamageable
   private bool _isSinking = false;
   private bool _debugEnabled = false;
   private string _debugState = string.Empty;
-  private bool _debugHasTargetPlayer = false;
-  private float _debugDistanceToTargetPlayer = 0.0f;
+  private bool _debugHasTargetShip = false;
+  private float _debugDistanceToTargetShip = 0.0f;
   private bool _debugFrontBlocked = false;
   private bool _debugLeftBlocked = false;
   private bool _debugRightBlocked = false;
@@ -152,13 +151,9 @@ public partial class AiShip : CharacterBody3D, IDamageable
       return;
     }
 
-    var targetPlayer = FindNearestTargetPlayer();
     Port nearestPort = FindNearestPort();
     Port[] availablePorts = GetPorts();
-    var nearbyThreatShip = FindNearestThreatShip();
-    Vector3 targetPlayerPosition = targetPlayer?.GlobalPosition ?? Vector3.Zero;
-    Vector3 localTargetPlayerPosition = targetPlayer != null ? ToLocal(targetPlayer.GlobalPosition) : Vector3.Zero;
-    float distanceToTargetPlayer = targetPlayer != null ? GlobalPosition.DistanceTo(targetPlayer.GlobalPosition) : float.MaxValue;
+    AiShipContact[] nearbyShips = BuildNearbyShipContacts();
 
     float traveled = GlobalPosition.DistanceTo(_lastPosition);
     _lastPosition = GlobalPosition;
@@ -176,8 +171,6 @@ public partial class AiShip : CharacterBody3D, IDamageable
     bool wideRightBlocked = WideRightRay?.IsColliding() ?? false;
     bool leftBlocked = frontLeftBlocked || wideLeftBlocked;
     bool rightBlocked = frontRightBlocked || wideRightBlocked;
-    float leftObstacleStrength = (frontLeftBlocked ? 1.0f : 0.0f) + (wideLeftBlocked ? 0.75f : 0.0f);
-    float rightObstacleStrength = (frontRightBlocked ? 1.0f : 0.0f) + (wideRightBlocked ? 0.75f : 0.0f);
 
     if (frontBlocked)
       _frontBlockedTimer += (float)delta;
@@ -187,42 +180,39 @@ public partial class AiShip : CharacterBody3D, IDamageable
     UpdateStallAreaTimer((float)delta, frontBlocked);
     UpdateEscapeState((float)delta, frontBlocked, leftBlocked, rightBlocked);
 
+    _controller.SyncSceneMemory(
+      _memory,
+      isStuck: _stuckTimer >= 1.0f,
+      isEscaping: _escapeTimerRemaining > 0.0f,
+      isEscapeReversing: _escapeTimerRemaining > EscapeForwardDurationSeconds,
+      escapeTurnDirection: _escapeTurnDirection
+    );
+
     var context = new AiShipContext
     {
       ShipPosition = GlobalPosition,
       ShipBasis = GlobalTransform.Basis,
       CurrentSpeed = _currentSpeed,
-      HasTargetPlayer = targetPlayer != null,
-      TargetPlayerPosition = targetPlayerPosition,
-      LocalTargetPlayerPosition = localTargetPlayerPosition,
-      DistanceToTargetPlayer = distanceToTargetPlayer,
       SpawnPoint = _spawnPoint,
-      PatrolRadius = _definition.PatrolRadius,
-      FireRange = _definition.FireRange,
-      PreferredCombatRange = _definition.PreferredCombatRange,
-      GoalArrivalDistance = _definition.GoalArrivalDistance,
-      FrontBlocked = frontBlocked,
-      LeftBlocked = leftBlocked,
-      RightBlocked = rightBlocked,
-      LeftObstacleStrength = leftObstacleStrength,
-      RightObstacleStrength = rightObstacleStrength,
-      IsStuck = _stuckTimer >= 1.0f,
-      IsEscaping = _escapeTimerRemaining > 0.0f,
-      IsEscapeReversing = _escapeTimerRemaining > EscapeForwardDurationSeconds,
-      EscapeTurnDirection = _escapeTurnDirection,
       NearestPort = nearestPort,
       Ports = availablePorts,
-      HasNearbyThreatShip = nearbyThreatShip != null,
-      NearbyThreatShipPosition = nearbyThreatShip?.GlobalPosition ?? Vector3.Zero,
-      LocalNearbyThreatShipPosition = nearbyThreatShip != null ? ToLocal(nearbyThreatShip.GlobalPosition) : Vector3.Zero,
-      DistanceToNearbyThreatShip = nearbyThreatShip != null ? GlobalPosition.DistanceTo(nearbyThreatShip.GlobalPosition) : float.MaxValue,
+      NearbyShips = nearbyShips,
+      TerrainRays =
+      [
+        BuildTerrainRayReading(AiShipRayIds.Forward, ForwardRay),
+        BuildTerrainRayReading(AiShipRayIds.ForwardLeft, ForwardLeftRay),
+        BuildTerrainRayReading(AiShipRayIds.ForwardRight, ForwardRightRay),
+        BuildTerrainRayReading(AiShipRayIds.WideLeft, WideLeftRay),
+        BuildTerrainRayReading(AiShipRayIds.WideRight, WideRightRay),
+      ]
     };
 
-    _debugHasTargetPlayer = context.HasTargetPlayer;
-    _debugDistanceToTargetPlayer = context.DistanceToTargetPlayer;
-    _debugFrontBlocked = context.FrontBlocked;
-    _debugLeftBlocked = context.LeftBlocked;
-    _debugRightBlocked = context.RightBlocked;
+    AiShipContact debugTargetShip = context.FindNearestHostileShip();
+    _debugHasTargetShip = debugTargetShip != null;
+    _debugDistanceToTargetShip = debugTargetShip?.Distance ?? 0.0f;
+    _debugFrontBlocked = AiNavigationHelpers.IsFrontBlocked(context);
+    _debugLeftBlocked = AiNavigationHelpers.IsLeftBlocked(context);
+    _debugRightBlocked = AiNavigationHelpers.IsRightBlocked(context);
 
     ApplyControl(_controller.GetControl(context, _memory, delta), (float)delta);
     UpdateDebugVisuals();
@@ -363,44 +353,9 @@ public partial class AiShip : CharacterBody3D, IDamageable
     tempAudio.Play();
   }
 
-  private Player FindNearestTargetPlayer()
+  private AiShipContact[] BuildNearbyShipContacts()
   {
-    _nearbyPlayers.Clear();
-
-    foreach (Node node in GetTree().GetNodesInGroup("players"))
-    {
-      if (node is not Player player)
-        continue;
-      if (player.State == PlayerState.Dead)
-        continue;
-      if (player.IsInPort)
-        continue;
-
-      float distance = GlobalPosition.DistanceTo(player.GlobalPosition);
-      if (distance <= _definition.DetectionRange)
-        _nearbyPlayers.Add(player);
-    }
-
-    Player best = null;
-    float bestDistance = float.MaxValue;
-
-    foreach (Player player in _nearbyPlayers)
-    {
-      float distance = GlobalPosition.DistanceTo(player.GlobalPosition);
-      if (distance < bestDistance)
-      {
-        best = player;
-        bestDistance = distance;
-      }
-    }
-
-    return best;
-  }
-
-  private Node3D FindNearestThreatShip()
-  {
-    Node3D best = null;
-    float bestDistance = float.MaxValue;
+    var contacts = new List<AiShipContact>();
 
     foreach (Node node in GetTree().GetNodesInGroup("players"))
     {
@@ -410,11 +365,17 @@ public partial class AiShip : CharacterBody3D, IDamageable
         continue;
 
       float distance = GlobalPosition.DistanceTo(player.GlobalPosition);
-      if (distance > _definition.ShipAvoidanceRange || distance >= bestDistance)
+      if (distance > AiShipWorldSettings.ShipDiscoveryRange)
         continue;
 
-      best = player;
-      bestDistance = distance;
+      contacts.Add(new AiShipContact
+      {
+        IsPlayer = true,
+        IsAllied = false,
+        IsThreat = distance <= _definition.ShipAvoidanceRange,
+        Distance = distance,
+        Position = player.GlobalPosition,
+      });
     }
 
     foreach (Node node in GetTree().GetNodesInGroup("ai_ships"))
@@ -423,18 +384,43 @@ public partial class AiShip : CharacterBody3D, IDamageable
         continue;
       if (node is not AiShip aiShip)
         continue;
-      if (aiShip.AllyTypeId == AllyTypeId)
+      if (aiShip._isSinking)
         continue;
 
       float distance = GlobalPosition.DistanceTo(aiShip.GlobalPosition);
-      if (distance > _definition.ShipAvoidanceRange || distance >= bestDistance)
+      if (distance > AiShipWorldSettings.ShipDiscoveryRange)
         continue;
 
-      best = aiShip;
-      bestDistance = distance;
+      bool isAllied = aiShip.AllyTypeId == AllyTypeId;
+      contacts.Add(new AiShipContact
+      {
+        IsPlayer = false,
+        IsAllied = isAllied,
+        IsThreat = !isAllied && distance <= _definition.ShipAvoidanceRange,
+        Distance = distance,
+        Position = aiShip.GlobalPosition,
+      });
     }
 
-    return best;
+    return contacts.ToArray();
+  }
+
+  private static AiShipTerrainRay BuildTerrainRayReading(string id, RayCast3D ray)
+  {
+    float maxDistance = ray?.TargetPosition.Length() ?? float.MaxValue;
+    bool isBlocked = ray?.IsColliding() ?? false;
+    float distance = maxDistance;
+
+    if (isBlocked)
+      distance = ray.GlobalPosition.DistanceTo(ray.GetCollisionPoint());
+
+    return new AiShipTerrainRay
+    {
+      Id = id,
+      IsBlocked = isBlocked,
+      Distance = distance,
+      MaxDistance = maxDistance,
+    };
   }
 
   private Port FindNearestPort()
@@ -535,8 +521,8 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
   private string BuildDebugText()
   {
-    string targetText = _debugHasTargetPlayer
-      ? $"Player {_debugDistanceToTargetPlayer:0.0}"
+    string targetText = _debugHasTargetShip
+      ? $"Ship {_debugDistanceToTargetShip:0.0}"
       : "None";
     string obstacleFlags = $"{(_debugFrontBlocked ? "F" : "-")}{(_debugLeftBlocked ? "L" : "-")}{(_debugRightBlocked ? "R" : "-")}";
     string escapeMode = _escapeTimerRemaining > 0.0f
