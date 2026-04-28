@@ -118,8 +118,8 @@ service_pattern() {
   case "$1" in
     webview) echo "${ROOT_DIR}/webview/node_modules/.bin/vite --host localhost --port 5173" ;;
     api) echo "dotnet run --project api" ;;
-    server) echo "${GODOT_BIN} --path godot --position 0,50 --server" ;;
-    client) echo "${GODOT_BIN} --path godot --resolution 2400x1000 --position 0,50 --client1" ;;
+    server) echo "${GODOT_BIN} --path ${ROOT_DIR}/godot --position 0,50 --server" ;;
+    client) echo "${GODOT_BIN} --path ${ROOT_DIR}/godot --resolution 2400x1000 --position 0,50 --client1" ;;
     *) echo "" ;;
   esac
 }
@@ -260,6 +260,17 @@ require_godot() {
   fi
 }
 
+# Godot's headless launches abort with "Couldn't detect whether to run the editor..."
+# until the import cache under godot/.godot exists. Fresh worktrees only have the
+# mono subfolder created by `dotnet build`, so populate the rest with --import once.
+ensure_godot_import_cache() {
+  if [[ -f "${ROOT_DIR}/godot/.godot/uid_cache.bin" ]]; then
+    return 0
+  fi
+  print_info "${YELLOW}" "=== Importing Godot assets (first run in this worktree) ==="
+  "${GODOT_BIN}" --headless --path "${ROOT_DIR}/godot" --import
+}
+
 maybe_build_for_service() {
   local service="$1"
 
@@ -329,13 +340,14 @@ start_service() {
       ;;
     server)
       require_godot
+      ensure_godot_import_cache
       if [[ "${USE_PROD}" != "true" ]]; then
         ensure_docker_db
       fi
       kill_port_if_needed "${port}"
       print_info "${RED}" "=== Starting Dedicated Server ==="
       server_args=(
-        "${GODOT_BIN}" --path godot --position 0,50 --server
+        "${GODOT_BIN}" --path "${ROOT_DIR}/godot" --position 0,50 --server
         --server-id "${SERVER_ID}"
         --server-api-key "${SERVER_API_KEY}"
       )
@@ -347,9 +359,10 @@ start_service() {
       ;;
     client)
       require_godot
+      ensure_godot_import_cache
       print_info "${GREEN}" "=== Starting Client ==="
       client_args=(
-        "${GODOT_BIN}" --path godot --resolution 2400x1000 --position 0,50
+        "${GODOT_BIN}" --path "${ROOT_DIR}/godot" --resolution 2400x1000 --position 0,50
         --client1
         --creative
       )
