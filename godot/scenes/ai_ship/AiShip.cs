@@ -519,7 +519,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
       _stateDebugLabel.Text = BuildDebugText();
   }
 
-  private string BuildDebugText()
+  public string BuildDebugText()
   {
     string targetText = _debugHasTargetShip
       ? $"Ship {_debugDistanceToTargetShip:0.0}"
