@@ -18,6 +18,7 @@ using System;
 public sealed class PythonNavigationAiShipController : IAiShipController
 {
   private const float DecisionIntervalSeconds = 0.2f;
+  private const string KeyAiType = "python_nav.ai_type";
   private const string KeyShipId = "python_nav.ship_id";
   private const string KeyEpisodeId = "python_nav.episode_id";
   private const string KeyTargetPortId = "python_nav.target_port_id";
@@ -34,11 +35,13 @@ public sealed class PythonNavigationAiShipController : IAiShipController
   private const string KeySceneEscapeTurnDirection = "python_nav.scene_escape_turn_direction";
 
   private readonly PythonAiWorkerClient _worker;
+  private readonly string _aiType;
   private readonly float _goalArrivalDistance;
   private readonly float _maxSpeed;
   private readonly RandomNumberGenerator _rng = new();
 
   public PythonNavigationAiShipController(
+    string aiType,
     PythonAiWorkerClient worker,
     float _unusedPatrolRadius,
     float goalArrivalDistance,
@@ -47,6 +50,7 @@ public sealed class PythonNavigationAiShipController : IAiShipController
     // Keep the existing constructor shape so the archetype factory does not need
     // a special case for this controller. We do not use patrol radius anymore
     // because the RL agent now navigates between ports instead of local waypoints.
+    _aiType = string.IsNullOrWhiteSpace(aiType) ? "neural_patrol" : aiType;
     _worker = worker;
     _goalArrivalDistance = Mathf.Max(1.0f, goalArrivalDistance);
     _maxSpeed = Mathf.Max(1.0f, maxSpeed);
@@ -86,8 +90,8 @@ public sealed class PythonNavigationAiShipController : IAiShipController
       {
         Throttle = action.Throttle,
         Turn = action.Turn,
-        FireLeft = false,
-        FireRight = false,
+        FireLeft = action.FireLeft,
+        FireRight = action.FireRight,
         DebugState = string.IsNullOrWhiteSpace(action.DebugState) ? "Python Port RL" : action.DebugState
       };
     }
@@ -131,25 +135,35 @@ public sealed class PythonNavigationAiShipController : IAiShipController
   {
     memory.GetOrCreate(KeyShipId, () => Guid.NewGuid().ToString("N"));
     memory.GetOrCreate(KeyEpisodeId, () => Guid.NewGuid().ToString("N"));
-    memory.GetOrCreate(KeyTargetPortId, () => PickTargetPortId(context, excludedPortId: string.Empty));
-    memory.GetOrCreate(KeyLastDistanceToGoal, () => DistanceToTargetPort(memory, context));
+    memory.GetOrCreate(KeyAiType, () => _aiType);
+
+    if (_aiType == "neural_patrol")
+    {
+      memory.GetOrCreate(KeyTargetPortId, () => PickTargetPortId(context, excludedPortId: string.Empty));
+      memory.GetOrCreate(KeyLastDistanceToGoal, () => DistanceToTargetPort(memory, context));
+    }
   }
 
   private void RunDecisionSample(AiShipContext context, AiShipMemory memory)
   {
-    Port targetPort = ResolveTargetPort(memory, context);
-    if (targetPort == null)
+    Port targetPort = _aiType == "neural_patrol"
+      ? ResolveTargetPort(memory, context)
+      : null;
+    if (_aiType == "neural_patrol" && targetPort == null)
       return;
 
     PythonAiObservation currentObservation = BuildObservation(context, memory, targetPort);
-    bool portTouched = HasReachedTargetPort(targetPort, context.ShipPosition);
+    bool portTouched = targetPort != null && HasReachedTargetPort(targetPort, context.ShipPosition);
 
     if (memory.TryGet<PythonAiObservation>(KeyLastObservation, out var previousObservation) &&
         memory.TryGet<PythonAiActionSnapshot>(KeyLastAction, out var previousAction) &&
         memory.TryGet<string>(KeyShipId, out var shipId) &&
         memory.TryGet<string>(KeyEpisodeId, out var episodeId))
     {
-      float reward = ComputeReward(memory, currentObservation, portTouched);
+      float reward = _aiType == "neural_patrol"
+        ? ComputeReward(memory, currentObservation, portTouched)
+        : 0.0f;
+      bool done = _aiType == "neural_patrol" && portTouched;
       _worker?.TrySendTransition(
         shipId,
         episodeId,
@@ -157,11 +171,11 @@ public sealed class PythonNavigationAiShipController : IAiShipController
         previousAction,
         reward,
         currentObservation,
-        done: portTouched,
-        doneReason: portTouched ? "port_touched" : string.Empty);
+        done: done,
+        doneReason: done ? "port_touched" : string.Empty);
     }
 
-    if (portTouched)
+    if (_aiType == "neural_patrol" && portTouched)
     {
       StartNextEpisode(memory, context);
       memory.Remove(KeyLastObservation);
@@ -174,9 +188,13 @@ public sealed class PythonNavigationAiShipController : IAiShipController
         return;
 
       currentObservation = BuildObservation(context, memory, targetPort);
+      memory.Set(KeyLastDistanceToGoal, DistanceToTargetPort(memory, context));
+    }
+    else if (_aiType == "neural_patrol")
+    {
+      memory.Set(KeyLastDistanceToGoal, DistanceToTargetPort(memory, context));
     }
 
-    memory.Set(KeyLastDistanceToGoal, DistanceToTargetPort(memory, context));
     RequestDecisionIfNeeded(memory, currentObservation);
   }
 
@@ -217,6 +235,8 @@ public sealed class PythonNavigationAiShipController : IAiShipController
     {
       Throttle = actionResult.Throttle,
       Turn = actionResult.Turn,
+      FireLeft = actionResult.FireLeft,
+      FireRight = actionResult.FireRight,
       DebugState = actionResult.DebugState
     });
 
@@ -237,16 +257,49 @@ public sealed class PythonNavigationAiShipController : IAiShipController
 
   private PythonAiObservation BuildObservation(AiShipContext context, AiShipMemory memory, Port targetPort)
   {
+    AiShipContact targetShip = context.FindNearestHostileShip();
+    AiShipContact threatShip = context.FindNearestThreatShip();
+    Port nearestPort = context.NearestPort;
     Vector3 targetPosition = targetPort?.GlobalPosition ?? context.ShipPosition;
+    if (_aiType == "raider" && targetShip != null)
+      targetPosition = targetShip.Position;
+    else if (_aiType == "trader" && nearestPort != null)
+      targetPosition = nearestPort.GlobalPosition;
+
     Vector3 localGoal = context.ShipBasis.Inverse() * (targetPosition - context.ShipPosition);
     float maxGoalDistance = AiShipWorldSettings.MapHalfExtent * 2.0f;
     float distanceToGoal = context.ShipPosition.DistanceTo(targetPosition);
+    Vector3 targetShipLocal = targetShip != null
+      ? context.ShipBasis.Inverse() * (targetShip.Position - context.ShipPosition)
+      : Vector3.Zero;
+    Vector3 threatShipLocal = threatShip != null
+      ? context.ShipBasis.Inverse() * (threatShip.Position - context.ShipPosition)
+      : Vector3.Zero;
+    Vector3 nearestPortLocal = nearestPort != null
+      ? context.ShipBasis.Inverse() * (nearestPort.GlobalPosition - context.ShipPosition)
+      : Vector3.Zero;
 
     return new PythonAiObservation
     {
+      AiType = _aiType,
       GoalLocalX = Mathf.Clamp(localGoal.X / maxGoalDistance, -1.0f, 1.0f),
       GoalLocalZ = Mathf.Clamp(localGoal.Z / maxGoalDistance, -1.0f, 1.0f),
       DistanceToGoal = Mathf.Clamp(distanceToGoal / maxGoalDistance, 0.0f, 1.0f),
+      HasTargetShip = targetShip != null,
+      TargetShipIsPlayer = targetShip?.IsPlayer == true,
+      TargetShipDistance = Mathf.Clamp((targetShip?.Distance ?? 0.0f) / maxGoalDistance, 0.0f, 1.0f),
+      TargetShipLocalX = Mathf.Clamp(targetShipLocal.X / maxGoalDistance, -1.0f, 1.0f),
+      TargetShipLocalZ = Mathf.Clamp(targetShipLocal.Z / maxGoalDistance, -1.0f, 1.0f),
+      HasThreatShip = threatShip != null,
+      ThreatShipDistance = Mathf.Clamp((threatShip?.Distance ?? 0.0f) / maxGoalDistance, 0.0f, 1.0f),
+      ThreatShipLocalX = Mathf.Clamp(threatShipLocal.X / maxGoalDistance, -1.0f, 1.0f),
+      ThreatShipLocalZ = Mathf.Clamp(threatShipLocal.Z / maxGoalDistance, -1.0f, 1.0f),
+      HasNearestPort = nearestPort != null,
+      NearestPortDistance = nearestPort == null
+        ? 0.0f
+        : Mathf.Clamp(context.ShipPosition.DistanceTo(nearestPort.GlobalPosition) / maxGoalDistance, 0.0f, 1.0f),
+      NearestPortLocalX = Mathf.Clamp(nearestPortLocal.X / maxGoalDistance, -1.0f, 1.0f),
+      NearestPortLocalZ = Mathf.Clamp(nearestPortLocal.Z / maxGoalDistance, -1.0f, 1.0f),
       SpeedFraction = Mathf.Clamp(context.CurrentSpeed / _maxSpeed, 0.0f, 1.0f),
       ForwardDistanceFraction = GetRayDistanceFraction(context, AiShipRayIds.Forward),
       ForwardLeftDistanceFraction = GetRayDistanceFraction(context, AiShipRayIds.ForwardLeft),

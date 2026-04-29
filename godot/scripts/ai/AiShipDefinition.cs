@@ -1,9 +1,7 @@
 namespace PiratesQuest.AI;
 
 using PiratesQuest.Data;
-using PiratesQuest.AI.hunterDeterministic;
 using PiratesQuest.AI.pythonNavigation;
-using PiratesQuest.AI.traderDeterministic;
 using System.Collections.Generic;
 
 /// <summary>
@@ -14,6 +12,8 @@ using System.Collections.Generic;
 /// </summary>
 public sealed class AiShipDefinition
 {
+  public static readonly string[] KnownIds = ["raider", "trader", "neural_patrol"];
+
   public string Id { get; init; } = "raider";
   public string DisplayName { get; init; } = "Raider";
   public string AllyTypeId { get; init; } = "raider";
@@ -45,26 +45,26 @@ public sealed class AiShipDefinition
     };
   }
 
+  public static bool IsKnownId(string id)
+  {
+    string normalizedId = (id ?? string.Empty).Trim().ToLowerInvariant();
+    foreach (string knownId in KnownIds)
+    {
+      if (knownId == normalizedId)
+        return true;
+    }
+
+    return false;
+  }
+
   public IAiShipController CreateController(AiShipControllerServices services)
   {
-    return Id switch
-    {
-      "neural_patrol" => new PythonNavigationAiShipController(
-        services?.PythonAiWorker,
-        PatrolRadius,
-        GoalArrivalDistance,
-        MaxSpeed),
-      "trader" => new TraderDeterministicAiShipController(new TraderDeterministicAiShipControllerConfig
-      {
-        GoalArrivalDistance = GoalArrivalDistance
-      }),
-      _ => new HunterAiShipController(new HunterAiShipControllerConfig
-      {
-        FireRange = FireRange,
-        PreferredCombatRange = PreferredCombatRange,
-        PatrolRadius = PatrolRadius
-      }),
-    };
+    return new PythonNavigationAiShipController(
+      Id,
+      services?.PythonAiWorker,
+      PatrolRadius,
+      GoalArrivalDistance,
+      MaxSpeed);
   }
 
   private static AiShipDefinition CreateRaider()

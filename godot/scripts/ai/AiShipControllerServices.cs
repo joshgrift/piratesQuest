@@ -14,22 +14,10 @@ using PiratesQuest.AI.pythonNavigation;
 public sealed class AiShipControllerServices
 {
   /// <summary>
-  /// Shared Python AI worker for neural controllers.
+  /// Shared Python AI worker for Python-backed controllers.
   /// Null when Python AI is disabled or the worker never reached a ready handshake.
   /// </summary>
   public PythonAiWorkerClient PythonAiWorker { get; init; }
-
-  /// <summary>
-  /// Shared CSV logger for deterministic raider training capture.
-  /// Null when logging has not been initialized for this session.
-  /// </summary>
-  public RaiderTrainingCsvLogger RaiderTrainingLogger { get; init; }
-
-  /// <summary>
-  /// Shared CSV logger for deterministic trader training capture.
-  /// Null when logging has not been initialized for this session.
-  /// </summary>
-  public TraderTrainingCsvLogger TraderTrainingLogger { get; init; }
 
   public static readonly AiShipControllerServices Empty = new();
 }

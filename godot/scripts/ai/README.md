@@ -51,30 +51,31 @@ In other words: this is the place for "decide what the ship wants to do."
 
 ## Per-AI Folders
 
-Each AI implementation should live in its own subfolder.
+Each runtime AI implementation now lives in its own Python subfolder under `godot/python_ai/`.
 
-Current example:
-
-- `hunterDeterministic/`
-  - contains `HunterAiShipController.cs`
+The shared Godot-side C# layer still handles sensing, movement, multiplayer, and
+worker process integration, but the archetype behavior itself lives in Python.
 
 This makes it easier to:
 
 - keep each AI self-contained
 - compare different AI approaches
-- add helper classes that belong to one AI without cluttering the shared root
+- load only the AI module that is actually needed at runtime
+- add helper files that belong to one AI without cluttering the shared root
 
 ## Suggested Pattern For New AI
 
 When adding a new AI:
 
 1. Add shared interfaces, context fields, or common helpers to `godot/scripts/ai/` if they are useful to all AI ships.
-2. Create a new folder in `godot/scripts/ai/` for the AI itself.
-3. Put that AI's controller and any AI-specific helpers in that folder.
-4. Keep `AiShip.cs` responsible for applying the returned control input.
-5. Keep long-lived AI behavior state in `AiShipMemory`, not in `AiShip.cs`.
-6. Pass static tuning into the controller once when it is created instead of putting it in `AiShipContext`.
-7. Put current-frame sensing in `AiShipContext`, and let each AI own its own memory keys for cross-frame state, including any recovery flags it wants to remember.
+2. Add the new archetype id to `AiShipDefinition.KnownIds`.
+3. Create a new folder in `godot/python_ai/` for the AI itself.
+4. Put that AI's `brain.py` and any AI-specific helpers in that folder.
+5. Expose a `create_brain(...)` function so the worker can lazy-load it.
+6. Keep `AiShip.cs` responsible for applying the returned control input.
+7. Keep long-lived scene/runtime transport state in `AiShipMemory`, not in `AiShip.cs`.
+8. Pass static tuning into the controller once when it is created instead of putting it in `AiShipContext`.
+9. Put current-frame sensing in `AiShipContext`, and send the resulting observation to Python.
 
 ## Rule Of Thumb
 

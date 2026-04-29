@@ -56,8 +56,6 @@ public partial class AiShipManager : RefCounted
   private bool _pythonAiSessionDisabled;
   private bool _isShuttingDown;
   private PythonAiWorkerClient _pythonAiWorker;
-  private RaiderTrainingCsvLogger _raiderTrainingLogger;
-  private TraderTrainingCsvLogger _traderTrainingLogger;
 
   public AiShipControllerServices ControllerServices { get; private set; } = AiShipControllerServices.Empty;
 
@@ -85,7 +83,6 @@ public partial class AiShipManager : RefCounted
     if (_play == null || !_play.Multiplayer.IsServer())
       return;
 
-    InitializeRaiderTrainingLoggers();
     InitializePythonAiIfNeeded();
 
     _respawnTimer = new Timer
@@ -177,11 +174,6 @@ public partial class AiShipManager : RefCounted
       _pythonAiWorker = null;
     }
 
-    _raiderTrainingLogger?.Dispose();
-    _raiderTrainingLogger = null;
-    _traderTrainingLogger?.Dispose();
-    _traderTrainingLogger = null;
-
     ControllerServices = AiShipControllerServices.Empty;
   }
 
@@ -261,7 +253,8 @@ public partial class AiShipManager : RefCounted
     _pythonAiWorker = new PythonAiWorkerClient(
       Configuration.PythonAiExecutable,
       scriptPath,
-      rolloutPath);
+      rolloutPath,
+      AiShipDefinition.KnownIds);
 
     _pythonAiWorker.Unavailable += OnPythonAiWorkerUnavailable;
 
@@ -281,50 +274,11 @@ public partial class AiShipManager : RefCounted
     GD.Print($"Python AI ready. Target neural patrol ships: {Configuration.PythonAiCount}");
   }
 
-  public void LogRaiderTrainingSample(
-    AiShip ship,
-    AiShipContext context,
-    AiShipMemory memory,
-    AiShipControlInput control)
-  {
-    _raiderTrainingLogger?.LogSample(ship, context, memory, control);
-  }
-
-  public void LogTraderTrainingSample(
-    AiShip ship,
-    AiShipContext context,
-    AiShipMemory memory,
-    AiShipControlInput control)
-  {
-    _traderTrainingLogger?.LogSample(ship, context, memory, control);
-  }
-
-  private void InitializeRaiderTrainingLoggers()
-  {
-    if (_raiderTrainingLogger != null || _traderTrainingLogger != null)
-      return;
-
-    string outputDirectory = ProjectSettings.GlobalizePath("user://ai_training");
-    Directory.CreateDirectory(outputDirectory);
-
-    string timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
-    string raiderOutputPath = Path.Combine(outputDirectory, $"raider_movements_{timestamp}.csv");
-    string traderOutputPath = Path.Combine(outputDirectory, $"trader_movements_{timestamp}.csv");
-
-    _raiderTrainingLogger = new RaiderTrainingCsvLogger(raiderOutputPath);
-    _traderTrainingLogger = new TraderTrainingCsvLogger(traderOutputPath);
-    RefreshControllerServices();
-    GD.Print($"Raider training CSV logging to {raiderOutputPath}");
-    GD.Print($"Trader training CSV logging to {traderOutputPath}");
-  }
-
   private void RefreshControllerServices()
   {
     ControllerServices = new AiShipControllerServices
     {
-      PythonAiWorker = _pythonAiWorker,
-      RaiderTrainingLogger = _raiderTrainingLogger,
-      TraderTrainingLogger = _traderTrainingLogger
+      PythonAiWorker = _pythonAiWorker
     };
   }
 

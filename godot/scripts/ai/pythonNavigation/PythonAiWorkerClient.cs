@@ -33,6 +33,7 @@ public sealed class PythonAiWorkerClient
   private readonly string _pythonExecutable;
   private readonly string _scriptPath;
   private readonly string _rolloutPath;
+  private readonly string[] _knownAiTypes;
   private readonly object _writeLock = new();
   private readonly ManualResetEventSlim _readyEvent = new(false);
   private readonly ConcurrentDictionary<string, ConcurrentDictionary<int, PythonAiActionResult>> _actionsByShip = new();
@@ -43,11 +44,12 @@ public sealed class PythonAiWorkerClient
   private bool _isShutdown;
   private int _unavailableNotified;
 
-  public PythonAiWorkerClient(string pythonExecutable, string scriptPath, string rolloutPath)
+  public PythonAiWorkerClient(string pythonExecutable, string scriptPath, string rolloutPath, string[] knownAiTypes)
   {
     _pythonExecutable = pythonExecutable ?? "python3";
     _scriptPath = scriptPath ?? string.Empty;
     _rolloutPath = rolloutPath ?? string.Empty;
+    _knownAiTypes = knownAiTypes ?? Array.Empty<string>();
   }
 
   public event Action<string> Unavailable;
@@ -87,6 +89,8 @@ public sealed class PythonAiWorkerClient
     startInfo.ArgumentList.Add(_scriptPath);
     startInfo.ArgumentList.Add("--rollout-path");
     startInfo.ArgumentList.Add(_rolloutPath);
+    startInfo.ArgumentList.Add("--known-ai-types");
+    startInfo.ArgumentList.Add(string.Join(",", _knownAiTypes));
 
     try
     {
@@ -332,6 +336,8 @@ public sealed class PythonAiWorkerClient
     int sequence = root.GetProperty("sequence").GetInt32();
     float throttle = Mathf.Clamp(root.GetProperty("throttle").GetSingle(), -1.0f, 1.0f);
     float turn = Mathf.Clamp(root.GetProperty("turn").GetSingle(), -1.0f, 1.0f);
+    bool fireLeft = root.TryGetProperty("fireLeft", out JsonElement fireLeftElement) && fireLeftElement.GetBoolean();
+    bool fireRight = root.TryGetProperty("fireRight", out JsonElement fireRightElement) && fireRightElement.GetBoolean();
     string debugState = root.TryGetProperty("debugState", out JsonElement debugStateElement)
       ? debugStateElement.GetString() ?? string.Empty
       : string.Empty;
@@ -342,6 +348,8 @@ public sealed class PythonAiWorkerClient
       Sequence = sequence,
       Throttle = throttle,
       Turn = turn,
+      FireLeft = fireLeft,
+      FireRight = fireRight,
       DebugState = debugState
     };
 
@@ -383,9 +391,23 @@ public sealed class PythonAiWorkerClient
 
 public sealed class PythonAiObservation
 {
+  public string AiType { get; init; } = "neural_patrol";
   public float GoalLocalX { get; init; }
   public float GoalLocalZ { get; init; }
   public float DistanceToGoal { get; init; }
+  public bool HasTargetShip { get; init; }
+  public bool TargetShipIsPlayer { get; init; }
+  public float TargetShipDistance { get; init; }
+  public float TargetShipLocalX { get; init; }
+  public float TargetShipLocalZ { get; init; }
+  public bool HasThreatShip { get; init; }
+  public float ThreatShipDistance { get; init; }
+  public float ThreatShipLocalX { get; init; }
+  public float ThreatShipLocalZ { get; init; }
+  public bool HasNearestPort { get; init; }
+  public float NearestPortDistance { get; init; }
+  public float NearestPortLocalX { get; init; }
+  public float NearestPortLocalZ { get; init; }
   public float SpeedFraction { get; init; }
   public float ForwardDistanceFraction { get; init; }
   public float ForwardLeftDistanceFraction { get; init; }
@@ -403,6 +425,8 @@ public class PythonAiActionSnapshot
 {
   public float Throttle { get; init; }
   public float Turn { get; init; }
+  public bool FireLeft { get; init; }
+  public bool FireRight { get; init; }
   public string DebugState { get; init; } = string.Empty;
 }
 
