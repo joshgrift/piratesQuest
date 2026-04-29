@@ -128,17 +128,16 @@ public partial class AiDebugMenu : CanvasLayer
     };
     detailLayout.AddChild(spawnHeader);
 
-    foreach (string archetypeId in AiShipDefinition.KnownIds)
+    foreach (AiShipDefinition definition in AiShips.All)
     {
-      var definition = AiShipDefinition.FromId(archetypeId);
       var spawnButton = new Button
       {
         Text = $"Spawn {definition.DisplayName}",
       };
-      string capturedArchetypeId = archetypeId;
+      string capturedArchetypeId = definition.Id;
       spawnButton.Pressed += () => SpawnAiShip(capturedArchetypeId);
       detailLayout.AddChild(spawnButton);
-      _spawnButtons[archetypeId] = spawnButton;
+      _spawnButtons[definition.Id] = spawnButton;
     }
 
     _enableDebugButton = new Button
@@ -151,7 +150,7 @@ public partial class AiDebugMenu : CanvasLayer
 
     _enableNavigationDebugButton = new Button
     {
-      Text = "Enable Rays + Patrol On Selected Ship",
+      Text = "Enable Ray Debug On Selected Ship",
       Disabled = true,
     };
     _enableNavigationDebugButton.Pressed += EnableNavigationDebugOnSelectedShip;
@@ -290,19 +289,20 @@ public partial class AiDebugMenu : CanvasLayer
       bool canEnable = hasSelectedShip && !_selectedShip.IsNavigationDebugEnabled;
       _enableNavigationDebugButton.Disabled = !canEnable;
       _enableNavigationDebugButton.Text = !hasSelectedShip
-        ? "Select A Ship To Enable Rays + Patrol"
+        ? "Select A Ship To Enable Ray Debug"
         : canEnable
-          ? "Enable Rays + Patrol On Selected Ship"
-          : "Rays + Patrol Already Enabled";
+          ? "Enable Ray Debug On Selected Ship"
+          : "Ray Debug Already Enabled";
     }
 
     foreach (var entry in _spawnButtons)
     {
       bool canSpawn = _play?.AiShipManager?.CanManuallySpawn(entry.Key) == true;
+      string displayName = AiShips.FromId(entry.Key).DisplayName;
       entry.Value.Disabled = !canSpawn;
       entry.Value.Text = canSpawn
-        ? $"Spawn {AiShipDefinition.FromId(entry.Key).DisplayName}"
-        : $"Spawn {AiShipDefinition.FromId(entry.Key).DisplayName} (Unavailable)";
+        ? $"Spawn {displayName}"
+        : $"Spawn {displayName} (Unavailable)";
     }
   }
 

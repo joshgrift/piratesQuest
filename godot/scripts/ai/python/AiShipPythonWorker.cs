@@ -1,4 +1,4 @@
-namespace PiratesQuest.AI.pythonNavigation;
+namespace PiratesQuest.AI;
 
 using Godot;
 using System;
@@ -11,16 +11,13 @@ using System.Threading;
 using System.Threading.Tasks;
 
 /// <summary>
-/// Small bridge around one shared Python worker process.
+/// Runs the shared Python worker process for AI ships.
 ///
-/// The worker speaks newline-delimited JSON:
-/// - Godot sends `decide` and `transition`
-/// - Python sends `ready` and `action`
-///
-/// This class keeps the process details away from AI controllers so they can
-/// focus on observations, rewards, and cached actions.
+/// Godot sends newline-delimited JSON requests and Python replies with actions.
+/// This class only owns process and message transport. AiShip and its controller
+/// still own sensing, rewards, and per-ship runtime memory.
 /// </summary>
-public sealed class PythonAiWorkerClient
+public sealed class AiShipPythonWorker
 {
   public const int ProtocolVersion = 1;
 
@@ -33,10 +30,9 @@ public sealed class PythonAiWorkerClient
   private readonly string _pythonExecutable;
   private readonly string _scriptPath;
   private readonly string _rolloutPath;
-  private readonly string[] _knownAiTypes;
   private readonly object _writeLock = new();
   private readonly ManualResetEventSlim _readyEvent = new(false);
-  private readonly ConcurrentDictionary<string, ConcurrentDictionary<int, PythonAiActionResult>> _actionsByShip = new();
+  private readonly ConcurrentDictionary<string, ConcurrentDictionary<int, AiShipPythonActionResult>> _actionsByShip = new();
 
   private Process _process;
   private StreamWriter _stdin;
@@ -44,12 +40,11 @@ public sealed class PythonAiWorkerClient
   private bool _isShutdown;
   private int _unavailableNotified;
 
-  public PythonAiWorkerClient(string pythonExecutable, string scriptPath, string rolloutPath, string[] knownAiTypes)
+  public AiShipPythonWorker(string pythonExecutable, string scriptPath, string rolloutPath)
   {
     _pythonExecutable = pythonExecutable ?? "python3";
     _scriptPath = scriptPath ?? string.Empty;
     _rolloutPath = rolloutPath ?? string.Empty;
-    _knownAiTypes = knownAiTypes ?? Array.Empty<string>();
   }
 
   public event Action<string> Unavailable;
@@ -89,8 +84,6 @@ public sealed class PythonAiWorkerClient
     startInfo.ArgumentList.Add(_scriptPath);
     startInfo.ArgumentList.Add("--rollout-path");
     startInfo.ArgumentList.Add(_rolloutPath);
-    startInfo.ArgumentList.Add("--known-ai-types");
-    startInfo.ArgumentList.Add(string.Join(",", _knownAiTypes));
 
     try
     {
@@ -131,12 +124,12 @@ public sealed class PythonAiWorkerClient
     return true;
   }
 
-  public bool TryRequestDecision(string shipId, int sequence, string episodeId, PythonAiObservation observation)
+  public bool TryRequestDecision(string shipId, int sequence, string episodeId, AiShipPythonObservation observation)
   {
     if (!IsAvailable || string.IsNullOrWhiteSpace(shipId) || observation == null)
       return false;
 
-    var message = new PythonAiDecisionMessage
+    return TryWriteMessage(new AiShipPythonDecisionMessage
     {
       Type = "decide",
       ProtocolVersion = ProtocolVersion,
@@ -144,25 +137,23 @@ public sealed class PythonAiWorkerClient
       Sequence = sequence,
       EpisodeId = episodeId,
       Observation = observation
-    };
-
-    return TryWriteMessage(message);
+    });
   }
 
   public bool TrySendTransition(
     string shipId,
     string episodeId,
-    PythonAiObservation observation,
-    PythonAiActionSnapshot action,
+    AiShipPythonObservation observation,
+    AiShipPythonAction action,
     float reward,
-    PythonAiObservation nextObservation,
+    AiShipPythonObservation nextObservation,
     bool done,
     string doneReason)
   {
     if (!IsAvailable || string.IsNullOrWhiteSpace(shipId) || observation == null || action == null || nextObservation == null)
       return false;
 
-    var message = new PythonAiTransitionMessage
+    return TryWriteMessage(new AiShipPythonTransitionMessage
     {
       Type = "transition",
       ProtocolVersion = ProtocolVersion,
@@ -174,12 +165,10 @@ public sealed class PythonAiWorkerClient
       NextObservation = nextObservation,
       Done = done,
       DoneReason = doneReason
-    };
-
-    return TryWriteMessage(message);
+    });
   }
 
-  public bool TryTakeAction(string shipId, int sequence, out PythonAiActionResult action)
+  public bool TryTakeAction(string shipId, int sequence, out AiShipPythonActionResult action)
   {
     action = null;
 
@@ -218,6 +207,7 @@ public sealed class PythonAiWorkerClient
           _process.Kill(entireProcessTree: true);
           _process.WaitForExit(1000);
         }
+
         _process.Dispose();
       }
     }
@@ -308,12 +298,10 @@ public sealed class PythonAiWorkerClient
     {
       using JsonDocument document = JsonDocument.Parse(line);
       JsonElement root = document.RootElement;
-
       if (!root.TryGetProperty("type", out JsonElement typeElement))
         return;
 
-      string messageType = typeElement.GetString() ?? string.Empty;
-      switch (messageType)
+      switch (typeElement.GetString())
       {
         case "ready":
           _isReady = true;
@@ -334,26 +322,21 @@ public sealed class PythonAiWorkerClient
   {
     string shipId = root.GetProperty("shipId").GetString() ?? string.Empty;
     int sequence = root.GetProperty("sequence").GetInt32();
-    float throttle = Mathf.Clamp(root.GetProperty("throttle").GetSingle(), -1.0f, 1.0f);
-    float turn = Mathf.Clamp(root.GetProperty("turn").GetSingle(), -1.0f, 1.0f);
-    bool fireLeft = root.TryGetProperty("fireLeft", out JsonElement fireLeftElement) && fireLeftElement.GetBoolean();
-    bool fireRight = root.TryGetProperty("fireRight", out JsonElement fireRightElement) && fireRightElement.GetBoolean();
-    string debugState = root.TryGetProperty("debugState", out JsonElement debugStateElement)
-      ? debugStateElement.GetString() ?? string.Empty
-      : string.Empty;
 
-    var action = new PythonAiActionResult
+    var action = new AiShipPythonActionResult
     {
       ShipId = shipId,
       Sequence = sequence,
-      Throttle = throttle,
-      Turn = turn,
-      FireLeft = fireLeft,
-      FireRight = fireRight,
-      DebugState = debugState
+      Throttle = Mathf.Clamp(root.GetProperty("throttle").GetSingle(), -1.0f, 1.0f),
+      Turn = Mathf.Clamp(root.GetProperty("turn").GetSingle(), -1.0f, 1.0f),
+      FireLeft = root.TryGetProperty("fireLeft", out JsonElement fireLeftElement) && fireLeftElement.GetBoolean(),
+      FireRight = root.TryGetProperty("fireRight", out JsonElement fireRightElement) && fireRightElement.GetBoolean(),
+      DebugState = root.TryGetProperty("debugState", out JsonElement debugStateElement)
+        ? debugStateElement.GetString() ?? string.Empty
+        : string.Empty
     };
 
-    var bySequence = _actionsByShip.GetOrAdd(shipId, _ => new ConcurrentDictionary<int, PythonAiActionResult>());
+    var bySequence = _actionsByShip.GetOrAdd(shipId, _ => new ConcurrentDictionary<int, AiShipPythonActionResult>());
     bySequence[sequence] = action;
   }
 
@@ -389,9 +372,9 @@ public sealed class PythonAiWorkerClient
   }
 }
 
-public sealed class PythonAiObservation
+public sealed class AiShipPythonObservation
 {
-  public string AiType { get; init; } = "neural_patrol";
+  public string AiType { get; init; } = string.Empty;
   public float GoalLocalX { get; init; }
   public float GoalLocalZ { get; init; }
   public float DistanceToGoal { get; init; }
@@ -421,7 +404,7 @@ public sealed class PythonAiObservation
   public bool IsEscaping { get; init; }
 }
 
-public class PythonAiActionSnapshot
+public class AiShipPythonAction
 {
   public float Throttle { get; init; }
   public float Turn { get; init; }
@@ -430,32 +413,32 @@ public class PythonAiActionSnapshot
   public string DebugState { get; init; } = string.Empty;
 }
 
-public sealed class PythonAiActionResult : PythonAiActionSnapshot
+public sealed class AiShipPythonActionResult : AiShipPythonAction
 {
   public string ShipId { get; init; } = string.Empty;
   public int Sequence { get; init; }
 }
 
-internal sealed class PythonAiDecisionMessage
+internal sealed class AiShipPythonDecisionMessage
 {
   public string Type { get; init; } = string.Empty;
   public int ProtocolVersion { get; init; }
   public string ShipId { get; init; } = string.Empty;
   public int Sequence { get; init; }
   public string EpisodeId { get; init; } = string.Empty;
-  public PythonAiObservation Observation { get; init; }
+  public AiShipPythonObservation Observation { get; init; }
 }
 
-internal sealed class PythonAiTransitionMessage
+internal sealed class AiShipPythonTransitionMessage
 {
   public string Type { get; init; } = string.Empty;
   public int ProtocolVersion { get; init; }
   public string ShipId { get; init; } = string.Empty;
   public string EpisodeId { get; init; } = string.Empty;
-  public PythonAiObservation Observation { get; init; }
-  public PythonAiActionSnapshot Action { get; init; }
+  public AiShipPythonObservation Observation { get; init; }
+  public AiShipPythonAction Action { get; init; }
   public float Reward { get; init; }
-  public PythonAiObservation NextObservation { get; init; }
+  public AiShipPythonObservation NextObservation { get; init; }
   public bool Done { get; init; }
   public string DoneReason { get; init; } = string.Empty;
 }

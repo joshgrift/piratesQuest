@@ -1,7 +1,6 @@
 namespace PiratesQuest.AI;
 
 using Godot;
-using PiratesQuest.AI.pythonNavigation;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,12 +35,7 @@ public partial class AiShipManager : RefCounted
   private const double RespawnCheckIntervalSeconds = 300.0;
   private const float SpawnHeight = 2.0f;
 
-  private readonly Dictionary<string, int> _targetCountByArchetype = new()
-  {
-    { "raider", 2 },
-    { "trader", 2 },
-    { "neural_patrol", 10 }
-  };
+  private readonly Dictionary<string, int> _targetCountByArchetype = [];
 
   private readonly Dictionary<string, int> _nextSequenceByArchetype = new();
   private readonly RandomNumberGenerator _rng = new();
@@ -55,9 +49,9 @@ public partial class AiShipManager : RefCounted
   private bool _debugAiShips;
   private bool _pythonAiSessionDisabled;
   private bool _isShuttingDown;
-  private PythonAiWorkerClient _pythonAiWorker;
+  private AiShipPythonWorker _pythonAiWorker;
 
-  public AiShipControllerServices ControllerServices { get; private set; } = AiShipControllerServices.Empty;
+  public AiShipPythonWorker PythonWorker => _pythonAiWorker;
 
   public void Initialize(
     Play play,
@@ -124,13 +118,10 @@ public partial class AiShipManager : RefCounted
   public bool CanManuallySpawn(string archetypeId)
   {
     string normalizedArchetypeId = NormalizeArchetypeId(archetypeId);
-    if (!AiShipDefinition.IsKnownId(normalizedArchetypeId))
+    if (!AiShips.IsKnownId(normalizedArchetypeId))
       return false;
 
-    if (normalizedArchetypeId == "neural_patrol")
-      return _pythonAiWorker != null && _pythonAiWorker.IsAvailable;
-
-    return true;
+    return _pythonAiWorker != null && _pythonAiWorker.IsAvailable;
   }
 
   public bool TrySpawnManualShip(string archetypeId)
@@ -163,9 +154,9 @@ public partial class AiShipManager : RefCounted
     }
     _respawnTimer = null;
 
-    // Close neural ships while the worker is still alive so their controllers
+    // Close AI ships while the worker is still alive so their controllers
     // can flush a final terminal transition for scene shutdown.
-    DespawnNeuralShips("scene_exit");
+    DespawnAllAiShips("scene_exit");
 
     if (_pythonAiWorker != null)
     {
@@ -174,7 +165,7 @@ public partial class AiShipManager : RefCounted
       _pythonAiWorker = null;
     }
 
-    ControllerServices = AiShipControllerServices.Empty;
+    _targetCountByArchetype.Clear();
   }
 
   private void EnsurePopulation()
@@ -192,7 +183,7 @@ public partial class AiShipManager : RefCounted
       if (child is not AiShip aiShip)
         continue;
 
-      string archetypeId = string.IsNullOrWhiteSpace(aiShip.ArchetypeId) ? "raider" : aiShip.ArchetypeId;
+      string archetypeId = string.IsNullOrWhiteSpace(aiShip.ArchetypeId) ? AiShips.Default.Id : aiShip.ArchetypeId;
       activeCountByArchetype[archetypeId] = activeCountByArchetype.GetValueOrDefault(archetypeId) + 1;
     }
 
@@ -215,7 +206,7 @@ public partial class AiShipManager : RefCounted
 
   private void SpawnAiShip(string archetypeId, Vector3 position, float yawRadians)
   {
-    var definition = AiShipDefinition.FromId(archetypeId);
+    var definition = AiShips.FromId(archetypeId);
     int sequence = _nextSequenceByArchetype.GetValueOrDefault(archetypeId, 1);
     _nextSequenceByArchetype[archetypeId] = sequence + 1;
 
@@ -234,13 +225,11 @@ public partial class AiShipManager : RefCounted
 
   private void InitializePythonAiIfNeeded()
   {
-    _targetCountByArchetype["neural_patrol"] = 1;
-    RefreshControllerServices();
+    _targetCountByArchetype.Clear();
 
-    if (!Configuration.PythonAiEnabled || Configuration.PythonAiCount <= 0)
+    if (!Configuration.PythonAiEnabled)
     {
-      GD.Print("Python AI disabled; skipping neural patrol archetype.");
-      _targetCountByArchetype.Remove("neural_patrol");
+      GD.Print("Python AI disabled; skipping AI ships.");
       return;
     }
 
@@ -250,36 +239,29 @@ public partial class AiShipManager : RefCounted
     string scriptPath = Configuration.GetPythonAiScriptAbsolutePath();
     string rolloutPath = BuildRolloutFilePath();
 
-    _pythonAiWorker = new PythonAiWorkerClient(
+    _pythonAiWorker = new AiShipPythonWorker(
       Configuration.PythonAiExecutable,
       scriptPath,
-      rolloutPath,
-      AiShipDefinition.KnownIds);
+      rolloutPath);
 
     _pythonAiWorker.Unavailable += OnPythonAiWorkerUnavailable;
 
     if (!_pythonAiWorker.Start())
     {
-      GD.PrintErr("Python AI worker never reached ready handshake. Neural patrol ships will be skipped for this session.");
+      GD.PrintErr("Python AI worker never reached ready handshake. AI ships will be skipped for this session.");
       _pythonAiWorker.Unavailable -= OnPythonAiWorkerUnavailable;
       _pythonAiWorker.Shutdown();
       _pythonAiWorker = null;
       _pythonAiSessionDisabled = true;
-      RefreshControllerServices();
       return;
     }
 
-    _targetCountByArchetype["neural_patrol"] = Configuration.PythonAiCount;
-    RefreshControllerServices();
-    GD.Print($"Python AI ready. Target neural patrol ships: {Configuration.PythonAiCount}");
-  }
-
-  private void RefreshControllerServices()
-  {
-    ControllerServices = new AiShipControllerServices
+    foreach (var entry in AiShips.BuildSpawnTargetCounts(Configuration.PythonAiCount))
     {
-      PythonAiWorker = _pythonAiWorker
-    };
+      _targetCountByArchetype[entry.Key] = entry.Value;
+    }
+
+    GD.Print($"Python AI ready. Loaded {AiShips.All.Count} AI ship type(s).");
   }
 
   private string BuildRolloutFilePath()
@@ -306,7 +288,7 @@ public partial class AiShipManager : RefCounted
       return;
 
     _pythonAiSessionDisabled = true;
-    _targetCountByArchetype.Remove("neural_patrol");
+    _targetCountByArchetype.Clear();
 
     if (_pythonAiWorker != null)
     {
@@ -315,11 +297,10 @@ public partial class AiShipManager : RefCounted
       _pythonAiWorker = null;
     }
 
-    RefreshControllerServices();
-    DespawnNeuralShips("worker_unavailable");
+    DespawnAllAiShips("worker_unavailable");
   }
 
-  private void DespawnNeuralShips(string reason)
+  private void DespawnAllAiShips(string reason)
   {
     Node aiShipRoot = _aiShipSpawner?.GetParent();
     if (aiShipRoot == null)
@@ -328,8 +309,6 @@ public partial class AiShipManager : RefCounted
     foreach (Node child in aiShipRoot.GetChildren())
     {
       if (child is not AiShip aiShip)
-        continue;
-      if (aiShip.ArchetypeId != "neural_patrol")
         continue;
 
       aiShip.ForceRemoval(reason);

@@ -57,7 +57,7 @@ class AiObservation:
     translation.
     """
 
-    aiType: str = "neural_patrol"
+    aiType: str = ""
 
     # Generic movement and goal fields shared by all AI types.
     goalLocalX: float = 0.0
@@ -101,7 +101,7 @@ class AiObservation:
     @staticmethod
     def from_dict(data: dict[str, object]) -> "AiObservation":
         return AiObservation(
-            aiType=str(data.get("aiType", "neural_patrol")),
+            aiType=str(data.get("aiType", "")),
             goalLocalX=_float_value(data.get("goalLocalX")),
             goalLocalZ=_float_value(data.get("goalLocalZ")),
             distanceToGoal=_float_value(data.get("distanceToGoal")),

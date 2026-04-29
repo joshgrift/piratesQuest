@@ -1,5 +1,23 @@
 # Python AI
 
+This folder is the main home for AI authoring.
+
+## One Place To Define AI Types
+
+Add new AI types in [AI_Ships.cs](./AI_Ships.cs).
+
+Each entry there defines:
+
+- the AI id
+- ship stats and visuals
+- default spawn count
+- goal mode
+- reward mode
+
+That file is the only place in the C# codebase that should need direct AI type ids.
+
+## Per-AI Folders
+
 Each AI type lives in its own folder:
 
 - `raider/brain.py`
@@ -29,7 +47,7 @@ That makes it easier to compare Godot output to Python code.
 2. Create `my_ai/brain.py`
 3. Inherit from `BaseAiBrain`
 4. Export a `create_brain(...)` function that returns your brain instance
-5. Add the new AI id to `AiShipDefinition.KnownIds` in C#
+5. Add one matching entry to `AI_Ships.cs`
 
 Example:
 

@@ -40,7 +40,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
   public bool IsDebugEnabled => _debugEnabled;
   public bool IsNavigationDebugEnabled => _navigationDebugEnabled;
 
-  private AiShipDefinition _definition = AiShipDefinition.FromId("raider");
+  private AiShipDefinition _definition = AiShips.Default;
   private IAiShipController _controller;
   private readonly AiShipMemory _memory = new();
   private readonly Dictionary<InventoryItemType, int> _cargoManifest = [];
@@ -74,7 +74,6 @@ public partial class AiShip : CharacterBody3D, IDamageable
   private bool _debugLeftBlocked = false;
   private bool _debugRightBlocked = false;
   private FloatingBody3D _floatingBody;
-  private MeshInstance3D _patrolPointDebugMarker;
   private Label3D _stateDebugLabel;
   private readonly List<RayDebugVisual> _rayDebugVisuals = new();
 
@@ -87,11 +86,9 @@ public partial class AiShip : CharacterBody3D, IDamageable
   private const float StuckAreaKillSeconds = 10.0f;
   private const float StuckAreaClearResetSeconds = 1.5f;
   private const float LifetimeRespawnSeconds = 1800.0f;
-  private const string HunterPatrolPointMemoryKey = "hunter.patrol_point";
   private static readonly Color DebugRayBlockedColor = new(1.0f, 0.34f, 0.24f, 1.0f);
   private static readonly Color DebugRayClearColor = new(0.2f, 0.95f, 0.66f, 1.0f);
   private static readonly Vector3 DebugLabelOffset = new(0.0f, 7.0f, 0.0f);
-  private static readonly Vector3 DebugMarkerHeightOffset = new(0.0f, 1.2f, 0.0f);
 
   private sealed class RayDebugVisual
   {
@@ -114,7 +111,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
     _lastPosition = GlobalPosition;
 
     _floatingBody = new FloatingBody3D(this);
-    _controller ??= _definition.CreateController(Manager?.ControllerServices ?? AiShipControllerServices.Empty);
+    _controller ??= new PythonAiShipController(_definition, Manager?.PythonWorker);
     RefreshDebugVisuals();
   }
 
@@ -122,10 +119,10 @@ public partial class AiShip : CharacterBody3D, IDamageable
   {
     NotifyControllerRemovedOnce("scene_exit");
 
-    // The patrol marker is added to the active scene instead of under this ship,
-    // so Godot will not clean it up automatically when the ship dies.
-    // We explicitly remove AI debug visuals here so death, despawn, and fail-safe
-    // cleanup all behave the same way.
+    // Some debug visuals are added to the active scene instead of under this ship,
+    // so Godot will not clean them up automatically when the ship dies.
+    // We explicitly remove them here so death, despawn, and fail-safe cleanup
+    // all behave the same way.
     CleanupDebugVisuals();
   }
 
@@ -136,13 +133,13 @@ public partial class AiShip : CharacterBody3D, IDamageable
   {
     string definitionId = data.ContainsKey("definitionId")
       ? data["definitionId"].AsString()
-      : "raider";
+      : AiShips.Default.Id;
 
     Vector3 spawnPosition = data.ContainsKey("position") ? data["position"].AsVector3() : Vector3.Zero;
     Vector3 spawnRotation = data.ContainsKey("rotation") ? data["rotation"].AsVector3() : Vector3.Zero;
 
-    _definition = AiShipDefinition.FromId(definitionId);
-    _controller = _definition.CreateController(Manager?.ControllerServices ?? AiShipControllerServices.Empty);
+    _definition = AiShips.FromId(definitionId);
+    _controller = new PythonAiShipController(_definition, Manager?.PythonWorker);
 
     Name = data.ContainsKey("name") ? data["name"].AsString() : $"ai_ship_{GetInstanceId()}";
     DisplayName = data.ContainsKey("displayName") ? data["displayName"].AsString() : _definition.DisplayName;
@@ -567,10 +564,6 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
   private void CleanupNavigationDebugVisuals()
   {
-    if (IsInstanceValid(_patrolPointDebugMarker))
-      _patrolPointDebugMarker.QueueFree();
-    _patrolPointDebugMarker = null;
-
     foreach (RayDebugVisual rayDebug in _rayDebugVisuals)
     {
       if (IsInstanceValid(rayDebug.Mesh))
@@ -581,16 +574,6 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
   private void EnsureNavigationDebugVisuals()
   {
-    if (_patrolPointDebugMarker == null)
-    {
-      _patrolPointDebugMarker = AiDebugVisuals.CreatePointMarker(
-        "PatrolPointDebugMarker",
-        new Color(0.25f, 0.95f, 0.65f),
-        radius: 0.8f
-      );
-      GetTree().CurrentScene?.AddChild(_patrolPointDebugMarker);
-    }
-
     if (_rayDebugVisuals.Count == 0)
     {
       TryCreateRayDebugVisual("ForwardRayDebug", ForwardRay);
@@ -645,19 +628,6 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
   private void UpdateNavigationDebugVisuals()
   {
-    if (_memory.TryGet<Vector3>(HunterPatrolPointMemoryKey, out Vector3 patrolPoint))
-    {
-      if (_patrolPointDebugMarker != null)
-      {
-        _patrolPointDebugMarker.Visible = true;
-        _patrolPointDebugMarker.GlobalPosition = patrolPoint + DebugMarkerHeightOffset;
-      }
-    }
-    else if (_patrolPointDebugMarker != null)
-    {
-      _patrolPointDebugMarker.Visible = false;
-    }
-
     foreach (RayDebugVisual rayDebug in _rayDebugVisuals)
     {
       UpdateRayDebugVisual(rayDebug);
@@ -701,7 +671,7 @@ public partial class AiShip : CharacterBody3D, IDamageable
   }
 
   /// <summary>
-  /// Server-side navigation debug toggle for patrol-point and terrain-ray visuals.
+  /// Server-side navigation debug toggle for terrain-ray visuals.
   /// </summary>
   public void SetNavigationDebugEnabled(bool enabled)
   {

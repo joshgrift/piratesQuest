@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Python AI worker entrypoint.
-
-Each AI archetype now lives in its own folder:
-- `raider/brain.py`
-- `trader/brain.py`
-- `neural_patrol/brain.py`
-"""
+"""Python AI worker entrypoint."""
 
 from __future__ import annotations
 
@@ -35,14 +29,12 @@ def load_brain(ai_type: str, rollout_path: Path) -> BaseAiBrain:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--rollout-path", required=True)
-    parser.add_argument("--known-ai-types", required=True)
     args = parser.parse_args()
 
     rollout_path = Path(args.rollout_path)
     rollout_path.parent.mkdir(parents=True, exist_ok=True)
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-    known_ai_types = {value.strip() for value in args.known_ai_types.split(",") if value.strip()}
     brains: dict[str, BaseAiBrain] = {}
 
     with rollout_path.open("a", encoding="utf-8") as rollout_file:
@@ -54,8 +46,8 @@ def main() -> int:
                 continue
 
             message = json.loads(line)
-            ai_type = message.get("observation", {}).get("aiType", "neural_patrol")
-            if ai_type not in known_ai_types:
+            ai_type = str(message.get("observation", {}).get("aiType", "")).strip()
+            if not ai_type:
                 continue
 
             if ai_type not in brains:

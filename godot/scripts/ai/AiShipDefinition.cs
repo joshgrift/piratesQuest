@@ -1,8 +1,20 @@
 namespace PiratesQuest.AI;
 
 using PiratesQuest.Data;
-using PiratesQuest.AI.pythonNavigation;
 using System.Collections.Generic;
+
+public enum AiShipGoalMode
+{
+  NearestHostileShip,
+  NearestPort,
+  RandomPortEpisode
+}
+
+public enum AiShipRewardMode
+{
+  None,
+  TouchPort
+}
 
 /// <summary>
 /// Data-only definition for one AI ship archetype.
@@ -12,11 +24,9 @@ using System.Collections.Generic;
 /// </summary>
 public sealed class AiShipDefinition
 {
-  public static readonly string[] KnownIds = ["raider", "trader", "neural_patrol"];
-
-  public string Id { get; init; } = "raider";
-  public string DisplayName { get; init; } = "Raider";
-  public string AllyTypeId { get; init; } = "raider";
+  public string Id { get; init; } = string.Empty;
+  public string DisplayName { get; init; } = string.Empty;
+  public string AllyTypeId { get; init; } = string.Empty;
   public AiShipVisualType VisualType { get; init; } = AiShipVisualType.RaiderBlack;
   public float MaxHealth { get; init; } = 120.0f;
   public float MaxSpeed { get; init; } = 11.5f;
@@ -31,128 +41,9 @@ public sealed class AiShipDefinition
   public float FireRange { get; init; } = 70.0f;
   public float GoalArrivalDistance { get; init; } = 20.0f;
   public float PatrolRadius { get; init; } = 250.0f;
+  public int DefaultSpawnCount { get; init; }
+  public bool UsePythonCountOverride { get; init; }
+  public AiShipGoalMode GoalMode { get; init; } = AiShipGoalMode.NearestPort;
+  public AiShipRewardMode RewardMode { get; init; } = AiShipRewardMode.None;
   public Dictionary<InventoryItemType, int> CargoManifest { get; init; } = [];
-
-  public static AiShipDefinition FromId(string id)
-  {
-    // This switch is the place to add more AI archetypes later.
-    return (id ?? string.Empty).Trim().ToLowerInvariant() switch
-    {
-      "raider" => CreateRaider(),
-      "trader" => CreateTrader(),
-      "neural_patrol" => CreateNeuralPatrol(),
-      _ => CreateRaider(),
-    };
-  }
-
-  public static bool IsKnownId(string id)
-  {
-    string normalizedId = (id ?? string.Empty).Trim().ToLowerInvariant();
-    foreach (string knownId in KnownIds)
-    {
-      if (knownId == normalizedId)
-        return true;
-    }
-
-    return false;
-  }
-
-  public IAiShipController CreateController(AiShipControllerServices services)
-  {
-    return new PythonNavigationAiShipController(
-      Id,
-      services?.PythonAiWorker,
-      PatrolRadius,
-      GoalArrivalDistance,
-      MaxSpeed);
-  }
-
-  private static AiShipDefinition CreateRaider()
-  {
-    return new AiShipDefinition
-    {
-      Id = "raider",
-      DisplayName = "Raider",
-      AllyTypeId = "raider",
-      VisualType = AiShipVisualType.RaiderBlack,
-      MaxHealth = 135.0f,
-      MaxSpeed = 12.5f,
-      Acceleration = 4.0f,
-      Deceleration = 4.4f,
-      TurnSpeed = 0.52f,
-      AttackDamage = 18.0f,
-      ProjectileBonusSpeed = 30.0f,
-      FireCooldownSeconds = 2.2f,
-      ShipAvoidanceRange = 90.0f,
-      PreferredCombatRange = 48.0f,
-      FireRange = 72.0f,
-      GoalArrivalDistance = 20.0f,
-      PatrolRadius = 250.0f,
-      CargoManifest = new Dictionary<InventoryItemType, int>
-      {
-        { InventoryItemType.Coin, 24 },
-        { InventoryItemType.Wood, 18 },
-        { InventoryItemType.CannonBall, 8 },
-      }
-    };
-  }
-
-  private static AiShipDefinition CreateTrader()
-  {
-    return new AiShipDefinition
-    {
-      Id = "trader",
-      DisplayName = "Trader",
-      AllyTypeId = "trader",
-      VisualType = AiShipVisualType.PlayerWhite,
-      MaxHealth = 110.0f,
-      MaxSpeed = 13.0f,
-      Acceleration = 4.2f,
-      Deceleration = 4.6f,
-      TurnSpeed = 0.56f,
-      AttackDamage = 0.0f,
-      ProjectileBonusSpeed = 0.0f,
-      FireCooldownSeconds = 999.0f,
-      ShipAvoidanceRange = 150.0f,
-      PreferredCombatRange = 0.0f,
-      FireRange = 0.0f,
-      GoalArrivalDistance = 32.0f,
-      PatrolRadius = 0.0f,
-      CargoManifest = new Dictionary<InventoryItemType, int>
-      {
-        { InventoryItemType.Coin, 30 },
-        { InventoryItemType.Wood, 12 },
-        { InventoryItemType.Iron, 10 },
-        { InventoryItemType.Fish, 16 },
-      }
-    };
-  }
-
-  private static AiShipDefinition CreateNeuralPatrol()
-  {
-    return new AiShipDefinition
-    {
-      Id = "neural_patrol",
-      DisplayName = "Neural Patrol",
-      AllyTypeId = "trader",
-      VisualType = AiShipVisualType.PlayerWhite,
-      MaxHealth = 120.0f,
-      MaxSpeed = 12.0f,
-      Acceleration = 4.0f,
-      Deceleration = 4.2f,
-      TurnSpeed = 0.5f,
-      AttackDamage = 0.0f,
-      ProjectileBonusSpeed = 0.0f,
-      FireCooldownSeconds = 999.0f,
-      ShipAvoidanceRange = 125.0f,
-      PreferredCombatRange = 0.0f,
-      FireRange = 0.0f,
-      GoalArrivalDistance = 18.0f,
-      PatrolRadius = 250.0f,
-      CargoManifest = new Dictionary<InventoryItemType, int>
-      {
-        { InventoryItemType.Coin, 12 },
-      }
-    };
-  }
 }
