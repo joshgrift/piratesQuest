@@ -124,6 +124,33 @@ public partial class AiShipManager : RefCounted
     Callable.From(EnsurePopulation).CallDeferred();
   }
 
+  public bool CanManuallySpawn(string archetypeId)
+  {
+    string normalizedArchetypeId = NormalizeArchetypeId(archetypeId);
+    if (!AiShipDefinition.IsKnownId(normalizedArchetypeId))
+      return false;
+
+    if (normalizedArchetypeId == "neural_patrol")
+      return _pythonAiWorker != null && _pythonAiWorker.IsAvailable;
+
+    return true;
+  }
+
+  public bool TrySpawnManualShip(string archetypeId)
+  {
+    if (_play == null || !_play.Multiplayer.IsServer() || _aiShipSpawner == null)
+      return false;
+
+    string normalizedArchetypeId = NormalizeArchetypeId(archetypeId);
+    if (!CanManuallySpawn(normalizedArchetypeId))
+      return false;
+
+    var (position, yawRadians) = PickEdgeSpawn();
+    SpawnAiShip(normalizedArchetypeId, position, yawRadians);
+    GD.Print($"Manually spawned {normalizedArchetypeId} AI ship.");
+    return true;
+  }
+
   public void Shutdown()
   {
     if (_isShuttingDown)
@@ -375,5 +402,10 @@ public partial class AiShipManager : RefCounted
     Vector3 toCenter = (Vector3.Zero - position).Normalized();
     float yawRadians = Mathf.Atan2(-toCenter.X, -toCenter.Z);
     return (position, yawRadians);
+  }
+
+  private static string NormalizeArchetypeId(string archetypeId)
+  {
+    return (archetypeId ?? string.Empty).Trim().ToLowerInvariant();
   }
 }

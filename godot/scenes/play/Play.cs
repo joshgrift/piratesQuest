@@ -34,6 +34,8 @@ public partial class Play : Node3D
   private LeaderboardEntryDto[] _latestLeaderboard = [];
   private AiShipManager _aiShipManager;
 
+  public AiShipManager AiShipManager => _aiShipManager;
+
   /// <summary>
   /// Handle global gameplay shortcuts.
   /// In Godot 4, "ui_cancel" is mapped to Esc by default in this project.

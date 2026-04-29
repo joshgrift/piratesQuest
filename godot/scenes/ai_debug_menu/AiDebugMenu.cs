@@ -1,6 +1,7 @@
 namespace PiratesQuest;
 
 using Godot;
+using PiratesQuest.AI;
 using System.Collections.Generic;
 
 public partial class AiDebugMenu : CanvasLayer
@@ -10,14 +11,20 @@ public partial class AiDebugMenu : CanvasLayer
   private const float MinCameraDistanceFromShip = 12.0f;
   private const int ListPanelWidth = 320;
   private const int DetailPanelWidth = 380;
+  private const float MinTimeScale = 0.25f;
+  private const float MaxTimeScale = 8.0f;
 
   private VBoxContainer _shipList;
   private Label _detailLabel;
+  private Label _timeScaleLabel;
+  private SpinBox _timeScaleSpinBox;
   private Button _enableDebugButton;
   private Button _enableNavigationDebugButton;
   private Button _zoomInButton;
   private AiShip _selectedShip;
   private readonly Dictionary<AiShip, Button> _rows = new();
+  private readonly Dictionary<string, Button> _spawnButtons = new();
+  private Play _play;
 
   public override void _Ready()
   {
@@ -27,6 +34,7 @@ public partial class AiDebugMenu : CanvasLayer
       return;
     }
 
+    _play = GetTree().CurrentScene as Play;
     Layer = 100;
     BuildUi();
 
@@ -98,6 +106,41 @@ public partial class AiDebugMenu : CanvasLayer
     _zoomInButton.Pressed += ZoomInOnSelectedShip;
     detailLayout.AddChild(_zoomInButton);
 
+    _timeScaleLabel = new Label
+    {
+      Text = "Game Speed: 1.00x",
+    };
+    detailLayout.AddChild(_timeScaleLabel);
+
+    _timeScaleSpinBox = new SpinBox
+    {
+      MinValue = MinTimeScale,
+      MaxValue = MaxTimeScale,
+      Step = 0.25,
+      Value = Engine.TimeScale,
+    };
+    _timeScaleSpinBox.ValueChanged += OnTimeScaleChanged;
+    detailLayout.AddChild(_timeScaleSpinBox);
+
+    var spawnHeader = new Label
+    {
+      Text = "Manual Spawn",
+    };
+    detailLayout.AddChild(spawnHeader);
+
+    foreach (string archetypeId in AiShipDefinition.KnownIds)
+    {
+      var definition = AiShipDefinition.FromId(archetypeId);
+      var spawnButton = new Button
+      {
+        Text = $"Spawn {definition.DisplayName}",
+      };
+      string capturedArchetypeId = archetypeId;
+      spawnButton.Pressed += () => SpawnAiShip(capturedArchetypeId);
+      detailLayout.AddChild(spawnButton);
+      _spawnButtons[archetypeId] = spawnButton;
+    }
+
     _enableDebugButton = new Button
     {
       Text = "Enable Debug On Selected Ship",
@@ -126,6 +169,12 @@ public partial class AiDebugMenu : CanvasLayer
 
   public override void _Process(double delta)
   {
+    if (_timeScaleLabel != null)
+      _timeScaleLabel.Text = $"Game Speed: {Engine.TimeScale:0.00}x";
+
+    if (_timeScaleSpinBox != null && !Mathf.IsEqualApprox((float)_timeScaleSpinBox.Value, Engine.TimeScale))
+      _timeScaleSpinBox.SetValueNoSignal(Engine.TimeScale);
+
     if (!IsInstanceValid(_selectedShip))
     {
       if (_selectedShip != null)
@@ -246,6 +295,15 @@ public partial class AiDebugMenu : CanvasLayer
           ? "Enable Rays + Patrol On Selected Ship"
           : "Rays + Patrol Already Enabled";
     }
+
+    foreach (var entry in _spawnButtons)
+    {
+      bool canSpawn = _play?.AiShipManager?.CanManuallySpawn(entry.Key) == true;
+      entry.Value.Disabled = !canSpawn;
+      entry.Value.Text = canSpawn
+        ? $"Spawn {AiShipDefinition.FromId(entry.Key).DisplayName}"
+        : $"Spawn {AiShipDefinition.FromId(entry.Key).DisplayName} (Unavailable)";
+    }
   }
 
   private void ZoomInOnSelectedShip()
@@ -307,5 +365,21 @@ public partial class AiDebugMenu : CanvasLayer
 
     _selectedShip.SetNavigationDebugEnabled(true);
     UpdateRowHighlights();
+  }
+
+  private void OnTimeScaleChanged(double value)
+  {
+    Engine.TimeScale = Mathf.Clamp((float)value, MinTimeScale, MaxTimeScale);
+    if (_timeScaleLabel != null)
+      _timeScaleLabel.Text = $"Game Speed: {Engine.TimeScale:0.00}x";
+  }
+
+  private void SpawnAiShip(string archetypeId)
+  {
+    bool spawned = _play?.AiShipManager?.TrySpawnManualShip(archetypeId) == true;
+    if (!spawned && _detailLabel != null)
+      _detailLabel.Text = $"Could not spawn {archetypeId}.";
+
+    RefreshShipList();
   }
 }
