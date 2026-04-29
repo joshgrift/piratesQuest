@@ -1,27 +1,64 @@
 #!/usr/bin/env python3
-"""Local-dev Python AI worker for waypoint navigation experiments.
-
-Protocol:
-- reads newline-delimited JSON from stdin
-- writes newline-delimited JSON to stdout
-- appends `transition` messages to one rollout JSONL file
-
-This v1 worker does not train. It returns a simple heuristic action so the
-Godot side can validate the bridge, rollout logging, and shared-worker design.
-"""
+"""Simple PyTorch DQN worker for port navigation."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import random
 import sys
+from collections import deque
+from dataclasses import dataclass
 from pathlib import Path
 
+import torch
+from torch import nn
+from torch.nn import functional as F
+
 PROTOCOL_VERSION = 1
+SEED = 7
 
+OBSERVATION_KEYS = [
+    "goalLocalX",
+    "goalLocalZ",
+    "distanceToGoal",
+    "speedFraction",
+    "forwardDistanceFraction",
+    "forwardLeftDistanceFraction",
+    "forwardRightDistanceFraction",
+    "wideLeftDistanceFraction",
+    "wideRightDistanceFraction",
+    "leftPressure",
+    "rightPressure",
+]
 
-def clamp(value: float, minimum: float, maximum: float) -> float:
-    return max(minimum, min(maximum, value))
+ACTION_SET = [
+    (0.90, -1.00),
+    (0.90, -0.45),
+    (0.90, 0.00),
+    (0.90, 0.45),
+    (0.90, 1.00),
+    (0.45, -1.00),
+    (0.45, -0.45),
+    (0.45, 0.00),
+    (0.45, 0.45),
+    (0.45, 1.00),
+    (-0.60, -1.00),
+    (-0.60, 0.00),
+    (-0.60, 1.00),
+]
+
+REPLAY_CAPACITY = 50_000
+MIN_REPLAY_SIZE = 256
+BATCH_SIZE = 64
+TRAIN_EVERY_TRANSITIONS = 4
+TARGET_SYNC_EVERY_UPDATES = 200
+CHECKPOINT_EVERY_UPDATES = 200
+LEARNING_RATE = 0.001
+GAMMA = 0.98
+EPSILON_START = 1.00
+EPSILON_END = 0.05
+EPSILON_DECAY_DECISIONS = 12_000
 
 
 def emit(message: dict) -> None:
@@ -29,71 +66,175 @@ def emit(message: dict) -> None:
     sys.stdout.flush()
 
 
-def choose_action(observation: dict) -> tuple[float, float, str]:
-    goal_x = float(observation.get("goalLocalX", 0.0))
-    goal_z = float(observation.get("goalLocalZ", 0.0))
-    distance_to_goal = float(observation.get("distanceToGoal", 0.0))
-    forward = float(observation.get("forwardDistanceFraction", 1.0))
-    forward_left = float(observation.get("forwardLeftDistanceFraction", 1.0))
-    forward_right = float(observation.get("forwardRightDistanceFraction", 1.0))
-    wide_left = float(observation.get("wideLeftDistanceFraction", 1.0))
-    wide_right = float(observation.get("wideRightDistanceFraction", 1.0))
-    left_pressure = float(observation.get("leftPressure", 0.0))
-    right_pressure = float(observation.get("rightPressure", 0.0))
-    front_blocked = bool(observation.get("frontBlocked", False))
-    is_stuck = bool(observation.get("isStuck", False))
-    is_escaping = bool(observation.get("isEscaping", False))
-
-    if is_stuck or is_escaping:
-        safer_turn = 1.0 if (forward_left + wide_left) < (forward_right + wide_right) else -1.0
-        return -0.9, safer_turn, "Recover"
-
-    if front_blocked or forward < 0.18:
-        safer_turn = 1.0 if (forward_left + wide_left) < (forward_right + wide_right) else -1.0
-        return -0.65, safer_turn, "Avoid Front"
-
-    obstacle_bias = clamp((left_pressure - right_pressure) * 0.7, -0.6, 0.6)
-    steering = clamp(goal_x * 1.8 + obstacle_bias, -1.0, 1.0)
-
-    # `goal_z` is negative when the target is in front of the ship.
-    if goal_z > 0.2:
-        steering = clamp(steering + (1.0 if goal_x >= 0.0 else -1.0) * 0.5, -1.0, 1.0)
-
-    if distance_to_goal > 0.4:
-        throttle = 0.85
-    elif distance_to_goal > 0.14:
-        throttle = 0.45
-    else:
-        throttle = 0.18
-
-    if min(forward_left, wide_left, forward_right, wide_right) < 0.12:
-        throttle = min(throttle, 0.45)
-
-    return throttle, steering, "Navigate"
+def observation_to_vector(observation: dict) -> list[float]:
+    values = [float(observation.get(key, 0.0)) for key in OBSERVATION_KEYS]
+    values.append(1.0 if observation.get("frontBlocked", False) else 0.0)
+    values.append(1.0 if observation.get("isStuck", False) else 0.0)
+    values.append(1.0 if observation.get("isEscaping", False) else 0.0)
+    return values
 
 
-def handle_message(message: dict, rollout_file) -> None:
-    message_type = message.get("type")
-    if message_type == "decide":
-        observation = message.get("observation", {})
-        throttle, turn, debug_state = choose_action(observation)
-        emit(
-            {
-                "type": "action",
-                "protocolVersion": PROTOCOL_VERSION,
-                "shipId": message.get("shipId", ""),
-                "sequence": int(message.get("sequence", 0)),
-                "throttle": throttle,
-                "turn": turn,
-                "debugState": debug_state,
-            }
+def action_to_index(action: dict) -> int:
+    throttle = float(action.get("throttle", 0.0))
+    turn = float(action.get("turn", 0.0))
+
+    best_index = 0
+    best_distance = float("inf")
+    for index, (candidate_throttle, candidate_turn) in enumerate(ACTION_SET):
+        distance = (candidate_throttle - throttle) ** 2 + (candidate_turn - turn) ** 2
+        if distance < best_distance:
+            best_distance = distance
+            best_index = index
+
+    return best_index
+
+
+@dataclass
+class Transition:
+    state: list[float]
+    action_index: int
+    reward: float
+    next_state: list[float]
+    done: bool
+
+
+class QNetwork(nn.Module):
+    def __init__(self, input_size: int, output_size: int) -> None:
+        super().__init__()
+        self.layers = nn.Sequential(
+            nn.Linear(input_size, 32),
+            nn.ReLU(),
+            nn.Linear(32, 32),
+            nn.ReLU(),
+            nn.Linear(32, output_size),
         )
-        return
 
-    if message_type == "transition":
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        return self.layers(inputs)
+
+
+class Trainer:
+    def __init__(self, checkpoint_path: Path, post_exploration_checkpoint_path: Path) -> None:
+        torch.manual_seed(SEED)
+
+        self.random = random.Random(SEED)
+        self.replay: deque[Transition] = deque(maxlen=REPLAY_CAPACITY)
+        self.checkpoint_path = checkpoint_path
+        self.post_exploration_checkpoint_path = post_exploration_checkpoint_path
+
+        input_size = len(OBSERVATION_KEYS) + 3
+        output_size = len(ACTION_SET)
+
+        self.online_network = QNetwork(input_size, output_size)
+        self.target_network = QNetwork(input_size, output_size)
+        self.target_network.load_state_dict(self.online_network.state_dict())
+
+        self.optimizer = torch.optim.Adam(self.online_network.parameters(), lr=LEARNING_RATE)
+        self.decisions_made = 0
+        self.transitions_seen = 0
+        self.updates_completed = 0
+        self.saved_post_exploration_checkpoint = self.post_exploration_checkpoint_path.exists()
+
+        if self.checkpoint_path.exists():
+            checkpoint = torch.load(self.checkpoint_path, map_location="cpu")
+            self.online_network.load_state_dict(checkpoint["online_state_dict"])
+            self.target_network.load_state_dict(checkpoint["target_state_dict"])
+            self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            self.decisions_made = int(checkpoint["decisions_made"])
+            self.transitions_seen = int(checkpoint["transitions_seen"])
+            self.updates_completed = int(checkpoint["updates_completed"])
+            if self.decisions_made >= EPSILON_DECAY_DECISIONS and not self.saved_post_exploration_checkpoint:
+                self.save_checkpoint(self.post_exploration_checkpoint_path)
+                self.saved_post_exploration_checkpoint = True
+
+    def choose_action(self, observation: dict) -> tuple[float, float, str]:
+        epsilon = self.current_epsilon()
+
+        if self.random.random() < epsilon:
+            action_index = self.random.randrange(len(ACTION_SET))
+            mode = "Explore"
+        else:
+            state = torch.tensor(observation_to_vector(observation), dtype=torch.float32).unsqueeze(0)
+            with torch.no_grad():
+                action_index = int(torch.argmax(self.online_network(state), dim=1).item())
+            mode = "Policy"
+
+        self.decisions_made += 1
+        if not self.saved_post_exploration_checkpoint and self.decisions_made >= EPSILON_DECAY_DECISIONS:
+            self.save_checkpoint(self.post_exploration_checkpoint_path)
+            self.saved_post_exploration_checkpoint = True
+
+        throttle, turn = ACTION_SET[action_index]
+        return throttle, turn, f"Port RL {mode} eps={epsilon:.2f}"
+
+    def record_transition(self, message: dict, rollout_file) -> None:
         rollout_file.write(json.dumps(message) + "\n")
         rollout_file.flush()
-        return
+
+        self.replay.append(
+            Transition(
+                state=observation_to_vector(message["observation"]),
+                action_index=action_to_index(message["action"]),
+                reward=float(message["reward"]),
+                next_state=observation_to_vector(message["nextObservation"]),
+                done=bool(message["done"]),
+            )
+        )
+        self.transitions_seen += 1
+
+        if self.transitions_seen % TRAIN_EVERY_TRANSITIONS == 0:
+            self.train_step()
+
+    def current_epsilon(self) -> float:
+        if self.decisions_made >= EPSILON_DECAY_DECISIONS:
+            return EPSILON_END
+
+        progress = self.decisions_made / EPSILON_DECAY_DECISIONS
+        return EPSILON_START + (EPSILON_END - EPSILON_START) * progress
+
+    def train_step(self) -> None:
+        if len(self.replay) < MIN_REPLAY_SIZE:
+            return
+
+        batch = self.random.sample(self.replay, BATCH_SIZE)
+
+        states = torch.tensor([item.state for item in batch], dtype=torch.float32)
+        actions = torch.tensor([item.action_index for item in batch], dtype=torch.int64)
+        rewards = torch.tensor([item.reward for item in batch], dtype=torch.float32)
+        next_states = torch.tensor([item.next_state for item in batch], dtype=torch.float32)
+        done_mask = torch.tensor([1.0 if item.done else 0.0 for item in batch], dtype=torch.float32)
+
+        with torch.no_grad():
+            next_q = self.target_network(next_states).max(dim=1).values
+            targets = rewards + (1.0 - done_mask) * GAMMA * next_q
+
+        predicted_q = self.online_network(states).gather(1, actions.unsqueeze(1)).squeeze(1)
+        loss = F.mse_loss(predicted_q, targets)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        self.updates_completed += 1
+
+        if self.updates_completed % TARGET_SYNC_EVERY_UPDATES == 0:
+            self.target_network.load_state_dict(self.online_network.state_dict())
+
+        if self.updates_completed % CHECKPOINT_EVERY_UPDATES == 0:
+            self.save_checkpoint(self.checkpoint_path)
+
+    def save_checkpoint(self, path: Path) -> None:
+        torch.save(
+            {
+                "online_state_dict": self.online_network.state_dict(),
+                "target_state_dict": self.target_network.state_dict(),
+                "optimizer_state_dict": self.optimizer.state_dict(),
+                "decisions_made": self.decisions_made,
+                "transitions_seen": self.transitions_seen,
+                "updates_completed": self.updates_completed,
+            },
+            path,
+        )
 
 
 def main() -> int:
@@ -104,6 +245,10 @@ def main() -> int:
     rollout_path = Path(args.rollout_path)
     rollout_path.parent.mkdir(parents=True, exist_ok=True)
 
+    checkpoint_path = rollout_path.with_name("port_policy_latest.pt")
+    post_exploration_checkpoint_path = rollout_path.with_name("port_policy_after_exploration.pt")
+    trainer = Trainer(checkpoint_path, post_exploration_checkpoint_path)
+
     with rollout_path.open("a", encoding="utf-8") as rollout_file:
         emit({"type": "ready", "protocolVersion": PROTOCOL_VERSION})
 
@@ -112,21 +257,27 @@ def main() -> int:
             if not line:
                 continue
 
-            try:
-                message = json.loads(line)
-            except json.JSONDecodeError as exc:
-                print(f"invalid json: {exc}", file=sys.stderr, flush=True)
+            message = json.loads(line)
+
+            if message["type"] == "decide":
+                throttle, turn, debug_state = trainer.choose_action(message["observation"])
+                emit(
+                    {
+                        "type": "action",
+                        "protocolVersion": PROTOCOL_VERSION,
+                        "shipId": message["shipId"],
+                        "sequence": int(message["sequence"]),
+                        "throttle": throttle,
+                        "turn": turn,
+                        "debugState": debug_state,
+                    }
+                )
                 continue
 
-            if int(message.get("protocolVersion", 0)) != PROTOCOL_VERSION:
-                print("protocol version mismatch", file=sys.stderr, flush=True)
-                continue
+            if message["type"] == "transition":
+                trainer.record_transition(message, rollout_file)
 
-            try:
-                handle_message(message, rollout_file)
-            except Exception as exc:  # pragma: no cover - local dev guardrail
-                print(f"worker error: {exc}", file=sys.stderr, flush=True)
-
+    trainer.save_checkpoint(checkpoint_path)
     return 0
 
 

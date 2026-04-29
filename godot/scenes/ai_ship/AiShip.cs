@@ -249,11 +249,13 @@ public partial class AiShip : CharacterBody3D, IDamageable
 
     AiShipControlInput control = _controller.GetControl(context, _memory, delta);
 
-    // Training capture is server-side only and only for the deterministic raider.
+    // Training capture is server-side only for the deterministic archetypes.
     // We log the state before movement is applied so the CSV stays aligned with
     // "this observation produced this action".
     if (ArchetypeId == "raider")
       Manager?.LogRaiderTrainingSample(this, context, _memory, control);
+    else if (ArchetypeId == "trader")
+      Manager?.LogTraderTrainingSample(this, context, _memory, control);
 
     ApplyControl(control, (float)delta);
     UpdateDebugVisuals();

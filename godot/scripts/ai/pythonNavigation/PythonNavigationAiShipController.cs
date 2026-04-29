@@ -7,7 +7,7 @@ using System;
 /// First Python-backed AI archetype.
 ///
 /// v1 is intentionally narrow:
-/// - one waypoint goal at a time
+/// - one target port at a time
 /// - terrain-aware navigation only
 /// - one shared Python worker process
 /// - one sampled decision every 0.2 seconds
@@ -20,8 +20,7 @@ public sealed class PythonNavigationAiShipController : IAiShipController
   private const float DecisionIntervalSeconds = 0.2f;
   private const string KeyShipId = "python_nav.ship_id";
   private const string KeyEpisodeId = "python_nav.episode_id";
-  private const string KeyPatrolCenter = "python_nav.patrol_center";
-  private const string KeyPatrolPoint = "python_nav.patrol_point";
+  private const string KeyTargetPortId = "python_nav.target_port_id";
   private const string KeyDecisionAccumulator = "python_nav.decision_accumulator";
   private const string KeyPendingSequence = "python_nav.pending_sequence";
   private const string KeyNextSequence = "python_nav.next_sequence";
@@ -34,20 +33,21 @@ public sealed class PythonNavigationAiShipController : IAiShipController
   private const string KeySceneIsEscapeReversing = "python_nav.scene_is_escape_reversing";
   private const string KeySceneEscapeTurnDirection = "python_nav.scene_escape_turn_direction";
 
-  private readonly RandomNumberGenerator _rng = new();
   private readonly PythonAiWorkerClient _worker;
-  private readonly float _patrolRadius;
   private readonly float _goalArrivalDistance;
   private readonly float _maxSpeed;
+  private readonly RandomNumberGenerator _rng = new();
 
   public PythonNavigationAiShipController(
     PythonAiWorkerClient worker,
-    float patrolRadius,
+    float _unusedPatrolRadius,
     float goalArrivalDistance,
     float maxSpeed)
   {
+    // Keep the existing constructor shape so the archetype factory does not need
+    // a special case for this controller. We do not use patrol radius anymore
+    // because the RL agent now navigates between ports instead of local waypoints.
     _worker = worker;
-    _patrolRadius = Mathf.Max(1.0f, patrolRadius);
     _goalArrivalDistance = Mathf.Max(1.0f, goalArrivalDistance);
     _maxSpeed = Mathf.Max(1.0f, maxSpeed);
     _rng.Randomize();
@@ -88,7 +88,7 @@ public sealed class PythonNavigationAiShipController : IAiShipController
         Turn = action.Turn,
         FireLeft = false,
         FireRight = false,
-        DebugState = string.IsNullOrWhiteSpace(action.DebugState) ? "Python Navigate" : action.DebugState
+        DebugState = string.IsNullOrWhiteSpace(action.DebugState) ? "Python Port RL" : action.DebugState
       };
     }
 
@@ -131,22 +131,25 @@ public sealed class PythonNavigationAiShipController : IAiShipController
   {
     memory.GetOrCreate(KeyShipId, () => Guid.NewGuid().ToString("N"));
     memory.GetOrCreate(KeyEpisodeId, () => Guid.NewGuid().ToString("N"));
-    memory.GetOrCreate(KeyPatrolCenter, () => PickPatrolCenter(context));
-    memory.GetOrCreate(KeyPatrolPoint, () => PickPatrolPoint(memory, context));
-    memory.GetOrCreate(KeyLastDistanceToGoal, () => DistanceToPatrolPoint(memory, context.ShipPosition));
+    memory.GetOrCreate(KeyTargetPortId, () => PickTargetPortId(context, excludedPortId: string.Empty));
+    memory.GetOrCreate(KeyLastDistanceToGoal, () => DistanceToTargetPort(memory, context));
   }
 
   private void RunDecisionSample(AiShipContext context, AiShipMemory memory)
   {
-    PythonAiObservation currentObservation = BuildObservation(context, memory);
-    bool goalReached = DistanceToPatrolPoint(memory, context.ShipPosition) <= _goalArrivalDistance;
+    Port targetPort = ResolveTargetPort(memory, context);
+    if (targetPort == null)
+      return;
+
+    PythonAiObservation currentObservation = BuildObservation(context, memory, targetPort);
+    bool portTouched = HasReachedTargetPort(targetPort, context.ShipPosition);
 
     if (memory.TryGet<PythonAiObservation>(KeyLastObservation, out var previousObservation) &&
         memory.TryGet<PythonAiActionSnapshot>(KeyLastAction, out var previousAction) &&
         memory.TryGet<string>(KeyShipId, out var shipId) &&
         memory.TryGet<string>(KeyEpisodeId, out var episodeId))
     {
-      float reward = ComputeReward(memory, currentObservation, goalReached);
+      float reward = ComputeReward(memory, currentObservation, portTouched);
       _worker?.TrySendTransition(
         shipId,
         episodeId,
@@ -154,21 +157,26 @@ public sealed class PythonNavigationAiShipController : IAiShipController
         previousAction,
         reward,
         currentObservation,
-        done: goalReached,
-        doneReason: goalReached ? "goal_reached" : string.Empty);
+        done: portTouched,
+        doneReason: portTouched ? "port_touched" : string.Empty);
     }
 
-    if (goalReached)
+    if (portTouched)
     {
       StartNextEpisode(memory, context);
       memory.Remove(KeyLastObservation);
       memory.Remove(KeyLastAction);
       memory.Remove(KeyPendingObservation);
       memory.Remove(KeyPendingSequence);
-      currentObservation = BuildObservation(context, memory);
+
+      targetPort = ResolveTargetPort(memory, context);
+      if (targetPort == null)
+        return;
+
+      currentObservation = BuildObservation(context, memory, targetPort);
     }
 
-    memory.Set(KeyLastDistanceToGoal, DistanceToPatrolPoint(memory, context.ShipPosition));
+    memory.Set(KeyLastDistanceToGoal, DistanceToTargetPort(memory, context));
     RequestDecisionIfNeeded(memory, currentObservation);
   }
 
@@ -221,51 +229,24 @@ public sealed class PythonNavigationAiShipController : IAiShipController
 
   private void StartNextEpisode(AiShipMemory memory, AiShipContext context)
   {
+    string previousPortId = memory.GetOrDefault(KeyTargetPortId, string.Empty);
     memory.Set(KeyEpisodeId, Guid.NewGuid().ToString("N"));
-    memory.Set(KeyPatrolPoint, PickPatrolPoint(memory, context));
+    memory.Set(KeyTargetPortId, PickTargetPortId(context, previousPortId));
     memory.Set(KeyDecisionAccumulator, 0.0f);
   }
 
-  private Vector3 PickPatrolCenter(AiShipContext context)
+  private PythonAiObservation BuildObservation(AiShipContext context, AiShipMemory memory, Port targetPort)
   {
-    float patrolExtent = AiShipWorldSettings.MapHalfExtent - AiShipWorldSettings.PatrolInset;
-    float x = _rng.RandfRange(-patrolExtent, patrolExtent);
-    float z = _rng.RandfRange(-patrolExtent, patrolExtent);
-    return new Vector3(x, context.SpawnPoint.Y, z);
-  }
-
-  private Vector3 PickPatrolPoint(AiShipMemory memory, AiShipContext context)
-  {
-    Vector3 center = memory.GetOrDefault(KeyPatrolCenter, context.ShipPosition);
-    float angle = _rng.RandfRange(0.0f, Mathf.Tau);
-    float distance = Mathf.Sqrt(_rng.Randf()) * _patrolRadius;
-    Vector3 offset = new(
-      Mathf.Cos(angle) * distance,
-      0.0f,
-      Mathf.Sin(angle) * distance
-    );
-
-    Vector3 candidate = center + offset;
-    float patrolExtent = AiShipWorldSettings.MapHalfExtent - AiShipWorldSettings.PatrolInset;
-
-    return new Vector3(
-      Mathf.Clamp(candidate.X, -patrolExtent, patrolExtent),
-      context.SpawnPoint.Y,
-      Mathf.Clamp(candidate.Z, -patrolExtent, patrolExtent)
-    );
-  }
-
-  private PythonAiObservation BuildObservation(AiShipContext context, AiShipMemory memory)
-  {
-    Vector3 patrolPoint = memory.GetOrDefault(KeyPatrolPoint, context.ShipPosition);
-    Vector3 localGoal = context.ShipBasis.Inverse() * (patrolPoint - context.ShipPosition);
-    float distanceToGoal = context.ShipPosition.DistanceTo(patrolPoint);
+    Vector3 targetPosition = targetPort?.GlobalPosition ?? context.ShipPosition;
+    Vector3 localGoal = context.ShipBasis.Inverse() * (targetPosition - context.ShipPosition);
+    float maxGoalDistance = AiShipWorldSettings.MapHalfExtent * 2.0f;
+    float distanceToGoal = context.ShipPosition.DistanceTo(targetPosition);
 
     return new PythonAiObservation
     {
-      GoalLocalX = Mathf.Clamp(localGoal.X / _patrolRadius, -1.0f, 1.0f),
-      GoalLocalZ = Mathf.Clamp(localGoal.Z / _patrolRadius, -1.0f, 1.0f),
-      DistanceToGoal = Mathf.Clamp(distanceToGoal / _patrolRadius, 0.0f, 2.0f),
+      GoalLocalX = Mathf.Clamp(localGoal.X / maxGoalDistance, -1.0f, 1.0f),
+      GoalLocalZ = Mathf.Clamp(localGoal.Z / maxGoalDistance, -1.0f, 1.0f),
+      DistanceToGoal = Mathf.Clamp(distanceToGoal / maxGoalDistance, 0.0f, 1.0f),
       SpeedFraction = Mathf.Clamp(context.CurrentSpeed / _maxSpeed, 0.0f, 1.0f),
       ForwardDistanceFraction = GetRayDistanceFraction(context, AiShipRayIds.Forward),
       ForwardLeftDistanceFraction = GetRayDistanceFraction(context, AiShipRayIds.ForwardLeft),
@@ -280,10 +261,11 @@ public sealed class PythonNavigationAiShipController : IAiShipController
     };
   }
 
-  private float ComputeReward(AiShipMemory memory, PythonAiObservation currentObservation, bool goalReached)
+  private float ComputeReward(AiShipMemory memory, PythonAiObservation currentObservation, bool portTouched)
   {
-    float previousDistance = memory.GetOrDefault(KeyLastDistanceToGoal, currentObservation.DistanceToGoal * _patrolRadius);
-    float currentDistance = currentObservation.DistanceToGoal * _patrolRadius;
+    float maxGoalDistance = AiShipWorldSettings.MapHalfExtent * 2.0f;
+    float previousDistance = memory.GetOrDefault(KeyLastDistanceToGoal, currentObservation.DistanceToGoal * maxGoalDistance);
+    float currentDistance = currentObservation.DistanceToGoal * maxGoalDistance;
     float reward = previousDistance - currentDistance;
 
     if (currentObservation.FrontBlocked)
@@ -292,10 +274,65 @@ public sealed class PythonNavigationAiShipController : IAiShipController
     if (currentObservation.IsStuck || currentObservation.IsEscaping)
       reward -= 0.10f;
 
-    if (goalReached)
+    if (portTouched)
       reward += 1.0f;
 
     return reward;
+  }
+
+  private Port ResolveTargetPort(AiShipMemory memory, AiShipContext context)
+  {
+    string targetPortId = memory.GetOrDefault(KeyTargetPortId, string.Empty);
+    foreach (Port port in context.Ports)
+    {
+      if (port?.PortId == targetPortId)
+        return port;
+    }
+
+    string replacementPortId = PickTargetPortId(context, excludedPortId: string.Empty);
+    if (string.IsNullOrWhiteSpace(replacementPortId))
+      return null;
+
+    memory.Set(KeyTargetPortId, replacementPortId);
+    foreach (Port port in context.Ports)
+    {
+      if (port?.PortId == replacementPortId)
+        return port;
+    }
+
+    return null;
+  }
+
+  private string PickTargetPortId(AiShipContext context, string excludedPortId)
+  {
+    if (context.Ports.Length == 0)
+      return string.Empty;
+
+    var candidates = new Godot.Collections.Array<Port>();
+    foreach (Port port in context.Ports)
+    {
+      if (port == null)
+        continue;
+      if (!string.IsNullOrWhiteSpace(excludedPortId) && port.PortId == excludedPortId && context.Ports.Length > 1)
+        continue;
+
+      candidates.Add(port);
+    }
+
+    if (candidates.Count == 0)
+      return context.Ports[0]?.PortId ?? string.Empty;
+
+    int index = _rng.RandiRange(0, candidates.Count - 1);
+    return candidates[index]?.PortId ?? string.Empty;
+  }
+
+  private bool HasReachedTargetPort(Port targetPort, Vector3 shipPosition)
+  {
+    if (targetPort == null)
+      return false;
+
+    float reachDistance = Mathf.Max(_goalArrivalDistance, targetPort.InteractionRadius);
+    return shipPosition.DistanceTo(targetPort.GlobalPosition) <= reachDistance;
   }
 
   private static float GetRayDistanceFraction(AiShipContext context, string rayId)
@@ -309,9 +346,11 @@ public sealed class PythonNavigationAiShipController : IAiShipController
     return Mathf.Clamp(ray.Distance / ray.MaxDistance, 0.0f, 1.0f);
   }
 
-  private float DistanceToPatrolPoint(AiShipMemory memory, Vector3 shipPosition)
+  private float DistanceToTargetPort(AiShipMemory memory, AiShipContext context)
   {
-    Vector3 patrolPoint = memory.GetOrDefault(KeyPatrolPoint, shipPosition);
-    return shipPosition.DistanceTo(patrolPoint);
+    Port targetPort = ResolveTargetPort(memory, context);
+    return targetPort == null
+      ? 0.0f
+      : context.ShipPosition.DistanceTo(targetPort.GlobalPosition);
   }
 }

@@ -25,5 +25,11 @@ public sealed class AiShipControllerServices
   /// </summary>
   public RaiderTrainingCsvLogger RaiderTrainingLogger { get; init; }
 
+  /// <summary>
+  /// Shared CSV logger for deterministic trader training capture.
+  /// Null when logging has not been initialized for this session.
+  /// </summary>
+  public TraderTrainingCsvLogger TraderTrainingLogger { get; init; }
+
   public static readonly AiShipControllerServices Empty = new();
 }

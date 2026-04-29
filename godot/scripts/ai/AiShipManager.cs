@@ -40,7 +40,7 @@ public partial class AiShipManager : RefCounted
   {
     { "raider", 2 },
     { "trader", 2 },
-    { "neural_patrol", 1 }
+    { "neural_patrol", 10 }
   };
 
   private readonly Dictionary<string, int> _nextSequenceByArchetype = new();
@@ -57,6 +57,7 @@ public partial class AiShipManager : RefCounted
   private bool _isShuttingDown;
   private PythonAiWorkerClient _pythonAiWorker;
   private RaiderTrainingCsvLogger _raiderTrainingLogger;
+  private TraderTrainingCsvLogger _traderTrainingLogger;
 
   public AiShipControllerServices ControllerServices { get; private set; } = AiShipControllerServices.Empty;
 
@@ -84,7 +85,7 @@ public partial class AiShipManager : RefCounted
     if (_play == null || !_play.Multiplayer.IsServer())
       return;
 
-    InitializeRaiderTrainingLogger();
+    InitializeRaiderTrainingLoggers();
     InitializePythonAiIfNeeded();
 
     _respawnTimer = new Timer
@@ -151,6 +152,8 @@ public partial class AiShipManager : RefCounted
 
     _raiderTrainingLogger?.Dispose();
     _raiderTrainingLogger = null;
+    _traderTrainingLogger?.Dispose();
+    _traderTrainingLogger = null;
 
     ControllerServices = AiShipControllerServices.Empty;
   }
@@ -260,19 +263,32 @@ public partial class AiShipManager : RefCounted
     _raiderTrainingLogger?.LogSample(ship, context, memory, control);
   }
 
-  private void InitializeRaiderTrainingLogger()
+  public void LogTraderTrainingSample(
+    AiShip ship,
+    AiShipContext context,
+    AiShipMemory memory,
+    AiShipControlInput control)
   {
-    if (_raiderTrainingLogger != null)
+    _traderTrainingLogger?.LogSample(ship, context, memory, control);
+  }
+
+  private void InitializeRaiderTrainingLoggers()
+  {
+    if (_raiderTrainingLogger != null || _traderTrainingLogger != null)
       return;
 
     string outputDirectory = ProjectSettings.GlobalizePath("user://ai_training");
     Directory.CreateDirectory(outputDirectory);
 
     string timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
-    string outputPath = Path.Combine(outputDirectory, $"raider_movements_{timestamp}.csv");
-    _raiderTrainingLogger = new RaiderTrainingCsvLogger(outputPath);
+    string raiderOutputPath = Path.Combine(outputDirectory, $"raider_movements_{timestamp}.csv");
+    string traderOutputPath = Path.Combine(outputDirectory, $"trader_movements_{timestamp}.csv");
+
+    _raiderTrainingLogger = new RaiderTrainingCsvLogger(raiderOutputPath);
+    _traderTrainingLogger = new TraderTrainingCsvLogger(traderOutputPath);
     RefreshControllerServices();
-    GD.Print($"Raider training CSV logging to {outputPath}");
+    GD.Print($"Raider training CSV logging to {raiderOutputPath}");
+    GD.Print($"Trader training CSV logging to {traderOutputPath}");
   }
 
   private void RefreshControllerServices()
@@ -280,7 +296,8 @@ public partial class AiShipManager : RefCounted
     ControllerServices = new AiShipControllerServices
     {
       PythonAiWorker = _pythonAiWorker,
-      RaiderTrainingLogger = _raiderTrainingLogger
+      RaiderTrainingLogger = _raiderTrainingLogger,
+      TraderTrainingLogger = _traderTrainingLogger
     };
   }
 
